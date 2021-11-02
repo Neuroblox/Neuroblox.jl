@@ -1,6 +1,7 @@
 module Neuroblox
 
-using ModelingToolkit
+using Reexport
+@reexport using ModelingToolkit
 
 @parameters t
 D = Differential(t)
