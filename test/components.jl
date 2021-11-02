@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq
+using Neuroblox, OrdinaryDiffEq, Test
 
 function CreateCircuit(;name)
 
