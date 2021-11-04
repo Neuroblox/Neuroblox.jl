@@ -17,17 +17,6 @@ function NeuralMass_Logistic(;name, τ=τ, H=H, λ=λ, r=r)
        return ODESystem(eqs, t, sts, params; name=name)
 end
 
-function NeuralMass_aTan(;name, ω=ω, ζ=ζ, k=k, h=h)
-       
-       sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-       params = @parameters ω=ω ζ=ζ k=k h=h
-
-       eqs = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*atan((jcn)/h)
-              D(y) ~ -(ω^2)*x]
-       
-       return ODESystem(eqs, t, sts, params; name=name)
-end
-
 function Connections(;name, sys=sys, adj_matrix=adj_matrix)
 
         begin
@@ -40,6 +29,6 @@ function Connections(;name, sys=sys, adj_matrix=adj_matrix)
         return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-export NeuralMass_Logistic, NeuralMass_aTan, Connections
+export NeuralMass, Connections
 
 end
