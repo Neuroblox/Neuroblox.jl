@@ -6,25 +6,27 @@ using Reexport
 @parameters t
 D = Differential(t)
 
-function NeuralMass_Logistic(;name, τ=τ, H=H, λ=λ, r=r)
-
-       sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-       params = @parameters τ=τ H=H λ=λ r=r
-
-       eqs = [D(x) ~ y - ((2/τ)*x),
-              D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-
-       return ODESystem(eqs, t, sts, params; name=name)
-end
-
-function NeuralMass_aTan(;name, ω=ω, ζ=ζ, k=k, h=h)
+function NeuralMass(;name, activation="a_tan", ω=0, ζ=0, k=0, h=0, τ=0, H=0, λ=0, r=0)
        
        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-       params = @parameters ω=ω ζ=ζ k=k h=h
 
-       eqs = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*atan((jcn)/h)
-              D(y) ~ -(ω^2)*x]
-       
+       if activation == "a_tan"
+
+              params = @parameters ω=ω ζ=ζ k=k h=h
+
+              eqs = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*atan((jcn)/h)
+                     D(y) ~ -(ω^2)*x]
+       end
+
+       if activation == "logistic"
+
+              params = @parameters τ=τ H=H λ=λ r=r
+
+              eqs = [D(x) ~ y - ((2/τ)*x),
+                     D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+
+       end
+
        return ODESystem(eqs, t, sts, params; name=name)
 end
 
@@ -40,6 +42,6 @@ function Connections(;name, sys=sys, adj_matrix=adj_matrix)
         return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-export NeuralMass_Logistic, NeuralMass_aTan, Connections
+export NeuralMass, Connections
 
 end
