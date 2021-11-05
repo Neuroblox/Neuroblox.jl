@@ -1,19 +1,18 @@
 using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, Optim, ForwardDiff, Test
 
 # Create Regions
-@named GPe = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named GPe = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named STN = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=10)
 
-# Connect Regions through Adjacency Matrix
+# Connect Regions
 sys = [GPe, STN]
-@parameters g_GPe_STN=-1.0 g_STN_GPe=1.0
+params =  @parameters g_GPe_STN=-1.0 g_STN_GPe=1.0
 adj_matrix = [sys[1].x g_STN_GPe*sys[2].x; 
-             g_GPe_STN*sys[1].x sys[2].x]
-
+              g_GPe_STN*sys[1].x sys[2].x]
 @named BG_Circuit = Connections(sys=sys, adj_matrix=adj_matrix)
+
 sim_dur = 10.0 # Simulate for 10 Seconds
 prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
-sol = solve(prob, Tsit5())
 
 ptrue = prob.p
 pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 1000

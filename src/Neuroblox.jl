@@ -29,7 +29,7 @@ function NeuralMass_aTan(;name, ω=ω, ζ=ζ, k=k, h=h)
 end
 
 function Connections(;name, sys=sys, adj_matrix=adj_matrix)
-
+       
         begin
                eqs = []
                for region_num in 1:length(sys)
