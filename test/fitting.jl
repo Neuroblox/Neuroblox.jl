@@ -1,26 +1,25 @@
 using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, Optim, ForwardDiff, Test
 
 # Create Regions
-@named GPe = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
-@named STN = NeuralMass_aTan(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=10)
+@named GPe = NeuralMass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named STN = NeuralMass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=10)
 
 # Connect Regions
 sys = [GPe, STN]
-params =  @parameters g_GPe_STN=-1.0 g_STN_GPe=1.0
+params =  @parameters g_GPe_STN=1.0 g_STN_GPe=1.0
+# inhibitory signs must go directly into adj_matrix to run fitting algorithm
 adj_matrix = [sys[1].x g_STN_GPe*sys[2].x; 
-              g_GPe_STN*sys[1].x sys[2].x]
+              -g_GPe_STN*sys[1].x sys[2].x]
 @named BG_Circuit = Connections(sys=sys, adj_matrix=adj_matrix)
 
 sim_dur = 10.0 # Simulate for 10 Seconds
 prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
 
 ptrue = prob.p
-pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 1000
+pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 100
 data = solve(prob, Vern9(), abstol=1e-12, reltol=1e-12, saveat=0.1)
-
 lb = 0.1 .* ptrue
 ub = 2 .* ptrue
-
 internalnorm(u,t) = sqrt(ForwardDiff.value(sum(abs2,u)))/length(u)
 
 function loss(p,_)
