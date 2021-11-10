@@ -40,8 +40,8 @@ optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
 optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 
 # Solve optimization problem
-optsol = solve(optprob,GradientDescent(),maxiters = 8000)
+optsol = solve(optprob,GradientDescent(),maxiters = 6000)
 
 # Compare results (test)
 #@test_broken !iszero(norm(optsol.u - pinit))
-@test norm(optsol.u - ptrue) < 2
+@test norm(optsol.u - ptrue) < 3
