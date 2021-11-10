@@ -42,6 +42,6 @@ optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 # Solve optimization problem
 optsol = solve(optprob,GradientDescent(),maxiters = 6000)
 
-# Compare results (test)
+# Calculate squared error of fit
+@test norm(optsol.u - ptrue) < 3 # balance threshold value and maxiters for run time
 #@test_broken !iszero(norm(optsol.u - pinit))
-@test norm(optsol.u - ptrue) < 3
