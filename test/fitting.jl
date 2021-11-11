@@ -40,8 +40,8 @@ optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
 optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 
 # Solve optimization problem
-optsol = solve(optprob,BFGS(),maxiters = 5000)
+optsol = solve(optprob,BFGS(),maxiters = 4000)
 
 # Calculate squared error of fit
-@test norm(optsol.u - ptrue) < 3 # balance threshold value and maxiters for run time
+@test norm(optsol.u - ptrue) < 5 # balance threshold value and maxiters for run time
 #@test_broken !iszero(norm(optsol.u - pinit))
