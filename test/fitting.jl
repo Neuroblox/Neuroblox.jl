@@ -22,14 +22,14 @@ ptrue = prob.p
 # Alter system parameters randomly
 pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 100
 # Solve problem as normal
-data = solve(prob, Vern9(), abstol=1e-12, reltol=1e-12, saveat=0.01)
+data = solve(prob, Vern9(), abstol=1e-12, reltol=1e-12, saveat=0.001)
 
 # Define loss function
 lb = 0.1 .* ptrue
 ub = 2 .* ptrue
 internalnorm(u,t) = sqrt(ForwardDiff.value(sum(abs2,u)))/length(u)
 function loss(p,_)
-    sol = solve(remake(prob,p=p), Tsit5(), abstol=1e-12, reltol=1e-12, saveat=0.01)
+    sol = solve(remake(prob,p=p), Tsit5(), abstol=1e-12, reltol=1e-12, saveat=0.001)
     if sol.retcode != :Success
         Inf * abs(p[1])
     else
@@ -40,7 +40,7 @@ optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
 optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 
 # Solve optimization problem
-optsol = solve(optprob,GradientDescent(),maxiters = 5000)
+optsol = solve(optprob,BFGS(),maxiters = 5000)
 
 # Calculate squared error of fit
 @test norm(optsol.u - ptrue) < 3 # balance threshold value and maxiters for run time
