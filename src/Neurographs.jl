@@ -60,14 +60,13 @@ function rem_vertex!(g :: SimpleNeuroGraph, v)
     for (key, value) in g.weights
         src = key[1]
         dst = key[2]
-        if src>v || dst>v
+        if src==v || dst ==v
+            delete!(g.weights, key)
+        elseif  src>v || dst>v
             new_src = (src > v ? src-1 : src)
             new_dst = (dst > v ? dst-1 : dst)
             new_weights[(new_src,new_dst)] = value # updated weight entry
             delete!(g.weights, key) # delete old entry
-        end
-        if src==v || dst ==v
-            delete!(g.weights, key)
         end
     end
     merge!(g.weights, new_weights) # add new entries to weights
@@ -86,6 +85,5 @@ function test()
     a = AdjMatrixfromSimpleNeuroGraph(g)
     rem_vertex!(g,2)
     b = AdjMatrixfromSimpleNeuroGraph(g)
-    return a,b
+    return a,b,g
 end
-
