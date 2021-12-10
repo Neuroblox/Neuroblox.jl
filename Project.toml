@@ -14,6 +14,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 DiffEqBase = "6.11"
+Graphs = "1"
 ModelingToolkit = "6, 7"
 MuladdMacro = "0.2"
 RecursiveArrayTools = "2"
