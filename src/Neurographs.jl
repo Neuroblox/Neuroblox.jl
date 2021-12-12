@@ -73,17 +73,3 @@ function rem_vertex!(g :: SimpleNeuroGraph, v)
     rem_vertex!(g.g,v) # now remove vertex
 end
 
-# will move this into the test
-function test()
-    g = SimpleNeuroGraph(SimpleDiGraph(),Dict(),Dict(),Dict())
-    add_vertex!(g,"name1","blox1")
-    add_vertex!(g,"name2","blox2")
-    add_vertex!(g,"name3","blox3")
-    add_edge!(g,1,2,1.0)
-    add_edge!(g,2,3,2.0)
-    add_edge!(g,3,1,3.0)
-    a = AdjMatrixfromSimpleNeuroGraph(g)
-    rem_vertex!(g,2)
-    b = AdjMatrixfromSimpleNeuroGraph(g)
-    return a,b,g
-end

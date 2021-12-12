@@ -3,6 +3,8 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 
+include("Neurographs.jl")
+
 @parameters t
 D = Differential(t)
 
@@ -43,5 +45,6 @@ function Connections(;name, sys=sys, adj_matrix=adj_matrix)
 end
 
 export NeuralMass, Connections
+export SimpleNeuroGraph, AdjMatrixfromSimpleNeuroGraph, add_edge!, add_vertex!, add_vertices!, rem_vertex!
 
 end
