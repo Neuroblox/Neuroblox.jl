@@ -33,4 +33,4 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["LinearAlgebra", "ForwardDiff", "SparseArrays", "Graphs", "GalacticOptim", "Optim", "OrdinaryDiffEq", "SafeTestsets", "Test"]
+test = ["LinearAlgebra", "ForwardDiff", "SparseArrays", "GalacticOptim", "Optim", "OrdinaryDiffEq", "SafeTestsets", "Test"]
