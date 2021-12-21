@@ -15,6 +15,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 DiffEqBase = "6.11"
+Graphs = "1"
 ModelingToolkit = "6, 7"
 MuladdMacro = "0.2"
 RecursiveArrayTools = "2"
