@@ -1,8 +1,4 @@
 using Graphs
-import Graphs.SimpleGraphs.add_edge!
-import Graphs.SimpleGraphs.add_vertex!
-import Graphs.SimpleGraphs.add_vertices!
-import Graphs.SimpleGraphs.rem_vertex!
 
 struct SimpleNeuroGraph
     g :: SimpleDiGraph
@@ -11,7 +7,7 @@ struct SimpleNeuroGraph
     blox :: Dict
 end
 
-function AdjMatrixfromSimpleNeuroGraph(g::SimpleNeuroGraph)
+function Graphs.AdjMatrixfromSimpleNeuroGraph(g::SimpleNeuroGraph)
     myadj = map(Float64,adjacency_matrix(g.g))
     for edge in edges(g.g)
         s = src(edge)
@@ -21,18 +17,18 @@ function AdjMatrixfromSimpleNeuroGraph(g::SimpleNeuroGraph)
     myadj
 end
 
-function add_edge!(g :: SimpleNeuroGraph, src, dst, weight)
+function Graphs.add_edge!(g :: SimpleNeuroGraph, src, dst, weight)
     add_edge!(g.g,src,dst)
     g.weights[(src,dst)] = weight
 end
 
-function add_vertex!(g :: SimpleNeuroGraph, name, blox)
+function Graphs.add_vertex!(g :: SimpleNeuroGraph, name, blox)
     add_vertex!(g.g)
     g.names[nv(g.g)] = name # vertices are added to the end
     g.blox[nv(g.g)] = blox
 end
 
-function add_vertices!(g :: SimpleNeuroGraph, n, names, blox)
+function Graphs.add_vertices!(g :: SimpleNeuroGraph, n, names, blox)
     add_vertices!(g.g, n)
     numverts = nv(g.g)
     for i in 1:n
@@ -42,7 +38,7 @@ function add_vertices!(g :: SimpleNeuroGraph, n, names, blox)
     end
 end
 
-function rem_vertex!(g :: SimpleNeuroGraph, v)
+function Graphs.rem_vertex!(g :: SimpleNeuroGraph, v)
 # somewhat tricky to implement since the remaining graph vertex indices
 # get shifted down from where the vertex is deleted
 
