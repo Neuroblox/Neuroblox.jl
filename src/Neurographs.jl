@@ -1,23 +1,19 @@
-using Graphs
-using MetaGraphs
-
 # define all possible neurographs
 abstract type AbstractNeuroGraph end
-struct LinearNeuroGraph <: AbstractNeuroGraph; g::MetaDiGraph end
-struct OtherNeuroGraph <: AbstractNeuroGraph; g::MetaDiGraph end
+struct LinearNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
+struct OtherNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
 
 # method forward does not work
-# add_edges!(ng::AbstractNeuroGraph,args...) = add_edges!(ng.g,args...)
-# add_vertex!(ng::AbstractNeuroGraph,args...) = add_vertex!(ng.g,args...)
-# gives the following error:
-# ERROR: LoadError: error in method definition: function SimpleGraphs.add_vertex! must be explicitly imported to be extended
+@inline add_edge!(g::AbstractNeuroGraph, x...) = add_edge!(g.graph, x...)
+@inline add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
+@inline rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
 
 function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
-    myadj = map(Float64,adjacency_matrix(g.g))
-    for edge in edges(g.g)
+    myadj = map(Float64,adjacency_matrix(g.graph))
+    for edge in edges(g.graph)
         s = src(edge)
         d = dst(edge)
-        myadj[s,d] = get_prop(g.g, edge, :weight)
+        myadj[s,d] = get_prop(g.graph, edge, :weight)
     end
     myadj
 end
