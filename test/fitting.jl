@@ -45,20 +45,20 @@ prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
 # Grab system parameters
 ptrue = prob.p
 # Alter system parameters randomly
-pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 1000
+pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 100
 # Solve problem as normal
-data = solve(prob, Vern9(), abstol=1e-12, reltol=1e-12, saveat=0.01)
+data = solve(prob, Vern9(), abstol=1e-9, reltol=1e-9, saveat=0.01)
 
 # Define loss function
 lb = 0.1 .* ptrue
 ub = 2 .* ptrue
 internalnorm(u,t) = sqrt(ForwardDiff.value(sum(abs2,u)))/length(u)
 function loss(p,_)
-    sol = solve(remake(prob,p=p), Tsit5(), abstol=1e-12, reltol=1e-12, saveat=0.01)
+    sol = solve(remake(prob,p=p), Vern9(), abstol=1e-9, reltol=1e-9, saveat=0.01)
     if sol.retcode != :Success
         Inf * abs(p[1])
     else
-        sum(abs2, sol .- data)
+        sqrt(sum(abs2, sol .- data)/length(sol))
     end
 end
 
