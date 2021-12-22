@@ -3,7 +3,7 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 
-import Graphs: add_edge!, add_vertex!, rem_vertex!, adjacency_matrix, edges, src, dst
+using Graphs
 using MetaGraphs
 
 include("Neurographs.jl")
