@@ -9,7 +9,7 @@ include("Neurographs.jl")
 D = Differential(t)
 
 function NeuralMass(;name, activation="a_tan", ω=0, ζ=0, k=0, h=0, τ=0, H=0, λ=0, r=0)
-       
+
        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
 
        if activation == "a_tan"
@@ -33,7 +33,7 @@ function NeuralMass(;name, activation="a_tan", ω=0, ζ=0, k=0, h=0, τ=0, H=0, 
 end
 
 function Connections(;name, sys=sys, adj_matrix=adj_matrix)
-       
+
         begin
                eqs = []
                for region_num in 1:length(sys)

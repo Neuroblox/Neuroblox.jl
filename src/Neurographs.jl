@@ -7,7 +7,7 @@ struct SimpleNeuroGraph
     blox :: Dict
 end
 
-function Graphs.AdjMatrixfromSimpleNeuroGraph(g::SimpleNeuroGraph)
+function AdjMatrixfromSimpleNeuroGraph(g::SimpleNeuroGraph)
     myadj = map(Float64,adjacency_matrix(g.g))
     for edge in edges(g.g)
         s = src(edge)
@@ -68,4 +68,3 @@ function Graphs.rem_vertex!(g :: SimpleNeuroGraph, v)
     merge!(g.weights, new_weights) # add new entries to weights
     rem_vertex!(g.g,v) # now remove vertex
 end
-
