@@ -3,6 +3,9 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 
+using Graphs
+using MetaGraphs
+
 include("Neurographs.jl")
 
 @parameters t
@@ -45,6 +48,6 @@ function Connections(;name, sys=sys, adj_matrix=adj_matrix)
 end
 
 export NeuralMass, Connections
-export SimpleNeuroGraph, AdjMatrixfromSimpleNeuroGraph, add_edge!, add_vertex!, add_vertices!, rem_vertex!
+export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph
 
 end
