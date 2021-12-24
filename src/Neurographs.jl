@@ -19,5 +19,5 @@ function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
 end
 
 function add_blox!(g::AbstractNeuroGraph,blox)
-    add_vertex!(g,Dict(:blox => blox)
+    add_vertex!(g,:blox, blox)
 end
