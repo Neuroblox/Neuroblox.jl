@@ -3,7 +3,7 @@ abstract type AbstractNeuroGraph end
 struct LinearNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
 struct OtherNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
 
-# method forward does not work
+# method forwarding to handle AbstractNeuroGraph
 Graphs.add_edge!(g::AbstractNeuroGraph, x...) = add_edge!(g.graph, x...)
 Graphs.add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
 Graphs.rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
@@ -16,4 +16,8 @@ function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
         myadj[s,d] = get_prop(g.graph, edge, :weight)
     end
     myadj
+end
+
+function add_blox!(g::AbstractNeuroGraph,blox)
+    add_vertex!(g,:blox, blox)
 end
