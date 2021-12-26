@@ -30,3 +30,18 @@ sim_dur = 10.0 # Simulate for 10 Seconds
 prob = ODAEProblem(structural_simplify(CBGTC_Circuit), [], (0.0, sim_dur), [])
 sol = solve(prob, Tsit5())
 @test sol[GPi.x,4] ≈ 0.9862259241442394
+
+adj_matrix_lin = [0 0 0 0 0 0 0 0;
+            -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+            0 -0.5*C_BG_Th 0 0 0 0 C_Cor_BG_Th 0;
+            0 -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+            0 0 0 -0.5*C_BG_Th 0 0 0 0;
+            0 0 0 0 C_BG_Th_Cor 0 6*C_Cor 0;
+            0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
+            0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
+
+@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin)
+
+prob2 = ODAEProblem(structural_simplify(CBGTC_Circuit_lin), [], (0.0, sim_dur), [])
+sol2 = solve(prob2, Tsit5())
+@test sol2[GPi.x,4] ≈ 0.9862259241442394

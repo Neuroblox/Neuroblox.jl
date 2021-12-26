@@ -47,7 +47,21 @@ function Connections(;name, sys=sys, adj_matrix=adj_matrix)
         return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-export NeuralMass, Connections
+function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
+
+       begin
+              sysx = [s.x for s in sys]
+              adjx = adj_matrix * sysx
+              eqs = []
+              for region_num in 1:length(sys)
+                     push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
+              end
+       end
+
+       return @named Circuit = ODESystem(eqs, systems = sys)
+end
+
+export NeuralMass, Connections, LinearConnections
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph
 
 end
