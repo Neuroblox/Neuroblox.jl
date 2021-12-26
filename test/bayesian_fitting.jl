@@ -44,11 +44,11 @@ using Turing: Variational
 sys = [Str, GPe, STN, GPi]
 @parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
 adj_matrix = [0 0 0 0;
-             -0.5*C_BG_Th*sys[1].x -0.5*C_BG_Th*sys[2].x C_BG_Th*sys[3].x 0;
-              0 -0.5*C_BG_Th*sys[2].x 0 0;
-              0 -0.5*C_BG_Th*sys[2].x C_BG_Th*sys[3].x 0]
+             -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0;
+              0 -0.5*C_BG_Th 0 0;
+              0 -0.5*C_BG_Th C_BG_Th 0]
 
-@named BG_Circuit = Connections(sys=sys, adj_matrix=adj_matrix)
+@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix)
 
 sim_dur = 5.0 # Simulation time (seconds)
 prob1 = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])

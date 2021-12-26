@@ -35,33 +35,19 @@ function NeuralMass(;name, activation="a_tan", ω=0, ζ=0, k=0, h=0, τ=0, H=0, 
        return ODESystem(eqs, t, sts, params; name=name)
 end
 
-function Connections(;name, sys=sys, adj_matrix=adj_matrix)
-
-        begin
-               eqs = []
-               for region_num in 1:length(sys)
-                      push!(eqs, sys[region_num].jcn ~ sum(adj_matrix[region_num,:]))
-               end
-        end
-
-        return @named Circuit = ODESystem(eqs, systems = sys)
-end
-
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
 
-       begin
-              sysx = [s.x for s in sys]
-              adjx = adj_matrix * sysx
-              eqs = []
-              for region_num in 1:length(sys)
-                     push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
-              end
+       sysx = [s.x for s in sys]
+       adjx = adj_matrix * sysx
+       eqs = []
+       for region_num in 1:length(sys)
+              push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
        end
 
        return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-export NeuralMass, Connections, LinearConnections
+export NeuralMass, LinearConnections
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph
 
 end
