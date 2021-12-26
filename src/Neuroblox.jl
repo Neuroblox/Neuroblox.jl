@@ -44,7 +44,7 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
               push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
        end
 
-       return ODESystem(eqs, systems = sys)
+       return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
 export NeuralMass, LinearConnections
