@@ -47,7 +47,13 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
        return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-export NeuralMass, LinearConnections
-export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph
+function ODEfromGraph(;name, g::LinearNeuroGraph)
+       sys = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
+       adj = AdjMatrixfromLinearNeuroGraph(g)
+       return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj)
+end
+
+export NeuralMass, LinearConnections, ODEfromGraph
+export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 
 end
