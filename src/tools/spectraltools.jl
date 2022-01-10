@@ -99,5 +99,3 @@ function csd2mar(csd, w, dt, p)
 
     return (coeff, noise_cov)
 end
-
-export csd2mar, mar2csd
