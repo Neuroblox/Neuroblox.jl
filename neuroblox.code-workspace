@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"julia.environmentPath": "/home/david/Projects/neuroblox/codes/Neuroblox.jl"
+	}
+}
