@@ -5,6 +5,9 @@ using Reexport
 
 using Graphs
 using MetaGraphs
+using LinearAlgebra: I
+using FFTW
+using ToeplitzMatrices
 
 include("Neurographs.jl")
 include("tools/spectraltools.jl")
