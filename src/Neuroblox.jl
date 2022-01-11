@@ -5,8 +5,12 @@ using Reexport
 
 using Graphs
 using MetaGraphs
+using LinearAlgebra: I
+using FFTW
+using ToeplitzMatrices
 
 include("Neurographs.jl")
+include("tools/spectraltools.jl")
 
 @parameters t
 D = Differential(t)
@@ -55,5 +59,6 @@ end
 
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
+export mar2csd, csd2mar
 
 end
