@@ -1,17 +1,3 @@
-# using Reexport
-# @reexport using DSP, FFTW
-# Questions:
-# 1. reexport mean and when do we use it?
-# 2. why does test not fail with the first commit but fails afterwards?
-# 3. standards about commenting
-# 4. standards about indentation
-# 5. standards about TODOs
-
-
-using LinearAlgebra: I
-using FFTW
-using ToeplitzMatrices
-
 """
 The following are various tools for spectral analysis used in Neuroblox.
 """
