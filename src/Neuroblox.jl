@@ -6,7 +6,6 @@ using Reexport
 using Graphs
 using MetaGraphs
 using AbstractFFTs
-using PyCall, Conda
 using LinearAlgebra: I
 using FFTW
 using ToeplitzMatrices
