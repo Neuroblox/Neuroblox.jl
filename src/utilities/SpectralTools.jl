@@ -35,7 +35,8 @@ function PowerSpectrum(;name, data=data, T=T, uniform=true, dt=dt, NQ=500)
 
     df = 1/T                                           
     f = 0:df:100                  
-    resampler = pyimport("scipy.signal")                     
+    resampler = pyimport("scipy")
+    resampler = resampler.signal                     
     pxx = df*(2*(dt^2))*AbstractFFTs.fft(resampler.resample(data, length(f))).*conj(AbstractFFTs.fft(resampler.resample(data, length(f))))
     pxx = real(pxx)
 
