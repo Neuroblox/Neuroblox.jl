@@ -10,6 +10,7 @@ using PyCall, Conda
 using LinearAlgebra: I
 using FFTW
 using ToeplitzMatrices
+using DSP
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
