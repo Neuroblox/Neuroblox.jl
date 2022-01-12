@@ -45,7 +45,7 @@ function hemodynamics!(dx, x, na, lndecay, lntransit)
     τ = H[3]*exp.(lntransit)
 
     # Fout = f(v) - outflow
-    fv = x[:, 2].^(H[4]^-1)
+    fv = x[:, 3].^(H[4]^-1)
 
     # e = f(f) - oxygen extraction
     ff = (1.0 .- (1.0 - H[5]).^(x[:, 2].^-1))/H[5]
@@ -74,7 +74,7 @@ function hemodynamics!(dx, x, na, lndecay, lntransit)
 end
 
 
-function boldsignal(x, lnϵ)
+function boldsignal(lnν, lnq, lnϵ)
     """
     This function implements the BOLD signal model described in: 
 
@@ -84,17 +84,13 @@ function boldsignal(x, lnϵ)
     adapted from spm_gx_fmri.m in SPM12 by Karl Friston & Klaas Enno Stephan
 
     ### Input variables ###
-    x          : biophysical quantities of hemodynamic response to neural activity of dimension Nx4, components are:
-        x[:,1] : vascular signal: s
-        x[:,2] : rCBF: ln(f)
-        x[:,3] : venous volume: ln(ν)
-        x[:,4] : deoxyhemoglobin (dHb): ln(q)
-    g          : BOLD response (%)
-    ϵ          : free parameter (note also here as above, actually ln(ϵ)), ratio of intra- to extra-vascular components
+    lnν  : venous volume: ln(ν)
+    lnq  : deoxyhemoglobin (dHb): ln(q)
+    lnϵ  : ratio of intra- to extra-vascular components (note also here as above, actually ln(ϵ) rather than ϵ itself)
 
     ### Return variables ###
-    bold       : bold signal
-    ∇          : analytic gradient of bold signal function
+    bold : BOLD response (%)
+    ∇    : analytic gradient of bold signal function
     """
 
     #=
@@ -126,11 +122,11 @@ function boldsignal(x, lnϵ)
     k2  = ϵ*r0*E0*TE;
     k3  = 1 - ϵ;
     # Output equation of BOLD signal model
-    ν   = exp.(x[:,4])
-    q   = exp.(x[:,5])
+    ν   = exp.(lnν)
+    q   = exp.(lnq)
     bold = V0*(k1 .- k1*q .+ k2 .- k2*q./ν .+ k3 .- k3*ν)
 
-    nd = size(x, 1)
+    nd = length(lnν)
     ∇ = zeros(nd, 2nd)
     ∇[1:nd, 1:nd]     = diagm(-V0*(k3*ν .- k2*q./ν))    # TODO: it is unclear why this is the correct gradient, do the algebra... (note this is a gradient per area, not a Jacobian)
     ∇[1:nd, nd+1:2nd] = diagm(-V0*(k1*q .+ k2*q./ν))
