@@ -5,7 +5,7 @@ This utility file contains the methods utilized for spectral data analysis.
     PowerSpectrum
 
 """
-
+Conda.add("scipy")
 function PowerSpectrum(;name, data=data, T=T, uniform=true, dt=dt, NQ=500)
     
     """
