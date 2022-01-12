@@ -7,15 +7,12 @@ using Graphs
 using MetaGraphs
 using AbstractFFTs
 using PyCall
-
-include("Neurographs.jl")
-include("utilities/SpectralTools.jl")
-
 using LinearAlgebra: I
 using FFTW
 using ToeplitzMatrices
 
 include("Neurographs.jl")
+include("utilities/SpectralTools.jl")
 include("tools/spectraltools.jl")
 
 @parameters t
