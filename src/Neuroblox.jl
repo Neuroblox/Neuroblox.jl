@@ -5,11 +5,18 @@ using Reexport
 
 using Graphs
 using MetaGraphs
-using AbstractFFTs, FFTW
+using AbstractFFTs
 using PyCall
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
+
+using LinearAlgebra: I
+using FFTW
+using ToeplitzMatrices
+
+include("Neurographs.jl")
+include("tools/spectraltools.jl")
 
 @parameters t
 D = Differential(t)
@@ -60,5 +67,6 @@ end
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export PowerSpectrum
+export mar2csd, csd2mar
 
 end
