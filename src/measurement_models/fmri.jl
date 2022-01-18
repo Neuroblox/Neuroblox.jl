@@ -53,7 +53,7 @@ function hemodynamics!(dx, x, na, lndecay, lntransit)
     # implement differential state equation f = dx/dt (hemodynamic)
 
     dx[:, 1] = na .- κ.*x[:, 1] .- H[2]*(x[:, 2] .- 1)   # Corresponds to eq (9)
-    dx[:, 2] = x[:, 1]./x[:, 2]  # Corresponds to eq (10), note the added logarithm (see doc string)
+    dx[:, 2] = x[:, 1]./x[:, 2]      # Corresponds to eq (10), note the added logarithm (see doc string)
     dx[:, 3] = (x[:, 2] .- fv)./(τ.*x[:, 3])    # Corresponds to eq (8), note the added logarithm (see doc string)
     dx[:, 4] = (ff.*x[:, 2] .- fv.*x[:, 4]./x[:, 3])./(τ.*x[:, 4])  # Corresponds to eq (8), note the added logarithm (see doc string)
 
@@ -104,31 +104,31 @@ function boldsignal(lnν, lnq, lnϵ)
 
     # NB: Biophysical constants for 1.5T scanners
     # Time to echo
-    TE  = 0.04
+    TE = 0.04
     # resting venous volume (%)
-    V0  = 4
+    V0 = 4
     # slope r0 of intravascular relaxation rate R_iv as a function of oxygen 
     # saturation S:  R_iv = r0*[(1 - S)-(1 - S0)] (Hz)
-    r0  = 25
+    r0 = 25
     # frequency offset at the outer surface of magnetized vessels (Hz)
     nu0 = 40.3
     # resting oxygen extraction fraction
-    E0  = 0.4
+    E0 = 0.4
     # estimated region-specific ratios of intra- to extra-vascular signal 
-    ϵ  = exp(lnϵ)
+    ϵ = exp(lnϵ)
 
     # Coefficients in BOLD signal model
-    k1  = 4.3*nu0*E0*TE;
-    k2  = ϵ*r0*E0*TE;
-    k3  = 1 - ϵ;
+    k1 = 4.3*nu0*E0*TE;
+    k2 = ϵ*r0*E0*TE;
+    k3 = 1 - ϵ;
     # Output equation of BOLD signal model
-    ν   = exp.(lnν)
-    q   = exp.(lnq)
+    ν = exp.(lnν)
+    q = exp.(lnq)
     bold = V0*(k1 .- k1*q .+ k2 .- k2*q./ν .+ k3 .- k3*ν)
 
     nd = length(lnν)
     ∇ = zeros(nd, 2nd)
-    ∇[1:nd, 1:nd]     = diagm(-V0*(k3*ν .- k2*q./ν))    # TODO: it is unclear why this is the correct gradient, do the algebra... (note this is a gradient per area, not a Jacobian)
+    ∇[1:nd, 1:nd]     = diagm(-V0*(k3*ν .- k2*q./ν))    # TODO: it is unclear why this is the correct gradient, do the algebra... (note this is a gradient per area, not a Jacobian, BOLD signal is a scalar function)
     ∇[1:nd, nd+1:2nd] = diagm(-V0*(k1*q .+ k2*q./ν))
 
     return (bold, ∇)
