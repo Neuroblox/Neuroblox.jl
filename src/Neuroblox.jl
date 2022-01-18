@@ -5,11 +5,15 @@ using Reexport
 
 using Graphs
 using MetaGraphs
+
 using LinearAlgebra: I, diagm, Matrix
+using AbstractFFTs
 using FFTW
 using ToeplitzMatrices
+using DSP
 
 include("Neurographs.jl")
+include("utilities/SpectralTools.jl")
 include("tools/spectraltools.jl")
 include("measurement_models/fmri.jl")
 
@@ -43,7 +47,8 @@ end
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
 
        sysx = [s.x for s in sys]
-       adjx = adj_matrix * sysx
+       adjx = adj_matrix .* sysx
+       
        eqs = []
        for region_num in 1:length(sys)
               push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
@@ -60,6 +65,7 @@ end
 
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
+export PowerSpectrum
 export mar2csd, csd2mar
 export hemodynamics!, boldsignal
 
