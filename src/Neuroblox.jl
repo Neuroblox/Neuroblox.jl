@@ -5,15 +5,16 @@ using Reexport
 
 using Graphs
 using MetaGraphs
+
+using LinearAlgebra: I, diagm, Matrix
 using AbstractFFTs
-using LinearAlgebra: I
 using FFTW
 using ToeplitzMatrices
 using DSP
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
-include("tools/spectraltools.jl")
+include("measurement_models/fmri.jl")
 
 @parameters t
 D = Differential(t)
@@ -65,5 +66,6 @@ export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export PowerSpectrum
 export mar2csd, csd2mar
+export hemodynamics!, boldsignal
 
 end
