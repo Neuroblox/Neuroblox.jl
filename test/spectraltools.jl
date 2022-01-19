@@ -70,7 +70,7 @@ Design Test Case (ComplexWavelet).
 # Wavelets must have values near zero at both ends, as well as a mean value of zero
 
 """
-data = matread("test/lfp_test_data.mat")
+data = matread("lfp_test_data.mat")
 @named wavelets = Neuroblox.ComplexWavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
 
 tol = 0.2
