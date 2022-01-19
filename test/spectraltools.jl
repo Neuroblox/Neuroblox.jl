@@ -3,12 +3,14 @@ using Neuroblox, Test
 using Distributions
 using LinearAlgebra: I, Matrix
 using OrdinaryDiffEq, Plots
+using Statistics
+using MAT
 
 
 nd = 2  # number of dimensions
 
 p = 2  # number of time lags of MAR model
-f = 2.0.^(range(0,5)) # frequencies at which to evaluate CSD
+f = 2.0.^(range(0,stop=5)) # frequencies at which to evaluate CSD
 dt = 1/(2*f[end]) # time step, inverse of sampling frequency
 dist = InverseWishart(nd*2, Matrix(1.0I, nd, nd))
 Σ = rand(dist)   # noise covariance matrix of MAR model
@@ -22,7 +24,7 @@ a_est, Σ_est = csd2mar(csd, f, dt, p)
 
 
 """
-Design Test Case. 
+Design Test Case (PowerSpectrum). 
 A circuit model is used, with an explicit paramter setting the oscillation frequency range of the system in radians/second:
     ω = 4*2*π
 The test will count the number of peaks in a given time window and match that to the frequency containing the most power.
@@ -62,3 +64,20 @@ index_of_maximum = find_max[2]
 tol = 0.5
 @test index_of_maximum*df>4-tol
 @test index_of_maximum*df<4+tol
+
+"""
+Design Test Case (ComplexWavelet).
+# Wavelets must have values near zero at both ends, as well as a mean value of zero
+
+"""
+data = matread("lfp_test_data.mat")
+@named wavelets = Neuroblox.ComplexWavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
+
+tol = 0.2
+@test real(wavelets[1][1]) < tol
+
+all_wavelets = Statistics.mean(real(wavelets))
+average_over_all = sum(all_wavelets)/length(all_wavelets)
+tol = 0.001
+@test sum(average_over_all) < 0 + tol
+
