@@ -3,7 +3,7 @@ using Neuroblox, Test
 using MAT
 using LinearAlgebra: I
 
-matvars = matread("test/DEM_demo_induced_fMRI_SPM12.mat")
+matvars = matread("DEM_demo_induced_fMRI_SPM12.mat")
 x = vcat(zeros(1,15), Matrix(matvars["x"]));
 transit = vec(matvars["transit"]);
 decay = 0.0
