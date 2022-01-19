@@ -2,9 +2,10 @@
 SpectralTools.jl
 
 This utility file contains the methods utilized for spectral data analysis.
-    PowerSpectrum : compute power spectrum from time series
-    mar2csd       : compute cross-spectral densities from multivariate auto-regressive model parameters
-    csd2mar       : compute multivariate auto-regressive model parameters from cross-spectral densities
+    PowerSpectrum  : compute power spectrum from time series
+    ComplexWavelet : generate a complex morlet wavelet
+    mar2csd        : compute cross-spectral densities from multivariate auto-regressive model parameters
+    csd2mar        : compute multivariate auto-regressive model parameters from cross-spectral densities
 """
 
 function PowerSpectrum(;name, data=data, T=T, uniform=true, dt=dt, NQ=500)
@@ -35,11 +36,58 @@ function PowerSpectrum(;name, data=data, T=T, uniform=true, dt=dt, NQ=500)
     end
 
     df = 1/T                                           
-    f = 0:df:100                  
+    f = 0:df:NQ                  
     pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
     pxx = real(pxx)
 
     return f, pxx
+end
+
+function ComplexWavelet(;name, data=data, dt=dt, lb=lb, ub=ub, a=1, n=6, m=0, num_wavelets=5)
+    """
+    This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
+    The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
+    Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.
+
+    It has the following inputs:
+        data: timeseries data to convolve with complex kernel (in seconds)
+        dt  : data sampling rate 
+        lb  : lower bound wavelet frequency (in Hz)
+        ub  : upper bound wavelet frequency (in Hz)
+        a   : amplitude of the Gaussian taper, default is 1
+        n   : number of wavelet cycles of the Gaussian taper, defines the trade-off between temporal precision and frequency precision
+              larger n gives better frequency precision at the cost of temporal precision
+              default is 6 Hz
+        m   : x-axis offset, default is 0
+        num_wavelets : number of wavelets to create, default is 5
+    
+    And outputs:
+        complex_wavelet : a family of complex morlet wavelets
+
+    """
+
+    fs = 1/dt
+    t = -length(data)/2:1/fs:length(data)/2
+    f = LinRange(lb, ub, num_wavelets) 
+
+    complex_wavelets = []
+    for i = 1:num_wavelets
+
+        # Create Gaussian Taper
+        s = n/2*π*f[i] 
+        gauss_window = a*exp.((-(t.-m).^2)/(2*(s.^2)))
+        
+        # Create Complex Sine Function
+        A = 1/((s*sqrt(π)).^0.5)
+        complex_sine = A.*exp.(im*2*π*f[i]*t)
+
+        # Create Kernel
+        wavelet_temp = complex_sine.*gauss_window
+        push!(complex_wavelets, wavelet_temp)
+    end
+
+    return complex_wavelets
+
 end
 
 function mar2csd(coeff, noise_cov, p, freqs)
