@@ -6,15 +6,17 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-using LinearAlgebra: I, diagm, Matrix
+using LinearAlgebra: I, diagm, diag, Matrix, eigen, pinv, mul!, tr, dot, logdet, svd
 using AbstractFFTs
 using FFTW
-using ToeplitzMatrices
+using ToeplitzMatrices: Toeplitz
 using DSP
+using ExponentialUtilities: expv
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
 include("measurement_models/fmri.jl")
+include("functional_connectivity_estimators/spectralDCM.jl")
 
 @parameters t
 D = Differential(t)
@@ -64,8 +66,8 @@ end
 
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
-export PowerSpectrum, ComplexWavelet
-export mar2csd, csd2mar
+export PowerSpectrum, ComplexWavelet, mar2csd, csd2mar
 export hemodynamics!, boldsignal
+export VariationalBayes
 
 end
