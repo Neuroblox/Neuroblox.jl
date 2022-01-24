@@ -43,8 +43,4 @@ niter = 128
 results = VariationalBayes(x, y_csd, w, V, param, priors, niter)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
-<<<<<<< HEAD
 @test (results["F"] < vars["F"]*0.999) & (results["F"] > vars["F"]*1.001)
-=======
-@test_broken results["F"] ≈ vars["F"]
->>>>>>> 80cde1600267963ce0b09c438914ded505a4fefd
