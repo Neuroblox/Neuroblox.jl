@@ -66,7 +66,11 @@ end
 
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
+<<<<<<< HEAD
 export PowerSpectrum, ComplexWavelet, mar2csd, csd2mar
+=======
+export mar2csd, csd2mar, PowerSpectrum
+>>>>>>> 80cde1600267963ce0b09c438914ded505a4fefd
 export hemodynamics!, boldsignal
 export VariationalBayes
 
