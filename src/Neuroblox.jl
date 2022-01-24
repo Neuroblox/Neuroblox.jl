@@ -11,7 +11,7 @@ using AbstractFFTs
 using FFTW
 using ToeplitzMatrices: Toeplitz
 using DSP
-using ExponentialUtilities: expv
+using ExponentialUtilities: expv, exponential!
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")

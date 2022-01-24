@@ -346,7 +346,7 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
         if t > exp(16)
             dθ = - inv(dFdpp)*dFdp    # -inv(dfdx)*f
         else
-            dθ = expv(t, dFdpp, inv(dFdpp)*dFdp) - inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
+            dθ = (exp(t * dFdpp) - I) * inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
         end
 
         ϵ_θ += dθ
