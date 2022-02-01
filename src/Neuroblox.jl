@@ -12,38 +12,13 @@ using FFTW
 using ToeplitzMatrices: Toeplitz
 using DSP
 using ExponentialUtilities: expv, exponential!
+using OrdinaryDiffEq, DataFrames
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
-
-@parameters t
-D = Differential(t)
-
-function NeuralMass(;name, activation="a_tan", ω=0, ζ=0, k=0, h=0, τ=0, H=0, λ=0, r=0)
-
-       sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-
-       if activation == "a_tan"
-
-              params = @parameters ω=ω ζ=ζ k=k h=h
-
-              eqs = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*atan((jcn)/h)
-                     D(y) ~ -(ω^2)*x]
-       end
-
-       if activation == "logistic"
-
-              params = @parameters τ=τ H=H λ=λ r=r
-
-              eqs = [D(x) ~ y - ((2/τ)*x),
-                     D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-
-       end
-
-       return ODESystem(eqs, t, sts, params; name=name)
-end
+include("blox/neuralmass.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
 
@@ -64,10 +39,17 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
        return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj)
 end
 
+function SimulationOutput(sys::ODESystem, u0, timespan, p, solver = Tsit5())
+       prob = ODAEProblem(structural_simplify(sys), u0, timespan, p)
+       sol = solve(prob, solver)
+       return DataFrame(sol)
+end
+
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export PowerSpectrum, ComplexWavelet, mar2csd, csd2mar
 export hemodynamics!, boldsignal
 export VariationalBayes
+export SimulationOutput
 
 end
