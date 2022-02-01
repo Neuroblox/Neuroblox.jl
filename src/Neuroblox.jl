@@ -39,7 +39,7 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
        return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj)
 end
 
-function SimulationOutput(sys::ODESystem, u0, timespan, p, solver = Tsit5())
+function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        prob = ODAEProblem(structural_simplify(sys), u0, timespan, p)
        sol = solve(prob, solver)
        return DataFrame(sol)
@@ -50,6 +50,6 @@ export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_
 export PowerSpectrum, ComplexWavelet, mar2csd, csd2mar
 export hemodynamics!, boldsignal
 export VariationalBayes
-export SimulationOutput
+export simulate
 
 end
