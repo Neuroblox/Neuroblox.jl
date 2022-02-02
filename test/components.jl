@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, Test
+using Neuroblox, OrdinaryDiffEq, DataFrames, Test
 
 # Create Regions
 @named Str = NeuralMass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
@@ -27,7 +27,5 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 @named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin)
 
 sim_dur = 10.0 # Simulate for 10 Seconds
-prob = ODAEProblem(structural_simplify(CBGTC_Circuit_lin), [], (0.0, sim_dur), [])
-sol = solve(prob, Tsit5())
-@test_broken sol[GPi.x,4] ≈ 0.9862259241442394
-@test sol[GPi.x,4] ≈ 0.9785615009584057
+sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
+@test sol[!,"GPi₊x(t)"][4] ≈ 0.9785615009584057
