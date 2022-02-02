@@ -1,4 +1,8 @@
-using Neuroblox, OrdinaryDiffEq, DataFrames, Test
+using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions
+
+"""
+neuralmass.jl test
+"""
 
 # Create Regions
 @named Str = NeuralMass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
@@ -29,3 +33,28 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 10.0 # Simulate for 10 Seconds
 sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
 @test sol[!,"GPi₊x(t)"][4] ≈ 0.9785615009584057
+
+"""
+thetaneuron.jl test
+"""
+# Network Parameters
+# N:     Population Size
+# η0, Δ: Distribution parameters for generating a constant drive into each neuron
+N  = 500
+η0 = 1.0
+Δ  = 0.05
+η = zeros(N)
+for i = 1:N
+    η[i] = rand(Cauchy(η0, Δ))
+end
+# α_inv: Time to peak of spike
+# k:     All-to-all coupling strength
+
+# Create Network
+@named theta_network = NetworkBuilder(N=500, model_type=Neuroblox.ThetaNeuron, model_params = [η=η, α_inv=1, k=-2])
+
+# Connect Network
+nonlinear_func = (2.0^n*(factorial(n)^2.0)/(factorial(2.0*n)))*(1-cos(neuron.θ))^n
+type = neuron
+adj_matrix = (1/N)*ones(N,N)
+@named ThetaCircuit = LinearConnections(nonlinearity=nonlinear_func, sys=theta_network, type=neuron, adj_matrix=adj_matrix)

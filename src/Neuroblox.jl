@@ -19,6 +19,32 @@ include("utilities/SpectralTools.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
+include("blox/thetaneuron.jl")
+
+function NetworkBuilder(;name, N=N, model_type=model_type, model_params=[])
+       #N: Population Size
+       #model_type: blox name call
+       #model_params: vector of parameters of variable size
+
+       network = []
+       for i = 1:N
+              @named neuron = spike_model(name=Symbol("neuron$i"), model_params[i])
+              push!(network, neuron)
+       end
+
+end
+
+function NonLinearConnections(;name, nonlinearity=nonlinearity, sys=sys, type=type, adj_matrix=adj_matrix)
+       
+       connections = [nonlinearity for type in sys]
+       adj = adj_matrix .* sysx
+
+       eqs = []
+       for element in 1:length(sys)
+              push!(eqs, sys[region_num].jcn ~ sum(adj[region_num]))
+       end
+
+end
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
 
@@ -45,7 +71,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        return DataFrame(sol)
 end
 
-export NeuralMass, LinearConnections, ODEfromGraph
+export NeuralMass, LinearConnections, ODEfromGraph, NetworkBuilder, NonLinearConnections
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export PowerSpectrum, ComplexWavelet, mar2csd, csd2mar
 export hemodynamics!, boldsignal
