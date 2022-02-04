@@ -19,24 +19,21 @@ include("utilities/SpectralTools.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
+include("blox/thetaneuron.jl")
 
-function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix)
-
-       sysx = [s.x for s in sys]
-       adjx = adj_matrix .* sysx
-       
+function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
+       adj = adj_matrix .* connector
        eqs = []
        for region_num in 1:length(sys)
-              push!(eqs, sys[region_num].jcn ~ sum(adjx[region_num]))
+              push!(eqs, sys[region_num].jcn ~ sum(adj[region_num]))
        end
-
        return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-function ODEfromGraph(;name, g::LinearNeuroGraph)
+function ODEfromGraph(;name, g::LinearNeuroGraph, connector=connector)
        sys = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
        adj = AdjMatrixfromLinearNeuroGraph(g)
-       return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj)
+       return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
