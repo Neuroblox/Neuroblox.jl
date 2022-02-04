@@ -36,7 +36,7 @@ adj_matrix = [0 0 0 0;
               0 -0.5*C_BG_Th 0 0;
               0 -0.5*C_BG_Th C_BG_Th 0]
 
-@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix)
+@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector=[s.x for s in sys])
 
 sim_dur = 5.0 # Simulation time (seconds)
 prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
