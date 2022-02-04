@@ -28,7 +28,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin)
+@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=[s.x for s in sys])
 
 sim_dur = 10.0 # Simulate for 10 Seconds
 sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
@@ -37,24 +37,16 @@ sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
 """
 thetaneuron.jl test
 """
-# Network Parameters
-# N:     Population Size
-# η0, Δ: Distribution parameters for generating a constant drive into each neuron
-N  = 500
-η0 = 1.0
-Δ  = 0.05
-η = zeros(N)
-for i = 1:N
-    η[i] = rand(Cauchy(η0, Δ))
-end
-# α_inv: Time to peak of spike
-# k:     All-to-all coupling strength
 
 # Create Network
-@named theta_network = NetworkBuilder(N=500, model_type=Neuroblox.ThetaNeuron, model_params = [η=η, α_inv=1, k=-2])
+@named theta_network = NetworkBuilder(N=500, blox=Neuroblox.ThetaNeuron, params=(η=rand(Cauchy(1.0, 0.05)), α_inv=1, k=-2, N=500))
 
 # Connect Network
-nonlinear_func = (2.0^n*(factorial(n)^2.0)/(factorial(2.0*n)))*(1-cos(neuron.θ))^n
-type = neuron
-adj_matrix = (1/N)*ones(N,N)
-@named ThetaCircuit = LinearConnections(nonlinearity=nonlinear_func, sys=theta_network, type=neuron, adj_matrix=adj_matrix)
+n = 3
+a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
+spike = a_n*(1-cos(neuron.θ))^n
+@named theta_connector = NetworkConnector(network=theta_network, connector_function=spike)
+
+# Create Circuit
+adj_matrix = ones(N,N)
+@named theta_circuit = LinearConnections(sys=theta_network, adj_matrix=adj_matrix, connector=theta_connector)
