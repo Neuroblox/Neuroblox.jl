@@ -22,8 +22,9 @@ a = AdjMatrixfromLinearNeuroGraph(g)
 # I am not sure how to test that the two adjacency matrices are equal
 @test isequal(a,adj_matrix)
 
-@named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix)
-@named two_regions_gr = ODEfromGraph(g=g)
+connector = [s.x for s in sys]
+@named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connector)
+@named two_regions_gr = ODEfromGraph(g=g, connector=connector)
 
 @test typeof(two_regions) == ODESystem
 @test typeof(two_regions_gr) == ODESystem
