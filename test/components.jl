@@ -36,17 +36,30 @@ sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
 
 """
 thetaneuron.jl test
+
+Test approach: generate a network of theta neurons and connect them through an all-to-all
+adjacency matrix via a spike function. Then compute the real part of the Kuramoto order parameter.
+The average of this parameter should be close to zero as synchrony varies in the network from a positive
+to a negative amplitude. 
 """
 
-# Create Network
-@named theta_network = NetworkBuilder(N=500, blox=Neuroblox.ThetaNeuron, params=(η=rand(Cauchy(1.0, 0.05)), α_inv=1, k=-2, N=500))
-
-# Connect Network
-n = 3
-a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
-spike = a_n*(1-cos(neuron.θ))^n
-@named theta_connector = NetworkConnector(network=theta_network, connector_function=spike)
+# Generate Theta Network
+network = [] 
+N = 500
+for i = 1:N
+    η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
+    @named neuron = Neuroblox.ThetaNeuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0, N=500)
+    push!(network, neuron)
+end
 
 # Create Circuit
 adj_matrix = ones(N,N)
-@named theta_circuit = LinearConnections(sys=theta_network, adj_matrix=adj_matrix, connector=theta_connector)
+n = 3
+a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
+@named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
+
+sim_dur = 50.0 # Simulate for 10 Seconds
+sol = simulate(theta_circuit, [], (0.0, sim_dur), [])
+R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
+@test mean(R) < 0.1
+@test mean(R) > -0.1
