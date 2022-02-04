@@ -37,7 +37,7 @@ freq_of_interest = 4
 @named STN = NeuralMass(activation="a_tan", ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
 sys = [STN]
 adj_matrix = [1.0]
-@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix)
+@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector = [s.x for s in sys])
 # Run Simulation
 sim_dur = 5.0                                                                           # Simulation time (seconds)
 prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
