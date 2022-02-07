@@ -26,7 +26,8 @@ function powerspectrum(;name, data=data, T=T, fs=1000, method="pwelch", window="
 
     if method == "auto" 
         df = 1/T                                           
-        f = 0:df:(fs/2)               
+        f = 0:df:(fs/2)  
+        dt = 1/fs             
         pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
         pxx = real(pxx)
     end
