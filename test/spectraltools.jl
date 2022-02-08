@@ -49,7 +49,7 @@ The power spectrum of the solution should have a center frequency around that se
 To Do: Employ a peak detection algorithm, useful for this test and signal processing. Number of peaks should match center frequency.
 
 """
-@named power = Neuroblox.PowerSpectrum(data=sol[1,:], T=sim_dur, uniform=true, dt=0.001)
+@named power = Neuroblox.powerspectrum(data=sol[1,:], T=sim_dur, fs=1000, method="auto")
 
 # 1) Make sure you can plot the data
 Plots.plot(sol.t, sol[1,:])
@@ -66,12 +66,12 @@ tol = 0.5
 @test index_of_maximum*df<4+tol
 
 """
-Design Test Case (ComplexWavelet).
+Design Test Case (complexwavelet).
 # Wavelets must have values near zero at both ends, as well as a mean value of zero
 
 """
 data = matread("lfp_test_data.mat")
-@named wavelets = Neuroblox.ComplexWavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
+@named wavelets = Neuroblox.complexwavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
 
 tol = 0.2
 @test real(wavelets[1][1]) < tol
@@ -80,4 +80,3 @@ all_wavelets = Statistics.mean(real(wavelets))
 average_over_all = sum(all_wavelets)/length(all_wavelets)
 tol = 0.001
 @test sum(average_over_all) < 0 + tol
-

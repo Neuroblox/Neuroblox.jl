@@ -2,69 +2,72 @@
 SpectralTools.jl
 
 This utility file contains the methods utilized for spectral data analysis.
-    PowerSpectrum  : compute power spectrum from time series
-    ComplexWavelet : generate a complex morlet wavelet
+    powerspectrum  : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
+    complexwavelet : generate a complex morlet wavelet
     mar2csd        : compute cross-spectral densities from multivariate auto-regressive model parameters
     csd2mar        : compute multivariate auto-regressive model parameters from cross-spectral densities
 """
 
-function PowerSpectrum(;name, data=data, T=T, uniform=true, dt=dt, NQ=500)
-    
-    """
-    PowerSpectrum computes the power spectrum of a given time series signal. 
-    It has the following inputs:
-        'data'   : time series data which assumes time is in the first column of the data matrix
-        'T'      : time series signal duration (in seconds)
-        'uniform': argument to account for uniform (uniform=true) or nonuniform(uniform=false) sampling
-        'fs'     : sampling frequency
-        'NQ'     : nyquist frequency (set to a default value for nonuniform sampling)
-    The following outputs:
-        'f'      : frequency vector with sampling df (frequency resolution) 
-        'pxx'    : real part of the power spectrum estimate
-    With parameters:
-        'df'     : frequency resolution
-    
-    The time series signal is resampled according to the frequency resolution to account for non-uniform sampling.
-    
-    """
-        
-    if uniform == true
-        fs = 1/dt 
-        NQ = fs/2            
-    else
-        fs = 1/(NQ*2)                                  
+"""
+powerspectrum computes the power spectrum of a given time series signal. 
+It has the following inputs:
+    'data'   : time series data which assumes time is in the first column of the data matrix
+    'T'      : time series signal duration (in seconds)
+    'fs'     : sampling frequency (default=1000)
+    'method' : select from auto, periodogram, pwelch (default=pwelch)
+    'window' : select from none, hanning, or hamming (default=hanning)
+The following outputs:
+    'f'      : frequency vector with sampling df (frequency resolution) 
+    'pxx'    : real part of the power spectrum estimate
+With parameters:
+    'df'     : frequency resolution
+"""
+function powerspectrum(;name, data=data, T=T, fs=1000, method="pwelch", window="hanning")
+
+    if method == "auto" 
+        df = 1/T                                           
+        f = 0:df:(fs/2)  
+        dt = 1/fs             
+        pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
+        pxx = real(pxx)
     end
 
-    df = 1/T                                           
-    f = 0:df:NQ                  
-    pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
-    pxx = real(pxx)
+    if method == "periodogram"
+        periodogram_estimation = periodogram(data, fs=fs, window=window)
+        pxx = periodogram_estimation.power
+        f = periodogram_estimation.freq
+    end
+
+    if method == "pwelch"
+        pwelch_periodogram_estimation = welch_pgram(data, fs=fs, window=window)
+        pxx = pwelch_periodogram_estimation.power
+        f = pwelch_periodogram_estimation.freq
+    end
 
     return f, pxx
 end
 
-function ComplexWavelet(;name, data=data, dt=dt, lb=lb, ub=ub, a=1, n=6, m=0, num_wavelets=5)
-    """
-    This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
-    The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
-    Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.
+"""
+This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
+The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
+Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.
 
-    It has the following inputs:
-        data: timeseries data to convolve with complex kernel (in seconds)
-        dt  : data sampling rate 
-        lb  : lower bound wavelet frequency (in Hz)
-        ub  : upper bound wavelet frequency (in Hz)
-        a   : amplitude of the Gaussian taper, default is 1
-        n   : number of wavelet cycles of the Gaussian taper, defines the trade-off between temporal precision and frequency precision
-              larger n gives better frequency precision at the cost of temporal precision
-              default is 6 Hz
-        m   : x-axis offset, default is 0
-        num_wavelets : number of wavelets to create, default is 5
-    
-    And outputs:
-        complex_wavelet : a family of complex morlet wavelets
+It has the following inputs:
+    data: time series data 
+    dt  : data sampling rate 
+    lb  : lower bound wavelet frequency (in Hz)
+    ub  : upper bound wavelet frequency (in Hz)
+    a   : amplitude of the Gaussian taper, default is 1
+    n   : number of wavelet cycles of the Gaussian taper, defines the trade-off between temporal precision and frequency precision
+          larger n gives better frequency precision at the cost of temporal precision
+          default is 6 Hz
+    m   : x-axis offset, default is 0
+    num_wavelets : number of wavelets to create, default is 5
 
-    """
+And outputs:
+    complex_wavelet : a family of complex morlet wavelets
+"""
+function complexwavelet(;name, data=data, dt=dt, lb=lb, ub=ub, a=1, n=6, m=0, num_wavelets=5)
 
     fs = 1/dt
     t = -length(data)/2:1/fs:length(data)/2
