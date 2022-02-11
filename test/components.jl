@@ -48,12 +48,12 @@ network = []
 N = 500
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-    @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0, N=500)
+    @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
     push!(network, neuron)
 end
 
 # Create Circuit
-adj_matrix = ones(N,N)
+adj_matrix = (1/N)*ones(N,N)
 n = 3
 a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
