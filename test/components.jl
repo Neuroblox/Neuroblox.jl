@@ -61,5 +61,7 @@ a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
 sim_dur = 50.0 # Simulate for 10 Seconds
 sol = simulate(theta_circuit, [], (0.0, sim_dur), [])
 R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
+
+# take absolute value not real part (take the norm)
 @test mean(R) < 0.1
 @test mean(R) > -0.1
