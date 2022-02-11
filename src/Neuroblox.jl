@@ -6,12 +6,12 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-using LinearAlgebra: I, diagm, diag, Matrix, eigen, pinv, mul!, tr, dot, logdet, svd
+import LinearAlgebra as la
 using AbstractFFTs
 using FFTW
-using ToeplitzMatrices: Toeplitz
+import ToeplitzMatrices as tm
 using DSP
-using ExponentialUtilities: expv, exponential!
+import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 
 include("Neurographs.jl")
@@ -44,9 +44,9 @@ end
 
 export NeuralMass, LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
-export powerspectrum, complexwavelet, mar2csd, csd2mar
+export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml
 export hemodynamics!, boldsignal
-export VariationalBayes
+export variationalbayes
 export simulate
 
 end

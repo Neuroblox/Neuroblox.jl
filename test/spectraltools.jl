@@ -1,7 +1,7 @@
 using Neuroblox, Test
 
+import LinearAlgebra as la
 using Distributions
-using LinearAlgebra: I, Matrix
 using OrdinaryDiffEq, Plots
 using Statistics
 using MAT
@@ -12,11 +12,12 @@ nd = 2  # number of dimensions
 p = 2  # number of time lags of MAR model
 f = 2.0.^(range(0,stop=5)) # frequencies at which to evaluate CSD
 dt = 1/(2*f[end]) # time step, inverse of sampling frequency
-dist = InverseWishart(nd*2, Matrix(1.0I, nd, nd))
+dist = InverseWishart(nd*2, la.Matrix(1.0la.I, nd, nd))
 Σ = rand(dist)   # noise covariance matrix of MAR model
 a = [randn(nd, nd) for i = 1:p]   # MAR model parameters
+mar = Dict([("A", a), ("Σ", Σ), ("p", p)])
 
-csd = mar2csd(a, Σ, p, f)
+csd = mar2csd(mar, f)
 a_est, Σ_est = csd2mar(csd, f, dt, p)
 
 @test_broken a ≈ a_est

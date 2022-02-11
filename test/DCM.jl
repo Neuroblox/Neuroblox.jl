@@ -40,7 +40,7 @@ niter = 128
 
 
 ### ESTIMATE DYNAMIC CAUSAL MODEL ###
-results = VariationalBayes(x, y_csd, w, V, param, priors, niter)
+results = variationalbayes(x, y_csd, w, V, param, priors, niter)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @test (results["F"] < vars["F"]*0.999) & (results["F"] > vars["F"]*1.001)

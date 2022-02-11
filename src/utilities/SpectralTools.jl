@@ -6,6 +6,7 @@ This utility file contains the methods utilized for spectral data analysis.
     complexwavelet : generate a complex morlet wavelet
     mar2csd        : compute cross-spectral densities from multivariate auto-regressive model parameters
     csd2mar        : compute multivariate auto-regressive model parameters from cross-spectral densities
+    mar_ml         : maximum likelihood estimate of multivariate auto-regressive model parameters
 """
 
 """
@@ -93,51 +94,73 @@ function complexwavelet(;name, data=data, dt=dt, lb=lb, ub=ub, a=1, n=6, m=0, nu
 
 end
 
-function mar2csd(coeff, noise_cov, p, freqs)
-    """
-    This function converts multivariate auto-regression (MAR) model parameters to a cross-spectral density (CSD).
-    coeff     : coefficients of MAR model, array of length p, each element contains the regression coefficients for that particular time-lag.
-    noise_cov : noise covariance matrix of MAR
-    p         : number of time lags
-    freqs     : frequencies at which to evaluate the CSD
 
-    This function returns:
-    csd       : cross-spectral density matrix of size MxN; M: number of samples, N: number of cross-spectral dimensions (number of variables squared)
-    """
+"""
+This function converts multivariate auto-regression (MAR) model parameters to a cross-spectral density (CSD).
+A     : coefficients of MAR model, array of length p, each element contains the regression coefficients for that particular time-lag.
+Σ     : noise covariance matrix of MAR
+p     : number of time lags
+freqs : frequencies at which to evaluate the CSD
+sf    : sampling frequency
 
-    dim = size(noise_cov, 1)
-    sf = 2*freqs[end]
-    w  = 2*pi*freqs/sf    # isn't it already transformed?? Is the original really in Hz?
+This function returns:
+csd   : cross-spectral density matrix of size MxN; M: number of samples, N: number of cross-spectral dimensions (number of variables squared)
+"""
+function mar2csd(mar, freqs, sf)
+    Σ = mar["Σ"]
+    p = mar["p"]
+    A = mar["A"]
+    nd = size(Σ, 1)
+    w  = 2*pi*freqs/sf
     nf = length(w)
-	csd = zeros(ComplexF64, nf, dim, dim)
+	csd = zeros(ComplexF64, nf, nd, nd)
 	for i = 1:nf
-		af_tmp = I
+		af_tmp = la.I
 		for k = 1:p
-			af_tmp = af_tmp + coeff[k] * exp(-im * k * w[i])
+			af_tmp = af_tmp + A[k] * exp(-im * k * w[i])
 		end
 		iaf_tmp = inv(af_tmp)
-		csd[i,:,:] = iaf_tmp * noise_cov * iaf_tmp'     # is this really the covariance or rather precision?!
+		csd[i,:,:] = iaf_tmp * Σ * iaf_tmp'
 	end
     csd = 2*csd/sf
+    return csd
+end
 
+function mar2csd(mar, freqs)
+    sf = 2*freqs[end]   # freqs[end] is not the sampling frequency of the signal... not sure about this step.
+    Σ = mar["Σ"]
+    p = mar["p"]
+    A = mar["A"]
+    nd = size(Σ, 1)
+    w  = 2pi*freqs/sf
+    nf = length(w)
+	csd = zeros(ComplexF64, nf, nd, nd)
+	for i = 1:nf
+		af_tmp = la.I
+		for k = 1:p
+			af_tmp = af_tmp + A[k] * exp(-im * k * w[i])
+		end
+		iaf_tmp = inv(af_tmp)
+		csd[i,:,:] = iaf_tmp * Σ * iaf_tmp'
+	end
+    csd = 2*csd/sf
     return csd
 end
 
 
+"""
+This function converts a cross-spectral density (CSD) into a multivariate auto-regression (MAR) model. It first transforms the CSD into its
+cross-correlation function (Wiener-Kinchine theorem) and then computes the MAR model coefficients.
+csd       : cross-spectral density matrix of size MxN; M: number of samples, N: number of cross-spectral dimensions (number of variables squared)
+w         : frequencies
+dt        : time step size
+p         : number of time steps of auto-regressive model
+
+This function returns
+coeff     : array of length p of coefficient matrices of size sqrt(N)xsqrt(N)
+noise_cov : noise covariance matrix
+"""
 function csd2mar(csd, w, dt, p)
-    """
-    This function converts a cross-spectral density (CSD) into a multivariate auto-regression (MAR) model. It first transforms the CSD into its
-    cross-correlation function (Wiener-Kinchine theorem) and then computes the MAR model coefficients.
-    csd       : cross-spectral density matrix of size MxN; M: number of samples, N: number of cross-spectral dimensions (number of variables squared)
-    w         : frequencies
-    dt        : time step size
-    p         : number of time steps of auto-regressive model
-
-    This function returns
-    coeff     : array of length p of coefficient matrices of size sqrt(N)xsqrt(N)
-    noise_cov : noise covariance matrix
-    """
-
     # TODO: investiagate why SymmetricToeplitz(ccf[1:p, i, j]) is not good to be used but instead need to use Toeplitz(ccf[1:p, i, j], ccf[1:p, j, i])
     # as is done in the original MATLAB code (confront comment there). ccf should be a symmetric matrix so there should be no difference between the
     # Toeplitz matrices but for the second jacobian (J[2], see for loop for i = 1:nJ in function diff) the computation produces subtle differences between
@@ -173,13 +196,40 @@ function csd2mar(csd, w, dt, p)
     for i = 1:m
         for j = 1:m
             A[((i-1)*p+1):i*p, j] = ccf[(1:p) .+ 1, i, j]
-            B[((i-1)*p+1):i*p, ((j-1)*p+1):j*p] = Toeplitz(ccf[1:p, i, j], vcat(ccf[1,i,j], ccf[2:p, j, i]))  # SymmetricToeplitz(ccf[1:p, i, j])
+            B[((i-1)*p+1):i*p, ((j-1)*p+1):j*p] = tm.Toeplitz(ccf[1:p, i, j], vcat(ccf[1,i,j], ccf[2:p, j, i]))  # SymmetricToeplitz(ccf[1:p, i, j])
         end
     end
     a = B\A
 
-    noise_cov  = ccf[1,:,:] - A'*a
-    coeff = [-a[i:p:m*p, :] for i = 1:p]
+    Σ  = ccf[1,:,:] - A'*a   # noise covariance matrix
+    lags = [-a[i:p:m*p, :] for i = 1:p]
+    mar = Dict([("A", lags), ("Σ", Σ), ("p", p)])
+    return mar
+end
 
-    return (coeff, noise_cov)
+
+"""
+Maximum likelihood estimator of a multivariate, or vector auto-regressive model.
+    y : MxN Data matrix where M is number of samples and N is number of dimensions
+    p : time lag parameter, also called order of MAR model
+    return values
+    mar["A"] : model parameters is a NxNxP tensor, i.e. one NxN parameter matrix for each time bin k ∈ {1,...,p}
+    mar["Σ"] : noise covariance matrix
+"""
+function mar_ml(y, p)
+    (ns, nd) = size(y)
+    ns < nd && error("error: there are more covariates than observation")
+    y = transpose(y)
+    Y = y[:, p+1:ns]
+    X = zeros(nd*p, ns-p)
+    for i = p:-1:1
+        X[(p-i)*nd+1:(p-i+1)*nd, :] = y[:, i:ns+i-p-1]
+    end
+
+    A = (Y*X')/(X*X')
+    ϵ = Y - A*X
+    Σ = ϵ*ϵ'/ns   # unbiased estimator requires the following denominator (ns-p-p*nd-1), the current is consistent with SPM12
+    A = -[A[:, (i-1)*nd+1:i*nd] for i = 1:p]    # flip sign to be consistent with SPM12 convention
+    mar = Dict([("A", A), ("Σ", Σ), ("p", p)])
+    return mar
 end
