@@ -4,7 +4,7 @@ using MAT
 
 ### DEFINE SEVERAL VARIABLES AND PRIORS TO GET STARTED ###
 
-vars = matread("spectralDCM_demodata.mat");
+vars = matread("test/spectralDCM_demodata.mat");
 y_csd = vars["csd"];
 w = vec(vars["M_nosparse"]["Hz"]);
 A = vars["M_nosparse"]["pE"]["A"];    # see table 1 in friston2014 for values of priors 
@@ -40,7 +40,7 @@ niter = 128
 
 
 ### ESTIMATE DYNAMIC CAUSAL MODEL ###
-results = VariationalBayes(x, y_csd, w, V, param, priors, niter)
+results = variationalbayes(x, y_csd, w, V, param, priors, niter)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @test (results["F"] < vars["F"]*0.999) & (results["F"] > vars["F"]*1.001)

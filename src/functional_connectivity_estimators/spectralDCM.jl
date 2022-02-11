@@ -2,7 +2,17 @@
 spectralDCM.jl
 
 Main functions to compute a spectral DCM.
+
+transferfunction : computes transfer function of neuronal model as well as measurement model
+csd_approx       : approximates CSD based on transfer functions
+csd_fmri_mtf     :
+diff             : computes Jacobian of model
+csd_Q            : computes precision component prior (which erroneously is not used in the SPM12 code for fMRI signals, it is used for other modalities)
+matlab_norm      : computes norm consistent with MATLAB's norm function (Julia's is different, at lest for matrices. Haven't tested vectors)
+spm_logdet       : mimick SPM12's way to compute the logarithm of the determinant. Sometimes Julia's logdet won't work.
+variationalbayes : main routine that computes the variational Bayes estimate of model parameters
 """
+
 
 function transferfunction(x, w, θμ, C, lnϵ, lndecay, lntransit)
     # compute transfer function of Volterra kernels, see fig 1 in friston2014
@@ -12,16 +22,16 @@ function transferfunction(x, w, θμ, C, lnϵ, lndecay, lntransit)
     # 2. get jacobian of hemodynamics
     dx = similar(x[:, 2:end])
     J = hemodynamics!(dx, x[:, 2:end], x[:, 1], lndecay, lntransit)[2]
-    θμ -= diagm(exp.(diag(θμ))/2 + diag(θμ))
+    θμ -= la.diagm(exp.(la.diag(θμ))/2 + la.diag(θμ))
     # if I eventually need also the change of variables rather than just the derivative then here is where to fix it!
     nd = size(θμ, 1)
     J_tot = [θμ zeros(nd, size(J, 2));   # add derivatives w.r.t. neural signal
-             [Matrix(1.0I, size(θμ)); zeros(size(J)[1]-nd, size(θμ)[2])] J]
+             [la.Matrix(1.0la.I, size(θμ)); zeros(size(J)[1]-nd, size(θμ)[2])] J]
 
     dfdu = [C; 
             zeros(size(J,1), size(C, 2))]
 
-    F = eigen(J_tot, sortby=nothing, permute=true)
+    F = la.eigen(J_tot, sortby=nothing, permute=true)
     Λ = F.values
     V = F.vectors
 
@@ -39,7 +49,7 @@ function transferfunction(x, w, θμ, C, lnϵ, lndecay, lntransit)
     # V = var["v"]
     # Λ = var["s"]
     dgdv  = dgdx*V[end-size(dgdx,2)+1:end, :]     # TODO: not a clean solution, also not in the original code since it seems that the code really depends on the ordering of eigenvalues and respectively eigenvectors!
-    dvdu  = pinv(V)*dfdu
+    dvdu  = la.pinv(V)*dfdu
 
     nw = size(w,1)            # number of frequencies
     ng = size(dgdx,1)         # number of outputs
@@ -89,7 +99,7 @@ function csd_approx(x, w, θμ, C, α, β, γ, lnϵ, lndecay, lntransit)
             Gn[:,j,i] = Gn[:,i,j]
         end
     end
-    C = Matrix(I, nd, nd)
+    C = la.Matrix(la.I, nd, nd)
     S = transferfunction(x, w, θμ, C, lnϵ, lndecay, lntransit)
 
     # predicted cross-spectral density
@@ -101,7 +111,7 @@ function csd_approx(x, w, θμ, C, α, β, γ, lnϵ, lndecay, lntransit)
     return G + Gn
 end
 
-function csd_fmri_mtf(x, w, p, param)
+function csd_fmri_mtf(x, freqs, p, param)
     dim = size(x, 1)
     θμ = reshape(param[1:dim^2], dim, dim)
     C = param[(1+dim^2):(3+dim^2)]
@@ -111,10 +121,10 @@ function csd_fmri_mtf(x, w, p, param)
     α = param[[9+dim^2, 11+dim^2]]
     β = param[[10+dim^2, 12+dim^2]]
     γ = param[(13+dim^2):(15+dim^2)]
-    G = csd_approx(x, w, θμ, C, α, β, γ, lnϵ, lndecay, lntransit)
-    dt  = 1/(2*w[end])
-    lags, noise_cov = csd2mar(G, w, dt, p-1)
-    y = mar2csd(lags, noise_cov, p-1, w)
+    G = csd_approx(x, freqs, θμ, C, α, β, γ, lnϵ, lndecay, lntransit)
+    dt  = 1/(2*freqs[end])
+    mar = csd2mar(G, freqs, dt, p-1)
+    y = mar2csd(mar, freqs)
     return y
 end
 
@@ -153,21 +163,21 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q .+ matlab_norm(Q, 1)/32*Matrix(I, size(Q)))   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q .+ matlab_norm(Q, 1)/32*la.Matrix(la.I, size(Q)))   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
     return Q
 end
 
 function spm_logdet(M)
     TOL = 1e-16
-    s = diag(M)
+    s = la.diag(M)
     if sum(abs.(s)) != sum(abs.(M[:]))
-        ~, s, ~ = svd(M)
+        ~, s, ~ = la.svd(M)
     end
     return sum(log.(s[(s .> TOL) .& (s .< TOL^-1)]))
 end
 
 
-function VariationalBayes(x, y, w, V, param, priors, niter)
+function variationalbayes(x, y, w, V, param, priors, niter)
     # extract priors
     Πθ_p = priors[1]
     Πλ_p = priors[2]
@@ -186,7 +196,7 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
 
     Q = zeros(ny,ny,nr)
     for i = 1:nr
-        Q[((i-1)*ns+1):(i*ns), ((i-1)*ns+1):(i*ns), i] = Matrix(1.0I, ns, ns)
+        Q[((i-1)*ns+1):(i*ns), ((i-1)*ns+1):(i*ns), i] = la.Matrix(1.0la.I, ns, ns)
     end
     nh = size(Q,3)             # number of precision components (this is the same as above, but may differ)
     λ = 8 * ones(nh)
@@ -224,7 +234,7 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
                 if t > exp(16)
                     ϵ_θ = state["ϵ_θ"] - inv(dFdpp)*dFdp    # -inv(dfdx)*f
                 else
-                    ϵ_θ = state["ϵ_θ"] + expv(t, dFdpp, inv(dFdpp)*dFdp) -inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
+                    ϵ_θ = state["ϵ_θ"] + eu.expv(t, dFdpp, inv(dFdpp)*dFdp) -inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
                 end
 
                 μθ = θμ + V*ϵ_θ
@@ -257,7 +267,7 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
 
             Σ = inv(iΣ)             # Julia requires conversion to dense matrix before inversion so just use dense from the get-go
             Pp = zeros(ComplexF64, size(Πθ_p))
-            mul!(Pp, J', iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why?
+            la.mul!(Pp, J', iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why?
             Pp = real(Pp)
             Σθ = inv(Pp + Πθ_p)
 
@@ -273,9 +283,9 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
             dFdh = zeros(nh)
             dFdhh = zeros(nh, nh)
             for i = 1:nh
-                dFdh[i] = (tr(PΣ[:,:,i])*nq - real(dot(ϵ,P[:,:,i],ϵ)) - tr(Σθ * JPJ[:,:,i]))/2
+                dFdh[i] = (la.tr(PΣ[:,:,i])*nq - real(la.dot(ϵ,P[:,:,i],ϵ)) - la.tr(Σθ * JPJ[:,:,i]))/2
                 for j = i:nh
-                    dFdhh[i, j] = - tr(PΣ[:,:,i] * PΣ[:,:,j])*nq/2
+                    dFdhh[i, j] = - la.tr(PΣ[:,:,i] * PΣ[:,:,j])*nq/2
                     dFdhh[j, i] = dFdhh[i, j]
                 end
             end
@@ -290,18 +300,13 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
             if t > exp(16)
                 dλ = -inv(dFdhh) * dFdh
             else
-                dλ = expv(t, dFdhh, inv(dFdhh)*dFdh) -inv(dFdhh)*dFdh   # (expm(dfdx*t) - I)*inv(dfdx)*f
+                dλ = eu.expv(t, dFdhh, inv(dFdhh)*dFdh) -inv(dFdhh)*dFdh   # (expm(dfdx*t) - I)*inv(dfdx)*f
             end
 
             dλ = [min(max(x, -1.0), 1.0) for x in dλ]      # probably precaution for numerical instabilities?
             λ = λ + dλ
-            # print("hyperparam: ", λ ≈ matread(string("dfdp_iter", k, m, ".mat"))["h"], "\n")
-            # print(λ, vec(matread(string("dfdp_iter", k, m, ".mat"))["h"]), "\n")
-            # print("delta param: ", dλ ≈ matread(string("dfdp_iter", k, m, ".mat"))["dh"], "\n")
-            # print(dλ, vec(matread(string("dfdp_iter", k, m, ".mat"))["dh"]), "\n")
-            # print("error:", ϵ_λ ≈ matread(string("dfdp_iter", k, m, ".mat"))["d"], "\n")
 
-            dF = dot(dFdh,dλ)
+            dF = la.dot(dFdh,dλ)
             # NB: it is unclear as to whether this is being reached. In this first tests iterations seem to be 
             # trapped in a periodic orbit jumping around between 1250 and 940. At that point the results become
             # somewhat arbitrary. The iterations stop at 8, whatever the last value of iΣ etc. is will be carried on.
@@ -312,9 +317,9 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
 
         ## E-Step with Levenberg-Marquardt regularization    // comment from MATLAB code
         L = zeros(3)
-        L[1] = (logdet(iΣ)*nq  - real(ϵ'*iΣ*ϵ) - ny*log(2pi))/2   # TODO: figure out why dot gives a different result here (dot(e',iΣ,e))
-        L[2] = (logdet(Πθ_p * Σθ) - dot(ϵ_θ, Πθ_p, ϵ_θ))/2
-        L[3] = (logdet(Πλ_p * Σλ) - dot(ϵ_λ, Πλ_p, ϵ_λ))/2;
+        L[1] = (la.logdet(iΣ)*nq  - real(ϵ'*iΣ*ϵ) - ny*log(2pi))/2   # TODO: figure out why dot gives a different result here (dot(e',iΣ,e))
+        L[2] = (la.logdet(Πθ_p * Σθ) - la.dot(ϵ_θ, Πθ_p, ϵ_θ))/2
+        L[3] = (la.logdet(Πλ_p * Σλ) - la.dot(ϵ_λ, Πλ_p, ϵ_λ))/2;
         F = sum(L);
 
         if k == 1
@@ -346,12 +351,12 @@ function VariationalBayes(x, y, w, V, param, priors, niter)
         if t > exp(16)
             dθ = - inv(dFdpp)*dFdp    # -inv(dfdx)*f
         else
-            dθ = (exp(t * dFdpp) - I) * inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
+            dθ = (exp(t * dFdpp) - la.I) * inv(dFdpp)*dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
         end
 
         ϵ_θ += dθ
         μθ = θμ + V*ϵ_θ
-        dF  = dot(dFdp, ϵ_θ);
+        dF  = la.dot(dFdp, ϵ_θ);
 
         # convergence condition: reach a change in Free Energy that is smaller than 0.1 four consecutive times
         print("iteration: ", k, " - F:", state["F"] - F0, " - dF predicted:", dF, "\n")
