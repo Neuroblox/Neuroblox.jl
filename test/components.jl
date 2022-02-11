@@ -5,14 +5,14 @@ neuralmass.jl test
 """
 
 # Create Regions
-@named Str = NeuralMass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = NeuralMass(activation="logistic", τ=0.04, H=20, λ=400, r=0.1)
-@named STN = NeuralMass(activation="logistic", τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = NeuralMass(activation="logistic", τ=0.014, H=20, λ=400, r=0.1)
-@named Th  = NeuralMass(activation="logistic", τ=0.002, H=10, λ=20, r=5)
-@named EI  = NeuralMass(activation="logistic", τ=0.01, H=20, λ=5, r=5)
-@named PY  = NeuralMass(activation="logistic", τ=0.001, H=20, λ=5, r=0.15)
-@named II  = NeuralMass(activation="logistic", τ=2.0, H=60, λ=5, r=5)
+@named Str = neuralmass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = neuralmass(activation="logistic", τ=0.04, H=20, λ=400, r=0.1)
+@named STN = neuralmass(activation="logistic", τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = neuralmass(activation="logistic", τ=0.014, H=20, λ=400, r=0.1)
+@named Th  = neuralmass(activation="logistic", τ=0.002, H=10, λ=20, r=5)
+@named EI  = neuralmass(activation="logistic", τ=0.01, H=20, λ=5, r=5)
+@named PY  = neuralmass(activation="logistic", τ=0.001, H=20, λ=5, r=0.15)
+@named II  = neuralmass(activation="logistic", τ=2.0, H=60, λ=5, r=5)
 
 # Connect Regions through Adjacency Matrix
 sys = [Str, GPe, STN, GPi, Th, EI, PY, II]
@@ -48,7 +48,7 @@ network = []
 N = 500
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-    @named neuron = Neuroblox.ThetaNeuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
+    @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
     push!(network, neuron)
 end
 
