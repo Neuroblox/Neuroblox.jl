@@ -48,12 +48,12 @@ network = []
 N = 500
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-    @named neuron = Neuroblox.ThetaNeuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0, N=500)
+    @named neuron = Neuroblox.ThetaNeuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
     push!(network, neuron)
 end
 
 # Create Circuit
-adj_matrix = ones(N,N)
+adj_matrix = (1/N)*ones(N,N)
 n = 3
 a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
@@ -61,5 +61,7 @@ a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
 sim_dur = 50.0 # Simulate for 10 Seconds
 sol = simulate(theta_circuit, [], (0.0, sim_dur), [])
 R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
+
+# take absolute value not real part (take the norm)
 @test mean(R) < 0.1
 @test mean(R) > -0.1
