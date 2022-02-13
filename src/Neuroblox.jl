@@ -45,9 +45,9 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
 end
 
 function simulate_neurons(sys::ODESystem, u0, timespan, p, solver = Rodas5()) #ODESystem is sent after structural_simplify
-       prob = ODAEProblem(sys, u0, timespan, p)
+       prob = ODEProblem(sys, u0, timespan, p)
        solver=solver
-       sol = solve(prob,solver,saveat=0.01,reltol=1e-3,abstol=1e-3)
+       sol = solve(prob,solver,saveat=0.01,reltol=1e-4,abstol=1e-4)
        return DataFrame(sol)
 end
 
