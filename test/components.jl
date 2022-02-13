@@ -100,14 +100,14 @@ syn = adj.*k/N_nrn
 
 @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn)
 
-@test typeof(syn_net) = ODESystem
-@test length(states(syn_net)) = 3*N_nrn
+@test typeof(syn_net) == ODESystem
+@test length(states(syn_net)) == 3*N_nrn
 
 #simulate for 100 s
 sim_dur =  100.0
 sol = simulate(syn_net, [], (0.0, sim_dur), [], solver=Rodas5())
 
-@test sol[end,1] = sim_dur
+@test sol[end,1] == sim_dur
 
 
 
