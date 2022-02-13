@@ -40,6 +40,7 @@ end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        prob = ODAEProblem(structural_simplify(sys), u0, timespan, p)
+       solver=solver
        sol = solve(prob, solver)
        return DataFrame(sol)
 end
