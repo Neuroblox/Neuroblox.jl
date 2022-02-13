@@ -44,7 +44,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        return DataFrame(sol)
 end
 
-export neuralmass, thetaneuron
+export neuralmass, thetaneuron, qif_neuron, synaptic_network
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml

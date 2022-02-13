@@ -3,8 +3,8 @@ function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix)
 	        
     for ii = 1:length(sys)
        	
-        presyn = findall(x-> x>0, adj_mat[ii,:])
-        wts = adj_mat[ii,presyn]		
+        presyn = findall(x-> x>0, adj_matrix[ii,:])
+        wts = adj_matrix[ii,presyn]		
 		presyn_nrn = sys[presyn]
         postsyn_nrn = sys[ii]
 		    
@@ -23,7 +23,10 @@ function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix)
     popfirst!(syn_eqs)
 	
     @named synaptic_eqs = ODESystem(syn_eqs,t)
-    @named synaptic_network = compose(synaptic_eqs, sys)
+    
+    sys_ode = [sys[ii] for ii = 1:length(sys)]
+
+    @named synaptic_network = compose(synaptic_eqs, sys_ode)
     return structural_simplify(synaptic_network)   
 
 end
