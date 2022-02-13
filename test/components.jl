@@ -105,7 +105,7 @@ syn = adj.*k/N_nrn
 
 #simulate for 100 s
 sim_dur =  100.0
-sol = simulate(syn_net, [], (0.0, sim_dur), [], solver=Rodas5())
+sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Rodas5())
 
 @test sol[end,1] == sim_dur
 

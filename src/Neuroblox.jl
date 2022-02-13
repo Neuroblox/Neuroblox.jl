@@ -40,6 +40,12 @@ end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        prob = ODAEProblem(structural_simplify(sys), u0, timespan, p)
+       sol = solve(prob, solver)
+       return DataFrame(sol)
+end
+
+function simulate_neurons(sys::ODESystem, u0, timespan, p, solver = Tsit5()) #ODESystem is sent after structural_simplify
+       prob = ODAEProblem(sys, u0, timespan, p)
        solver=solver
        sol = solve(prob, solver)
        return DataFrame(sol)
@@ -51,6 +57,6 @@ export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_
 export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml
 export hemodynamics!, boldsignal
 export variationalbayes
-export simulate
+export simulate, simulate_neurons
 
 end
