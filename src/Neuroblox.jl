@@ -20,8 +20,8 @@ include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
 include("blox/thetaneuron.jl")
-include("blox/QIF_neuron.jl")
-include("blox/SynapticNetwork.jl")
+include("blox/qif_neuron.jl")
+include("blox/synaptic_network.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
        adj = adj_matrix .* connector

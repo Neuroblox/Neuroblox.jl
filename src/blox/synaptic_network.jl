@@ -1,4 +1,4 @@
-function SynapticNetwork(;name, sys=sys, adj_matrix=adj_matrix)
+function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix)
     syn_eqs= [ 0~sys[1].V - sys[1].V]
 	        
     for ii = 1:length(sys)
