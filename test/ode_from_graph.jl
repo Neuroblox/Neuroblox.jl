@@ -24,7 +24,7 @@ a = AdjMatrixfromLinearNeuroGraph(g)
 
 connector = [s.x for s in sys]
 @named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connector)
-@named two_regions_gr = ODEfromGraph(g=g, connector=connector)
+@named two_regions_gr = ODEfromGraph(g=g)
 
 @test typeof(two_regions) == ODESystem
 @test typeof(two_regions_gr) == ODESystem
