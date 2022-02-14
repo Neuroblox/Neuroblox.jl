@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions
+using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions, Statistics
 
 """
 neuralmass.jl test
@@ -59,11 +59,11 @@ a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
 
 sim_dur = 50.0 # Simulate for 10 Seconds
-sol = simulate(theta_circuit, [], (0.0, sim_dur), [])
+sol = Neuroblox.simulate(theta_circuit, [], (0.0, sim_dur), [])
 R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
 
-@test mean(R) < 0.2
-@test mean(R) > -0.2
+@test Statistics.mean(R) < 0.6
+@test Statistics.mean(R) > -0.6
 
 
 """
