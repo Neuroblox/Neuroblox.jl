@@ -20,6 +20,8 @@ include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
 include("blox/thetaneuron.jl")
+include("blox/QIF_neuron.jl")
+include("blox/synaptic_network.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
        adj = adj_matrix .* connector
@@ -42,12 +44,19 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
        return DataFrame(sol)
 end
 
-export neuralmass, thetaneuron
+function simulate_neurons(sys::ODESystem, u0, timespan, p, solver = Rodas5()) #ODESystem is sent after structural_simplify
+       prob = ODEProblem(sys, u0, timespan, p)
+       solver=solver
+       sol = solve(prob,solver,saveat=0.01,reltol=1e-4,abstol=1e-4)
+       return DataFrame(sol)
+end
+
+export neuralmass, thetaneuron, qif_neuron, synaptic_network
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml
 export hemodynamics!, boldsignal
 export variationalbayes
-export simulate
+export simulate, simulate_neurons
 
 end
