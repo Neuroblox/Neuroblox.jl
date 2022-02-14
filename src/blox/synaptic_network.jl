@@ -10,15 +10,15 @@ function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix)
 		    
         if length(presyn)>0
 					
-		    ind = [i for i = 1:length(presyn)];
-	        eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p],ind)-postsyn_nrn.Isyn]
+            ind = [i for i = 1:length(presyn)];
+	    eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p],ind)-postsyn_nrn.Isyn]
             push!(syn_eqs,eq[1])
 			
-		else
-		    eq = [0~postsyn_nrn.Isyn];
-		    push!(syn_eqs,eq[1]);
+	else
+	    eq = [0~postsyn_nrn.Isyn];
+	    push!(syn_eqs,eq[1]);
 		 
-		end
+	end
     end
     popfirst!(syn_eqs)
 	
