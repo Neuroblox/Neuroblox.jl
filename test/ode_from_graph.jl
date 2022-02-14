@@ -1,7 +1,7 @@
 using Neuroblox, Test, SparseArrays, Graphs, MetaGraphs
 
-@named GPe = NeuralMass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = NeuralMass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named GPe = neuralmass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
+@named STN = neuralmass(activation="a_tan", ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
 
 # Connect Regions through Adjacency Matrix
 sys = [GPe, STN]

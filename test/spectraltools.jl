@@ -1,7 +1,7 @@
 using Neuroblox, Test
 
+import LinearAlgebra as la
 using Distributions
-using LinearAlgebra: I, Matrix
 using OrdinaryDiffEq, Plots
 using Statistics
 using MAT
@@ -12,11 +12,12 @@ nd = 2  # number of dimensions
 p = 2  # number of time lags of MAR model
 f = 2.0.^(range(0,stop=5)) # frequencies at which to evaluate CSD
 dt = 1/(2*f[end]) # time step, inverse of sampling frequency
-dist = InverseWishart(nd*2, Matrix(1.0I, nd, nd))
+dist = InverseWishart(nd*2, la.Matrix(1.0la.I, nd, nd))
 Σ = rand(dist)   # noise covariance matrix of MAR model
 a = [randn(nd, nd) for i = 1:p]   # MAR model parameters
+mar = Dict([("A", a), ("Σ", Σ), ("p", p)])
 
-csd = mar2csd(a, Σ, p, f)
+csd = mar2csd(mar, f)
 a_est, Σ_est = csd2mar(csd, f, dt, p)
 
 @test_broken a ≈ a_est
@@ -34,7 +35,7 @@ The test will count the number of peaks in a given time window and match that to
 freq_of_interest = 4
 
 # Create Circuit 
-@named STN = NeuralMass(activation="a_tan", ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
+@named STN = neuralmass(activation="a_tan", ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
 sys = [STN]
 adj_matrix = [1.0]
 @named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector = [s.x for s in sys])
@@ -49,7 +50,7 @@ The power spectrum of the solution should have a center frequency around that se
 To Do: Employ a peak detection algorithm, useful for this test and signal processing. Number of peaks should match center frequency.
 
 """
-@named power = Neuroblox.PowerSpectrum(data=sol[1,:], T=sim_dur, uniform=true, dt=0.001)
+@named power = Neuroblox.powerspectrum(data=sol[1,:], T=sim_dur, fs=1000, method="auto")
 
 # 1) Make sure you can plot the data
 Plots.plot(sol.t, sol[1,:])
@@ -66,12 +67,12 @@ tol = 0.5
 @test index_of_maximum*df<4+tol
 
 """
-Design Test Case (ComplexWavelet).
+Design Test Case (complexwavelet).
 # Wavelets must have values near zero at both ends, as well as a mean value of zero
 
 """
 data = matread("lfp_test_data.mat")
-@named wavelets = Neuroblox.ComplexWavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
+@named wavelets = Neuroblox.complexwavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
 
 tol = 0.2
 @test real(wavelets[1][1]) < tol
@@ -80,4 +81,3 @@ all_wavelets = Statistics.mean(real(wavelets))
 average_over_all = sum(all_wavelets)/length(all_wavelets)
 tol = 0.001
 @test sum(average_over_all) < 0 + tol
-
