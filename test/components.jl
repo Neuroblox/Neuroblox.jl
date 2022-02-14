@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions
+using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions, Statistics
 
 """
 neuralmass.jl test
