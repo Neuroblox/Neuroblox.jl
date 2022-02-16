@@ -126,8 +126,3 @@ R = (1/(C*pi))*(W+conj.(W))/2
 ψ = log.(sol[1,:]./R)/im
 
 @test norm.(R[length(R)]) < 0.1
-
-p1 = plot(real(norm.(R).*sin.(ψ)), real(norm.(R).*cos.(ψ)),  xlabel="Rcosψ", ylabel="Rsinψ", linewidth=3.0, label="Z(t)", lc=:red, title="Phase Plane")
-p2 = plot(sol.t, norm.(R), xlabel="Time (ms)", ylabel="R(t)", linewidth=3.0, label="R", lc=:blue, xlims=(0,1100), title="Synchrony")
-p3 = plot(sol.t, real(ψ),  xlabel="Time (ms)", ylabel="ψ(t)", linewidth=3.0, label="ψ", lc=:blue, xlims=(0,1100), title="Phase Oscillation")
-plot(p1, p2, p3, layout=(3,1), size=(500,700))
