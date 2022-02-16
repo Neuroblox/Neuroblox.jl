@@ -32,8 +32,9 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=conn
        return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-function ODEfromGraph(;name, g::LinearNeuroGraph, connector=connector)
+function ODEfromGraph(;name, g::LinearNeuroGraph)
        sys = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
+       connector = [s.x for s in sys]
        adj = AdjMatrixfromLinearNeuroGraph(g)
        return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
