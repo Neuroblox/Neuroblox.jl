@@ -51,12 +51,20 @@ function simulate_neurons(sys::ODESystem, u0, timespan, p, solver = Rodas5()) #O
        return DataFrame(sol)
 end
 
+function simulate_complex(sys::ODESystem, u0, timespan, p, solver=Tsit5())
+       prob = ODEProblem(sys, u0, timespan, p)
+       prob = remake(prob, u0=complex.(prob.u0))
+       solver=solver
+       sol = solve(prob, Tsit5())
+       return sol
+end
+
 export neuralmass, thetaneuron, qif_neuron, synaptic_network
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml
 export hemodynamics!, boldsignal
 export variationalbayes
-export simulate, simulate_neurons
+export simulate, simulate_neurons, simulate_complex
 
 end
