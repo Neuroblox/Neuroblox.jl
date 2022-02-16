@@ -7,3 +7,4 @@ using SafeTestsets
 @time @safetestset "Neural Signal Measurement Models Tests" begin include("measurement_models.jl") end
 @time @safetestset "Spectral Utilities Tests" begin include("spectraltools.jl") end
 @time @safetestset "Dynamic Causal Modeling Tests" begin include("DCM.jl") end
+@time @safetestset "ODE from Graph and simulate" begin include("graph_to_dataframe.jl") end
