@@ -1,4 +1,5 @@
-using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions, Statistics
+using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra
+
 
 """
 neuralmass.jl test
@@ -107,3 +108,22 @@ sim_dur =  100.0
 sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Rodas5())
 
 @test sol[end,1] == sim_dur
+
+"""
+complex neural mass model test (next generation neural mass model)
+This test generates a neural mass model using the kuramoto order parameter
+to capture within-population synchrony. A model is generated and then
+the phase of oscillations is computed (ψ) along with synchrony (R). 
+This model has no input, and therefore oscillations and synchrony should
+tend toward zero.
+"""
+@named macroscopic_model = neuralmass(activation="complex", C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
+sim_dur = 1000.0 
+sol = simulate_complex(macroscopic_model, [], (0.0, sim_dur), [], Tsit5())
+
+C=30
+W = (1 .- conj.(sol[1,:]))./(1 .+ conj.(sol[1,:]))
+R = (1/(C*pi))*(W+conj.(W))/2
+ψ = log.(sol[1,:]./R)/im
+
+@test norm.(R[length(R)]) < 0.1
