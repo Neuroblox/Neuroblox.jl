@@ -155,7 +155,7 @@ network. It then simulates their activity.
     phase[6] = pi
      
     τ = 5*ones(Nrns); # postsynaptic potential time constants
-    τ[6] .= 70;
+    τ[6] = 70;
 
 nrn_network=[]
 for ii = 1:Nrns
