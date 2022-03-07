@@ -20,7 +20,7 @@ include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
 include("blox/thetaneuron.jl")
-include("blox/QIF_neuron.jl")
+include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
@@ -60,7 +60,7 @@ function simulate_complex(sys::ODESystem, u0, timespan, p, solver=Tsit5())
        return sol
 end
 
-export neuralmass, thetaneuron, qif_neuron, synaptic_network
+export neuralmass, thetaneuron, qif_neuron, if_neuron, synaptic_network
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml

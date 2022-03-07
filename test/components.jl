@@ -127,3 +127,58 @@ R = (1/(C*pi))*(W+conj.(W))/2
 ψ = log.(sol[1,:]./R)/im
 
 @test norm.(R[length(R)]) < 0.1
+
+"""
+leaky integrate integrate and fire neuron if_neuron() test.
+This test generates 5 excitatory and 1 inhibitory neurons and connects them into winner take all
+network. It then simulates their activity.
+"""
+
+# generate if_neurons 
+    # parameters 
+    Nrns = 6
+    E_syn=zeros(1,Nrns);	 #synaptic reversal potentials is property of presynaptic neuron
+    E_syn[6] =-70;
+
+    G_syn = 0.4*ones(1,Nrns); #synaptic conductance is property of presynaptic neuron
+    G_syn[6] = 5;
+  
+    I_in = zeros(Nrns); #input currents
+    for ii = 1:5
+        I_in[ii] = 25*rand();
+    end
+    I_in[6] = 0.85;
+    freq = zeros(Nrns);
+    freq[6] = 5;
+
+    phase = zeros(Nrns);
+    phase[6] = pi
+     
+    τ = 5*ones(Nrns); # postsynaptic potential time constants
+    τ[6] .= 70;
+
+nrn_network=[]
+for ii = 1:Nrns
+    nn = if_neuron(name=Symbol("nrn$ii"),E_syn=E_syn[ii],G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii], phase=phase[ii], τ=τ[ii])
+    push!(nrn_network,nn)
+end
+
+# adjacency matrix 
+syn =  zeros(Nrns,Nrns);
+syn[end,1:end-1].=1;
+syn[1:end-1,end].=1;
+
+#connect the neurons
+@named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn)
+@test typeof(syn_net) == ODESystem
+@test length(states(syn_net)) == 5*Nrns
+
+# simulate
+sim_dur =  500.0
+sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Tsit5())
+@test sol[end,1] == sim_dur
+
+
+
+
+  
