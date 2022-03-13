@@ -32,7 +32,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 @named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=[s.x for s in sys])
 
 sim_dur = 10.0 # Simulate for 10 Seconds
-sol = simulate(CBGTC_Circuit_lin, [], (0.0, sim_dur), [])
+sol = simulate(structural_simplify(CBGTC_Circuit_lin), [], (0.0, sim_dur), [])
 @test sol[!,"GPi₊x(t)"][4] ≈ 0.9785615009584057
 
 """
