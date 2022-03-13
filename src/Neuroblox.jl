@@ -40,7 +40,7 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
 end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
-       prob = ODAEProblem(structural_simplify(sys), u0, timespan, p)
+       prob = ODAEProblem(sys, u0, timespan, p)
        sol = solve(prob, solver)
        return DataFrame(sol)
 end

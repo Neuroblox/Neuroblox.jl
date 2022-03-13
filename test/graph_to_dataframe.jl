@@ -21,5 +21,5 @@ add_edge!(g,2,2,:weight,1.0)
 sim_dur = 10.0 # Simulate for 10 Seconds
 
 # returns dataframe with time series for 4 outputs
-sol = simulate(two_regions_gr, [], (0.0, sim_dur), [])
+sol = simulate(structural_simplify(two_regions_gr), [], (0.0, sim_dur), [])
 @test typeof(sol) == DataFrame
