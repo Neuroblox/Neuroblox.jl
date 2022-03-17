@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra
+using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra
 
 
 """
@@ -178,7 +178,15 @@ sim_dur =  500.0
 sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Tsit5())
 @test sol[end,1] == sim_dur
 
+"""
+van_der_pol.jl test
 
+Test for van der Pol generator.
+"""
 
+@named VdP = van_der_pol()
 
-  
+prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
+sol = solve(prob_vdp,EM(),dt=0.1)
+@test length(sol.t)==201
+
