@@ -64,8 +64,9 @@ It has the following inputs:
 """
 function bandpassfilter(data, lb, ub, fs, order)
     responsetype = Bandpass(lb, ub, fs=fs)
+    order = Int(ceil(0.5*order))
     designmethod = Butterworth(order)
-    signal = filt(digitalfilter(responsetype, designmethod), data)
+    signal = filtfilt(digitalfilter(responsetype, designmethod), data)
     return signal
 end
 
