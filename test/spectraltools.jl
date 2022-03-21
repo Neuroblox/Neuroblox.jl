@@ -64,7 +64,7 @@ tol = 0.5
 bandpassfilter test
 Compute power spectrum before and after filtering the data.
 """
-data = matread("test/lfp_test_data.mat")
+data = matread("lfp_test_data.mat")
 data = data["lfp"]
 f, pxx = Neuroblox.powerspectrum(data, length(data), 1000, "periodogram", hanning)
 
@@ -80,7 +80,7 @@ f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "peri
 complexwavelet test
 Wavelets must have values near zero at both ends, as well as a mean value of zero
 """
-data = matread("test/lfp_test_data.mat")
+data = matread("lfp_test_data.mat")
 wavelets = Neuroblox.complexwavelet(data["lfp"], 0.001, 2, 60)
 tol = 0.2
 @test real(wavelets[1][1]) < tol
