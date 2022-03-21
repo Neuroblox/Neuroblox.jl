@@ -11,6 +11,7 @@ This utility file contains the methods utilized for spectral data analysis.
 
 """
 powerspectrum computes the power spectrum of a given time series signal. 
+Data in matrix format is converted to vector format.
 It has the following inputs:
     'data'   : time series data which assumes time is in the first column of the data matrix
     'T'      : time series signal duration (in seconds)
@@ -23,7 +24,11 @@ The following outputs:
 With parameters:
     'df'     : frequency resolution
 """
-function powerspectrum(;name, data=data, T=T, fs=1000, method="pwelch", window="hanning")
+function powerspectrum(data, T, fs, method, window)
+
+    if typeof(data) == Matrix{Float64}
+        data = vec(data)
+    end
 
     if method == "auto" 
         df = 1/T                                           
@@ -49,6 +54,22 @@ function powerspectrum(;name, data=data, T=T, fs=1000, method="pwelch", window="
 end
 
 """
+This function takes in time series data and bandpass filters it.
+It has the following inputs:
+    data: time series data
+    lb: minimum cut-off frequency
+    ub: maximum cut-off frequency
+    fs: sampling frequency
+    order: filter order
+"""
+function bandpassfilter(data, lb, ub, fs, order)
+    responsetype = Bandpass(lb, ub, fs=fs)
+    designmethod = Butterworth(order)
+    signal = filt(digitalfilter(responsetype, designmethod), data)
+    return signal
+end
+
+"""
 This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
 The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
 Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.
@@ -68,7 +89,7 @@ It has the following inputs:
 And outputs:
     complex_wavelet : a family of complex morlet wavelets
 """
-function complexwavelet(;name, data=data, dt=dt, lb=lb, ub=ub, a=1, n=6, m=0, num_wavelets=5)
+function complexwavelet(data, dt, lb, ub, a=1, n=6, m=0, num_wavelets=5)
 
     fs = 1/dt
     t = -length(data)/2:1/fs:length(data)/2

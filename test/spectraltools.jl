@@ -5,6 +5,7 @@ using Distributions
 using OrdinaryDiffEq, Plots
 using Statistics
 using MAT
+using DSP
 
 
 nd = 2  # number of dimensions
@@ -29,11 +30,8 @@ Design Test Case (PowerSpectrum).
 A circuit model is used, with an explicit paramter setting the oscillation frequency range of the system in radians/second:
     ω = 4*2*π
 The test will count the number of peaks in a given time window and match that to the frequency containing the most power.
-
 """
-
 freq_of_interest = 4
-
 # Create Circuit 
 @named STN = neuralmass(activation="a_tan", ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
 sys = [STN]
@@ -45,38 +43,47 @@ prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
 sol = solve(prob, Tsit5(), dt = 0.001)
 
 """
-Perform Test.
+powerspectrum test.
 The power spectrum of the solution should have a center frequency around that set by ω in Hz, with some tolerance.
 To Do: Employ a peak detection algorithm, useful for this test and signal processing. Number of peaks should match center frequency.
-
 """
-@named power = Neuroblox.powerspectrum(data=sol[1,:], T=sim_dur, fs=1000, method="auto")
-
+f, pxx = Neuroblox.powerspectrum(sol[1,:], sim_dur, 1000, "auto", hanning)
 # 1) Make sure you can plot the data
 Plots.plot(sol.t, sol[1,:])
-Plots.plot(power[1], power[2], xlims=(0,10))
-
+Plots.plot(f, pxx, xlims=(0,10))
 # 2) Find the local maxima
 T = sim_dur
 df = 1/T
-find_max = findmax(power[2][1:length(power[1])-Int(ceil(freq_of_interest/df))])
+find_max = findmax(pxx[1:length(f)-Int(ceil(freq_of_interest/df))])
 index_of_maximum = find_max[2]
-
 tol = 0.5
 @test index_of_maximum*df>4-tol
 @test index_of_maximum*df<4+tol
 
 """
-Design Test Case (complexwavelet).
-# Wavelets must have values near zero at both ends, as well as a mean value of zero
-
+bandpassfilter test
+Compute power spectrum before and after filtering the data.
 """
 data = matread("lfp_test_data.mat")
-@named wavelets = Neuroblox.complexwavelet(data=data["lfp"], dt=0.001, lb=2, ub=60)
+data = data["lfp"]
+f, pxx = Neuroblox.powerspectrum(data, length(data), 1000, "periodogram", hanning)
 
+lb = 12
+ub = 30
+signal = Neuroblox.bandpassfilter(data, lb, ub, 1000, 4)
+f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "periodogram", hanning)
+
+@test pxx_signal[1:lb] < pxx[1:lb]
+@test pxx_signal[ub:100] < pxx[ub:100]
+
+"""
+complexwavelet test
+Wavelets must have values near zero at both ends, as well as a mean value of zero
+"""
+data = matread("lfp_test_data.mat")
+wavelets = Neuroblox.complexwavelet(data["lfp"], 0.001, 2, 60)
 tol = 0.2
 @test real(wavelets[1][1]) < tol
-
 all_wavelets = Statistics.mean(real(wavelets))
 average_over_all = sum(all_wavelets)/length(all_wavelets)
 tol = 0.001
