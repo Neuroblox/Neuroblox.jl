@@ -16,6 +16,7 @@ using OrdinaryDiffEq, DataFrames
 
 include("Neurographs.jl")
 include("utilities/SpectralTools.jl")
+include("utilities/learning_tools.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neuralmass.jl")
@@ -64,7 +65,8 @@ end
 export neuralmass, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
-export powerspectrum, complexwavelet, mar2csd, csd2mar, mar_ml
+export powerspectrum, complexwavelet, bandpassfilter, mar2csd, csd2mar, mar_ml
+export learningrate
 export hemodynamics!, boldsignal
 export variationalbayes
 export simulate, simulate_neurons, simulate_complex
