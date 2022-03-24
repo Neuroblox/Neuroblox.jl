@@ -41,25 +41,10 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
        return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
 
-function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5())
+function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
        prob = ODAEProblem(sys, u0, timespan, p)
-       sol = solve(prob, solver)
+       sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
        return DataFrame(sol)
-end
-
-function simulate_neurons(sys::ODESystem, u0, timespan, p, solver = Rodas5()) #ODESystem is sent after structural_simplify
-       prob = ODEProblem(sys, u0, timespan, p)
-       solver=solver
-       sol = solve(prob,solver,saveat=0.01,reltol=1e-4,abstol=1e-4)
-       return DataFrame(sol)
-end
-
-function simulate_complex(sys::ODESystem, u0, timespan, p, solver=Tsit5())
-       prob = ODEProblem(sys, u0, timespan, p)
-       prob = remake(prob, u0=complex.(prob.u0))
-       solver=solver
-       sol = solve(prob, Tsit5())
-       return sol
 end
 
 export neuralmass, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
@@ -69,6 +54,6 @@ export powerspectrum, complexwavelet, bandpassfilter, mar2csd, csd2mar, mar_ml
 export learningrate
 export hemodynamics!, boldsignal
 export variationalbayes
-export simulate, simulate_neurons, simulate_complex
+export simulate, simulate_complex
 
 end
