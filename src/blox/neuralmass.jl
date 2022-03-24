@@ -17,7 +17,7 @@ function jansen_rit(;name, τ=0, H=0, λ=0, r=0)
     return ODESystem(eqs, t, sts, params; name=name)
 end
 
-function next_generation(;name, C=0, Δ=0, η_0=0, v_syn=0, alpha_inv=0)
+function next_generation(;name, C=0, Δ=0, η_0=0, v_syn=0, alpha_inv=0, k=0)
     params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
     sts    = @variables Z(t)=0.5 g(t)=1.6
     Z = ModelingToolkit.unwrap(Z)
