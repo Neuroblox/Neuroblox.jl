@@ -33,7 +33,7 @@ The test will count the number of peaks in a given time window and match that to
 """
 freq_of_interest = 4
 # Create Circuit 
-@named STN = neuralmass(activation="a_tan", ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
+@named STN = harmonic_oscillator(ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
 sys = [STN]
 adj_matrix = [1.0]
 @named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector = [s.x for s in sys])

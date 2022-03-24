@@ -6,14 +6,14 @@ neuralmass.jl test
 """
 
 # Create Regions
-@named Str = neuralmass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = neuralmass(activation="logistic", τ=0.04, H=20, λ=400, r=0.1)
-@named STN = neuralmass(activation="logistic", τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = neuralmass(activation="logistic", τ=0.014, H=20, λ=400, r=0.1)
-@named Th  = neuralmass(activation="logistic", τ=0.002, H=10, λ=20, r=5)
-@named EI  = neuralmass(activation="logistic", τ=0.01, H=20, λ=5, r=5)
-@named PY  = neuralmass(activation="logistic", τ=0.001, H=20, λ=5, r=0.15)
-@named II  = neuralmass(activation="logistic", τ=2.0, H=60, λ=5, r=5)
+@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named STN = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
+@named Th  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
+@named EI  = jansen_rit(τ=0.01, H=20, λ=5, r=5)
+@named PY  = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
+@named II  = jansen_rit(τ=2.0, H=60, λ=5, r=5)
 
 # Connect Regions through Adjacency Matrix
 sys = [Str, GPe, STN, GPi, Th, EI, PY, II]
@@ -117,7 +117,7 @@ the phase of oscillations is computed (ψ) along with synchrony (R).
 This model has no input, and therefore oscillations and synchrony should
 tend toward zero.
 """
-@named macroscopic_model = neuralmass(activation="complex", C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
+@named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
 sim_dur = 1000.0 
 sol = simulate(structural_simplify(macroscopic_model), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], solver=Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
 
