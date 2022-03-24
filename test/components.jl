@@ -103,11 +103,11 @@ syn = adj.*k/N_nrn
 @test typeof(syn_net) == ODESystem
 @test length(states(syn_net)) == 3*N_nrn
 
-#simulate for 4 s
-sim_dur =  4.0
-sol = simulate(syn_net, [], (0.0, sim_dur), [], solver=Rodas5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
-
-@test sol[end,1] == sim_dur
+#simulate for 100 s
+sim_dur =  100.0
+prob = ODEProblem(syn_net, [], (0.0, sim_dur), [])
+sol = solve(prob,Rodas5(),saveat=0.01,reltol=1e-4,abstol=1e-4)
+@test sol.t[end] == sim_dur
 
 """
 complex neural mass model test (next generation neural mass model)
