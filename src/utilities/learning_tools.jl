@@ -4,7 +4,7 @@ It has the following inputs:
     outcomes: vector of 1's and 0's for behavioral outcomes
     windows: number of windows to split the outcome data into
 And the following outputs:
-    rate: the learning rate across each 
+    rate: the learning rate across each window
 """
 function learningrate(outcomes, windows)
     bins = Int(floor(length(outcomes)*(1/windows)))
