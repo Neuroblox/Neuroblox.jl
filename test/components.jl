@@ -105,9 +105,9 @@ syn = adj.*k/N_nrn
 
 #simulate for 100 s
 sim_dur =  100.0
-sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Rodas5())
-
-@test sol[end,1] == sim_dur
+prob = ODEProblem(syn_net, [], (0.0, sim_dur), [])
+sol = solve(prob,Rodas5(),saveat=0.01,reltol=1e-4,abstol=1e-4)
+@test sol.t[end] == sim_dur
 
 """
 complex neural mass model test (next generation neural mass model)
@@ -119,12 +119,12 @@ tend toward zero.
 """
 @named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
 sim_dur = 1000.0 
-sol = simulate_complex(macroscopic_model, [], (0.0, sim_dur), [], Tsit5())
+sol = simulate(structural_simplify(macroscopic_model), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], solver=Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
 
 C=30
-W = (1 .- conj.(sol[1,:]))./(1 .+ conj.(sol[1,:]))
+W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
 R = (1/(C*pi))*(W+conj.(W))/2
-ψ = log.(sol[1,:]./R)/im
+ψ = log.(sol[!,"Z(t)"]./R)/im
 
 @test norm.(R[length(R)]) < 0.1
 
@@ -175,7 +175,7 @@ syn[1:end-1,end].=1;
 
 # simulate
 sim_dur =  500.0
-sol = simulate_neurons(syn_net, [], (0.0, sim_dur), [], Tsit5())
+sol = simulate(syn_net, [], (0.0, sim_dur), [])
 @test sol[end,1] == sim_dur
 
 """
