@@ -23,10 +23,10 @@ using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, Optim, Flux, Forw
 #              -0.5*C_BG_Th*sys[1].x C_BG_Th*sys[2].x 0]
 
 # Try an even more complicated circuit: It works!
-@named Str = neuralmass(activation="logistic", τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = neuralmass(activation="logistic", τ=0.04, H=20, λ=400, r=0.1)
-@named STN = neuralmass(activation="logistic", τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = neuralmass(activation="logistic", τ=0.014, H=20, λ=400, r=0.1)
+@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named STN = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
 
 # Connect Regions through Adjacency Matrix
 sys = [Str, GPe, STN, GPi]
