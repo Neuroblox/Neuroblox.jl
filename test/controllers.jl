@@ -13,4 +13,4 @@ ub = 16
 filter_order = 6
 controller_call_times, arv_estimation = ARVController(data, fs, call_rate, lb, ub, filter_order)
 
-@test plot(controller_call_times, arv_estimation, linewidth=3.0)
+@test plot(controller_call_times, arv_estimation, linewidth=1.0)
