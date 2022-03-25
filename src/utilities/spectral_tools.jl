@@ -1,9 +1,10 @@
 """
-SpectralTools.jl
+spectral_tools.jl
 
 This utility file contains the methods utilized for spectral data analysis.
     powerspectrum  : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
     complexwavelet : generate a complex morlet wavelet
+    bandpassfilter : designs a bandpass filter and applies it to time series data with some given pass band
     mar2csd        : compute cross-spectral densities from multivariate auto-regressive model parameters
     csd2mar        : compute multivariate auto-regressive model parameters from cross-spectral densities
     mar_ml         : maximum likelihood estimate of multivariate auto-regressive model parameters

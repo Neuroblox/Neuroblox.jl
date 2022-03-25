@@ -15,12 +15,12 @@ import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 
 include("Neurographs.jl")
-include("utilities/SpectralTools.jl")
+include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
-include("blox/neuralmass.jl")
-include("blox/thetaneuron.jl")
+include("blox/neural_mass.jl")
+include("blox/theta_neuron.jl")
 include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
