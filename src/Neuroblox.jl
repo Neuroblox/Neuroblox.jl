@@ -17,6 +17,7 @@ using OrdinaryDiffEq, DataFrames
 include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
+include("control/ARVController.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
@@ -51,7 +52,7 @@ export harmonic_oscillator, jansen_rit, next_generation, thetaneuron, qif_neuron
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, mar2csd, csd2mar, mar_ml
-export learningrate
+export learningrate, ARVController
 export hemodynamics!, boldsignal
 export variationalbayes
 export simulate

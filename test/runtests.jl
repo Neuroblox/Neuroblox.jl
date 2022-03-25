@@ -8,3 +8,5 @@ using SafeTestsets
 @time @safetestset "Spectral Utilities Tests" begin include("spectraltools.jl") end
 @time @safetestset "Dynamic Causal Modeling Tests" begin include("DCM.jl") end
 @time @safetestset "ODE from Graph and simulate" begin include("graph_to_dataframe.jl") end
+@time @safetestset "Learning Tests" begin include("learning.jl") end
+@time @safetestset "Control Tests" begin include("controllers.jl") end
