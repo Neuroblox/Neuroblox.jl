@@ -2,7 +2,7 @@
 test for ARVController
 """
 
-using Neuroblox, Test, Plots, MAT
+using Neuroblox, Test, MAT
 
 data = matread("lfp_test_data.mat")
 data = data["lfp"]
@@ -13,4 +13,4 @@ ub = 16
 filter_order = 6
 controller_call_times, arv_estimation = Neuroblox.ARVController(data, fs, call_rate, lb, ub, filter_order)
 
-@test plot(controller_call_times, arv_estimation, linewidth=1.0)
+@test sum(arv_estimation) > 0
