@@ -4,7 +4,7 @@ test for ARVController
 
 using Neuroblox, Test, Plots, MAT
 
-data = matread("test/lfp_test_data.mat")
+data = matread("lfp_test_data.mat")
 data = data["lfp"]
 fs = 1000
 call_rate = 150/fs
