@@ -2,7 +2,7 @@
 test for ARVController
 """
 
-using Neuroblox, Test, Plots
+using Neuroblox, Test, Plots, MAT
 
 data = matread("test/lfp_test_data.mat")
 data = data["lfp"]
