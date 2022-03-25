@@ -17,6 +17,7 @@ using OrdinaryDiffEq, DataFrames
 include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
+include("control/ARVController.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
@@ -47,11 +48,11 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
        return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_rit, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_rit, next_generation, theta_neuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, mar2csd, csd2mar, mar_ml
-export learningrate
+export learningrate, ARVController
 export hemodynamics!, boldsignal
 export variationalbayes
 export simulate
