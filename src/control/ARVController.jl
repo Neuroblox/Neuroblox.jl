@@ -21,7 +21,7 @@ function ARVController(data, fs, call_rate, lb, ub, filter_order)
         lbs = Int(ceil(lb*length(spectral_estimation[1])/500))
         ubs = Int(ceil(ub*length(spectral_estimation[1])/500))
         arv = abs.(spectral_estimation[2])[lbs:ubs]
-        arv = mean(arv)
+        arv = Statistics.mean(arv)
         push!(arv_estimation, arv)
     end
     controller_call_times = (1:Int(floor(length(data)/call_time))).*(call_rate*fs)

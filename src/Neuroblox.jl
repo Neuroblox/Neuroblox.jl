@@ -10,7 +10,7 @@ import LinearAlgebra as la
 using AbstractFFTs
 using FFTW
 import ToeplitzMatrices as tm
-using DSP
+using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 
