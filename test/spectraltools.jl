@@ -86,6 +86,18 @@ transformed_signal = Neuroblox.hilberttransform(data)
 
 tol = 0.001
 @test sum(imag(transformed_signal)) < 0 + tol
+
+"""
+phaseangle test
+the imaginary part of the transformed data must sum to approximately zero
+"""
+data = matread("lfp_test_data_phase.mat")
+data = data["lfp_data"]
+phase = Neuroblox.phaseangle(data)
+
+@test minimum(phase) > -pi
+@test maximum(phase) < pi
+
 """
 complexwavelet test
 Wavelets must have values near zero at both ends, as well as a mean value of zero
