@@ -72,6 +72,14 @@ function bandpassfilter(data, lb, ub, fs, order)
 end
 
 """
+This function takes in time series data and hilbert transforms it using the DSP hilbert function.
+"""
+function hilberttransform(data)
+    transformed_data = DSP.hilbert(data)
+    return transformed_data
+end
+
+"""
 This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
 The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
 Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.

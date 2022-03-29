@@ -77,6 +77,16 @@ f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "peri
 @test pxx_signal[ub:100] < pxx[ub:100]
 
 """
+hilberttransform test
+the imaginary part of the transformed data must sum to approximately zero
+"""
+data = matread("lfp_test_data_phase.mat")
+data = data["lfp_data"]
+transformed_signal = Neuroblox.hilberttransform(data)
+
+tol = 0.001
+@test sum(imag(transformed_signal)) < 0 + tol
+"""
 complexwavelet test
 Wavelets must have values near zero at both ends, as well as a mean value of zero
 """
