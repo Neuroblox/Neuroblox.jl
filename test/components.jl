@@ -56,7 +56,7 @@ end
 # Create Circuit
 adj_matrix = (1/N)*ones(N,N)
 n = 3
-a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
+a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
 
 sim_dur = 50.0 # Simulate for 10 Seconds
