@@ -51,7 +51,7 @@ end
 export harmonic_oscillator, jansen_rit, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
-export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, mar2csd, csd2mar, mar_ml
+export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ARVController
 export hemodynamics!, boldsignal
 export variationalbayes

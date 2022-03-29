@@ -2,12 +2,14 @@
 spectral_tools.jl
 
 This utility file contains the methods utilized for spectral data analysis.
-    powerspectrum  : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
-    complexwavelet : generate a complex morlet wavelet
-    bandpassfilter : designs a bandpass filter and applies it to time series data with some given pass band
-    mar2csd        : compute cross-spectral densities from multivariate auto-regressive model parameters
-    csd2mar        : compute multivariate auto-regressive model parameters from cross-spectral densities
-    mar_ml         : maximum likelihood estimate of multivariate auto-regressive model parameters
+    powerspectrum    : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
+    bandpassfilter   : designs a bandpass filter and applies it to time series data with some given pass band
+    hilberttransform : performs a hilbert transform on time series data to get a complex signal
+    phaseangle       : computes the phase angle on hilbert-transformed time series data
+    complexwavelet   : generate a complex morlet wavelet
+    mar2csd          : compute cross-spectral densities from multivariate auto-regressive model parameters
+    csd2mar          : compute multivariate auto-regressive model parameters from cross-spectral densities
+    mar_ml           : maximum likelihood estimate of multivariate auto-regressive model parameters
 """
 
 """
@@ -55,7 +57,7 @@ function powerspectrum(data, T, fs, method, window)
 end
 
 """
-This function takes in time series data and bandpass filters it.
+bandpassfilter takes in time series data and bandpass filters it.
 It has the following inputs:
     data: time series data
     lb: minimum cut-off frequency
@@ -72,7 +74,7 @@ function bandpassfilter(data, lb, ub, fs, order)
 end
 
 """
-This function takes in time series data and hilbert transforms it using the DSP hilbert function.
+hilberttransform takes in time series data and hilbert transforms it using the DSP hilbert function.
 """
 function hilberttransform(data)
     transformed_data = DSP.hilbert(data)
@@ -80,7 +82,16 @@ function hilberttransform(data)
 end
 
 """
-This function creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
+phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
+"""
+function phaseangle(data)
+    d = Neuroblox.hilberttransform(data)
+    phase = angle.(d)
+    return phase
+end
+
+"""
+complexwavelet creates a complex morlet wavelet by windowing a complex sine wave with a Gaussian taper. 
 The morlet wavelet is a special case of a bandpass filter in which the frequency response is Gaussian-shaped.
 Convolution with a complex wavelet is equivalent to performing a Hilbert transform of a bandpass filtered signal.
 
