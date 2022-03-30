@@ -43,7 +43,7 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
 end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
-       prob = ODAEProblem(sys, u0, timespan, p)
+       prob = ODEProblem(sys, u0, timespan, p)
        sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
        return DataFrame(sol)
 end
