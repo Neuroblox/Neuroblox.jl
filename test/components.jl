@@ -32,7 +32,8 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 @named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=[s.x for s in sys])
 
 sim_dur = 10.0 # Simulate for 10 Seconds
-sol = simulate(structural_simplify(CBGTC_Circuit_lin), [], (0.0, sim_dur), [])
+mysys = structural_simplify(CBGTC_Circuit_lin)
+sol = simulate(mysys, [], (0.0, sim_dur), [])
 @test sol[!,"GPi₊x(t)"][4] ≈ 0.9785615009584057
 
 """
@@ -56,7 +57,7 @@ end
 # Create Circuit
 adj_matrix = (1/N)*ones(N,N)
 n = 3
-a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2.0*n))
+a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
 
 sim_dur = 50.0 # Simulate for 10 Seconds
