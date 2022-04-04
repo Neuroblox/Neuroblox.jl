@@ -1,35 +1,4 @@
-using Neuroblox, Graphs, MetaGraphs, DataFrames, Test
-
-"""
-harmonic oscillator neural mass blox
-"""
-@named GPe = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
-
-# Connect Regions through Adjacency Matrix
-sys = [GPe, STN]
-@parameters g_GPe_STN=1.0 g_STN_GPe=1.0
-
-#create graph
-g = LinearNeuroGraph(MetaDiGraph())
-add_blox!(g,GPe)
-add_blox!(g,STN)
-add_edge!(g,1,1,:weight,1.0)
-add_edge!(g,1,2,:weight,g_STN_GPe)
-add_edge!(g,2,1,:weight,g_STN_GPe*g_GPe_STN)
-add_edge!(g,2,2,:weight,1.0)
-
-@named two_regions_gr = ODEfromGraph(g=g)
-
-sim_dur = 5.0 # Simulate for 10 Seconds
-
-# returns dataframe with time series for 4 outputs
-sol = simulate(structural_simplify(two_regions_gr), [], (0.0, sim_dur), [])
-@test typeof(sol) == DataFrame
-
-"""
-jansen rit neural mass blox
-"""
+using Neuroblox, Graphs, MetaGraphs
 
 @named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
 @named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
@@ -65,8 +34,7 @@ add_edge!(g,4,4,:weight,0.0)
 
 @named four_regions_gr = ODEfromGraph(g=g)
 
-sim_dur = 5.0 # Simulate for 5 Seconds
+sim_dur = 10.0 # Simulate for 10 Seconds
 
 # returns dataframe with time series for 2*4 outputs
 sol = simulate(structural_simplify(four_regions_gr), [], (0.0, sim_dur), [])
-@test typeof(sol) == DataFrame
