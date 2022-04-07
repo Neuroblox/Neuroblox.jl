@@ -14,6 +14,22 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 
+# define abstract types for Neuroblox
+abstract type Blox end
+abstract type BloxConnection end
+
+abstract type NeuronBlox <: Blox end
+abstract type NeuralMassBlox <: Blox end
+abstract type MathBlox <: Blox end
+abstract type DynamicInputBlox <: Blox end
+abstract type FilterBlox <: Blox end
+abstract type ControlBlox <: Blox end
+
+abstract type BloxConnectFloat <: BloxConnection end
+abstract type BloxConnectComplex <: BloxConnection end
+abstract type BloxConnectMultiFloat <: BloxConnection end
+abstract type BloxConnectMultiComplex <: BloxConnection end
+
 include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
