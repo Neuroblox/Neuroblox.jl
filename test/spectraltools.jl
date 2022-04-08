@@ -34,12 +34,15 @@ The test will count the number of peaks in a given time window and match that to
 freq_of_interest = 4
 # Create Circuit 
 @named STN = harmonic_oscillator(ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
-sys = [STN]
-adj_matrix = [1.0]
-@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector = [s.x for s in sys])
 # Run Simulation
-sim_dur = 5.0                                                                           # Simulation time (seconds)
-prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
+
+sys = [STN.odesystem]
+adj_mat = [1.0]
+connect = [STN.connector]
+@named STN_Circuit = LinearConnections(sys=sys, adj_matrix=adj_mat, connector=connect)
+
+sim_dur = 5.0                                                                         # Simulation time (seconds)
+prob = ODEProblem(structural_simplify(STN_Circuit), [], (0.0, sim_dur), [])
 sol = solve(prob, Tsit5(), dt = 0.001)
 
 """
@@ -49,8 +52,8 @@ To Do: Employ a peak detection algorithm, useful for this test and signal proces
 """
 f, pxx = Neuroblox.powerspectrum(sol[1,:], sim_dur, 1000, "auto", hanning)
 # 1) Make sure you can plot the data
-Plots.plot(sol.t, sol[1,:])
-Plots.plot(f, pxx, xlims=(0,10))
+p1 = Plots.plot(sol.t, sol[1,:])
+p2 = Plots.plot(f, pxx, xlims=(0,10))
 # 2) Find the local maxima
 T = sim_dur
 df = 1/T

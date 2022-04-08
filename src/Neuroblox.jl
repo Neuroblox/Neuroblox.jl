@@ -19,7 +19,12 @@ abstract type Blox end
 abstract type BloxConnection end
 
 abstract type NeuronBlox <: Blox end
+
 abstract type NeuralMassBlox <: Blox end
+abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
+abstract type JansenRitBlox <: NeuralMassBlox end
+abstract type NextGenerationBlox <: NeuralMassBlox end
+
 abstract type MathBlox <: Blox end
 abstract type DynamicInputBlox <: Blox end
 abstract type FilterBlox <: Blox end
@@ -52,8 +57,9 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=conn
 end
 
 function ODEfromGraph(;name, g::LinearNeuroGraph)
-       sys = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
-       connector = [s.x for s in sys]
+       blox = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
+       sys = [s.odesystem for s in blox]
+       connector = [s.connector for s in blox]
        adj = AdjMatrixfromLinearNeuroGraph(g)
        return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
