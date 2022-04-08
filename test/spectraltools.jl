@@ -35,8 +35,14 @@ freq_of_interest = 4
 # Create Circuit 
 @named STN = harmonic_oscillator(ω=freq_of_interest*2*π, ζ=1, k=(freq_of_interest*2*π)^2, h=5.0)
 # Run Simulation
-sim_dur = 5.0                                                                           # Simulation time (seconds)
-prob = ODEProblem(structural_simplify(STN.odesystem), [], (0.0, sim_dur), [])
+
+sys = [STN.odesystem]
+adj_mat = [1.0]
+connect = [STN.connector]
+@named STN_Circuit = LinearConnections(sys=sys, adj_matrix=adj_mat, connector=connect)
+
+sim_dur = 5.0                                                                         # Simulation time (seconds)
+prob = ODEProblem(structural_simplify(STN_Circuit), [], (0.0, sim_dur), [])
 sol = solve(prob, Tsit5(), dt = 0.001)
 
 """
