@@ -16,7 +16,9 @@ neuralmass.jl test
 @named II  = jansen_rit(τ=2.0, H=60, λ=5, r=5)
 
 # Connect Regions through Adjacency Matrix
-sys = [Str, GPe, STN, GPi, Th, EI, PY, II]
+blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
+sys = [s.odesystem for s in blox]
+connect = [s.connector for s in blox]
 
 @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
@@ -29,7 +31,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=[s.x for s in sys])
+@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
 
 sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)

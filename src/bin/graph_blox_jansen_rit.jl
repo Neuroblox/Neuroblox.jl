@@ -6,7 +6,6 @@ using Neuroblox, Graphs, MetaGraphs
 @named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
 
 # Connect Regions through Adjacency Matrix
-sys = [Str, GPe, STN, GPi]
 @parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
 
 # Create Graph

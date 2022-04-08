@@ -4,7 +4,6 @@ using Neuroblox, Graphs, MetaGraphs
 @named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1.0)
 
 # Connect Regions through Adjacency Matrix
-sys = [GPe, STN]
 @parameters g_GPe_STN=1.0 g_STN_GPe=1.0
 
 #create graph
