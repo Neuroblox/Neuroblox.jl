@@ -29,14 +29,17 @@ using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, Optim, Flux, Forw
 @named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
 
 # Connect Regions through Adjacency Matrix
-sys = [Str, GPe, STN, GPi]
+blox = [Str, GPe, STN, GPi]
+sys = [s.odesystem for s in blox]
+connect = [s.connector for s in blox]
+
 @parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
 adj_matrix = [0 0 0 0;
              -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0;
               0 -0.5*C_BG_Th 0 0;
               0 -0.5*C_BG_Th C_BG_Th 0]
 
-@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector=[s.x for s in sys])
+@named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector=connect)
 
 sim_dur = 5.0 # Simulation time (seconds)
 prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
