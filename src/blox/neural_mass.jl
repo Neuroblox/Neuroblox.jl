@@ -15,7 +15,6 @@ mutable struct harmonic_oscillator <: HarmonicOscillatorBlox
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        @show typeof(odesys)
         new(ω, ζ, k, h, odesys.x, odesys)
     end
 end
