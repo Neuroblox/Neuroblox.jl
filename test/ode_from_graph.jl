@@ -4,7 +4,10 @@ using Neuroblox, Test, SparseArrays, Graphs, MetaGraphs
 @named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
 
 # Connect Regions through Adjacency Matrix
-sys = [GPe, STN]
+blox = [GPe, STN]
+sys = [s.odesystem for s in blox]
+connect = [s.connector for s in blox]
+
 @parameters g_GPe_STN=1.0 g_STN_GPe=1.0
 adj_matrix = [1.0 g_STN_GPe;
             g_STN_GPe*g_GPe_STN 1.0]
@@ -22,8 +25,7 @@ a = AdjMatrixfromLinearNeuroGraph(g)
 # I am not sure how to test that the two adjacency matrices are equal
 @test isequal(a,adj_matrix)
 
-connector = [s.x for s in sys]
-@named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connector)
+@named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connect)
 @named two_regions_gr = ODEfromGraph(g=g)
 
 @test typeof(two_regions) == ODESystem
