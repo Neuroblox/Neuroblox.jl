@@ -10,3 +10,5 @@ using SafeTestsets
 @time @safetestset "ODE from Graph and simulate" begin include("graph_to_dataframe.jl") end
 @time @safetestset "Learning Tests" begin include("learning.jl") end
 @time @safetestset "Control Tests" begin include("controllers.jl") end
+@time @safetestset "Bayesian Fitting Tests" begin include("bayesian_fitting.jl") end
+
