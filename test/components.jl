@@ -36,7 +36,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!,"GPi₊x(t)"][4] ≈ 0.9785615009584057
+@test sol[!,"GPi₊x(t)"][4] ≈ 0.9862056391119574
 
 """
 thetaneuron.jl test
