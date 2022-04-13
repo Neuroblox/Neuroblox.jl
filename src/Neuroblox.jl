@@ -51,7 +51,7 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=conn
        adj = adj_matrix .* connector
        eqs = []
        for region_num in 1:length(sys)
-              push!(eqs, sys[region_num].jcn ~ sum(adj[region_num]))
+              push!(eqs, sys[region_num].jcn ~ sum(adj[region_num,:]))
        end
        return @named Circuit = ODESystem(eqs, systems = sys)
 end
