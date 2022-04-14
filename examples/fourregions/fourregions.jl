@@ -22,7 +22,7 @@ begin
     # instantiate, i.e. make sure that all packages are downloaded
     Pkg.instantiate()
 	Pkg.add("Plots")
-	Pkg.add(path=joinpath(@__DIR__, "..", "Neuroblox.jl"))
+	Pkg.add(path=joinpath(@__DIR__, "..", "..", "..", "Neuroblox.jl"))
 	Pkg.add(["Graphs","MetaGraphs"])
 	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, Graphs, MetaGraphs, OrdinaryDiffEq
@@ -63,14 +63,14 @@ adj = AdjMatrixfromLinearNeuroGraph(g)
 # ╔═╡ 12e9b29e-48ac-4cad-b732-c08f9ecf03e9
 @named four_regions_gr = ODEfromGraph(g=g)
 
+# ╔═╡ 477619d7-4c2a-4b95-8934-c8efd810b67b
+Circuit_ss = structural_simplify(four_regions_gr)
+
 # ╔═╡ 6081c9f0-6272-4127-9825-547814132e86
 sim_dur = 10.0 # Simulate for 10 Seconds
 
 # ╔═╡ 85bf2521-ffb0-42ed-9e3a-fe7b56805c23
-begin
-	Circuit_ss = structural_simplify(four_regions_gr)
-	prob = ODEProblem(Circuit_ss, [], sim_dur, [])
-end
+prob = ODAEProblem(Circuit_ss, [], sim_dur, [])
 
 # ╔═╡ 687da2ca-392b-4357-ba17-dec7ce5cd7b8
 Circuit_ss.ps
@@ -127,6 +127,7 @@ end
 # ╠═72ee87b4-34c5-4252-9c1d-af0c7d30a6dc
 # ╠═13566bad-0da0-40b4-831d-0cbd1de31b13
 # ╠═12e9b29e-48ac-4cad-b732-c08f9ecf03e9
+# ╠═477619d7-4c2a-4b95-8934-c8efd810b67b
 # ╠═6081c9f0-6272-4127-9825-547814132e86
 # ╠═85bf2521-ffb0-42ed-9e3a-fe7b56805c23
 # ╠═687da2ca-392b-4357-ba17-dec7ce5cd7b8
