@@ -38,7 +38,7 @@ end
 
 # ╔═╡ 696655d0-0f58-44d6-84a6-1142ad5e1021
 begin
-	@parameters C_1=2.0 C_2=1.0 C_3=1.0
+	@parameters C_1=2.0 C_2=1.0 C_3=1.0 C_4=1.0 C_5=1.0 C_6=1.0 C_7=1.0 C_8=1.0
 end
 
 # ╔═╡ 72ee87b4-34c5-4252-9c1d-af0c7d30a6dc
@@ -46,15 +46,36 @@ begin
 	g = LinearNeuroGraph(MetaDiGraph())
 	add_blox!(g,Str)
 	add_blox!(g,GPe)
-	add_blox!(g,STN)
+	# Changed the order of the blox to match the order they are named for clarity on the adjacency matrix
 	add_blox!(g,GPi)
-	add_edge!(g,3,1,:weight,C_1)
-	add_edge!(g,4,2,:weight,C_1)
-	add_edge!(g,1,2,:weight,C_2)
-	add_edge!(g,2,1,:weight,C_2)
-	add_edge!(g,3,4,:weight,C_2)
-	add_edge!(g,1,3,:weight,C_3)
-	add_edge!(g,2,4,:weight,C_3)
+	add_blox!(g,STN)
+
+	#add_edge!(g,3,1,:weight,C_1) # GPi to STR? Should not exist, removed	
+	#add_edge!(g,2,1,:weight,C_2) # GPe to STR? Should not exist, removed
+	#add_edge!(g,3,4,:weight,C_2) # GPi to STN? Should not exist, removed
+	
+	# C_1 and C_2 should both inhibitory
+	add_edge!(g,1,3,:weight,C_1)  # STR to GPi 
+	add_edge!(g,1,2,:weight,C_2)  # STR to GPe 
+
+	# C_3 should be inhibitory
+	add_edge!(g,2,4,:weight,C_3)  # GPe to STN 
+	
+	# add self-inhibition of GPe, C_4 should be inhibitory
+	add_edge!(g,2,2,:weight,C_4)  # GPe to GPe
+	
+	# add GPe to GPi connection, C_5 should be inhibitory
+	add_edge!(g,2,3,:weight,C_5) # GPe to GPi
+	
+	# add STN to GPi connection, C_6 should be excitatory
+	add_edge!(g,4,3,:weight,C_6) # STN to GPi
+	
+	# C_7 should be excitatory
+	add_edge!(g,4,2,:weight,C_7)  # STN to GPe 
+
+	
+	# There should be no inputs to the Striatum from GPe, GPi, or STN. However, GPi `  connects to the Thalamus, then to the Cortex, then back to the Striatum, so let's create a "connection" from GPi to STR to close this loop and play around with mixed blox types. This could be net excitatory or net inhibitory depending on the circumstances
+	add_edge!(g,3,1,:weight,C_8) # GPi to STR 
 end
 
 # ╔═╡ 13566bad-0da0-40b4-831d-0cbd1de31b13
@@ -91,6 +112,11 @@ begin
 	para2[1] = (c1-5000)/1000
 	para2[2] = (c2-5000)/1000
 	para2[3] = (c3-5000)/1000
+	para2[4] = (c4-5000)/1000
+	para2[5] = (c5-5000)/1000
+	para2[6] = (c6-5000)/1000
+	para2[7] = (c7-5000)/1000
+	para2[8] = (c8-5000)/1000
 	prob2 = remake(prob; p=para2)
 	sol = solve(prob2,Tsit5())
 end
