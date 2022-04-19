@@ -38,7 +38,7 @@ end
 
 # ╔═╡ 696655d0-0f58-44d6-84a6-1142ad5e1021
 begin
-	@parameters C_1=2.0 C_2=1.0 C_3=1.0 C_4=1.0 C_5=1.0 C_6=1.0 C_7=1.0 C_8=1.0
+	@parameters C_1=2.1 C_2=1.1 C_3=1.11 C_4=1.111 C_5=1.1111 C_6=1.11111 C_7=1.2 C_8=1.3
 end
 
 # ╔═╡ 72ee87b4-34c5-4252-9c1d-af0c7d30a6dc
@@ -115,14 +115,14 @@ $(@bind c8 html"<input type=range min=0 max=10000>")
 # ╔═╡ 4acd166f-7d6d-4724-8232-63a4d839ec6a
 begin
 	para2 = prob.p
-	para2[1] = (c1-5000)/1000
-	para2[2] = (c2-5000)/1000
+	para2[2] = (c1-5000)/1000
+	para2[1] = (c2-5000)/1000
 	para2[3] = (c3-5000)/1000
-	para2[4] = (c4-5000)/1000
-	para2[5] = (c5-5000)/1000
-	para2[6] = (c6-5000)/1000
+	para2[5] = (c4-5000)/1000
+	para2[4] = (c5-5000)/1000
+	para2[8] = (c6-5000)/1000
 	para2[7] = (c7-5000)/1000
-	para2[8] = (c8-5000)/1000
+	para2[6] = (c8-5000)/1000
 	prob2 = remake(prob; p=para2)
 	sol = solve(prob2,Tsit5())
 end
