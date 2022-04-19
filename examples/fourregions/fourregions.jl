@@ -32,8 +32,8 @@ end
 begin
 	@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
 	@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-	@named GPi = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-	@named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1.0)
+	@named GPi = harmonic_oscillator(ω=18*2*π, ζ=1, k=(18*2*π)^2, h=0.1)
+	@named STN = harmonic_oscillator(ω=18*2*π, ζ=1, k=(18*2*π)^2, h=1.0)
 end
 
 # ╔═╡ 696655d0-0f58-44d6-84a6-1142ad5e1021
@@ -50,11 +50,11 @@ begin
 	add_blox!(g,GPi)
 	add_blox!(g,STN)
 
-	#add_edge!(g,3,1,:weight,C_1) # GPi to STR? Should not exist, removed	
-	#add_edge!(g,2,1,:weight,C_2) # GPe to STR? Should not exist, removed
-	#add_edge!(g,3,4,:weight,C_2) # GPi to STN? Should not exist, removed
+	#add_edge!(g,3,1,:weight,C_1) # GPi to STR should not exist, removed	
+	#add_edge!(g,2,1,:weight,C_2) # GPe to STR should not exist, removed
+	#add_edge!(g,3,4,:weight,C_2) # GPi to STN should not exist, removed
 	
-	# C_1 and C_2 should both inhibitory
+	# C_1 and C_2 should both be inhibitory
 	add_edge!(g,1,3,:weight,C_1)  # STR to GPi 
 	add_edge!(g,1,2,:weight,C_2)  # STR to GPe 
 
@@ -73,8 +73,9 @@ begin
 	# C_7 should be excitatory
 	add_edge!(g,4,2,:weight,C_7)  # STN to GPe 
 
-	
-	# There should be no inputs to the Striatum from GPe, GPi, or STN. However, GPi `  connects to the Thalamus, then to the Cortex, then back to the Striatum, so let's create a "connection" from GPi to STR to close this loop and play around with mixed blox types. This could be net excitatory or net inhibitory depending on the circumstances
+	# There should be no inputs to the Striatum from GPe, GPi, or STN. 
+	# However, GPi  connects Thalamus->Cortex->Striatum, so let's create a "connection" from GPi to STR to close this loop and play around with mixed blox types. 
+	# This could be net excitatory or net inhibitory depending on the circumstances
 	add_edge!(g,3,1,:weight,C_8) # GPi to STR 
 end
 
@@ -104,6 +105,11 @@ md"""
 $(@bind c1 html"<input type=range min=0 max=10000>")
 $(@bind c2 html"<input type=range min=0 max=10000>")
 $(@bind c3 html"<input type=range min=0 max=10000>")
+$(@bind c4 html"<input type=range min=0 max=10000>")
+$(@bind c5 html"<input type=range min=0 max=10000>")
+$(@bind c6 html"<input type=range min=0 max=10000>")
+$(@bind c7 html"<input type=range min=0 max=10000>")
+$(@bind c8 html"<input type=range min=0 max=10000>")
 """
 
 # ╔═╡ 4acd166f-7d6d-4724-8232-63a4d839ec6a
