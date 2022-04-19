@@ -59,7 +59,7 @@ modelEMn = fitvpEMn(xn,yn)
 Turing.setadbackend(:tracker)
 advi = ADVI(10, 1000)
 setchunksize(8)
-q = vi(modelEM, advi)
+q = vi(modelEMn, advi)
 
 # sampling
 z = rand(q, 1000)
