@@ -66,4 +66,4 @@ z = rand(q, 1000)
 avg = vec(mean(z; dims = 2))
 
 @test 0.5<avg[1]<1.5 # testing θ
-@test 0.05<avg[2]<0.15 # tesing ϕ
+@test 0.05<avg[2]<0.25 # tesing ϕ
