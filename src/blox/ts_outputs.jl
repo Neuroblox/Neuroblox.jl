@@ -8,8 +8,11 @@ phase_inter has the following parameters:
 and returns:
     an function that returns an interpolated phase for t in range
 """
-function phase_inter(phase_range,phase_data_phase)
-    return CubicSplineInterpolation(phase_range,phase_data_phase)
+function phase_inter(phase_range,phase_data)
+    if typeof(phase_data) == Matrix{Float64}
+        return CubicSplineInterpolation(phase_range,vec(phase_data))
+    end
+    return CubicSplineInterpolation(phase_range,phase_data)
 end
 
 """
