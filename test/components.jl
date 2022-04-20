@@ -193,3 +193,13 @@ prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 @test length(sol.t)==201
 
+"""
+ts_outputs.jl test
+
+Test for time-series output tests.
+"""
+phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
+phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
+phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
+@test phase_cos_out(0.1,2.5)≈0.9689124217106447
+@test phase_sin_out(0.1,2.5)≈0.24740395925452294
