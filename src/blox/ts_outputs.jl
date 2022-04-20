@@ -27,7 +27,9 @@ and returns:
 Usage:
     phase_int = phase_inter(0:0.1:50,phase_data)
     phase_out(t) = phase_cos_blox(0.1,t,phase_int)
-    # which is now a function of time and can be used in an input blox
+    which is now a function of time and can be used in an input blox
+    you can also use the dot operator to calculate time-series
+    signal = phase_out.(collect(0:0.01:50))
 """
 function phase_cos_blox(ω,t,phase_inter::F) where F
     if (t in phase_inter.itp.ranges[1])
@@ -50,7 +52,9 @@ and returns:
 Usage:
     phase_int = phase_inter(0:0.1:50,phase_data)
     phase_out(t) = phase_sin_blox(0.1,t,phase_int)
-    # which is now a function of time and can be used in an input blox
+    which is now a function of time and can be used in an input blox
+    you can also use the dot operator to calculate time-series
+    signal = phase_out.(collect(0:0.01:50))
 """
 function phase_sin_blox(ω,t,phase_inter::F) where F
     if (t in phase_inter.itp.ranges[1])
