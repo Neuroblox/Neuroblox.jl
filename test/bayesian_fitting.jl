@@ -7,7 +7,7 @@ using Tracker
 
 @named VdP = van_der_pol()
 
-prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
+prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 10.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 time = sol.t
 dt = time[2]-time[1]
@@ -26,7 +26,7 @@ end
 
 Turing.setadbackend(:forwarddiff)
 modelEM = fitvpEM(x,y)
-chain = Turing.sample(modelEM,NUTS(0.65),500)
+chain = Turing.sample(modelEM,NUTS(0.65),200)
 @test 0.5<mean(chain[:θ])<1.5
 @test 0.05<mean(chain[:ϕ])<0.15
 
@@ -62,7 +62,7 @@ setchunksize(8)
 q = vi(modelEMn, advi)
 
 # sampling
-z = rand(q, 1000)
+z = rand(q, 500)
 avg = vec(mean(z; dims = 2))
 
 @test 0.01<avg[1]<3.0 # testing θ
