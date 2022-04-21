@@ -38,6 +38,39 @@ mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
 @test sol[!,"GPi₊x(t)"][4] ≈ 0.9862056391119574
 
+
+"""
+Components Test for Cortical-Subcortical Jansen-Rit blox
+    Cortical: PFC (Just Pyramidal Cells (PY), no Exc. Interneurons or Inh. Interneurons)
+    Subcortical: Basal Ganglia (GPe, STN, GPi) + Thalamus
+
+"""
+
+# Create Regions
+@named GPe       = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
+
+# Connect Regions through Adjacency Matrix
+blox = [GPe, STN, GPi, Thalamus, PFC]
+sys = [s.odesystem for s in blox]
+connect = [s.connector for s in blox]
+
+@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+
+adj_matrix_lin = [0 C_BG_Th 0 0 0;
+            -0.5*C_BG_Th 0 0 0 C_Cor_BG_Th;
+            -0.5*C_BG_Th C_BG_Th 0 0 0;
+            0 0 -0.5*C_BG_Th 0 0;
+            0 0 0 C_BG_Th_Cor 0]
+
+@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
+sim_dur = 10.0 # Simulate for 10 Seconds
+mysys = structural_simplify(CBGTC_Circuit_lin)
+sol = simulate(mysys, [], (0.0, sim_dur), [])
+
 """
 thetaneuron.jl test
 
