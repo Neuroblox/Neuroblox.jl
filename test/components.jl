@@ -203,3 +203,28 @@ phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
 phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
 @test phase_cos_out(0.1,2.5)≈0.9689124217106447
 @test phase_sin_out(0.1,2.5)≈0.24740395925452294
+
+# now test how to connect this time series to a neural mass blox
+@named Str2 = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+@parameters phase_input = 0
+
+sys = [Str2.odesystem]
+eqs = [sys[1].jcn ~ phase_input]
+@named phase_system = ODESystem(eqs,systems=sys)
+phase_system_simpl = structural_simplify(phase_system)
+phase_ode = ODEProblem(phase_system_simpl,[],(0,3.0),[])
+
+# create callback functions
+# we always want to update phase_input to be our phase_cos_out(t)
+condition = function (u,t,integrator)
+    true
+end
+
+function affect!(integrator)
+    integrator.p[1] = phase_cos_out(10*pi,integrator.t)
+end
+
+cb = DiscreteCallback(condition,affect!)
+
+sol = solve(phase_ode,Tsit5(),callback=cb)
+@test sol[2,:][5] ≈ 13.49728948607267
