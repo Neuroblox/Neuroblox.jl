@@ -26,8 +26,11 @@ abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 abstract type JansenRitBlox <: NeuralMassBlox end
 abstract type NextGenerationBlox <: NeuralMassBlox end
 
+abstract type DynamicSignalBlox <: Blox end
+abstract type PhaseSignalBlox <: DynamicSignalBlox end
+abstract type TSfromPSDBlox <: DynamicSignalBlox end
+
 abstract type MathBlox <: Blox end
-abstract type DynamicInputBlox <: Blox end
 abstract type FilterBlox <: Blox end
 abstract type ControlBlox <: Blox end
 
