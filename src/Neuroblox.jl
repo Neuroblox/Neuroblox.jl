@@ -13,6 +13,7 @@ import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
+using Interpolations
 
 # define abstract types for Neuroblox
 abstract type Blox end
@@ -25,8 +26,11 @@ abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 abstract type JansenRitBlox <: NeuralMassBlox end
 abstract type NextGenerationBlox <: NeuralMassBlox end
 
+abstract type DynamicSignalBlox <: Blox end
+abstract type PhaseSignalBlox <: DynamicSignalBlox end
+abstract type TSfromPSDBlox <: DynamicSignalBlox end
+
 abstract type MathBlox <: Blox end
-abstract type DynamicInputBlox <: Blox end
 abstract type FilterBlox <: Blox end
 abstract type ControlBlox <: Blox end
 
@@ -47,6 +51,7 @@ include("blox/theta_neuron.jl")
 include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
+include("blox/ts_outputs.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
        adj = adj_matrix .* connector
@@ -72,6 +77,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
 end
 
 export harmonic_oscillator, jansen_rit, cmc, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml

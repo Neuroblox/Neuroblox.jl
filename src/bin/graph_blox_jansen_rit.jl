@@ -1,28 +1,34 @@
 using Neuroblox, Graphs, MetaGraphs
 
-@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-@named GPi = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1.0)
+# Create Regions
+@named GPe       = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
 
 # Connect Regions through Adjacency Matrix
-@parameters C_Cor=2.0
+@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 # Create Graph
 g = LinearNeuroGraph(MetaDiGraph())
-add_blox!(g,Str)
 add_blox!(g,GPe)
 add_blox!(g,STN)
 add_blox!(g,GPi)
-add_edge!(g,3,1,:weight,0.5*C_Cor)
-add_edge!(g,4,1,:weight,0.5*C_Cor)
-add_edge!(g,1,2,:weight,0.1*C_Cor)
-add_edge!(g,3,4,:weight,0.1*C_Cor)
-add_edge!(g,1,3,:weight,0.1*C_Cor)
-add_edge!(g,2,4,:weight,0.1*C_Cor)
+add_blox!(g,Thalamus)
+add_blox!(g,PFC)
 
-@named four_regions_gr = ODEfromGraph(g=g)
+add_edge!(g,1,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,1,2,:weight, C_BG_Th)
+add_edge!(g,2,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,2,5,:weight, C_Cor_BG_Th)
+add_edge!(g,3,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,3,2,:weight, C_BG_Th)
+add_edge!(g,4,3,:weight, -0.5*C_BG_Th)
+add_edge!(g,4,4,:weight, C_BG_Th_Cor)
 
+
+@named five_regions_gr = ODEfromGraph(g=g)
 sim_dur = 10.0 # Simulate for 10 Seconds
 
-# returns dataframe with time series for 2*4 outputs
-sol = simulate(structural_simplify(four_regions_gr), [], (0.0, sim_dur), [])
+# returns dataframe with time series for 2*5 outputs
+sol = simulate(structural_simplify(five_regions_gr), [], (0.0, sim_dur), [])

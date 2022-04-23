@@ -47,6 +47,39 @@ sol = simulate(region, [], (0.0, 10.0), [])
 @test sigmoid(sol[!,"x3(t)"][end],2/3) + sigmoid(sol[!,"x4(t)"][end],2/3) == 1.9784137309018637
 
 
+
+"""
+Components Test for Cortical-Subcortical Jansen-Rit blox
+    Cortical: PFC (Just Pyramidal Cells (PY), no Exc. Interneurons or Inh. Interneurons)
+    Subcortical: Basal Ganglia (GPe, STN, GPi) + Thalamus
+
+"""
+
+# Create Regions
+@named GPe       = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
+
+# Connect Regions through Adjacency Matrix
+blox = [GPe, STN, GPi, Thalamus, PFC]
+sys = [s.odesystem for s in blox]
+connect = [s.connector for s in blox]
+
+@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+
+adj_matrix_lin = [0 C_BG_Th 0 0 0;
+            -0.5*C_BG_Th 0 0 0 C_Cor_BG_Th;
+            -0.5*C_BG_Th C_BG_Th 0 0 0;
+            0 0 -0.5*C_BG_Th 0 0;
+            0 0 0 C_BG_Th_Cor 0]
+
+@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
+sim_dur = 10.0 # Simulate for 10 Seconds
+mysys = structural_simplify(CBGTC_Circuit_lin)
+sol = simulate(mysys, [], (0.0, sim_dur), [])
+
 """
 thetaneuron.jl test
 
@@ -202,3 +235,38 @@ prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 @test length(sol.t)==201
 
+"""
+ts_outputs.jl test
+
+Test for time-series output tests.
+"""
+phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
+phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
+phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
+@test phase_cos_out(0.1,2.5)≈0.9689124217106447
+@test phase_sin_out(0.1,2.5)≈0.24740395925452294
+
+# now test how to connect this time series to a neural mass blox
+@named Str2 = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+@parameters phase_input = 0
+
+sys = [Str2.odesystem]
+eqs = [sys[1].jcn ~ phase_input]
+@named phase_system = ODESystem(eqs,systems=sys)
+phase_system_simpl = structural_simplify(phase_system)
+phase_ode = ODEProblem(phase_system_simpl,[],(0,3.0),[])
+
+# create callback functions
+# we always want to update phase_input to be our phase_cos_out(t)
+condition = function (u,t,integrator)
+    true
+end
+
+function affect!(integrator)
+    integrator.p[1] = phase_cos_out(10*pi,integrator.t)
+end
+
+cb = DiscreteCallback(condition,affect!)
+
+sol = solve(phase_ode,Tsit5(),callback=cb)
+@test sol[2,:][5] ≈ 13.49728948607267
