@@ -44,6 +44,10 @@ end
 Define canonical micro circuit according to the implementation in SPM12. Closesd representation is given in Bastos et al. 2015 
 "A DCM study of spectral asymmetries in feedforward and feedback connections between visual areas V1 and V4 in the monkey"
 Parameters values are taken from in this study.
+
+TODO: 
+- add the baseline subtraction to center firing rate at 0.
+- connector is treated as the variable that represents the LFP, i.e. a measurement, not the variable that is used to connect blox. This needs to be re-designed.
 """
 mutable struct cmc <: JansenRitBlox   # canonical micro circuit blox
     τ1::Num
