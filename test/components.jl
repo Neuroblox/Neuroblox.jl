@@ -6,14 +6,14 @@ neuralmass.jl test
 """
 
 # Create Regions
-@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-@named STN = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
-@named Th  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
-@named EI  = jansen_rit(τ=0.01, H=20, λ=5, r=5)
-@named PY  = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
-@named II  = jansen_rit(τ=2.0, H=60, λ=5, r=5)
+@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
+@named STN = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = jansen_ritSC(τ=0.014, H=20, λ=400, r=0.1)
+@named Th  = jansen_ritSC(τ=0.002, H=10, λ=20, r=5)
+@named EI  = jansen_ritSC(τ=0.01, H=20, λ=5, r=5)
+@named PY  = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
+@named II  = jansen_ritSC(τ=2.0, H=60, λ=5, r=5)
 
 # Connect Regions through Adjacency Matrix
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
@@ -60,11 +60,11 @@ Components Test for Cortical-Subcortical Jansen-Rit blox
 """
 
 # Create Regions
-@named GPe       = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-@named STN       = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi       = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
-@named Thalamus  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
-@named PFC       = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
+@named GPe       = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = jansen_ritC(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = jansen_ritSC(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
 
 # Connect Regions through Adjacency Matrix
 blox = [GPe, STN, GPi, Thalamus, PFC]
@@ -249,7 +249,7 @@ phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
 @test phase_sin_out(0.1,2.5)≈0.24740395925452294
 
 # now test how to connect this time series to a neural mass blox
-@named Str2 = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+@named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
 @parameters phase_input = 0
 
 sys = [Str2.odesystem]

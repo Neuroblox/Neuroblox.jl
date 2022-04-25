@@ -1,11 +1,11 @@
 using Neuroblox, Graphs, MetaGraphs
 
 # Create Regions
-@named GPe       = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-@named STN       = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi       = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
-@named Thalamus  = jansen_rit(τ=0.002, H=10, λ=20, r=5)
-@named PFC       = jansen_rit(τ=0.001, H=20, λ=5, r=0.15)
+@named GPe       = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = jansen_ritC(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = jansen_ritC(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = jansen_ritC(τ=0.001, H=20, λ=5, r=0.15)
 
 # Connect Regions through Adjacency Matrix
 @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5

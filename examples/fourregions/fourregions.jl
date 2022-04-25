@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.2
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -30,8 +30,8 @@ end
 
 # ╔═╡ f5dd2f05-3e53-49fb-9e38-2e570d89979a
 begin
-	@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
-	@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+	@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
+	@named GPe = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
 	@named GPi = harmonic_oscillator(ω=18*2*π, ζ=1, k=(18*2*π)^2, h=0.1)
 	@named STN = harmonic_oscillator(ω=18*2*π, ζ=1, k=(18*2*π)^2, h=1.0)
 end
@@ -124,7 +124,7 @@ begin
 	para2[7] = (c7-5000)/1000
 	para2[6] = (c8-5000)/1000
 	prob2 = remake(prob; p=para2)
-	sol = solve(prob2,Tsit5())
+	sol = solve(prob2,Rodas4())
 end
 
 # ╔═╡ 1ef9cf88-2b14-4c05-ad45-c06c99b83264
