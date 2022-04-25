@@ -23,7 +23,8 @@ abstract type NeuronBlox <: Blox end
 
 abstract type NeuralMassBlox <: Blox end
 abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
-abstract type JansenRitBlox <: NeuralMassBlox end
+abstract type JansenRitCBlox <: NeuralMassBlox end
+abstract type JansenRitSCBlox <: NeuralMassBlox end
 abstract type NextGenerationBlox <: NeuralMassBlox end
 
 abstract type DynamicSignalBlox <: Blox end
@@ -76,7 +77,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
        return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_rit, cmc, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_ritC ,jansen_ritSC, cmc, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
