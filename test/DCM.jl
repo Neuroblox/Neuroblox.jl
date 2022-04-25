@@ -4,7 +4,7 @@ using MAT
 
 ### DEFINE SEVERAL VARIABLES AND PRIORS TO GET STARTED ###
 
-vars = matread("spectralDCM_demodata.mat");
+vars = matread(joinpath(@__DIR__,"spectralDCM_demodata.mat"));
 y_csd = vars["csd"];
 w = vec(vars["M_nosparse"]["Hz"]);
 A = vars["M_nosparse"]["pE"]["A"];    # see table 1 in friston2014 for values of priors 
