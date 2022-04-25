@@ -47,6 +47,7 @@ include("control/ARVController.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
+include("blox/canonicalmicrocircuit.jl")
 include("blox/theta_neuron.jl")
 include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
@@ -54,29 +55,29 @@ include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 
 function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
-       adj = adj_matrix .* connector
-       eqs = []
-       for region_num in 1:length(sys)
-              push!(eqs, sys[region_num].jcn ~ sum(adj[region_num,:]))
-       end
-       return @named Circuit = ODESystem(eqs, systems = sys)
+    adj = adj_matrix .* connector
+    eqs = []
+    for region_num in 1:length(sys)
+       push!(eqs, sys[region_num].jcn ~ sum(adj[:, region_num]))
+    end
+    return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
 function ODEfromGraph(;name, g::LinearNeuroGraph)
-       blox = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
-       sys = [s.odesystem for s in blox]
-       connector = [s.connector for s in blox]
-       adj = AdjMatrixfromLinearNeuroGraph(g)
-       return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
+    blox = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
+    sys = [s.odesystem for s in blox]
+    connector = [s.connector for s in blox]
+    adj = AdjMatrixfromLinearNeuroGraph(g)
+    return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
-       prob = ODEProblem(sys, u0, timespan, p)
-       sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
-       return DataFrame(sol)
+    prob = ODEProblem(sys, u0, timespan, p)
+    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
+    return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_rit, cmc, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_rit, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!

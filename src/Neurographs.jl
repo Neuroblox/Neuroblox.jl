@@ -15,9 +15,9 @@ function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
         d = dst(edge)
         myadj[s,d] = get_prop(g.graph, edge, :weight)
     end
-    myadj
+    return myadj
 end
 
 function add_blox!(g::AbstractNeuroGraph,blox)
-    add_vertex!(g,:blox, blox)
+    add_vertex!(g, :blox, blox)
 end

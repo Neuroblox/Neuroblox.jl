@@ -67,7 +67,7 @@ tol = 0.5
 bandpassfilter test
 Compute power spectrum before and after filtering the data.
 """
-data = matread("lfp_test_data.mat")
+data = matread(joinpath(@__DIR__, "lfp_test_data.mat"))
 data = data["lfp"]
 f, pxx = Neuroblox.powerspectrum(data, length(data), 1000, "periodogram", hanning)
 
@@ -83,7 +83,7 @@ f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "peri
 hilberttransform test
 the imaginary part of the transformed data must sum to approximately zero
 """
-data = matread("lfp_test_data_phase.mat")
+data = matread(joinpath(@__DIR__, "lfp_test_data_phase.mat"))
 data = data["lfp_data"]
 transformed_signal = Neuroblox.hilberttransform(data)
 
@@ -94,7 +94,7 @@ tol = 0.001
 phaseangle test
 the imaginary part of the transformed data must sum to approximately zero
 """
-data = matread("lfp_test_data_phase.mat")
+data = matread(joinpath(@__DIR__, "lfp_test_data_phase.mat"))
 data = data["lfp_data"]
 phase = Neuroblox.phaseangle(data)
 
@@ -105,7 +105,7 @@ phase = Neuroblox.phaseangle(data)
 complexwavelet test
 Wavelets must have values near zero at both ends, as well as a mean value of zero
 """
-data = matread("lfp_test_data.mat")
+data = matread(joinpath(@__DIR__, "lfp_test_data.mat"))
 wavelets = Neuroblox.complexwavelet(data["lfp"], 0.001, 2, 60)
 tol = 0.2
 @test real(wavelets[1][1]) < tol

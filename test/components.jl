@@ -36,23 +36,27 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!, "GPi₊x(t)"][4] ≈ 0.9862056391119574
+@test sol[!, "GPi₊x(t)"][4] ≈ 0.987204228282147
 
 """
-Canonical micro circuit test 
+Canonical micro circuit tests 
 """
-@named region = cmc()
+
+@named region = cmc_singleregion()
 region = structural_simplify(region.odesystem)
-sol = simulate(region, [], (0.0, 10.0), []) 
-@test sigmoid(sol[!,"x3(t)"][end],2/3) + sigmoid(sol[!,"x4(t)"][end],2/3) == 1.9784137309018637
+sol = simulate(region, [], (0.0, 10.0), [])
+@test sol[!,"x3(t)"][end] + sol[!,"x4(t)"][end] ≈ -5.159427948410745
 
-
+# canonical micro circuit based on single Jansen-Rit blox
+@named singleregion = cmc()
+singleregion = structural_simplify(singleregion.odesystem)
+sol = simulate(singleregion, [], (0.0, 10.0), [])
+@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159427948410745
 
 """
 Components Test for Cortical-Subcortical Jansen-Rit blox
     Cortical: PFC (Just Pyramidal Cells (PY), no Exc. Interneurons or Inh. Interneurons)
     Subcortical: Basal Ganglia (GPe, STN, GPi) + Thalamus
-
 """
 
 # Create Regions
@@ -91,7 +95,7 @@ to a negative amplitude.
 
 # Generate Theta Network
 network = [] 
-N = 500
+N = 50
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
     @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
@@ -104,13 +108,11 @@ n = 3
 a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2*n))
 @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
 
-sim_dur = 50.0 # Simulate for 10 Seconds
+sim_dur = 10.0 # Simulate for 10 Seconds
 sol = Neuroblox.simulate(structural_simplify(theta_circuit), [], (0.0, sim_dur), [])
 R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
 
-@test Statistics.mean(R) < 0.6
-@test Statistics.mean(R) > -0.6
-
+@test abs(Statistics.mean(R)) < 0.6
 
 """
 qif_neuron.jl and synaptic_network.jl test
@@ -233,7 +235,7 @@ Test for van der Pol generator.
 
 prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
-@test length(sol.t)==201
+@test sol.retcode == :Success
 
 """
 ts_outputs.jl test
