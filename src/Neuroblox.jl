@@ -78,7 +78,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
     return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_rit, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_rit, jansen_ritC, jansen_ritSC, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!

@@ -182,27 +182,27 @@ network. It then simulates their activity.
 """
 
 # generate if_neurons 
-    # parameters 
-    Nrns = 6
-    E_syn=zeros(1,Nrns);	 #synaptic reversal potentials is property of presynaptic neuron
-    E_syn[6] =-70;
+# parameters 
+Nrns = 6
+E_syn=zeros(1,Nrns);	 #synaptic reversal potentials is property of presynaptic neuron
+E_syn[6] =-70;
 
-    G_syn = 0.4*ones(1,Nrns); #synaptic conductance is property of presynaptic neuron
-    G_syn[6] = 5;
-  
-    I_in = zeros(Nrns); #input currents
-    for ii = 1:5
-        I_in[ii] = 25*rand();
-    end
-    I_in[6] = 0.85;
-    freq = zeros(Nrns);
-    freq[6] = 5;
+G_syn = 0.4*ones(1,Nrns); #synaptic conductance is property of presynaptic neuron
+G_syn[6] = 5;
 
-    phase = zeros(Nrns);
-    phase[6] = pi
-     
-    τ = 5*ones(Nrns); # postsynaptic potential time constants
-    τ[6] = 70;
+I_in = zeros(Nrns); #input currents
+for ii = 1:5
+    I_in[ii] = 25*rand();
+end
+I_in[6] = 0.85;
+freq = zeros(Nrns);
+freq[6] = 5;
+
+phase = zeros(Nrns);
+phase[6] = pi
+    
+τ = 5*ones(Nrns); # postsynaptic potential time constants
+τ[6] = 70;
 
 nrn_network=[]
 for ii = 1:Nrns

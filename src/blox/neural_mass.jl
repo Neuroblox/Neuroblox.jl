@@ -68,7 +68,7 @@ TODO:
 - connector is treated as the variable that represents the LFP, i.e. a measurement, not the variable that is used to connect blox. This needs to be re-designed.
 !!! Deprecated. Remove soon!!!
 """
-mutable struct cmc_singleregion <: JansenRitBlox   # canonical micro circuit blox
+mutable struct cmc_singleregion <: JansenRitCBlox   # canonical micro circuit blox
     τ1::Num
     τ2::Num
     τ3::Num
