@@ -30,10 +30,10 @@ sol = simulate(structural_simplify(two_regions_gr), [], (0.0, sim_dur), [])
 jansen rit neural mass blox
 """
 
-@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
-@named STN = jansen_rit(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = jansen_rit(τ=0.014, H=20, λ=400, r=0.1)
+@named Str = jansen_ritSC(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = jansen_ritSC(τ=0.04, H=20, λ=400, r=0.1)
+@named STN = jansen_ritSC(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = jansen_ritSC(τ=0.014, H=20, λ=400, r=0.1)
 
 # Connect Regions through Adjacency Matrix
 @parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
