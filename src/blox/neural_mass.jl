@@ -20,7 +20,7 @@ mutable struct harmonic_oscillator <: HarmonicOscillatorBlox
 end
 
 # This is for later to connect the icons to the different blox
-#function gui.icon(Type::HarmonicOscillatorBlox)
+# function gui.icon(Type::HarmonicOscillatorBlox)
 #    return HarmonicOscillatorImage
 
 mutable struct jansen_rit <: JansenRitBlox
@@ -37,6 +37,49 @@ mutable struct jansen_rit <: JansenRitBlox
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(τ, H, λ, r, odesys.x, odesys)
+    end
+end
+
+"""
+Define canonical micro circuit according to the implementation in SPM12. Closesd representation is given in Bastos et al. 2015 
+"A DCM study of spectral asymmetries in feedforward and feedback connections between visual areas V1 and V4 in the monkey"
+Parameters values are taken from in this study.
+
+TODO: 
+- add the baseline subtraction to center firing rate at 0.
+- connector is treated as the variable that represents the LFP, i.e. a measurement, not the variable that is used to connect blox. This needs to be re-designed.
+"""
+mutable struct cmc <: JansenRitBlox   # canonical micro circuit blox
+    τ1::Num
+    τ2::Num
+    τ3::Num
+    τ4::Num
+    a11::Num
+    a12::Num
+    a13::Num
+    a21::Num
+    a22::Num
+    a31::Num
+    a33::Num
+    a34::Num
+    a43::Num
+    a44::Num
+    connector::Num
+    odesystem::ODESystem
+    function cmc(;name, τ1=0.002, τ2=0.002, τ3=0.016, τ4=0.028, a11=-800.0, a12=-800.0, a13=-800.0, a21=800.0, a22=-800.0, a31=800.0, a33=800.0, a34=400.0, a43=400.0, a44=-200.0)
+        params = @parameters τ1=τ1 τ2=τ2 τ3=τ3 τ4=τ4
+        sts    = @variables x1(t)=1.0 x2(t)=1.0 x3(t)=1.0 x4(t)=1.0 y1(t)=1.0 y2(t)=1.0 y3(t)=1.0 y4(t)=1.0
+        σ(x)   = sigmoid(x, 2/3)   # slope parameter fixed, as in SPM12
+        eqs    = [D(x1) ~ y1 - 2/τ1*x1,           # spiny stellate
+                  D(y1) ~ -x1/τ1^2 + (a11*σ(x1) + a12*σ(x2) + a13*σ(x3))/τ1,
+                  D(x2) ~ y2 - 2/τ2*x2,           # inhibitory interneuron
+                  D(y2) ~ -x2/τ2^2 + (a21*σ(x1) + a22*σ(x2))/τ2,
+                  D(x3) ~ y3 - 2/τ3*x3,           # deep pyramidal
+                  D(y3) ~ -x3/τ3^2 + (a31*σ(x1) + a33*σ(x3) + a34*σ(x4))/τ3,
+                  D(x4) ~ y4 - 2/τ4*x4,           # supragranular pyramidal
+                  D(y4) ~ -x4/τ4^2 + (a43*σ(x3) + a44*σ(x4))/τ4]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(τ1, τ2, τ3, τ4, a11, a12, a13, a21, a22, a31, a33, a34, a43, a44, σ(odesys.x4) + σ(odesys.x3), odesys)
     end
 end
 

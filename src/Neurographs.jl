@@ -9,7 +9,7 @@ Graphs.add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
 Graphs.rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
 
 function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
-    myadj = map(Num,adjacency_matrix(g.graph))
+    myadj = map(Num, adjacency_matrix(g.graph))
     for edge in edges(g.graph)
         s = src(edge)
         d = dst(edge)

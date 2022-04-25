@@ -42,6 +42,7 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
+include("utilities/helperfunctions.jl")
 include("control/ARVController.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
@@ -75,12 +76,13 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
        return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_rit, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_rit, cmc, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ARVController
+export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes
 export simulate

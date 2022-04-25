@@ -36,7 +36,16 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!,"GPi₊x(t)"][4] ≈ 0.9862056391119574
+@test sol[!, "GPi₊x(t)"][4] ≈ 0.9862056391119574
+
+"""
+Canonical micro circuit test 
+"""
+@named region = cmc()
+region = structural_simplify(region.odesystem)
+sol = simulate(region, [], (0.0, 10.0), []) 
+@test sigmoid(sol[!,"x3(t)"][end],2/3) + sigmoid(sol[!,"x4(t)"][end],2/3) == 1.9784137309018637
+
 
 
 """
