@@ -37,7 +37,7 @@ end
 
 # ╔═╡ 41b807c3-c8b9-4f93-86f6-c066f99fdad1
 begin
-	@named Str2 = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
+	@named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
 	@parameters phase_input=0 ampl=1
 
 	sys = [Str2.odesystem]

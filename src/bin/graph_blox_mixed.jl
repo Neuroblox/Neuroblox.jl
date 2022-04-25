@@ -1,7 +1,7 @@
 using Neuroblox, Graphs, MetaGraphs
 
-@named Str = jansen_rit(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_rit(τ=0.04, H=20, λ=400, r=0.1)
+@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
 @named GPi = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
 @named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1.0)
 

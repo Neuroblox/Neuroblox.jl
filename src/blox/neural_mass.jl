@@ -23,14 +23,31 @@ end
 # function gui.icon(Type::HarmonicOscillatorBlox)
 #    return HarmonicOscillatorImage
 
-mutable struct jansen_rit <: JansenRitBlox
+mutable struct jansen_ritC <: JansenRitCBlox
     τ::Num
     H::Num
     λ::Num
     r::Num
     connector::Num
     odesystem::ODESystem
-    function jansen_rit(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+    function jansen_ritC(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+        params = @parameters τ=τ H=H λ=λ r=r
+        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
+        eqs    = [D(x) ~ y - ((2/τ)*x),
+                D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(τ, H, λ, r, odesys.x, odesys)
+    end
+end
+
+mutable struct jansen_ritSC <: JansenRitSCBlox
+    τ::Num
+    H::Num
+    λ::Num
+    r::Num
+    connector::Num
+    odesystem::ODESystem
+    function jansen_ritSC(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -49,7 +66,7 @@ TODO:
 - add the baseline subtraction to center firing rate at 0.
 - connector is treated as the variable that represents the LFP, i.e. a measurement, not the variable that is used to connect blox. This needs to be re-designed.
 """
-mutable struct cmc <: JansenRitBlox   # canonical micro circuit blox
+mutable struct cmc <: JansenRitCBlox   # canonical micro circuit blox
     τ1::Num
     τ2::Num
     τ3::Num
