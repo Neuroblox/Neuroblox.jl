@@ -44,134 +44,130 @@ begin
 end
 
 # ╔═╡ 9aa9ae2b-b8a0-463d-8e9e-b3339b25a99d
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+@parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
 
-# ╔═╡ fef8036a-f073-4473-9549-2b69ec644e8a
+# ╔═╡ f45de893-522a-4c0d-b1f0-9093623208ee
 begin
-	g = LinearNeuroGraph(MetaDiGraph())
-	add_blox!(g,Str)
-	add_blox!(g,GPe)
-	add_blox!(g,STN)
-	add_blox!(g,GPi)
-	add_blox!(g,Th)
-	add_blox!(g,EI)
-	add_blox!(g,PY)
-	add_blox!(g,II)
+	g7 = LinearNeuroGraph(MetaDiGraph())
+	add_blox!(g7,GPe)
+	add_blox!(g7,STN)
+	add_blox!(g7,GPi)
+	add_blox!(g7,Th)
+	add_blox!(g7,EI)
+	add_blox!(g7,PY)
+	add_blox!(g7,II)
 
-	add_edge!(g,2,1,:weight, -0.5*C_BG_Th)
-	add_edge!(g,2,2,:weight, -0.5*C_BG_Th)
-	add_edge!(g,2,3,:weight, C_BG_Th)
+	add_edge!(g7,1,1,:weight, -0.5*C_BG_Th)
+	add_edge!(g7,2,1,:weight, C_BG_Th)
 	
-	add_edge!(g,3,2,:weight, -0.5*C_BG_Th)
-	add_edge!(g,3,7,:weight, C_Cor_BG_Th)
+	add_edge!(g7,1,2,:weight, -0.5*C_BG_Th)
+	add_edge!(g7,6,2,:weight, C_Cor_BG_Th)
 	
-	add_edge!(g,4,2,:weight, -0.5*C_BG_Th)
-	add_edge!(g,4,3,:weight, C_BG_Th)
+	add_edge!(g7,1,3,:weight, -0.5*C_BG_Th)
+	add_edge!(g7,2,3,:weight, C_BG_Th)
 	
-	add_edge!(g,5,4,:weight, -0.5*C_BG_Th)
+	add_edge!(g7,3,4,:weight, -0.5*C_BG_Th)
 	
-	add_edge!(g,6,5,:weight, C_BG_Th_Cor)
-	add_edge!(g,6,7,:weight, 6*C_Cor)
+	add_edge!(g7,4,5,:weight, C_BG_Th_Cor)
+	add_edge!(g7,6,5,:weight, 6*C_Cor)
 	
-	add_edge!(g,7,6,:weight, 4.8*C_Cor)
-	add_edge!(g,7,8,:weight, -1.5*C_Cor)
+	add_edge!(g7,5,6,:weight, 4.8*C_Cor)
+	add_edge!(g7,7,6,:weight, -1.5*C_Cor)
 
-	add_edge!(g,8,7,:weight, 1.5*C_Cor)
-	add_edge!(g,8,8,:weight, -3.3*C_Cor)
+	add_edge!(g7,6,7,:weight, 1.5*C_Cor)
+	add_edge!(g7,7,7,:weight, -3.3*C_Cor)
 end
 
 # ╔═╡ 5fc63975-3a15-4430-a7f1-4e5db64c04a1
-AdjMatrixfromLinearNeuroGraph(g)
+AdjMatrixfromLinearNeuroGraph(g7)
 
 # ╔═╡ 33002a2b-f8a9-4728-8288-2f92d3b89948
-@named eight_regions_gr = ODEfromGraph(g=g)
+@named seven_regions_gr = ODEfromGraph(g=g7)
 
 # ╔═╡ c4b4aa78-0324-4ea8-9903-efe87f6074e8
-eight_regions_s = structural_simplify(eight_regions_gr)
+seven_regions_s = structural_simplify(seven_regions_gr)
 
 # ╔═╡ 1a48d894-f43b-4559-8844-50b6e1989bda
 sim_dur = 10.0 # Simulate for 10 Seconds
 
 # ╔═╡ 906a3f36-613c-465c-b7d1-6caa245cfe86
-prob = ODAEProblem(eight_regions_s, [], (0,sim_dur), [])
+prob = ODEProblem(seven_regions_s, [], (0,sim_dur), [])
 
 # ╔═╡ dd455500-d1bf-443d-b589-d400b6844874
 prob.p
 
 # ╔═╡ 7e6ec3b2-a8a7-42a0-87fe-b069c5a66a46
-eight_regions_s.ps
+seven_regions_s.ps
 
 # ╔═╡ 0447ca7d-9dc0-4777-b4ac-adc2eb7d3c8a
-eight_regions_s.states
+seven_regions_s.states
 
 # ╔═╡ a1c1b45f-8692-4456-ab20-d72b3e44fc0d
 indexof(sym,syms) = findfirst(isequal(sym),syms)
 
 # ╔═╡ f039dc58-04ba-4682-8f87-86ec19bd8d2f
-parameters(eight_regions_s)
+parameters(seven_regions_s)
 
 # ╔═╡ 413e1cd3-00cf-4bb3-98f2-35fa323454cd
 begin
 	# get the indices of the parameters in the parameter list
-	bgth_idx = indexof(C_BG_Th,parameters(eight_regions_s))
-	corbgth_idx = indexof(C_Cor_BG_Th,parameters(eight_regions_s))
-	cor_idx = indexof(C_Cor,parameters(eight_regions_s))
-	bgthcor_idx = indexof(C_BG_Th_Cor,parameters(eight_regions_s))
+	bgth_idx = indexof(C_BG_Th,parameters(seven_regions_s))
+	corbgth_idx = indexof(C_Cor_BG_Th,parameters(seven_regions_s))
+	cor_idx = indexof(C_Cor,parameters(seven_regions_s))
+	bgthcor_idx = indexof(C_BG_Th_Cor,parameters(seven_regions_s))
+	gpeh_idx = 6
 end
 
 # ╔═╡ b94c0e24-1793-4fe0-b84d-974d0c27113c
 md"""
-BG-Th
-$(@bind bgth html"<input type=range min=1 max=60 step=0.1>")
 Cor BG-Th
-$(@bind corbgth html"<input type=range min=1 max=15 step=0.05>")
-BG-Th Cor
-$(@bind bgthcor html"<input type=range min=1 max=15 step=0.05>")
+$(@bind corbgth html"<input type=range min=3 max=20 step=0.05>")
 
-Cor
-$(@bind cor html"<input type=range min=1 max=60 step=0.1>")
+BG-Th Cor
+$(@bind bgthcor html"<input type=range min=3 max=20 step=0.05>")
+
+GPeH
+$(@bind h html"<input type=range min=0 max=20 step=0.1>")
 """
 
 # ╔═╡ 32d1b83e-acfa-4351-9bcf-bc4367781186
 begin
 	# set the parameters for the simulation using the sliders
 	p_new = prob.p
-	p_new[ bgth_idx ] = bgth
 	p_new[ corbgth_idx] = corbgth
-	p_new[cor_idx] = cor
+	p_new[gpeh_idx] = h
 	p_new[bgthcor_idx] = bgthcor
-	prob_new = remake(prob; p=p_new, u0=ones(16)*0.1)
+	prob_new = remake(prob; p=p_new, u0=ones(14)*0.1)
 	sol = solve(prob_new, Tsit5())
 end
-
-# ╔═╡ c81dfd67-d338-43af-82b4-a83671c3148d
-(bgth,corbgth,bgthcor,cor)
 
 # ╔═╡ 8accf027-0261-42e5-ac11-c066cfb57c43
 begin
 	l = @layout [a; b; c]
-	p1 = plot(sol.t,sol[11,:],label="EI")
-	p2 = plot(sol.t,sol[13,:],label="PY")
-	p3 = plot(sol.t,sol[15,:],label="II")
+	p1 = plot(sol.t,sol[9,:],label="EI")
+	p2 = plot(sol.t,sol[11,:],label="PY")
+	p3 = plot(sol.t,sol[13,:],label="II")
 	plot(p1, p2, p3, layout = l)
 end
 
+# ╔═╡ c81dfd67-d338-43af-82b4-a83671c3148d
+(corbgth,bgthcor,h)
+
 # ╔═╡ bcb92a18-166c-46a7-aace-ccca97a825e4
 begin
-	l2 = @layout [a b; c; d e]
-	p4 = plot(sol.t,sol[1,:],label="Str")
-	p5 = plot(sol.t,sol[3,:],label="GPe")
-	p6 = plot(sol.t,sol[5,:],label="STN")
-	p7 = plot(sol.t,sol[7,:],label="GPi")
-	p8 = plot(sol.t,sol[9,:],label="Th")
-	plot(p4, p5, p6, p7, p8, layout = l2)
+	l2 = @layout [a b; c d]
+	p4 = plot(sol.t,sol[1,:],label="GPe")
+	p5 = plot(sol.t,sol[3,:],label="STN")
+	p6 = plot(sol.t,sol[5,:],label="GPi")
+	p7 = plot(sol.t,sol[7,:],label="Th")
+	plot(p4, p5, p6, p7, layout = l2)
 end
 
 # ╔═╡ Cell order:
 # ╠═771d1460-c48a-11ec-10d4-c7c5dd2a9984
 # ╠═66460e85-1544-406b-9c79-773ab174a5cb
 # ╠═9aa9ae2b-b8a0-463d-8e9e-b3339b25a99d
-# ╠═fef8036a-f073-4473-9549-2b69ec644e8a
+# ╠═f45de893-522a-4c0d-b1f0-9093623208ee
 # ╠═5fc63975-3a15-4430-a7f1-4e5db64c04a1
 # ╠═33002a2b-f8a9-4728-8288-2f92d3b89948
 # ╠═c4b4aa78-0324-4ea8-9903-efe87f6074e8
@@ -184,7 +180,7 @@ end
 # ╠═f039dc58-04ba-4682-8f87-86ec19bd8d2f
 # ╠═413e1cd3-00cf-4bb3-98f2-35fa323454cd
 # ╠═32d1b83e-acfa-4351-9bcf-bc4367781186
-# ╟─b94c0e24-1793-4fe0-b84d-974d0c27113c
-# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╟─8accf027-0261-42e5-ac11-c066cfb57c43
+# ╟─b94c0e24-1793-4fe0-b84d-974d0c27113c
+# ╟─c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═bcb92a18-166c-46a7-aace-ccca97a825e4
