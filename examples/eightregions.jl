@@ -122,30 +122,30 @@ end
 # ╔═╡ b94c0e24-1793-4fe0-b84d-974d0c27113c
 md"""
 BG-Th
-$(@bind bgth html"<input type=range min=0 max=10000>")
+$(@bind bgth html"<input type=range min=1 max=60 step=0.1>")
 Cor BG-Th
-$(@bind corbgth html"<input type=range min=0 max=10000>")
+$(@bind corbgth html"<input type=range min=1 max=15 step=0.05>")
 BG-Th Cor
-$(@bind bgthcor html"<input type=range min=0 max=10000>")
+$(@bind bgthcor html"<input type=range min=1 max=15 step=0.05>")
 
 Cor
-$(@bind cor html"<input type=range min=0 max=10000>")
+$(@bind cor html"<input type=range min=1 max=60 step=0.1>")
 """
 
 # ╔═╡ 32d1b83e-acfa-4351-9bcf-bc4367781186
 begin
 	# set the parameters for the simulation using the sliders
 	p_new = prob.p
-	p_new[ bgth_idx ] = (bgth)/100
-	p_new[ corbgth_idx] = (corbgth-5000)/1000
-	p_new[cor_idx] = (cor)/100
-	p_new[bgthcor_idx] = (bgthcor-5000)/1000
+	p_new[ bgth_idx ] = bgth
+	p_new[ corbgth_idx] = corbgth
+	p_new[cor_idx] = cor
+	p_new[bgthcor_idx] = bgthcor
 	prob_new = remake(prob; p=p_new, u0=ones(16)*0.1)
 	sol = solve(prob_new, Tsit5())
 end
 
 # ╔═╡ c81dfd67-d338-43af-82b4-a83671c3148d
-((bgth)/100,(corbgth-5000)/1000,(bgthcor-5000)/1000,(cor)/100)
+(bgth,corbgth,bgthcor,cor)
 
 # ╔═╡ 8accf027-0261-42e5-ac11-c066cfb57c43
 begin
