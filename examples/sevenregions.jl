@@ -33,7 +33,6 @@ end
 # ╔═╡ 66460e85-1544-406b-9c79-773ab174a5cb
 begin
 	# Create Regions
-	@named Str = jansen_ritSC(τ=0.0022, H=20, λ=300, r=0.3)
 	@named GPe = jansen_ritSC(τ=0.04, H=20, λ=400, r=0.1)
 	@named STN = jansen_ritSC(τ=0.01, H=20, λ=500, r=0.1)
 	@named GPi = jansen_ritSC(τ=0.014, H=20, λ=400, r=0.1)
@@ -127,7 +126,7 @@ BG-Th Cor
 $(@bind bgthcor html"<input type=range min=3 max=20 step=0.05>")
 
 GPeH
-$(@bind h html"<input type=range min=0 max=20 step=0.1>")
+$(@bind h html"<input type=range min=0 max=500 step=1>")
 """
 
 # ╔═╡ 32d1b83e-acfa-4351-9bcf-bc4367781186
