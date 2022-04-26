@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.2
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -145,6 +145,8 @@ begin
 end
 
 # ╔═╡ 8accf027-0261-42e5-ac11-c066cfb57c43
+# ╠═╡ disabled = true
+#=╠═╡
 begin
 	l = @layout [a; b; c]
 	p1 = plot(sol.t,sol[9,:],label="EI")
@@ -152,8 +154,11 @@ begin
 	p3 = plot(sol.t,sol[13,:],label="II")
 	plot(p1, p2, p3, layout = l)
 end
+  ╠═╡ =#
 
 # ╔═╡ bcb92a18-166c-46a7-aace-ccca97a825e4
+# ╠═╡ disabled = true
+#=╠═╡
 begin
 	l2 = @layout [a b; c d]
 	p4 = plot(sol.t,sol[1,:],label="GPe")
@@ -162,6 +167,7 @@ begin
 	p7 = plot(sol.t,sol[7,:],label="Th")
 	plot(p4, p5, p6, p7, layout = l2)
 end
+  ╠═╡ =#
 
 # ╔═╡ d9181a23-46a4-4f95-be4e-9b4fc184f1d8
 begin
@@ -171,10 +177,10 @@ begin
 
 	# Synchrony Figure for Demo 1
 	l22 = @layout [a; b; c]
-	p44 = plot(sol.t,sol[1,:],label="GPe", lw=2.0, xlims=(0,2.0))
-	p55 = plot(sol.t,sol[3,:],label="STN", lw=2.0, xlims=(0,2.0))
-	p66 = plot(f_gpe, pxx_gpe, xlims=(0,60), lw=2.0, label="GPe")
-	p66 = plot!(f_stn, pxx_stn, xlims=(0,60), lw=2.0, label="STN")
+	p44 = plot(sol.t,sol[1,:],label="GPe", lw=2.0, xlims=(0.5,2.5),color="blue")
+	p55 = plot(sol.t,sol[3,:],label="STN", lw=2.0, xlims=(0.5,2.5),xlabel="t in sec",color="orange")
+	p66 = plot(f_gpe, pxx_gpe/1000, xlims=(10,20), lw=2.0, label="GPe",color="blue")
+	p66 = plot!(f_stn, 10*pxx_stn/1000, xlims=(10,20), ylims=(0,25),lw=2.0, label="10xSTN",xlabel="f in Hz",ylabel="PSD",color="orange")
 	plot(p44, p55, p66, layout = l22)
 	
 end
@@ -211,6 +217,33 @@ begin
 
 end
 
+# ╔═╡ 3d1bb45b-4dc7-45df-a551-6064c1ef4e3e
+begin
+	anim3 = @animate for hh ∈ 1:10:600
+		# set the parameters for the simulation using the sliders
+		p_an = prob.p
+		p_an[ corbgth_idx] = corbgth
+		p_an[gpeh_idx] = hh
+		p_an[bgthcor_idx] = bgthcor
+		prob_an = remake(prob; p=p_an, u0=ones(14)*0.1)
+		sol_an = solve(prob_an, Rodas4())
+		
+    	f_gpe_an, pxx_gpe_an = Neuroblox.powerspectrum(sol_an[1,:],
+			length(sol_an[1,:]), 1000, "pwelch", hanning)
+		f_stn_an, pxx_stn_an = Neuroblox.powerspectrum(sol_an[3,:],
+			length(sol_an[3,:]), 1000, "pwelch", hanning)
+
+		# Synchrony Figure for Demo 1
+		p4a = plot(sol_an.t,sol_an[1,:],label="GPe H=$hh", lw=2.0, xlims=(0.5,2.5),ylims=(-270,270),color="blue")
+		p5a = plot(sol_an.t,sol_an[3,:],label="STN", lw=2.0, xlims=(0.5,2.5),ylims=(-85,85),xlabel="t in sec",color="orange")
+		p6a = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(10,20), lw=2.0, label="GPe",color="blue")
+		p6a = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(10,20), ylims=(0,30),lw=2.0, label="STN",xlabel="f in Hz",ylabel="PSD",color="orange")
+		plot(p4a, p5a, p6a, layout = l22)
+	end
+	gif(anim3, "anim_fps15.gif", fps = 15)
+end
+
+
 # ╔═╡ Cell order:
 # ╠═771d1460-c48a-11ec-10d4-c7c5dd2a9984
 # ╠═66460e85-1544-406b-9c79-773ab174a5cb
@@ -228,10 +261,11 @@ end
 # ╠═f039dc58-04ba-4682-8f87-86ec19bd8d2f
 # ╠═413e1cd3-00cf-4bb3-98f2-35fa323454cd
 # ╠═32d1b83e-acfa-4351-9bcf-bc4367781186
-# ╟─8accf027-0261-42e5-ac11-c066cfb57c43
-# ╟─c81dfd67-d338-43af-82b4-a83671c3148d
+# ╠═8accf027-0261-42e5-ac11-c066cfb57c43
+# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═bcb92a18-166c-46a7-aace-ccca97a825e4
 # ╠═3213bf3e-0b6e-477c-bcf9-af8f13cb5dfc
 # ╠═d9181a23-46a4-4f95-be4e-9b4fc184f1d8
 # ╠═ed02b30f-6ebf-4796-b778-5347fce35dc1
 # ╠═37bd5c95-7a4f-406e-a11c-bdc273482f68
+# ╠═3d1bb45b-4dc7-45df-a551-6064c1ef4e3e
