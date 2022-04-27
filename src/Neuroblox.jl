@@ -72,7 +72,7 @@ function ODEfromGraph(;name, g::LinearNeuroGraph)
     return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
 end
 
-function simulate(sys::ODESystem, u0, timespan, p, solver = Tsit5(); kwargs...)
+function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
     return DataFrame(sol)
