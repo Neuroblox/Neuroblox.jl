@@ -36,7 +36,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!, "GPi₊x(t)"][4] ≈ 0.987204228282147
+@test sol[!, "GPi₊x(t)"][4] ≈ 0.976257006970988
 
 """
 Canonical micro circuit tests 
@@ -45,13 +45,13 @@ Canonical micro circuit tests
 @named region = cmc_singleregion()
 region = structural_simplify(region.odesystem)
 sol = simulate(region, [], (0.0, 10.0), [])
-@test sol[!,"x3(t)"][end] + sol[!,"x4(t)"][end] ≈ -5.159427948410745
+@test sol[!,"x3(t)"][end] + sol[!,"x4(t)"][end] ≈ -5.159425345927339
 
 # canonical micro circuit based on single Jansen-Rit blox
 @named singleregion = cmc()
 singleregion = structural_simplify(singleregion.odesystem)
 sol = simulate(singleregion, [], (0.0, 10.0), [])
-@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159427948410745
+@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159425345927338
 
 """
 Components Test for Cortical-Subcortical Jansen-Rit blox
@@ -166,7 +166,7 @@ tend toward zero.
 """
 @named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
 sim_dur = 1000.0 
-sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], solver=Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
+sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), []; saveat=0.01,reltol=1e-4,abstol=1e-4)
 
 C=30
 W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
