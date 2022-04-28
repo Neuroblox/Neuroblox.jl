@@ -49,6 +49,7 @@ MuladdMacro = "0.2"
 RecursiveArrayTools = "2"
 Reexport = "1.0"
 StaticArrays = "1.0"
+Tracker = "0.2"
 Turing = "0.21"
 julia = "1.7"
 
