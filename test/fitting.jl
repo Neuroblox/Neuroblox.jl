@@ -72,11 +72,12 @@ function cb(p,l)
     @show iter,l
     l < 0.01
 end
+
 optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
 optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 
-loss(pinit,nothing)
-loss(ptrue,nothing)
+# loss(pinit,nothing)
+# loss(ptrue,nothing)
 
 # Solve optimization problem
 optsol = solve(optprob, ADAM(0.0001),maxiters = 300, cb = cb)
