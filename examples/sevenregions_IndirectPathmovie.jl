@@ -215,45 +215,46 @@ begin
 		sol_an = solve(prob_an, Rodas4())
 
 		# Synchrony Figure for Stimulating Indirect Pathway Demo
-		p_lfpa = plot(sol_an.t, sol_an[1,:],label="GPe H=$(@sprintf("%.2f", hga))", lw=2.5, xlims=(0,1), color="blue", fg_legend = :false)
-		p_lfpa = plot!(sol_an.t, sol_an[3,:],label="STN", lw=2.5, xlims=(0,5), xlabel="time in sec", ylabel="arb. V", color="orange")
+		p_lfpa = plot(sol_an.t, sol_an[1,:],label="GPe H=$(@sprintf("%.2f", hga))", lw=2.8, xlims=(1,2), color="blue", fg_legend = :false)
+		p_lfpa = plot!(sol_an.t, sol_an[3,:],label="STN", lw=2.8, xlims=(1,2), xlabel="time in sec", ylabel="arb. V", color="orange", ylims=(-290,290), show_axis = false)
 		title!("Simulated LFP")
 
-		p_dyna = plot(sol_an[1,:], sol_an[3,:], label=false, xlabel="GPe", ylabel="STN", color="black")
+		p_dyna = plot(sol_an[1,:], sol_an[3,:], lw=3.0, label=false, xlabel="GPe", ylabel="STN", color="black", xlims=(-270,270), ylims=(-90,90))
 		title!("Phase Space")
 
 		phase_angle_gpea = Neuroblox.phaseangle(sol_an[1,:])
 		phase_angle_stna = Neuroblox.phaseangle(sol_an[3,:])
-		
-		p_phasea = plot(sol_an.t, phase_angle_gpea, xlims=(0.7, 1.0), color="blue", label="GPe", lw=2.5, fg_legend = :false)
-		p_phasea = plot!(sol_an.t, phase_angle_stna, xlims=(0.7, 1.0), color="orange", label="STN", lw=2.5, xlabel="time in sec", ylabel="Circular Position")
+		p_phasea = plot(sol_an.t, phase_angle_gpea, xlims=(0.7, 1.0), color="blue", label="GPe", lw=2.8, fg_legend = :false)
+		p_phasea = plot!(sol_an.t, phase_angle_stna, xlims=(0.7, 1.0), color="orange", label="STN", lw=2.8, xlabel="time in sec", ylabel="Circular Position", ylims=(-3.2, 3.2))
 		title!("Phase Synchrony")
 
-		#f_gpe_an, pxx_gpe_an = Neuroblox.powerspectrum(sol_an[1,:],
-			#length(sol_an[1,:]), 1000, "pwelch", hanning)
-		#f_stn_an, pxx_stn_an = Neuroblox.powerspectrum(sol_an[3,:],
-			#length(sol_an[3,:]), 1000, "pwelch", hanning)
+		f_gpe_an, pxx_gpe_an = Neuroblox.powerspectrum(sol_an[1,:],
+			length(sol_an[1,:]), 1000, "pwelch", hanning)
+		f_stn_an, pxx_stn_an = Neuroblox.powerspectrum(sol_an[3,:],
+			length(sol_an[3,:]), 1000, "pwelch", hanning)
 
-		alpha_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 8, 16, 1000, 6)
-		f_gpe_an_a, pxx_gpe_an_a = Neuroblox.powerspectrum(alpha_powera_gpe,
-			length(alpha_powera_gpe), 1000, "pwelch", hanning)
+		#alpha_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 7, 15, 1000, 6)
+		#f_gpe_an_a, pxx_gpe_an_a = Neuroblox.powerspectrum(alpha_powera_gpe,
+		#	length(alpha_powera_gpe), 1000, "pwelch", hanning)
 
-		beta_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 16, 35, 1000, 6)
-		f_gpe_an_b, pxx_gpe_an_b = Neuroblox.powerspectrum(beta_powera_gpe,
-			length(beta_powera_gpe), 1000, "pwelch", hanning)
+		#beta_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 15, 35, 1000, 6)
+		#f_gpe_an_b, pxx_gpe_an_b = Neuroblox.powerspectrum(beta_powera_gpe,
+		#	length(beta_powera_gpe), 1000, "pwelch", hanning)
 
-		alpha_powera_stn = Neuroblox.bandpassfilter(sol_an[3,:], 8, 16, 1000, 6)
-		f_stn_an_a, pxx_stn_an_a = Neuroblox.powerspectrum(alpha_powera_stn,
-			length(alpha_powera_stn), 1000, "pwelch", hanning)
+		#alpha_powera_stn = Neuroblox.bandpassfilter(sol_an[3,:], 7, 15, 1000, 6)
+		#f_stn_an_a, pxx_stn_an_a = Neuroblox.powerspectrum(alpha_powera_stn,
+		#	length(alpha_powera_stn), 1000, "pwelch", hanning)
 
-		beta_powera_stn = Neuroblox.bandpassfilter(sol_an[1,:], 16, 35, 1000, 6)
-		f_stn_an_b, pxx_stn_an_b = Neuroblox.powerspectrum(beta_powera_stn,
-			length(beta_powera_stn), 1000, "pwelch", hanning)
+		#beta_powera_stn = Neuroblox.bandpassfilter(sol_an[1,:], 15, 35, 1000, 6)
+		#f_stn_an_b, pxx_stn_an_b = Neuroblox.powerspectrum(beta_powera_stn,
+		#	length(beta_powera_stn), 1000, "pwelch", hanning)
 				
-		#p_powera = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(0,30), lw=2.5, label="GPe",color="blue")
-		#p_powera = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(0,30), lw=2.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2")
-		p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
-		p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
+		p_powera = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(0,40), lw=3.5, label="GPe",color="blue", ylims=(0,12))
+		p_powera = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(0,40), lw=3.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2", ylims=(0,12))
+		p_powera = vline!([7,15], label="Alpha", lw=3.0, color="black")
+		p_powera = vline!([15.3,35], label="Beta", lw=3.0, color="black", linestyle = :dot)
+		#p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
+		#p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
 		title!("Power Spectral Density")
 		
 		plot(p_lfpa, p_dyna, p_phasea, p_powera, layout = ll, size=(800,400))

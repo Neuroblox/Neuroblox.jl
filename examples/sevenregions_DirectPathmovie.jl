@@ -234,26 +234,28 @@ begin
 		#f_stn_an, pxx_stn_an = Neuroblox.powerspectrum(sol_an[3,:],
 			#length(sol_an[3,:]), 1000, "pwelch", hanning)
 
-		alpha_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 8, 16, 1000, 6)
+		alpha_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 7, 15, 1000, 6)
 		f_gpe_an_a, pxx_gpe_an_a = Neuroblox.powerspectrum(alpha_powera_gpe,
 			length(alpha_powera_gpe), 1000, "pwelch", hanning)
 
-		beta_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 16, 35, 1000, 6)
+		beta_powera_gpe = Neuroblox.bandpassfilter(sol_an[1,:], 15, 35, 1000, 6)
 		f_gpe_an_b, pxx_gpe_an_b = Neuroblox.powerspectrum(beta_powera_gpe,
 			length(beta_powera_gpe), 1000, "pwelch", hanning)
 
-		alpha_powera_stn = Neuroblox.bandpassfilter(sol_an[3,:], 8, 16, 1000, 6)
+		alpha_powera_stn = Neuroblox.bandpassfilter(sol_an[3,:], 7, 15, 1000, 6)
 		f_stn_an_a, pxx_stn_an_a = Neuroblox.powerspectrum(alpha_powera_stn,
 			length(alpha_powera_stn), 1000, "pwelch", hanning)
 
-		beta_powera_stn = Neuroblox.bandpassfilter(sol_an[1,:], 16, 35, 1000, 6)
+		beta_powera_stn = Neuroblox.bandpassfilter(sol_an[1,:], 15, 35, 1000, 6)
 		f_stn_an_b, pxx_stn_an_b = Neuroblox.powerspectrum(beta_powera_stn,
 			length(beta_powera_stn), 1000, "pwelch", hanning)
 				
-		#p_powera = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(0,30), lw=2.5, label="GPe",color="blue")
-		#p_powera = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(0,30), lw=2.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2")
-		p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
-		p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
+		p_powera = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(0,30), lw=2.5, label="GPe",color="blue")
+		p_powera = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(0,30), lw=2.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2")
+		p_powera = vline!([7,15], label="Alpha", lw=2.0)
+		p_powera = vline!([15.1,35], label="Beta", lw=2.0)
+		#p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
+		#p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
 		title!("Power Spectral Density")
 		
 		plot(p_lfpa, p_dyna, p_phasea, p_powera, layout = ll, size=(800,400))
