@@ -224,7 +224,6 @@ begin
 
 		phase_angle_gpea = Neuroblox.phaseangle(sol_an[1,:])
 		phase_angle_stna = Neuroblox.phaseangle(sol_an[3,:])
-		
 		p_phasea = plot(sol_an.t, phase_angle_gpea, xlims=(0.7, 1.0), color="blue", label="GPe", lw=2.8, fg_legend = :false)
 		p_phasea = plot!(sol_an.t, phase_angle_stna, xlims=(0.7, 1.0), color="orange", label="STN", lw=2.8, xlabel="time in sec", ylabel="Circular Position", ylims=(-3.2, 3.2))
 		title!("Phase Synchrony")
@@ -255,7 +254,7 @@ begin
 		p_powera = vline!([7,15], label="Alpha", lw=3.0, color="black")
 		p_powera = vline!([15.3,35], label="Beta", lw=3.0, color="black", linestyle = :dot)
 		#p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
-		#p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, #sum(pxx_stn_an_b)], label="STN/1000")
+		#p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
 		title!("Power Spectral Density")
 		
 		plot(p_lfpa, p_dyna, p_phasea, p_powera, layout = ll, size=(800,400))
