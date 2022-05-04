@@ -33,7 +33,7 @@ mutable struct jansen_ritC <: JansenRitCBlox
     function jansen_ritC(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        eqs    = [D(x) ~ y - ((2/τ)*x),
+        eqs    = [D(x) ~ y + ((2/τ)*x),
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(τ, H, λ, r, odesys.x, odesys)
