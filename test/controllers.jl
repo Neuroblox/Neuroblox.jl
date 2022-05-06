@@ -15,7 +15,7 @@ arv_estimation = Neuroblox.ARVTarget(data, lb, ub, fs, call_rate)
 """
 Test for PhaseTarget
 """
-circular_loc = Neuroblox.PhaseTarget(data)
+circular_loc = Neuroblox.PhaseTarget(data, lb, ub, fs)
 @test angle(circular_loc) <= pi
 @test angle(circular_loc) >= pi
 
