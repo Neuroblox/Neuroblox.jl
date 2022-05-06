@@ -22,23 +22,6 @@ circular_loc = Neuroblox.PhaseTarget(data)
 """
 Test for ControlError
 """
-function ControlError(type, target, actual, lb, ub, fs, call_rate)
-
-    control_bin = call_rate*fs
-    if type == ARV
-        arv_target = Neuroblox.ARVTarget(target, lb, ub, fs, control_bin)
-        arv_actual = Neuroblox.ARVTarget(actual, lb, ub, fs, control_bin)
-        control_error = arv_target - arv_actual
-    end
-
-    if type == phase
-        phi_target = Neuroblox.PhaseTarget(target)
-        phi_actual = Neuroblox.PhaseTarget(actual)
-        control_error = angle.(phi_target./exp.(phi_actual))
-    end
-
-    return control_error
-end
 control_error_ARV = Neuroblox.ControlError("ARV", data, data, 9, 16, 1000, 0.150)
 @test control_error_ARV ≈ 0
 control_error_phase = Neuroblox.ControlError("phase", data, data, 9, 16, 1000, 0.150)
