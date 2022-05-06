@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.2
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -26,7 +26,7 @@ begin
 	Pkg.add("Graphs")
 	Pkg.add("Plots")
 	Pkg.add("DSP")
-	Pkg.add(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
+	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
 	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, DSP, Printf
 end
@@ -172,6 +172,9 @@ end
 # ╔═╡ c743e876-aa11-4533-af8d-d2ec8f2bb22f
 phase_difference = angle.(exp.(im*phase_angle_gpe)./exp.(im*phase_angle_stn))
 
+# ╔═╡ 18208fe8-5ac3-49b2-a353-25d18a4d7432
+rectangle(w, h, x, y) = Shape(x .+ [0,w,w,0], y .+ [0,0,h,h])
+
 # ╔═╡ a5a247b0-89a7-47ae-86dd-9bd6b9156731
 begin
 	ll = @layout [a b; c d]
@@ -193,8 +196,10 @@ begin
 	#p_bar = bar!(["STN"], [peak_value_stn], color="orange", label="STN")
 	#title!("Center Frequency")
 	
-	p_power = plot(f_gpe, pxx_gpe/1000, xlims=(0,30), lw=2.5, label="GPe",color="blue")
-	p_power = plot!(f_stn, 10*pxx_stn/1000, xlims=(0,30), lw=2.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2")
+	p_power = plot(f_gpe, pxx_gpe/1000, xlims=(0,40), lw=2.5, label="GPe",color="blue")
+	p_power = plot!(f_stn, 10*pxx_stn/1000, xlims=(0,40), lw=2.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2")
+	p_power = plot!(rectangle(8,2,7,0), opacity=.5,label="α")
+	p_power = plot!(rectangle(19.7,2,15.3,0), opacity=.5,label="β")
 	title!("Power Spectral Density")
 
 	plot(p_lfp, p_dyn, p_phase, p_power, layout = ll, size=(800,400))
@@ -215,11 +220,11 @@ begin
 		sol_an = solve(prob_an, Rodas4())
 
 		# Synchrony Figure for Stimulating Indirect Pathway Demo
-		p_lfpa = plot(sol_an.t, sol_an[1,:],label="GPe H=$(@sprintf("%.2f", hga))", lw=2.8, xlims=(1,2), color="blue", fg_legend = :false)
+		p_lfpa = plot(sol_an.t, sol_an[1,:],label="GPe", lw=2.8, xlims=(1,2), color="blue", fg_legend = :false)
 		p_lfpa = plot!(sol_an.t, sol_an[3,:],label="STN", lw=2.8, xlims=(1,2), xlabel="time in sec", ylabel="arb. V", color="orange", ylims=(-290,290), show_axis = false)
-		title!("Simulated LFP")
+		title!("Simulated LFP (GPe H=$(@sprintf("%.2f", hga)))")
 
-		p_dyna = plot(sol_an[1,:], sol_an[3,:], lw=3.0, label=false, xlabel="GPe", ylabel="STN", color="black", xlims=(-270,270), ylims=(-90,90))
+		p_dyna = plot(sol_an[1,:], sol_an[3,:], lw=2.0, label=false, xlabel="GPe", ylabel="STN", color="black", xlims=(-270,270), ylims=(-90,90))
 		title!("Phase Space")
 
 		phase_angle_gpea = Neuroblox.phaseangle(sol_an[1,:])
@@ -251,8 +256,8 @@ begin
 				
 		p_powera = plot(f_gpe_an, pxx_gpe_an/1000, xlims=(0,40), lw=3.5, label="GPe",color="blue", ylims=(0,12))
 		p_powera = plot!(f_stn_an, 10*pxx_stn_an/1000, xlims=(0,40), lw=3.5, label="10xSTN",color="orange", fg_legend = :false, xlabel="Hz", ylabel="arb. V/Hz^2", ylims=(0,12))
-		p_powera = vline!([7,15], label="Alpha", lw=3.0, color="black")
-		p_powera = vline!([15.3,35], label="Beta", lw=3.0, color="black", linestyle = :dot)
+		p_power = plot!(rectangle(8,2,7,0), opacity=.5,label="α-band")
+		p_power = plot!(rectangle(19.7,2,15.3,0), opacity=.5,label="β-band")
 		#p_powera = bar(["Alpha", "Beta"], [sum(pxx_gpe_an_a)/1000, sum(pxx_gpe_an_b)], label="GPe")
 		#p_powera = bar!(["Alpha", "Beta"], [sum(pxx_stn_an_a)/1000, sum(pxx_stn_an_b)], label="STN/1000")
 		title!("Power Spectral Density")
@@ -285,11 +290,12 @@ end
 # ╠═413e1cd3-00cf-4bb3-98f2-35fa323454cd
 # ╠═32d1b83e-acfa-4351-9bcf-bc4367781186
 # ╠═8accf027-0261-42e5-ac11-c066cfb57c43
-# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═bcb92a18-166c-46a7-aace-ccca97a825e4
 # ╠═9328ebbd-232f-49a5-8d6c-bf6cae71b898
 # ╠═8fd5ac10-e306-49a7-aca4-397918dc242d
 # ╠═3213bf3e-0b6e-477c-bcf9-af8f13cb5dfc
+# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═c743e876-aa11-4533-af8d-d2ec8f2bb22f
+# ╠═18208fe8-5ac3-49b2-a353-25d18a4d7432
 # ╠═a5a247b0-89a7-47ae-86dd-9bd6b9156731
 # ╠═35b8f488-372b-44ef-a53b-c5bd26672205
