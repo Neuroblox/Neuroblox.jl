@@ -17,7 +17,7 @@ Test for PhaseTarget
 """
 circular_loc = Neuroblox.PhaseTarget(data, lb, ub, fs)
 @test all(angle.(circular_loc) .<= pi)
-@test all(angle.(circular_loc) .>= pi)
+@test all(angle.(circular_loc) .>= -pi)
 
 """
 Test for ControlError
