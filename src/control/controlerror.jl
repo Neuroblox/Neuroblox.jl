@@ -21,6 +21,9 @@ Time series data is bandpass filtered and hilbert-transformed.
 Phase angle is computed in radians.
 """
 function PhaseTarget(data, lb, ub, fs)
+    if typeof(data) == Matrix{Float64}
+        data = vec(data)
+    end
     signal = Neuroblox.bandpassfilter(data, lb, ub, fs, 4)
     phi = Neuroblox.phaseangle(signal)
     circular_location = exp.(im*phi)
