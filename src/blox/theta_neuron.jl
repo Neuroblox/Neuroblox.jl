@@ -13,7 +13,7 @@ and the following variables:
 and returns:
     an ODE System
 """
-function thetaneuron(;name, η=η, α_inv=α_inv, k=k)
+function theta_neuron(;name, η=η, α_inv=α_inv, k=k)
 
     params = @parameters η=η α_inv=α_inv k=k
     sts    = @variables θ(t)=0.0 g(t)=0.0 jcn(t)=0.0

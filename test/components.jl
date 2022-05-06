@@ -98,7 +98,7 @@ network = []
 N = 50
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-    @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
+    @named neuron = Neuroblox.theta_neuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
     push!(network, neuron)
 end
 
