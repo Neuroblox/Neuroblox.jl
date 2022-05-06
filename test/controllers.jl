@@ -16,13 +16,13 @@ arv_estimation = Neuroblox.ARVTarget(data, lb, ub, fs, call_rate)
 Test for PhaseTarget
 """
 circular_loc = Neuroblox.PhaseTarget(data, lb, ub, fs)
-@test angle(circular_loc) <= pi
-@test angle(circular_loc) >= pi
+@test mean(angle.(circular_loc)) <= pi
+@test mean(angle.(circular_loc)) >= pi
 
 """
 Test for ControlError
 """
-control_error_ARV = Neuroblox.ControlError("ARV", data, data, 9, 16, 1000, 0.150)
+control_error_ARV = Neuroblox.ControlError(ARV, data, data, 9, 16, 1000, 0.150)
 @test control_error_ARV ≈ 0
-control_error_phase = Neuroblox.ControlError("phase", data, data, 9, 16, 1000, 0.150)
+control_error_phase = Neuroblox.ControlError(phase, data, data, 9, 16, 1000, 0.150)
 @test control_error_phase ≈ 0

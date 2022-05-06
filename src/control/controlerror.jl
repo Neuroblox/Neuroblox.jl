@@ -47,7 +47,7 @@ function ControlError(type, target, actual, lb, ub, fs, call_rate)
     if type == phase
         phi_target = Neuroblox.PhaseTarget(target, lb, ub, fs)
         phi_actual = Neuroblox.PhaseTarget(actual, lb, ub, fs)
-        control_error = angle.(phi_target./exp.(phi_actual))
+        control_error = angle.(phi_target./phi_actual)
     end
 
     return control_error
