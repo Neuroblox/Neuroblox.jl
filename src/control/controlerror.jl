@@ -38,13 +38,13 @@ to some type (ARV value, relies on ARVTarget, or phase value, relies on PhaseTar
 function ControlError(type, target, actual, lb, ub, fs, call_rate)
 
     control_bin = call_rate*fs
-    if type == ARV
+    if type == "ARV"
         arv_target = Neuroblox.ARVTarget(target, lb, ub, fs, control_bin)
         arv_actual = Neuroblox.ARVTarget(actual, lb, ub, fs, control_bin)
         control_error = arv_target - arv_actual
     end
 
-    if type == phase
+    if type == "phase"
         phi_target = Neuroblox.PhaseTarget(target, lb, ub, fs)
         phi_actual = Neuroblox.PhaseTarget(actual, lb, ub, fs)
         control_error = angle.(phi_target./phi_actual)
