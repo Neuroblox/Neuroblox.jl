@@ -1,4 +1,4 @@
-using Neuroblox, Test, MAT
+using Neuroblox, Test, MAT, Statistics
 
 """
 Test for ARVTarget
@@ -23,6 +23,6 @@ circular_loc = Neuroblox.PhaseTarget(data, lb, ub, fs)
 Test for ControlError
 """
 control_error_ARV = Neuroblox.ControlError("ARV", data, data, 9, 16, 1000, 0.150)
-@test mean(control_error_ARV) .≈ 0
+@test Statistics.mean(control_error_ARV) .≈ 0
 control_error_phase = Neuroblox.ControlError("phase", data, data, 9, 16, 1000, 0.150)
-@test mean(control_error_phase) .≈ 0
+@test Statistics.mean(control_error_phase) .≈ 0
