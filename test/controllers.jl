@@ -1,16 +1,34 @@
-"""
-test for ARVController
-"""
+using Neuroblox, Test, MAT, Statistics
 
-using Neuroblox, Test, MAT
-
+"""
+Test for ARVTarget
+"""
 data = matread(joinpath(@__DIR__, "lfp_test_data.mat"))
 data = data["lfp"]
 fs = 1000
 call_rate = 150/fs
 lb = 9
 ub = 16
-filter_order = 6
-controller_call_times, arv_estimation = Neuroblox.ARVController(data, fs, call_rate, lb, ub, filter_order)
-
+arv_estimation = Neuroblox.ARVTarget(data, lb, ub, fs, call_rate)
 @test sum(arv_estimation) > 0
+
+"""
+Test for PhaseTarget
+""" 
+circular_loc = Neuroblox.PhaseTarget(data, lb, ub, fs)
+@test all(angle.(circular_loc) .<= pi)
+@test all(angle.(circular_loc) .>= -pi)
+
+"""
+Test for ControlError
+"""
+
+tol = 0.25
+
+control_error_ARV = Neuroblox.ControlError("ARV", data, data, 9, 16, 1000, 0.150)
+@test Statistics.mean(control_error_ARV) < tol
+@test Statistics.mean(control_error_ARV) > -tol
+
+control_error_phase = Neuroblox.ControlError("phase", data, data, 9, 16, 1000, 0.150)
+@test Statistics.mean(control_error_phase) < tol
+@test Statistics.mean(control_error_phase) > -tol

@@ -44,7 +44,7 @@ include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("utilities/helperfunctions.jl")
-include("control/ARVController.jl")
+include("control/controlerror.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
@@ -78,12 +78,12 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
     return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, theta_neuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
-export learningrate, ARVController
+export learningrate, ARVTarget, PhaseTarget, ControlError
 export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes
