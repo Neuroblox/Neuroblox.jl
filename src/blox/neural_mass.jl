@@ -57,6 +57,37 @@ mutable struct jansen_ritSC <: JansenRitSCBlox
     end
 end
 
+mutable struct wilson_cowan <: WisonCowanBlox
+    a_E::Num
+    a_I::Num
+    c_EE::Num
+    c_EI::Num
+    c_IE::Num
+    c_II::Num
+    θ_E::Num
+    θ_I::Num
+    η::Num
+    connector::Num
+    odesystem::ODESystem
+    function wilson_cowan(;name,
+                          a_E=1.2,
+                          a_I=2.0,
+                          c_EE=5.0,
+                          c_IE=6.0,
+                          c_EI=10.0,
+                          c_II=1.0,
+                          θ_E=2.0,
+                          θ_I=3.5,
+                          η=1.0)
+        params = @parameters a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η
+        sts    = @variables E(t)=1.0 I(t)=1.0 jcn(t)=0.0 P(t)=0.0
+        eqs    = [D(E) ~ -E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
+                  D(I) ~ -I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, odesys)
+    end
+end
+
 """
 !!! Deprecated. Remove soon!!!
 Define canonical micro circuit according to the implementation in SPM12. Closesd representation is given in Bastos et al. 2015 
