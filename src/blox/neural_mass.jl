@@ -57,7 +57,7 @@ mutable struct jansen_ritSC <: JansenRitSCBlox
     end
 end
 
-mutable struct wilson_cowan <: WisonCowanBlox
+mutable struct wilson_cowan <: WilsonCowanBlox
     a_E::Num
     a_I::Num
     c_EE::Num
