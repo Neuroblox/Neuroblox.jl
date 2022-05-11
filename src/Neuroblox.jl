@@ -25,6 +25,7 @@ abstract type NeuralMassBlox <: Blox end
 abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 abstract type JansenRitCBlox <: NeuralMassBlox end
 abstract type JansenRitSCBlox <: NeuralMassBlox end
+abstract type WilsonCowanBlox <: NeuralMassBlox end
 abstract type NextGenerationBlox <: NeuralMassBlox end
 
 abstract type DynamicSignalBlox <: Blox end
