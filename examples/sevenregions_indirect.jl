@@ -26,7 +26,7 @@ begin
 	Pkg.add("Graphs")
 	Pkg.add("Plots")
 	Pkg.add("DSP")
-	Pkg.add(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
+	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
 	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, DSP, Printf
 end
