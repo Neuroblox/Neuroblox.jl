@@ -142,6 +142,9 @@ begin
 	plot(p1, p2, p3, layout = l)
 end
 
+# ╔═╡ c81dfd67-d338-43af-82b4-a83671c3148d
+(hg, hs)
+
 # ╔═╡ bcb92a18-166c-46a7-aace-ccca97a825e4
 begin
 	l2 = @layout [a b; c d]
@@ -165,9 +168,6 @@ begin
 	f_gpe, pxx_gpe = Neuroblox.powerspectrum(sol[1,:], length(sol[1,:]), 1000, "pwelch", hanning)
 	f_stn, pxx_stn = Neuroblox.powerspectrum(sol[3,:], length(sol[3,:]), 1000, "pwelch", hanning)
 end
-
-# ╔═╡ c81dfd67-d338-43af-82b4-a83671c3148d
-(hg, hs)
 
 # ╔═╡ c743e876-aa11-4533-af8d-d2ec8f2bb22f
 phase_difference = angle.(exp.(im*phase_angle_gpe)./exp.(im*phase_angle_stn))
@@ -290,11 +290,11 @@ end
 # ╠═413e1cd3-00cf-4bb3-98f2-35fa323454cd
 # ╠═32d1b83e-acfa-4351-9bcf-bc4367781186
 # ╠═8accf027-0261-42e5-ac11-c066cfb57c43
+# ╟─3213bf3e-0b6e-477c-bcf9-af8f13cb5dfc
+# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═bcb92a18-166c-46a7-aace-ccca97a825e4
 # ╠═9328ebbd-232f-49a5-8d6c-bf6cae71b898
 # ╠═8fd5ac10-e306-49a7-aca4-397918dc242d
-# ╠═3213bf3e-0b6e-477c-bcf9-af8f13cb5dfc
-# ╠═c81dfd67-d338-43af-82b4-a83671c3148d
 # ╠═c743e876-aa11-4533-af8d-d2ec8f2bb22f
 # ╠═18208fe8-5ac3-49b2-a353-25d18a4d7432
 # ╠═a5a247b0-89a7-47ae-86dd-9bd6b9156731

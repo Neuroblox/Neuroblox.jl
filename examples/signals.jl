@@ -22,7 +22,7 @@ begin
     # instantiate, i.e. make sure that all packages are downloaded
     Pkg.instantiate()
 	Pkg.add("Plots")
-	Pkg.add(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
+	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
 	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, OrdinaryDiffEq
 end

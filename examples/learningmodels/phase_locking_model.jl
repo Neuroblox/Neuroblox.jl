@@ -15,7 +15,7 @@ begin
 	Pkg.add("DSP")
 	Pkg.add("MAT")
 	Pkg.add("Statistics")
-	Pkg.add(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
+	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
     using Plots, Neuroblox, Statistics, MAT, DSP
 end
 
