@@ -21,7 +21,7 @@ mutable struct jansen_rit_spm12 <: JansenRitCBlox
         params = @parameters τ=τ
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
-                  D(y) ~ -x/(τ*τ) + x*jcn/τ]
+                  D(y) ~ -x/(τ*τ) + jcn/τ]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(τ, r, sigmoid(odesys.x, r), odesys)
     end

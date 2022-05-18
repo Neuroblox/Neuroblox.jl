@@ -63,7 +63,7 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
     return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol, wilson_cowan
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph, connectcomplexblox, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
