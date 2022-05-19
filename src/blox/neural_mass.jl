@@ -89,12 +89,12 @@ mutable struct WilsonCowanBlox <: NeuralMassBlox
                           θ_E=2.0,
                           θ_I=3.5,
                           η=1.0)
-        params = @parameters a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η
+        params = @parameters τ_E=τ_E τ_I=τ_I a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η
         sts    = @variables E(t)=1.0 I(t)=1.0 jcn(t)=0.0 P(t)=0.0
         eqs    = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                   D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, odesys)
+        new(τ_E,τ_I,a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, odesys)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
