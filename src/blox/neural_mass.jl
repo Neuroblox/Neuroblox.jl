@@ -64,6 +64,8 @@ end
 const jansen_ritSC = JansenRitSCBlox
 
 mutable struct WilsonCowanBlox <: NeuralMassBlox
+    τ_E::Num
+    τ_I::Num
     a_E::Num
     a_I::Num
     c_EE::Num
@@ -76,6 +78,8 @@ mutable struct WilsonCowanBlox <: NeuralMassBlox
     connector::Num
     odesystem::ODESystem
     function WilsonCowanBlox(;name,
+                          τ_E=1.0,
+                          τ_I=1.0,
                           a_E=1.2,
                           a_I=2.0,
                           c_EE=5.0,
@@ -87,8 +91,8 @@ mutable struct WilsonCowanBlox <: NeuralMassBlox
                           η=1.0)
         params = @parameters a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η
         sts    = @variables E(t)=1.0 I(t)=1.0 jcn(t)=0.0 P(t)=0.0
-        eqs    = [D(E) ~ -E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
-                  D(I) ~ -I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
+        eqs    = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
+                  D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, odesys)
     end
