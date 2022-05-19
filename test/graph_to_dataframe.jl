@@ -18,7 +18,7 @@ add_edge!(g,1,2,:weight,g_STN_GPe)
 add_edge!(g,2,1,:weight,g_STN_GPe*g_GPe_STN)
 add_edge!(g,2,2,:weight,1.0)
 
-@named two_regions_gr = ODEfromGraph(g=g)
+@named two_regions_gr = ODEfromGraph(g)
 
 sim_dur = 5.0 # Simulate for 10 Seconds
 
@@ -61,7 +61,7 @@ add_edge!(g,4,2,:weight,-0.5*C_BG_Th)
 add_edge!(g,4,3,:weight, C_BG_Th)
 add_edge!(g,4,4,:weight,0.0)
 
-@named four_regions_gr = ODEfromGraph(g=g)
+@named four_regions_gr = ODEfromGraph(g)
 
 sim_dur = 5.0 # Simulate for 5 Seconds
 

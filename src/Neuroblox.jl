@@ -56,22 +56,6 @@ include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 
-function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
-    adj = adj_matrix .* connector
-    eqs = []
-    for region_num in 1:length(sys)
-       push!(eqs, sys[region_num].jcn ~ sum(adj[:, region_num]))
-    end
-    return @named Circuit = ODESystem(eqs, systems = sys)
-end
-
-function ODEfromGraph(;name, g::LinearNeuroGraph)
-    blox = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
-    sys = [s.odesystem for s in blox]
-    connector = [s.connector for s in blox]
-    adj = AdjMatrixfromLinearNeuroGraph(g)
-    return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
-end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -79,9 +63,9 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
     return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, theta_neuron, qif_neuron, if_neuron, synaptic_network, van_der_pol, wilson_cowan
+export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol, wilson_cowan
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, ODEfromGraph
+export LinearConnections, ODEfromGraph, connectcomplexblox, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ARVTarget, PhaseTarget, ControlError
