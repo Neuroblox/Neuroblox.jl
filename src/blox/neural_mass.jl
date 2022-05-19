@@ -150,7 +150,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
     k::Num
     connector::Num
     odesystem::ODESystem
-    function next_generation(;name, C=0.0, Δ=0.0, η_0=0.0, v_syn=0.0, alpha_inv=0.0, k=0.0)
+    function NextGenerationBlox(;name, C=0.0, Δ=0.0, η_0=0.0, v_syn=0.0, alpha_inv=0.0, k=0.0)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
         sts    = @variables Z(t)=0.5 g(t)=1.6
         Z = ModelingToolkit.unwrap(Z)
