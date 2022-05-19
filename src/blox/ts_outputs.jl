@@ -65,7 +65,7 @@ function phase_sin_blox(ω,t,phase_inter::F) where F
     return sin(ω*t + phase)
 end
 
-mutable struct phase_cos_signal <: PhaseSignalBlox
+mutable struct phase_cos_signal
     # all parameters are Num as to allow symbolic expressions
     ω::Num
     signal_connector::Num
