@@ -19,22 +19,24 @@ using Interpolations
 abstract type Blox end
 abstract type BloxConnection end
 
-abstract type NeuronBlox <: Blox end
+# abstract type NeuronBlox <: Blox end
 
 abstract type NeuralMassBlox <: Blox end
-abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
-abstract type JansenRitCBlox <: NeuralMassBlox end
-abstract type JansenRitSCBlox <: NeuralMassBlox end
-abstract type WilsonCowanBlox <: NeuralMassBlox end
-abstract type NextGenerationBlox <: NeuralMassBlox end
 
-abstract type DynamicSignalBlox <: Blox end
-abstract type PhaseSignalBlox <: DynamicSignalBlox end
-abstract type TSfromPSDBlox <: DynamicSignalBlox end
+# we define these in neural_mass.jl
+# abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
+# abstract type JansenRitCBlox <: NeuralMassBlox end
+# abstract type JansenRitSCBlox <: NeuralMassBlox end
+# abstract type WilsonCowanBlox <: NeuralMassBlox end
+# abstract type NextGenerationBlox <: NeuralMassBlox end
 
-abstract type MathBlox <: Blox end
-abstract type FilterBlox <: Blox end
-abstract type ControlBlox <: Blox end
+# abstract type DynamicSignalBlox <: Blox end
+# abstract type PhaseSignalBlox <: DynamicSignalBlox end
+# abstract type TSfromPSDBlox <: DynamicSignalBlox end
+
+# abstract type MathBlox <: Blox end
+# abstract type FilterBlox <: Blox end
+# abstract type ControlBlox <: Blox end
 
 abstract type BloxConnectFloat <: BloxConnection end
 abstract type BloxConnectComplex <: BloxConnection end

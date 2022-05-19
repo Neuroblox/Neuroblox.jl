@@ -1,7 +1,7 @@
 @parameters t
 D = Differential(t)
 
-mutable struct harmonic_oscillator <: HarmonicOscillatorBlox
+mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
     ω::Num
     ζ::Num
@@ -9,7 +9,7 @@ mutable struct harmonic_oscillator <: HarmonicOscillatorBlox
     h::Num
     connector::Num
     odesystem::ODESystem
-    function harmonic_oscillator(;name, ω=0.0, ζ=0.0, k=0.0, h=0.0)
+    function HarmonicOscillatorBlox(;name, ω=0.0, ζ=0.0, k=0.0, h=0.0)
         params = @parameters ω=ω ζ=ζ k=k h=h
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
@@ -18,19 +18,21 @@ mutable struct harmonic_oscillator <: HarmonicOscillatorBlox
         new(ω, ζ, k, h, odesys.x, odesys)
     end
 end
+# this assignment is temporary until all the code is changed to the new name
+const harmonic_oscillator = HarmonicOscillatorBlox
 
 # This is for later to connect the icons to the different blox
 # function gui.icon(Type::HarmonicOscillatorBlox)
 #    return HarmonicOscillatorImage
 
-mutable struct jansen_ritC <: JansenRitCBlox
+mutable struct JansenRitCBlox <: NeuralMassBlox
     τ::Num
     H::Num
     λ::Num
     r::Num
     connector::Num
     odesystem::ODESystem
-    function jansen_ritC(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+    function JansenRitCBlox(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -39,15 +41,17 @@ mutable struct jansen_ritC <: JansenRitCBlox
         new(τ, H, λ, r, odesys.x, odesys)
     end
 end
+# this assignment is temporary until all the code is changed to the new name
+const jansen_ritC = JansenRitCBlox
 
-mutable struct jansen_ritSC <: JansenRitSCBlox
+mutable struct  JansenRitSCBlox <: NeuralMassBlox
     τ::Num
     H::Num
     λ::Num
     r::Num
     connector::Num
     odesystem::ODESystem
-    function jansen_ritSC(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+    function JansenRitSCBlox(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -56,8 +60,10 @@ mutable struct jansen_ritSC <: JansenRitSCBlox
         new(τ, H, λ, r, odesys.x, odesys)
     end
 end
+# this assignment is temporary until all the code is changed to the new name
+const jansen_ritSC = JansenRitSCBlox
 
-mutable struct wilson_cowan <: WilsonCowanBlox
+mutable struct WilsonCowanBlox <: NeuralMassBlox
     a_E::Num
     a_I::Num
     c_EE::Num
@@ -69,7 +75,7 @@ mutable struct wilson_cowan <: WilsonCowanBlox
     η::Num
     connector::Num
     odesystem::ODESystem
-    function wilson_cowan(;name,
+    function WilsonCowanBlox(;name,
                           a_E=1.2,
                           a_I=2.0,
                           c_EE=5.0,
@@ -87,6 +93,8 @@ mutable struct wilson_cowan <: WilsonCowanBlox
         new(a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, odesys)
     end
 end
+# this assignment is temporary until all the code is changed to the new name
+const wilson_cowan = WilsonCowanBlox
 
 """
 !!! Deprecated. Remove soon!!!
@@ -99,7 +107,7 @@ TODO:
 - connector is treated as the variable that represents the LFP, i.e. a measurement, not the variable that is used to connect blox. This needs to be re-designed.
 !!! Deprecated. Remove soon!!!
 """
-mutable struct cmc_singleregion <: JansenRitCBlox   # canonical micro circuit blox
+mutable struct cmc_singleregion   # canonical micro circuit blox
     τ1::Num
     τ2::Num
     τ3::Num
@@ -133,7 +141,7 @@ mutable struct cmc_singleregion <: JansenRitCBlox   # canonical micro circuit bl
     end
 end
 
-mutable struct next_generation <: NextGenerationBlox
+mutable struct NextGenerationBlox <: NeuralMassBlox
     C::Num
     Δ::Num
     η_0::Num
@@ -154,3 +162,5 @@ mutable struct next_generation <: NextGenerationBlox
         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys)
     end
 end
+# this assignment is temporary until all the code is changed to the new name
+const next_generation = NextGenerationBlox
