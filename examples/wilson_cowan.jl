@@ -109,7 +109,7 @@ end
 # ╔═╡ aa9a5f4e-c008-44f3-acd9-37e3df9357ef
 begin
 	# set the parameters for the simulation using the sliders
-	sol2 = solve(prob_new, Euler(),dt=0.1)
+	sol2 = solve(prob_new, Euler(),dt=0.01)
 end
 
 # ╔═╡ 7530ba11-de39-4d54-af15-7865ce8137b5
