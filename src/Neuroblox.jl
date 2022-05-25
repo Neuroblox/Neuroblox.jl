@@ -57,6 +57,7 @@ include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
+include("gui/GUI.jl")
 
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
