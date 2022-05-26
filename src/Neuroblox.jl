@@ -19,21 +19,24 @@ using Interpolations
 abstract type Blox end
 abstract type BloxConnection end
 
-abstract type NeuronBlox <: Blox end
+# abstract type NeuronBlox <: Blox end
 
 abstract type NeuralMassBlox <: Blox end
-abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
-abstract type JansenRitCBlox <: NeuralMassBlox end
-abstract type JansenRitSCBlox <: NeuralMassBlox end
-abstract type NextGenerationBlox <: NeuralMassBlox end
 
-abstract type DynamicSignalBlox <: Blox end
-abstract type PhaseSignalBlox <: DynamicSignalBlox end
-abstract type TSfromPSDBlox <: DynamicSignalBlox end
+# we define these in neural_mass.jl
+# abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
+# abstract type JansenRitCBlox <: NeuralMassBlox end
+# abstract type JansenRitSCBlox <: NeuralMassBlox end
+# abstract type WilsonCowanBlox <: NeuralMassBlox end
+# abstract type NextGenerationBlox <: NeuralMassBlox end
 
-abstract type MathBlox <: Blox end
-abstract type FilterBlox <: Blox end
-abstract type ControlBlox <: Blox end
+# abstract type DynamicSignalBlox <: Blox end
+# abstract type PhaseSignalBlox <: DynamicSignalBlox end
+# abstract type TSfromPSDBlox <: DynamicSignalBlox end
+
+# abstract type MathBlox <: Blox end
+# abstract type FilterBlox <: Blox end
+# abstract type ControlBlox <: Blox end
 
 abstract type BloxConnectFloat <: BloxConnection end
 abstract type BloxConnectComplex <: BloxConnection end
@@ -44,7 +47,7 @@ include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("utilities/helperfunctions.jl")
-include("control/ARVController.jl")
+include("control/controlerror.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
@@ -54,23 +57,8 @@ include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
+include("gui/GUI.jl")
 
-function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
-    adj = adj_matrix .* connector
-    eqs = []
-    for region_num in 1:length(sys)
-       push!(eqs, sys[region_num].jcn ~ sum(adj[:, region_num]))
-    end
-    return @named Circuit = ODESystem(eqs, systems = sys)
-end
-
-function ODEfromGraph(;name, g::LinearNeuroGraph)
-    blox = [ get_prop(g.graph,v,:blox) for v in 1:nv(g.graph)]
-    sys = [s.odesystem for s in blox]
-    connector = [s.connector for s in blox]
-    adj = AdjMatrixfromLinearNeuroGraph(g)
-    return @named GraphCircuit = LinearConnections(sys=sys,adj_matrix=adj,connector=connector)
-end
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -78,12 +66,12 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
     return DataFrame(sol)
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit4cmc, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol
+export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol, wilson_cowan
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, ODEfromGraph
+export LinearConnections, ODEfromGraph, connectcomplexblox, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
-export learningrate, ARVController
+export learningrate, ARVTarget, PhaseTarget, ControlError
 export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes

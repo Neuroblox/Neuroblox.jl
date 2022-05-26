@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.17.3
 
 using Markdown
 using InteractiveUtils
@@ -25,7 +25,7 @@ begin
 	Pkg.add("MetaGraphs")
 	Pkg.add("Graphs")
 	Pkg.add("Plots")
-	Pkg.add(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
+	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
 	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs
 end

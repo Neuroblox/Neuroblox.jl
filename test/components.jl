@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra
+using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, Random
 
 
 """
@@ -51,7 +51,30 @@ sol = simulate(region, [], (0.0, 10.0), [])
 @named singleregion = cmc()
 singleregion = structural_simplify(singleregion.odesystem)
 sol = simulate(singleregion, [], (0.0, 10.0), [])
-@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159425345927338
+@test sol[!,"singleregion_dp₊x(t)"][end] + sol[!,"singleregion_ii₊x(t)"][end] ≈ -5.159425345927338
+
+# connect multiple canonical micro circuits
+@named r1 = cmc()
+@named r2 = cmc()
+@named r3 = cmc()
+
+regions = [r1, r2, r3]
+nr = length(regions)
+A = Array{Matrix{Float64}}(undef, nr, nr);
+Random.seed!(1234)
+for i = 1:nr
+    for j = 1:nr
+        if i == j continue end
+        nodes_source = nv(regions[i].lngraph.graph)
+        nodes_sink = nv(regions[j].lngraph.graph)
+        A[i, j] = rand(nodes_source, nodes_sink)
+    end
+end
+@named manyregions = connectcomplexblox(regions, A)
+manyregions = structural_simplify(manyregions)
+sol = simulate(manyregions, [], (0.0, 10.0), [])
+@test_broken sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
+
 
 """
 Components Test for Cortical-Subcortical Jansen-Rit blox
@@ -98,7 +121,7 @@ network = []
 N = 50
 for i = 1:N
     η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-    @named neuron = Neuroblox.thetaneuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
+    @named neuron = Neuroblox.theta_neuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
     push!(network, neuron)
 end
 
@@ -236,6 +259,20 @@ Test for van der Pol generator.
 prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 @test sol.retcode == :Success
+
+"""
+wilson_cowan test
+
+Test for Wilson-Cowan model
+"""
+@named WC = wilson_cowan()
+sys = [WC.odesystem]
+eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
+@named WC_sys = ODESystem(eqs,systems=sys)
+WC_sys_s = structural_simplify(WC_sys)
+prob = ODEProblem(WC_sys_s, [], (0,sim_dur), [])
+sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
+@test sol[1,end] ≈ 0.17513795881745436
 
 """
 ts_outputs.jl test
