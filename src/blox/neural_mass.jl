@@ -9,7 +9,7 @@ mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     h::Num
     connector::Num
     odesystem::ODESystem
-    function HarmonicOscillatorBlox(;name, ω=0.0, ζ=0.0, k=0.0, h=0.0)
+    function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
         params = @parameters ω=ω ζ=ζ k=k h=h
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
@@ -32,7 +32,7 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
     r::Num
     connector::Num
     odesystem::ODESystem
-    function JansenRitCBlox(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+    function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -51,7 +51,7 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
     r::Num
     connector::Num
     odesystem::ODESystem
-    function JansenRitSCBlox(;name, τ=0.0, H=0.0, λ=0.0, r=0.0)
+    function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
         params = @parameters τ=τ H=H λ=λ r=r
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -154,7 +154,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
     k::Num
     connector::Num
     odesystem::ODESystem
-    function NextGenerationBlox(;name, C=0.0, Δ=0.0, η_0=0.0, v_syn=0.0, alpha_inv=0.0, k=0.0)
+    function NextGenerationBlox(;name, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
         sts    = @variables Z(t)=0.5 g(t)=1.6
         Z = ModelingToolkit.unwrap(Z)

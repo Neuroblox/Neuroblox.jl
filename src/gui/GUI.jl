@@ -48,30 +48,30 @@ const STRING = "string"
 
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   Dict(
-    :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
-    :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
+    :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi)),
+    :ζ => NCAD(1.0, NUMBER, -1.0, 1.0),
+    :k => NCAD(625*(2*pi), NUMBER, (2*pi), 22500*(2*pi)),
+    :h => NCAD(35.0, NUMBER, 0.01, 90.0),
     :name => NCAD(nothing, STRING, nothing, nothing)
   )
 end
 
 function arguments(::Type{Neuroblox.JansenRitCBlox})
   Dict(
-    :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
-    :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
+    :τ => NCAD(0.001, NUMBER, 0.001, 2.0),
+    :H => NCAD(20.0, NUMBER, 0.0, 500.0),
+    :λ => NCAD(5.0, NUMBER, 1.0, 25.0),
+    :r => NCAD(0.15, NUMBER, 0.1, 5.0),
     :name => NCAD(nothing, STRING, nothing, nothing)
   )
 end
 
 function arguments(::Type{Neuroblox.JansenRitSCBlox})
   Dict(
-    :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
-    :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
+    :τ => NCAD(0.014, NUMBER, 0.001, 0.1),
+    :H => NCAD(20.0, NUMBER, 0.0, 500.0),
+    :λ => NCAD(400.0, NUMBER, 20.0, 500.0),
+    :r => NCAD(0.1, NUMBER, 0.1, 5.0),
     :name => NCAD(nothing, STRING, nothing, nothing)
   )
 end
@@ -95,12 +95,12 @@ end
 
 function arguments(::Type{Neuroblox.NextGenerationBlox})
   Dict(
-    :C => NCAD(0.0, NUMBER, 0.0, 5.0),
-    :Δ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :η_0 => NCAD(5.0, NUMBER, 0.0, 700.0),
-    :v_syn => NCAD(0.0, NUMBER, 0.0, 5.0),
-    :alpha_inv => NCAD(0.0, NUMBER, 0.0, 5.0),
-    :k => NCAD(0.0, NUMBER, 0.0, 5.0),
+    :C => NCAD(30.0, NUMBER, 1.0, 50.0),
+    :Δ => NCAD(1.0, NUMBER, 0.01, 100.0),
+    :η_0 => NCAD(5.0, NUMBER, 0.01, 20.0),
+    :v_syn => NCAD(-10.0, NUMBER, -20.0, 0.0),
+    :alpha_inv => NCAD(35.0, NUMBER, 0.01, 10.0),
+    :k => NCAD(0.105, NUMBER, 0.01, 2.0),
     :name => NCAD(nothing, STRING, nothing, nothing)
   )
 end
