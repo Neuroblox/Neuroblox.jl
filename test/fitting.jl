@@ -57,7 +57,7 @@ optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 # loss(ptrue,nothing)
 
 # Solve optimization problem
-optsol = GalacticOptim.solve(optprob, GalacticOptimisers.ADAM(0.0001),maxiters = 300, callback = cb)
+optsol = GalacticOptim.solve(optprob, GalacticOptimisers.Adam(0.0001),maxiters = 300, callback = cb)
 optprob2 = remake(optprob,u0 = optsol.u)
 optsol2 = GalacticOptim.solve(optprob2, BFGS(initial_stepnorm = 0.0001),maxiters = 300, callback = cb)
 
