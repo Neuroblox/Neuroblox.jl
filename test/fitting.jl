@@ -1,4 +1,4 @@
-using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, Optim, Flux, ForwardDiff, Test
+using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, GalacticOptimJL, GalacticOptimisers, Flux, ForwardDiff, Test
 
 @named Str = jansen_ritSC(τ=0.0022, H=20, λ=300, r=0.3)
 @named GPe = jansen_ritSC(τ=0.04, H=20, λ=400, r=0.1)
@@ -19,7 +19,7 @@ adj_matrix = [0 0 0 0;
 @named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector=connect)
 
 sim_dur = 5.0 # Simulation time (seconds)
-prob = ODAEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
+prob = ODEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
 
 # Fitting Procedure
 # Grab system parameters
@@ -57,9 +57,9 @@ optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
 # loss(ptrue,nothing)
 
 # Solve optimization problem
-optsol = solve(optprob, ADAM(0.0001),maxiters = 300, cb = cb)
+optsol = GalacticOptim.solve(optprob, GalacticOptimisers.ADAM(0.0001),maxiters = 300, callback = cb)
 optprob2 = remake(optprob,u0 = optsol.u)
-optsol2 = solve(optprob2, BFGS(initial_stepnorm = 0.0001),maxiters = 300, cb = cb)
+optsol2 = GalacticOptim.solve(optprob2, BFGS(initial_stepnorm = 0.0001),maxiters = 300, callback = cb)
 
 # Calculate squared error of fit
 @test norm(optsol.u - ptrue) < 16 # balance threshold value and maxiters for run time
