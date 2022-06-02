@@ -27,8 +27,8 @@ The following outputs:
 With parameters:
     'df'     : frequency resolution
 """
-mutable struct PowerSpectrumBlox <: UtilitiesBlox
-    
+mutable struct PowerSpectrumBlox <: SpectralUtilities
+
     data::Num
     T::Num
     fs::Num
