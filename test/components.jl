@@ -258,7 +258,7 @@ for ii = 1:5
     nn = hh_neuron_excitatory(name=Symbol("hh_nrn$ii"),E_syn=0,G_syn=3,I_in=I_in[ii],freq=0, phase=0, τ=5)
     push!(hh_nrn_network,nn)
 end
-nn = hh_neuron_inhibitory(name=Symbol("hh_nrn$ii"),E_syn=-70,G_syn=23,I_in=0.85,freq=4, phase=pi, τ=70)
+nn = hh_neuron_inhibitory(name=Symbol("hh_nrn6"),E_syn=-70,G_syn=23,I_in=0.85,freq=4, phase=pi, τ=70)
 push!(hh_nrn_network,nn)
 
 # adjacency matrix 
