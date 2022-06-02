@@ -34,7 +34,8 @@ abstract type NeuralMassBlox <: Blox end
 # abstract type PhaseSignalBlox <: DynamicSignalBlox end
 # abstract type TSfromPSDBlox <: DynamicSignalBlox end
 
-abstract type UtilitiesBlox <: Blox end
+abstract type UtilitiesBlox <: Blox end 
+
 # abstract type MathBlox <: Blox end
 # abstract type FilterBlox <: Blox end
 # abstract type ControlBlox <: Blox end

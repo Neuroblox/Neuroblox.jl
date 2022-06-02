@@ -28,6 +28,7 @@ With parameters:
     'df'     : frequency resolution
 """
 mutable struct PowerSpectrumBlox <: UtilitiesBlox
+    
     data::Num
     T::Num
     fs::Num
@@ -35,6 +36,7 @@ mutable struct PowerSpectrumBlox <: UtilitiesBlox
     window::Num
     frequency::Num
     power:Num
+
     function PowerSpectrumBlox(data, T, fs, method, window)
         if typeof(data) == Matrix{Float64}
             data = vec(data)
