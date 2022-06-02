@@ -34,9 +34,8 @@ mutable struct PowerSpectrumBlox <: SpectralUtilities
     fs::Num
     method::Num
     window::Num
-    frequency::Num
-    power:Num
-
+    freq::Num
+    pow::Num
     function PowerSpectrumBlox(data, T, fs, method, window)
         if typeof(data) == Matrix{Float64}
             data = vec(data)
