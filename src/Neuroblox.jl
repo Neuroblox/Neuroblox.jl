@@ -18,6 +18,7 @@ using Interpolations
 # define abstract types for Neuroblox
 abstract type Blox end
 abstract type BloxConnection end
+abstract type BloxUtilities end
 
 # abstract type NeuronBlox <: Blox end
 
@@ -33,6 +34,8 @@ abstract type NeuralMassBlox <: Blox end
 # abstract type DynamicSignalBlox <: Blox end
 # abstract type PhaseSignalBlox <: DynamicSignalBlox end
 # abstract type TSfromPSDBlox <: DynamicSignalBlox end
+
+abstract type SpectralUtilities <: BloxUtilities end 
 
 # abstract type MathBlox <: Blox end
 # abstract type FilterBlox <: Blox end

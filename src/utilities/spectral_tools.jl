@@ -27,34 +27,40 @@ The following outputs:
 With parameters:
     'df'     : frequency resolution
 """
-function powerspectrum(data, T, fs, method, window)
+mutable struct PowerSpectrumBlox <: SpectralUtilities
 
-    if typeof(data) == Matrix{Float64}
-        data = vec(data)
+    data::Num
+    T::Num
+    fs::Num
+    method::Num
+    window::Num
+    freq::Num
+    pow::Num
+    function PowerSpectrumBlox(data, T, fs, method, window)
+        if typeof(data) == Matrix{Float64}
+            data = vec(data)
+        end
+        if method == "auto" 
+            df = 1/T                                           
+            f = 0:df:(fs/2)  
+            dt = 1/fs             
+            pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
+            pxx = real(pxx)
+        end
+        if method == "periodogram"
+            periodogram_estimation = periodogram(data, fs=fs, window=window)
+            pxx = periodogram_estimation.power
+            f = periodogram_estimation.freq
+        end
+        if method == "pwelch"
+            pwelch_periodogram_estimation = welch_pgram(data, fs=fs, window=window)
+            pxx = pwelch_periodogram_estimation.power
+            f = pwelch_periodogram_estimation.freq
+        end
+        new(data, T, fs, method, window, f, pxx)
     end
-
-    if method == "auto" 
-        df = 1/T                                           
-        f = 0:df:(fs/2)  
-        dt = 1/fs             
-        pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
-        pxx = real(pxx)
-    end
-
-    if method == "periodogram"
-        periodogram_estimation = periodogram(data, fs=fs, window=window)
-        pxx = periodogram_estimation.power
-        f = periodogram_estimation.freq
-    end
-
-    if method == "pwelch"
-        pwelch_periodogram_estimation = welch_pgram(data, fs=fs, window=window)
-        pxx = pwelch_periodogram_estimation.power
-        f = pwelch_periodogram_estimation.freq
-    end
-
-    return f, pxx
 end
+const powerspectrum = PowerSpectrumBlox
 
 """
 bandpassfilter takes in time series data and bandpass filters it.
