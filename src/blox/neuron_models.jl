@@ -71,7 +71,7 @@ end
 
 
 # Hodgkin-Huxley Inhibitory neurons 
-function hh_neuron_inhibitory(;name,E_syn=0.0,G_syn=2, I_in=0, freq=0,phase=0, τ=10)
+function hh_neuron_inhibitory(;name,E_syn=-70.0,G_syn=2, I_in=0, freq=0,phase=0, τ=10)
 	sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Isyn(t)=0.0 G(t)=0 z(t)=0 
 	ps = @parameters E_syn=E_syn G_Na = 52 G_K  = 20 G_L = 0.1 E_Na = 55 E_K = -90 E_L = -60 G_syn = G_syn V_shift = 0 V_range = 35 τ_syn = 10 τ₁ = 0.1 τ₂ = τ I_in = I_in freq=freq phase=phase
 	
