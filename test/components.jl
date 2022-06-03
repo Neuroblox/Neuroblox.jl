@@ -299,7 +299,7 @@ eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
 WC_sys_s = structural_simplify(WC_sys)
 prob = ODEProblem(WC_sys_s, [], (0,sim_dur), [])
 sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
-@test sol[1,end] ≈ 0.17513795881745436
+@test sol[1,end] ≈ 0.17513685727060388
 
 """
 ts_outputs.jl test
