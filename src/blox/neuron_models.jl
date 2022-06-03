@@ -54,7 +54,7 @@ mutable struct IFNeuronBlox <: NeuronBlox
 		  	]
     		ev = [V~θ] => [V~Eₘ,z~G_syn,Cₜ~10]
 		odesys = ODESystem(eqs,t,sts,ps,continuous_events=[ev];name=name)
-		new(C, E_syn, G_syn, I_in, freq, phase, ω, ζ, k, h, τ, odesys.V, odesys)
+		new(C, E_syn, G_syn, I_in, freq, phase, τ, odesys.V, odesys)
 	end
 end
 const if_neuron = IFNeuronBlox
