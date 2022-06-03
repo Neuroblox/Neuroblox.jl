@@ -24,8 +24,8 @@ mutable struct QIFNeuronBlox <: NeuronBlox
    		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
 		odesys = ODESystem(eqs,t,sts,ps,continuous_events=[ev];name=name)
 		new(C, E_syn, G_syn, ω, τ, odesys.V, odesys)
+	end
 end
-
 const qif_neuron = QIFNeuronBlox
 
 # Leaky Integrate and Fire neurons
