@@ -157,7 +157,7 @@ nrn_network=[]
 
 for ii = 1:N_nrn
 	 nn = qif_neuron(name=Symbol("nrn$ii"),C=30.0,E_syn=-10,G_syn=1,ω=rand(Cauchy(ω₀,Δω)),τ=35)
-     push!(nrn_network,nn)
+     push!(nrn_network,nn.odesystem)
 end
 
 # create synaptic network
@@ -230,7 +230,7 @@ phase[6] = pi
 nrn_network=[]
 for ii = 1:Nrns
     nn = if_neuron(name=Symbol("nrn$ii"),E_syn=E_syn[ii],G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii], phase=phase[ii], τ=τ[ii])
-    push!(nrn_network,nn)
+    push!(nrn_network,nn.odesystem)
 end
 
 # adjacency matrix 
