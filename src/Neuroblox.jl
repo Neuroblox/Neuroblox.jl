@@ -20,8 +20,8 @@ abstract type Blox end
 abstract type BloxConnection end
 abstract type BloxUtilities end
 
-# abstract type NeuronBlox <: Blox end
-
+# subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
+abstract type NeuronBlox <: Blox end
 abstract type NeuralMassBlox <: Blox end
 
 # we define these in neural_mass.jl
@@ -70,6 +70,8 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
 end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
+export IFNeuronBlox, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox
+export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph, connectcomplexblox, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
