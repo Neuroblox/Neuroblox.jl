@@ -27,8 +27,8 @@ The following outputs:
 With parameters:
     'df'     : frequency resolution
 """
-function powerspectrum(data, T, fs, method, window)
 
+function powerspectrum(data, T, fs, method, window)
     if typeof(data) == Matrix{Float64}
         data = vec(data)
     end
@@ -52,8 +52,18 @@ function powerspectrum(data, T, fs, method, window)
         pxx = pwelch_periodogram_estimation.power
         f = pwelch_periodogram_estimation.freq
     end
-
     return f, pxx
+end
+
+mutable struct PowerSpectrumBlox <: SpectralUtilities
+    T::Float64
+    fs::Float64
+    method::String
+    window::Union{Function,AbstractVector,Nothing}
+    PSDfunc::Function
+    function PowerSpectrumBlox(T, fs, method, window)
+        new(T, fs, method, window, powerspectrum)
+    end
 end
 
 """
@@ -71,6 +81,17 @@ function bandpassfilter(data, lb, ub, fs, order)
     designmethod = Butterworth(order)
     signal = filtfilt(digitalfilter(responsetype, designmethod), data)
     return signal
+end
+
+mutable struct BandPassFilterBlox <: SpectralUtilities
+    lb::Float64
+    ub::Float64
+    fs::Float64
+    order::Int64
+    BPFfunc::Function
+    function BandPassFilterBlox(lb,ub, fs, order)
+        new(lb, ub, fs, oder, bandpassfilter)
+    end
 end
 
 """

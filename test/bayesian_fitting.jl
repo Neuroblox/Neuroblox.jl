@@ -1,4 +1,4 @@
-using Neuroblox, StochasticDiffEq ,ForwardDiff, Test
+using Neuroblox, StochasticDiffEq ,ForwardDiff, LinearAlgebra, Test
 using Turing
 using Distributions
 using Turing: Variational
@@ -20,8 +20,8 @@ y = sol[2,:]
   ϕ ~ Uniform(0,0.5)
   dxh = datay[1:end-1]
   dyh = θ .* (1 .- datax[1:end-1] .^ 2) .* datay[1:end-1] .- datax[1:end-1]
-  datax[2:end] ~ MvNormal(datax[1:end-1] .+ dxh * dt,ϕ*sqrt(dt))
-  datay[2:end] ~ MvNormal(datay[1:end-1] .+ dyh * dt,ϕ*sqrt(dt))
+  datax[2:end] ~ MvNormal(datax[1:end-1] .+ dxh * dt,ϕ^2*dt * I)
+  datay[2:end] ~ MvNormal(datay[1:end-1] .+ dyh * dt,ϕ^2*dt * I)
 end
 
 Turing.setadbackend(:forwarddiff)
@@ -50,8 +50,8 @@ yn = y .+ rand(noise,length(y))
       xh[i] ~ Normal(xh[i-1] + dxh * dt,ϕ*sqrt(dt))
       yh[i] ~ Normal(yh[i-1] + dyh * dt,ϕ*sqrt(dt))
   end
-  datax ~ MvNormal(xh,σ)
-  datay ~ MvNormal(yh,σ)
+  datax ~ MvNormal(xh,σ ^ 2 * I)
+  datay ~ MvNormal(yh,σ ^ 2 * I)
 end
 
 # ADVI

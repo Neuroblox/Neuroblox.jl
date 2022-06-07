@@ -157,7 +157,7 @@ nrn_network=[]
 
 for ii = 1:N_nrn
 	 nn = qif_neuron(name=Symbol("nrn$ii"),C=30.0,E_syn=-10,G_syn=1,ω=rand(Cauchy(ω₀,Δω)),τ=35)
-     push!(nrn_network,nn)
+     push!(nrn_network,nn.odesystem)
 end
 
 # create synaptic network
@@ -230,7 +230,7 @@ phase[6] = pi
 nrn_network=[]
 for ii = 1:Nrns
     nn = if_neuron(name=Symbol("nrn$ii"),E_syn=E_syn[ii],G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii], phase=phase[ii], τ=τ[ii])
-    push!(nrn_network,nn)
+    push!(nrn_network,nn.odesystem)
 end
 
 # adjacency matrix 
@@ -244,8 +244,35 @@ syn[1:end-1,end].=1;
 @test length(states(syn_net)) == 5*Nrns
 
 # simulate
-sim_dur =  500.0
+sim_dur =  50.0
 sol = simulate(syn_net, [], (0.0, sim_dur), [])
+@test sol[end,1] == sim_dur
+
+"""
+hh_neuron_excitatory() and hh_neuron_inhibitory() test.
+This test generates 5 excitatory and 1 inhibitory hh neurons and connects them into winner take all
+network. It then simulates their activity.
+"""
+hh_nrn_network=[]
+for ii = 1:5
+    nn = hh_neuron_excitatory(name=Symbol("hh_nrn$ii"),E_syn=0,G_syn=3,I_in=I_in[ii],freq=0, phase=0, τ=5)
+    push!(hh_nrn_network,nn)
+end
+nn = hh_neuron_inhibitory(name=Symbol("hh_nrn6"),E_syn=-70,G_syn=23,I_in=0.85,freq=4, phase=pi, τ=70)
+push!(hh_nrn_network,nn)
+
+# adjacency matrix 
+syn =  zeros(Nrns,Nrns);
+syn[end,1:end-1].=1;
+syn[1:end-1,end].=1;
+
+#connect the neurons
+@named hh_syn_net = synaptic_network(sys=hh_nrn_network,adj_matrix=syn)
+@test typeof(hh_syn_net) == ODESystem
+
+# simulate
+sim_dur =  50.0
+sol = simulate(hh_syn_net, [], (0.0, sim_dur), [])
 @test sol[end,1] == sim_dur
 
 """
@@ -272,7 +299,7 @@ eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
 WC_sys_s = structural_simplify(WC_sys)
 prob = ODEProblem(WC_sys_s, [], (0,sim_dur), [])
 sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
-@test sol[1,end] ≈ 0.17513795881745436
+@test sol[1,end] ≈ 0.17513685727060388
 
 """
 ts_outputs.jl test
