@@ -51,28 +51,25 @@ function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
     :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
     :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
     :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
-    :name => NCAD(nothing, STRING, nothing, nothing)
+    :h => NCAD(0.1, NUMBER, 0.1, 5.0)
   )
 end
 
 function arguments(::Type{Neuroblox.JansenRitCBlox})
   Dict(
-    :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
-    :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
-    :name => NCAD(nothing, STRING, nothing, nothing)
+    :τ => NCAD(0.001, NUMBER, 0.001, 5.0),
+    :H => NCAD(0.0, NUMBER, 0.0, 500.0),
+    :λ => NCAD(5.0, NUMBER, 5.0, 700.0),
+    :r => NCAD(0.1, NUMBER, 0.1, 5.0)
   )
 end
 
 function arguments(::Type{Neuroblox.JansenRitSCBlox})
   Dict(
-    :ω => NCAD(0.001, NUMBER, 0.001, 5.0),
-    :ζ => NCAD(0.0, NUMBER, 0.0, 500.0),
-    :k => NCAD(5.0, NUMBER, 5.0, 700.0),
-    :h => NCAD(0.1, NUMBER, 0.1, 5.0),
-    :name => NCAD(nothing, STRING, nothing, nothing)
+    :τ => NCAD(0.001, NUMBER, 0.001, 5.0),
+    :H => NCAD(0.0, NUMBER, 0.0, 500.0),
+    :λ => NCAD(5.0, NUMBER, 5.0, 700.0),
+    :r => NCAD(0.1, NUMBER, 0.1, 5.0)
   )
 end
 
@@ -88,8 +85,7 @@ function arguments(::Type{Neuroblox.WilsonCowanBlox})
     :c_II => NCAD(1.0, NUMBER, 1.0, 100.0),
     :θ_E => NCAD(2.0, NUMBER, 1.0, 100.0),
     :θ_I => NCAD(3.5, NUMBER, 1.0, 100.0),
-    :η => NCAD(1.0, NUMBER, 1.0, 100.0),
-    :name => NCAD(nothing, STRING, nothing, nothing)
+    :η => NCAD(1.0, NUMBER, 1.0, 100.0)
   )
 end
 
@@ -100,8 +96,7 @@ function arguments(::Type{Neuroblox.NextGenerationBlox})
     :η_0 => NCAD(5.0, NUMBER, 0.0, 700.0),
     :v_syn => NCAD(0.0, NUMBER, 0.0, 5.0),
     :alpha_inv => NCAD(0.0, NUMBER, 0.0, 5.0),
-    :k => NCAD(0.0, NUMBER, 0.0, 5.0),
-    :name => NCAD(nothing, STRING, nothing, nothing)
+    :k => NCAD(0.0, NUMBER, 0.0, 5.0)
   )
 end
 
