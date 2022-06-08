@@ -100,4 +100,25 @@ function arguments(::Type{Neuroblox.NextGenerationBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
+  Dict(
+    :C => NCAD(30.0, NUMBER, 1.0, 50.0),
+    :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0),
+    :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0),
+	  :I_in => NCAD(-10.0, NUMBER, -20.0, 0.0),
+	  :freq => NCAD(35.0, NUMBER, 0.01, 10.0),
+	  :phase => NCAD(0.105, NUMBER, 0.01, 2.0),
+	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0)
+  )
+end
+
+function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings for the arguments
+  Dict(
+    :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0),
+    :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0),
+	  :w => NCAD(-10.0, NUMBER, -20.0, 0.0),
+	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0)
+  )
+end
+
 end
