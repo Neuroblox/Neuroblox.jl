@@ -26,7 +26,13 @@ function outputs end
 
 function label(::Type{T}) where T
   name = split(string(T), '.'; keepempty = false)[end]
-  endswith(name, "Blox") ? name[1:end-4] : name
+  if endswith(name, "Blox")
+    name[1:end-4]
+  elseif endswith(name, "Utility")
+    name[1:end-7]
+  else
+    name
+  end
 end
 
 function icon(::Type{T}) where T
