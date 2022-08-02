@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.4
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -27,7 +27,7 @@ begin
 	Pkg.add("Plots")
 	Pkg.add("CSV")
 	Pkg.add("DataFrames")
-	Pfg.add("LinearAlgebra")
+	Pkg.add("LinearAlgebra")
 	Pkg.develop(path=joinpath(@__DIR__, "..", "..","..", "Neuroblox.jl"))
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, CSV, DataFrames,LinearAlgebra
 end

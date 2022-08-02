@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.3
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -15,6 +15,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ 771d1460-c48a-11ec-10d4-c7c5dd2a9984
+# ╠═╡ show_logs = false
 begin
     import Pkg
     # activate the shared project environment
@@ -81,13 +82,13 @@ end
 AdjMatrixfromLinearNeuroGraph(g7)
 
 # ╔═╡ 33002a2b-f8a9-4728-8288-2f92d3b89948
-@named seven_regions_gr = ODEfromGraph(g=g7)
+@named seven_regions_gr = ODEfromGraph(g7)
 
 # ╔═╡ c4b4aa78-0324-4ea8-9903-efe87f6074e8
 seven_regions_s = structural_simplify(seven_regions_gr)
 
 # ╔═╡ 1a48d894-f43b-4559-8844-50b6e1989bda
-sim_dur = 10.0 # Simulate for 10 Seconds
+sim_dur = 5.0 # Simulate for 10 Seconds
 
 # ╔═╡ 906a3f36-613c-465c-b7d1-6caa245cfe86
 prob = ODEProblem(seven_regions_s, [], (0,sim_dur), [])
