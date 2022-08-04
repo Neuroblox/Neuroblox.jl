@@ -168,3 +168,58 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
 end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
+
+mutable struct LauterBreakspearBlox <: NeuralMassBlox
+    C::Num
+    δ_VZ::Num
+    connector::Num
+    odesystem::ODESystem
+    function LauterBreakspearBlox(;name,
+                          T_Ca=-0.01,
+                          δ_Ca=0.15,
+                          g_Ca=1.0,
+                          V_Ca=1.0,
+                          T_K=0.0,
+                          δ_K=0.3,
+                          g_K=2.0,
+                          V_K=-0.7,
+                          T_Na=0.3,
+                          δ_Na=0.15,
+                          g_Na=6.7,
+                          V_Na=0.53,
+                          V_L=-0.5,
+                          g_L=0.5,
+                          V_T=0.0,
+                          Z_T=0.0,
+                          δ_VZ=0.61,
+                          Q_Vmax=1.0,
+                          Q_Zmax=1.0,
+                          IS = 0.3,
+                          a_ee=0.36,
+                          a_ei=2.0,
+                          a_ie=2.0,
+                          a_ne=1.0,
+                          a_ni=0.4,
+                          b=0.1,
+                          τ_K=1.0,
+                          ϕ=0.7,
+                          r_NMDA=0.25,
+                          C=0.35)
+        params = @parameters C=C δ_VZ=δ_VZ
+        sts    = @variables V(t) Z(t) W(t) jcn(t) Q_V(t) Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
+
+        eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
+                          g_K * W * (V - V_K) - g_L * (V - V_L) -
+                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Ca) -
+                          a_ie * Z * Q_Z + a_ne * IS,
+                  D(Z) ~ b * (a_ne * IS + a_ei * V * Q_V),
+                  D(W) ~ ϕ * (m_K - W) / τ_K,
+                  Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
+                  Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
+                  m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
+                  m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
+                  m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(C, δ_VZ, Q_V, odesys)
+    end
+end
