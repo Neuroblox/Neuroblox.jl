@@ -220,6 +220,6 @@ mutable struct LauterBreakspearBlox <: NeuralMassBlox
                   m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                   m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, δ_VZ, Q_V, odesys)
+        new(C, δ_VZ, odesys.Q_V, odesys)
     end
 end
