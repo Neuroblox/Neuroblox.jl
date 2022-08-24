@@ -210,9 +210,9 @@ mutable struct LauterBreakspearBlox <: NeuralMassBlox
 
         eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
                           g_K * W * (V - V_K) - g_L * (V - V_L) -
-                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Ca) -
+                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) +
                           a_ie * Z * Q_Z + a_ne * IS,
-                  D(Z) ~ b * (a_ne * IS + a_ei * V * Q_V),
+                  D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
                   D(W) ~ ϕ * (m_K - W) / τ_K,
                   Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
                   Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
