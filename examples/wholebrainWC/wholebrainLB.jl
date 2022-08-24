@@ -80,13 +80,10 @@ equations(LB_Circuit_lin)[1]
 mysys = structural_simplify(LB_Circuit_lin)
 
 # ╔═╡ d8f367ad-52dd-4cc2-9c65-0f84cd22d62e
-length(mysys.states)
+mysys.states
 
 # ╔═╡ d593209e-2fc8-40c0-883b-935b5512c779
 mysys.ps
-
-# ╔═╡ 9778982a-e706-457f-8723-703d6fefbdb0
-prob = ODEProblem(mysys,0.5*rand(length(mysys.states)),(0.0,100.0),[])
 
 # ╔═╡ 41587582-f793-4198-af39-7cd0637d57cc
 md"""
@@ -95,6 +92,17 @@ $(@bind coup html"<input type=range value=0.5 min=0 max=1 step=0.01>")
 delta
 $(@bind delta html"<input type=range value=0.1 min=0 max=1 step=0.01>")
 """
+
+# ╔═╡ 649e0326-64d8-436e-818d-2705d16a74a0
+begin
+	uw = 0.4*rand(Int(length(mysys.states)/3)) .+ 0.11
+	uv = 0.9*rand(Int(length(mysys.states)/3)) .- 0.6
+	uz = 0.9*rand(Int(length(mysys.states)/3)) .- 0.9
+	u0 = collect(Iterators.flatten(zip(uv,uz,uw)))
+end
+
+# ╔═╡ 9778982a-e706-457f-8723-703d6fefbdb0
+prob = ODEProblem(mysys,u0,(0.0,100.0),[])
 
 # ╔═╡ b201b708-908a-4321-8c06-da3b442af069
 begin
@@ -107,11 +115,8 @@ begin
 	sol = solve(prob2,Rodas4(),saveat=0.1)
 end
 
-# ╔═╡ 469f3bd1-18f7-42f8-8972-3e9a4713bf66
-
-
 # ╔═╡ 4545b94d-fd25-4a3d-ba30-faeff8c89b8c
-plot(sol,label=false)
+plot(sol,label=false,xlim=(0,100),ylim=(-1,3))
 
 # ╔═╡ 1357d862-557b-4460-8c20-61c7ec9ef872
 size(sol)
@@ -132,9 +137,9 @@ size(sol)
 # ╠═69920cca-0cd3-4761-92f5-8dcca67500dc
 # ╠═d8f367ad-52dd-4cc2-9c65-0f84cd22d62e
 # ╠═d593209e-2fc8-40c0-883b-935b5512c779
-# ╠═9778982a-e706-457f-8723-703d6fefbdb0
 # ╠═b201b708-908a-4321-8c06-da3b442af069
 # ╠═41587582-f793-4198-af39-7cd0637d57cc
-# ╠═469f3bd1-18f7-42f8-8972-3e9a4713bf66
+# ╠═649e0326-64d8-436e-818d-2705d16a74a0
+# ╠═9778982a-e706-457f-8723-703d6fefbdb0
 # ╠═4545b94d-fd25-4a3d-ba30-faeff8c89b8c
 # ╠═1357d862-557b-4460-8c20-61c7ec9ef872
