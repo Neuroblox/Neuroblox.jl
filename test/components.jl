@@ -315,7 +315,7 @@ lb_simpl = structural_simplify(lb_connect)
 prob = ODEProblem(lb_simpl,[0.5,0.5,0.5],(0,10.0),[])
 sol = solve(prob,Tsit5())
 
-@test sol[1,10] ≈ -0.6246710908910986
+@test sol[1,10] ≈ 0.47040070087315417
 
 """
 ts_outputs.jl test
