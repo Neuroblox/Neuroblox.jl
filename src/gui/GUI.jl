@@ -95,6 +95,13 @@ function arguments(::Type{Neuroblox.WilsonCowanBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.LauterBreakspearBlox})
+  Dict(
+    :C => NCAD(0.35, NUMBER, 0.0, 1.0),
+    :δ_VZ => NCAD(0.61, NUMBER, 0.1, 2.0),
+  )
+end
+
 function arguments(::Type{Neuroblox.NextGenerationBlox})
   Dict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0),
