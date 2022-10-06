@@ -75,6 +75,7 @@ ModelingToolkit = "8"
 MuladdMacro = "0.2"
 Optim = "1"
 OrdinaryDiffEq = "6"
+OutlierDetection = "0.3"
 Plots = "1"
 RecursiveArrayTools = "2"
 Reexport = "1.0"
@@ -107,4 +108,4 @@ Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [targets]
-test = ["LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "GalacticOptim", "GalacticOptimJL", "GalacticOptimisers","Optim", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]
+test = ["LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "GalacticOptim", "GalacticOptimJL", "GalacticOptimisers", "Optim", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]
