@@ -11,4 +11,5 @@ using SafeTestsets
 @time @safetestset "Learning Tests" begin include("learning.jl") end
 @time @safetestset "Control Tests" begin include("controllers.jl") end
 @time @safetestset "Bayesian Fitting Tests" begin include("bayesian_fitting.jl") end
+@time @safetestset "Source Tests" begin include("source_components.jl") end
 

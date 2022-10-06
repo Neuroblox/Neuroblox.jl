@@ -2,6 +2,7 @@ module Neuroblox
 
 using Reexport
 @reexport using ModelingToolkit
+@reexport using ModelingToolkitStandardLibrary.Blocks
 
 using Graphs
 using MetaGraphs
@@ -23,6 +24,7 @@ abstract type BloxUtilities end
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
 abstract type NeuronBlox <: Blox end
 abstract type NeuralMassBlox <: Blox end
+abstract type SourceBlox <: Blox end
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -60,6 +62,7 @@ include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
+include("blox/sources.jl")
 include("gui/GUI.jl")
 
 
@@ -71,12 +74,13 @@ end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LauterBreakspearBlox
+export cosine_source
 export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, ODEfromGraph, connectcomplexblox, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
-export learningrate, ARVTarget, PhaseTarget, ControlError
+export learningrate, ControlError
 export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes
