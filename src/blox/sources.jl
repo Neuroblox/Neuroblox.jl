@@ -1,7 +1,7 @@
 @parameters t
 
 #CosineBlox
-mutable struct CosineBlox <: SourceBlox	
+mutable struct CosineBlox	
     f::Num
     a::Num
     phi::Num
