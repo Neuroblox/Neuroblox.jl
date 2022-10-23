@@ -24,7 +24,7 @@ abstract type BloxUtilities end
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
 abstract type NeuronBlox <: Blox end
 abstract type NeuralMassBlox <: Blox end
-abstract type SourceBlox <: Blox end
+# abstract type SourceBlox <: Blox end will be added later
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
