@@ -51,7 +51,7 @@ function cb(p,l)
 end
 
 optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
-optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
+optprob = OptimizationProblem(optfun,pinit)
 
 # loss(pinit,nothing)
 # loss(ptrue,nothing)
