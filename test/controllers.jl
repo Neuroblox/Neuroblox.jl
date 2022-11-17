@@ -19,6 +19,14 @@ tol = 0.25
 """
 Test for CDVTarget
 """ 
-control_error_phase = Neuroblox.ControlError("CDV", data, data, lb, ub, fs, order, call_rate)
-@test Statistics.mean(control_error_phase) < tol
-@test Statistics.mean(control_error_phase) > -tol
+control_error_CDV = Neuroblox.ControlError("CDV", data, data, lb, ub, fs, order, call_rate)
+@test Statistics.mean(control_error_CDV) < tol
+@test Statistics.mean(control_error_CDV) > -tol
+
+"""
+Test for ACVTarget
+"""
+control_error_ACV = Neuroblox.ControlError("ACV", data, data, lb, ub, fs, order, call_rate)
+tol = 0.1
+@test Statistics.mean(control_error_ACV) <= 1.0 
+@test Statistics.mean(control_error_ACV) > 1.0-tol

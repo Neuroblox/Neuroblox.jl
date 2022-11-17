@@ -19,6 +19,7 @@ end
 CDVTarget
 Time series data is bandpass filtered and hilbert-transformed.
 Phase angle is computed in radians.
+Circular difference is quantified as the angle of circular_location.
 """
 function CDVTarget(data, lb, ub, fs, order)
     if typeof(data) == Matrix{Float64}
@@ -34,6 +35,7 @@ end
 PDVTarget
 Time series data is bandpass filtered and hilbert-transformed.
 Phase angle is computed in radians.
+Phase deviation is quantified as the angle difference between a given set of signals.
 """
 function PDVTarget(data, lb, ub, fs, order)
     if typeof(data) == Matrix{Float64}
@@ -48,6 +50,7 @@ end
 PLVTarget
 Time series data is bandpass filtered and hilbert-transformed.
 Phase angle is computed in radians.
+
 """
 function PLVTarget(data1, data2, lb, ub, fs, order)
     if typeof(data1) == Matrix{Float64}
@@ -63,10 +66,27 @@ function PLVTarget(data1, data2, lb, ub, fs, order)
     return PLV
 end
 
+function ACVTarget(data1, data2, lb, ub, fs, order)
+    if typeof(data1) == Matrix{Float64}
+        data1 = vec(data1)
+    end
+    if typeof(data2) == Matrix{Float64}
+        data2 = vec(data2)
+    end
+    avg_coh(x)  = dropdims(mean(coherence(x); dims=3); dims=3)
+    signal1 = Neuroblox.bandpassfilter(data1, lb, ub, fs, order)
+    signal2 = Neuroblox.bandpassfilter(data2, lb, ub, fs, order)
+    signals = Matrix{Float64}(undef, 2, length(signal1))
+    signals[1,:] = signal1
+    signals[2,:] = signal2
+    avgcoh = avg_coh(mt_coherence(signals; demean=true, fs=fs, freq_range=(lb,ub)))
+    ACV = avgcoh[2,1]
+    return ACV
+end
+
 """
 ControlError
-Returns the control error (deviation of the actual signal from the target signal) measured according
-to some type (ARV value, relies on ARVTarget, or phase value, relies on PhaseTarget).
+Returns the control error (deviation of the actual value from the target value).
 """
 function ControlError(type, target, actual, lb, ub, fs, order, call_rate)
 
@@ -92,6 +112,10 @@ function ControlError(type, target, actual, lb, ub, fs, order, call_rate)
 
     if type == "PLV"
         control_error = PLVTarget(target, actual, lb, ub, fs, order)        
+    end
+
+    if type == "ACV"
+        control_error = ACVTarget(target, actual, lb, ub, fs, order)
     end
 
     return control_error
