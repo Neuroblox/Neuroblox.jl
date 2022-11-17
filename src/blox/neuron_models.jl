@@ -28,7 +28,31 @@ mutable struct QIFNeuronBlox <: NeuronBlox
 end
 const qif_neuron = QIFNeuronBlox
 
-# Leaky Integrate and Fire neurons
+"""
+thetaneuron has the following parameters:
+    η:     Constant drive
+    α_inv: Time to peak of spike
+    k:     All-to-all coupling strength
+and the following variables:
+    θ(t):   Theta neuron state
+    g(t):   Synaptic current
+    jcn(t): Synaptic input
+and returns:
+    an ODE System
+"""
+function theta_neuron(;name, η=η, α_inv=α_inv, k=k)
+
+    params = @parameters η=η α_inv=α_inv k=k
+    sts    = @variables θ(t)=0.0 g(t)=0.0 jcn(t)=0.0
+    
+    eqs = [D(θ) ~ 1-cos(θ) + (1+cos(θ))*(η + k*g),
+          D(g) ~ α_inv*(jcn - g)]
+
+    return ODESystem(eqs, t, sts, params; name=name)
+
+end
+
+# Leaky Integrate and Fire neuron with synaptic dynamics
 mutable struct IFNeuronBlox <: NeuronBlox
     # all parameters are Num as to allow symbolic expressions
     C::Num
@@ -58,6 +82,36 @@ mutable struct IFNeuronBlox <: NeuronBlox
 	end
 end
 const if_neuron = IFNeuronBlox
+
+
+# Standard Leaky Integrate and Fire neuron model 
+mutable struct LIFneuron
+	I_in::Num
+	V_L::Num
+	τ::Num
+	R::Num
+	θ::Num
+    connector::Num
+    odesystem::ODESystem
+	function LIFneuron(;name, I_in=0, V_L=-70.0, τ=10.0, R=100.0, θ = -10.0)
+		sts = @variables V(t) = -70.0 jcn(t) = 0.0
+		par = @parameters I_in=I_in V_L=V_L R=R τ=τ st=-Inf ststore=[]
+		eqs = [
+		    	D(V) ~ (-V + V_L + R*(I_in + jcn))/τ
+		  	  ]
+
+		function lif_affect!(integ, u, p, ctx)
+			integ.u[u.V] = integ.p[p.V_L]
+			integ.p[p.st] = integ.t
+			push!(integ.p[p.ststore], integ.t)
+		end
+
+    	spike = [V ~ θ] => (lif_affect!, [V], [V_L, st, ststore], nothing)
+
+		odesys = ODESystem(eqs, t, sts, par; continuous_events=spike, name=name)
+		new(I_in, V_L, τ, R, θ, odesys.jcn, odesys)
+	end
+end
 
 # Hodgkin-Huxley Excitatory neurons 
 function hh_neuron_excitatory(;name,E_syn=0.0,G_syn=2,I_in=0,freq=0,phase=0,τ=10)
