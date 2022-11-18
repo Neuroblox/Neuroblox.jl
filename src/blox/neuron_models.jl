@@ -119,10 +119,10 @@ mutable struct LIFneuron
 		function lif_affect!(integ, u, p, ctx)
 			integ.u[u.V] = integ.p[p.V_L]
 			integ.p[p.st] = integ.t
-			push!(integ.p[p.ststore], integ.t)
+			push!(integ.p[p.strain], integ.t)
 		end
 
-    	spike = [V ~ θ] => (lif_affect!, [V], [V_L, st, ststore], nothing)
+    	spike = [V ~ θ] => (lif_affect!, [V], [V_L, st, strain], nothing)
 
 		odesys = ODESystem(eqs, t, sts, par; continuous_events=spike, name=name)
 		new(I_in, V_L, τ, R, θ, odesys.jcn, odesys)

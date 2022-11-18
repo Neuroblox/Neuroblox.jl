@@ -209,8 +209,8 @@ N = 6   # 6 neurons
 I_in = ones(N);             # same input current to all
 τ = 5*collect(1:N);         # increasing membrane time constant
 # synaptic properties 
-syn_amp = 0.4*ones(1,Nrns); # synaptic amplitudes
-syn_τ = 
+syn_amp = 0.4*ones(N, N); # synaptic amplitudes
+syn_τ = 5*ones(N)
 nrn_network=[]
 nrn_spiketimes=[]
 
@@ -221,13 +221,15 @@ for i = 1:N
 end
 
 # connect the neurons
-@named syn_net = SpikeConnections(sys=nrn_network, psp_amplitude=ones(N,N), τ=5*ones(N,N), spiketimes=nrn_sts)
+@named syn_net = spikeconnections(sys=nrn_network, psp_amplitude=syn_amp, τ=syn_τ, spiketimes=nrn_spiketimes)
 
 sim_dur =  50.0
 prob = ODEProblem(structural_simplify(syn_net), [], (0.0, sim_dur), [])
-sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1) #pass keyword arguments to solver
+sol = solve(prob, AutoVern7(Rodas4())) #pass keyword arguments to solver
 
-@test length(sol.prob.p[12] == 35)
+@test length(sol.prob.p[end]) == 5
+@test length(sol.prob.p[21]) == 11
+
 
 """
 leaky integrate integrate and fire neuron if_neuron() test.
