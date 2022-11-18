@@ -84,7 +84,23 @@ end
 const if_neuron = IFNeuronBlox
 
 
-# Standard Leaky Integrate and Fire neuron model 
+"""
+Standard Leaky Integrate and Fire neuron model.
+
+variables:
+    V(t):  Membrane voltage
+    jcn:   Input from other neurons
+parameters:
+    I_in:   Input current
+	V_L:    Resting state potential
+    τ:      Membrane timescale
+	R:      Membrane resistance
+	θ:      Spike threshold
+	st:     Last spike time
+	strain: Spike train
+returns:
+    an ODE System
+"""
 mutable struct LIFneuron
 	I_in::Num
 	V_L::Num
@@ -95,7 +111,7 @@ mutable struct LIFneuron
     odesystem::ODESystem
 	function LIFneuron(;name, I_in=0, V_L=-70.0, τ=10.0, R=100.0, θ = -10.0)
 		sts = @variables V(t) = -70.0 jcn(t) = 0.0
-		par = @parameters I_in=I_in V_L=V_L R=R τ=τ st=-Inf ststore=[]
+		par = @parameters I_in=I_in V_L=V_L R=R τ=τ st=-Inf strain=[]
 		eqs = [
 		    	D(V) ~ (-V + V_L + R*(I_in + jcn))/τ
 		  	  ]
