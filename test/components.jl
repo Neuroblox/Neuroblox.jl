@@ -107,6 +107,27 @@ sim_dur = 10.0 # Simulate for 10 Seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [])
 
+
+"""
+complex neural mass model test (next generation neural mass model)
+This test generates a neural mass model using the kuramoto order parameter
+to capture within-population synchrony. A model is generated and then
+the phase of oscillations is computed (ψ) along with synchrony (R). 
+This model has no input, and therefore oscillations and synchrony should
+tend toward zero.
+"""
+@named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
+sim_dur = 1000.0 
+sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
+
+C=30
+W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
+R = (1/(C*pi))*(W+conj.(W))/2
+ψ = log.(sol[!,"Z(t)"]./R)/im
+
+@test norm.(R[length(R)]) < 0.1
+
+
 """
 thetaneuron.jl test
 
@@ -180,23 +201,35 @@ sol = solve(prob,Rodas5(),saveat=0.01,reltol=1e-4,abstol=1e-4)
 @test sol.t[end] == sim_dur
 
 """
-complex neural mass model test (next generation neural mass model)
-This test generates a neural mass model using the kuramoto order parameter
-to capture within-population synchrony. A model is generated and then
-the phase of oscillations is computed (ψ) along with synchrony (R). 
-This model has no input, and therefore oscillations and synchrony should
-tend toward zero.
+network of LIFs test
 """
-@named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
-sim_dur = 1000.0 
-sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
+N = 6   # 6 neurons
 
-C=30
-W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
-R = (1/(C*pi))*(W+conj.(W))/2
-ψ = log.(sol[!,"Z(t)"]./R)/im
+# neuron properties
+I_in = ones(N);             # same input current to all
+τ = 5*collect(1:N);         # increasing membrane time constant
+# synaptic properties 
+syn_amp = 0.4*ones(N, N); # synaptic amplitudes
+syn_τ = 5*ones(N)
+nrn_network=[]
+nrn_spiketimes=[]
 
-@test norm.(R[length(R)]) < 0.1
+for i = 1:N
+    nn = LIFneuron(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
+    push!(nrn_network, nn.odesystem)
+	push!(nrn_spiketimes, nn.odesystem.st)
+end
+
+# connect the neurons
+@named syn_net = spikeconnections(sys=nrn_network, psp_amplitude=syn_amp, τ=syn_τ, spiketimes=nrn_spiketimes)
+
+sim_dur =  50.0
+prob = ODEProblem(structural_simplify(syn_net), [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4())) #pass keyword arguments to solver
+
+@test length(sol.prob.p[end]) == 5
+@test length(sol.prob.p[21]) == 11
+
 
 """
 leaky integrate integrate and fire neuron if_neuron() test.
