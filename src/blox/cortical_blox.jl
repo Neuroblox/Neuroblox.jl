@@ -216,3 +216,16 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn, input_ar=asc_input, inh_nrn = inh_nrn, inh_mod_nrn=inh_mod_nrn)
 
 end
+
+mutable struct CorticalBlox
+    # all parameters are Num as to allow symbolic expressions
+    connector::Num # symbolic expression to connect with another blox
+    output::Num[] # list of symbols that we want to output for plotting
+    mean::String[] # list of strings that we will take the mean over for plotting
+    odesystem::ODESystem
+    function CorticalBlox(;name,nblocks=20, blocksize=6)
+        odesys = cortical_blox(name=name,nblocks=20, blocksize=6)
+        statesV = [s for s in states(odesys) if contains(string(s),"V")]
+        new(sum(statesV), statesV, ["V"], odesys)
+    end
+end
