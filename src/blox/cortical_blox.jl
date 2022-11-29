@@ -117,8 +117,8 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix, input_ar=input_ar,inh_nrn = inh_nrn, inh_mod_nrn = inh_mod_nrn)
         syn_eqs= [ 0~sys[1].V - sys[1].V]
 
-        Nrns = length(adj_matrix[1,:])  
-
+        Nrns = length(adj_matrix[1,:])
+        
         for ii = 1:length(sys)
             
             presyn = findall(x-> x>0.0, adj_matrix[ii,:])
@@ -220,11 +220,11 @@ end
 mutable struct CorticalBlox
     # all parameters are Num as to allow symbolic expressions
     connector::Num # symbolic expression to connect with another blox
-    output::Num[] # list of symbols that we want to output for plotting
-    mean::String[] # list of strings that we will take the mean over for plotting
+    output::Vector{Num} # list of symbols that we want to output for plotting
+    mean::Vector{String} # list of strings that we will take the mean over for plotting
     odesystem::ODESystem
     function CorticalBlox(;name,nblocks=20, blocksize=6)
-        odesys = cortical_blox(name=name,nblocks=20, blocksize=6)
+        odesys = cortical_blox(name=name,nblocks=nblocks, blocksize=blocksize)
         statesV = [s for s in states(odesys) if contains(string(s),"V")]
         new(sum(statesV), statesV, ["V"], odesys)
     end
