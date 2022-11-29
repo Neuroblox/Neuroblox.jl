@@ -56,6 +56,7 @@ include("control/controlerror.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
 include("blox/neural_mass.jl")
+include("blox/cortical_blox.jl")
 include("blox/canonicalmicrocircuit.jl")
 include("blox/neuron_models.jl")
 include("blox/synaptic_network.jl")
@@ -71,8 +72,22 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
     return DataFrame(sol)
 end
 
+function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
+    prob = ODEProblem(blox.odesystem, u0, timespan, p)
+    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
+    statesV = [s for s in states(blox.odesystem) if contains(string(s),"V")]
+    vsol = sol[statesV]
+    vmean = vec(mean(hcat(vsol...),dims=2))
+    df = DataFrame(sol)
+    vlist = Symbol.(statesV)
+    pushfirst!(vlist,:timestamp)
+    dfv = df[!,vlist]
+    dfv[!,:Vmean] = vmean
+    return dfv
+end
+
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFneuron, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LauterBreakspearBlox
+export IFNeuronBlox, LIFneuron, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LauterBreakspearBlox, CorticalBlox
 export cosine_source
 export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
