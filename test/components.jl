@@ -351,6 +351,15 @@ sol = solve(prob,Tsit5())
 @test sol[1,10] ≈ -0.6246712806761001
 
 """
+CorticalBlox test
+"""
+@named cb = CorticalBlox(nblocks=6,blocksize=6)
+@test length(states(cb.odesystem)) == 222
+prob = ODEProblem(cb.odesystem, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (222,41)
+
+"""
 ts_outputs.jl test
 
 Test for time-series output tests.
