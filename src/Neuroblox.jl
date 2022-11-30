@@ -15,7 +15,8 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 using Interpolations
-using Distributions, Random
+import Distributions
+using Random
 
 # define abstract types for Neuroblox
 abstract type Blox end
@@ -107,7 +108,7 @@ function random_initials(odesys::ODESystem, blox)
             for sys_var in keys(b.initial)
                 if (string(sys_var) == string(state))
                     init_tuple = b.initial[sys_var]
-                    push!(u0, rand(Uniform(init_tuple[1],init_tuple[2])))
+                    push!(u0, rand(Distributions.Uniform(init_tuple[1],init_tuple[2])))
                     found = true
                     break
                 end
@@ -132,6 +133,6 @@ export learningrate, ControlError
 export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes
-export simulate
+export simulate, random_initials
 
 end
