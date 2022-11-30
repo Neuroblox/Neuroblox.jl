@@ -15,6 +15,7 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 using Interpolations
+using Distributions, Random
 
 # define abstract types for Neuroblox
 abstract type Blox end
@@ -84,6 +85,27 @@ function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4
     dfv = df[!,vlist]
     dfv[!,:Vmean] = vmean
     return dfv
+end
+
+function random_initials(odesys::ODESystem, blox)
+    u0 = Float64[]
+    for state in states(odesys)
+        found = false
+        for b in blox
+            for sys_var in keys(b.initial)
+                if (string(sys_var) == string(state))
+                    init_tuple = b.initial[sys_var]
+                    push!(u0, rand(Uniform(init_tuple[1],init_tuple[2])))
+                    found = true
+                    break
+                end
+            end
+            if found
+                break
+            end
+        end
+    end
+    return u0
 end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
