@@ -87,6 +87,18 @@ function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4
     return dfv
 end
 
+"""
+random_initials creates a vector of random initial conditions for an ODESystem that is
+composed of a list of blox.  The function finds the initial conditions in the blox and then
+sets a random value in between range tuple given for that state.
+
+It has the following inputs:
+    odesys: ODESystem
+    blox  : list of blox
+
+And outputs:
+    u0 : Float64 vector of initial conditions
+"""
 function random_initials(odesys::ODESystem, blox)
     u0 = Float64[]
     for state in states(odesys)
