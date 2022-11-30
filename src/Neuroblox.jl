@@ -101,23 +101,20 @@ And outputs:
     u0 : Float64 vector of initial conditions
 """
 function random_initials(odesys::ODESystem, blox)
+    odestates = states(odesys)
     u0 = Float64[]
-    for state in states(odesys)
-        found = false
-        for b in blox
-            for sys_var in keys(b.initial)
-                if (string(sys_var) == string(state))
-                    init_tuple = b.initial[sys_var]
-                    push!(u0, rand(Distributions.Uniform(init_tuple[1],init_tuple[2])))
-                    found = true
-                    break
-                end
-            end
-            if found
-                break
-            end
-        end
+    init_dict = Dict{Num,Tuple{Float64,Float64}}()
+
+    # first merge all the inital dicts into one
+    for b in blox
+        merge!(init_dict, b.initial)
     end
+
+    for state in odestates
+        init_tuple = init_dict[state]
+        push!(u0, rand(Distributions.Uniform(init_tuple[1],init_tuple[2])))
+    end
+    
     return u0
 end
 
