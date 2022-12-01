@@ -43,7 +43,7 @@ testing random inital conditions for neural mass blox
 """
 
 sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
-@test size(sol2)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
+@test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
 
 """
 Canonical micro circuit tests 
