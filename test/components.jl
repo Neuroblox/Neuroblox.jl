@@ -335,9 +335,9 @@ sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
 @test sol[1,end] ≈ 0.17513685727060388
 
 """
-Lauter-Breakspear model test
+Larter-Breakspear model test
 """
-@named lb = LauterBreakspearBlox()
+@named lb = LarterBreakspearBlox()
 sys = [lb.odesystem]
 eqs = [sys[1].jcn ~ 0]
 @named lb_connect = ODESystem(eqs,systems=sys)
