@@ -226,6 +226,6 @@ mutable struct CorticalBlox
     function CorticalBlox(;name,nblocks=20, blocksize=6)
         odesys = cortical_blox(name=name,nblocks=nblocks, blocksize=blocksize)
         statesV = [s for s in states(odesys) if contains(string(s),"V")]
-        new(sum(statesV), statesV, ["V"], odesys)
+        new(sum(statesV), statesV, ["V(t)"], odesys)
     end
 end
