@@ -178,12 +178,40 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
 
-mutable struct LauterBreakspearBlox <: NeuralMassBlox
+mutable struct LarterBreakspearBlox <: NeuralMassBlox
     C::Num
     δ_VZ::Num
+    T_Ca::Num
+    δ_Ca::Num
+    g_Ca::Num
+    V_Ca::Num
+    T_K::Num
+    δ_K::Num
+    g_K::Num
+    V_K::Num
+    T_Na::Num
+    δ_Na::Num
+    g_Na::Num
+    V_Na::Num
+    V_L::Num
+    g_L::Num
+    V_T::Num
+    Z_T::Num
+    Q_Vmax::Num
+    Q_Zmax::Num
+    IS::Num
+    a_ee::Num
+    a_ei::Num
+    a_ie::Num
+    a_ne::Num
+    a_ni::Num
+    b::Num
+    τ_K::Num
+    ϕ::Num
+    r_NMDA::Num
     connector::Num
     odesystem::ODESystem
-    function LauterBreakspearBlox(;name,
+    function LarterBreakspearBlox(;name,
                           T_Ca=-0.01,
                           δ_Ca=0.15,
                           g_Ca=1.0,
@@ -229,6 +257,6 @@ mutable struct LauterBreakspearBlox <: NeuralMassBlox
                   m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                   m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, δ_VZ, odesys.Q_V, odesys)
+        new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA, odesys.Q_V, odesys)
     end
 end
