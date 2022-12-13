@@ -80,7 +80,7 @@ end
 @named manyregions = connectcomplexblox(regions, A)
 manyregions = structural_simplify(manyregions)
 sol = simulate(manyregions, [], (0.0, 10.0), [])
-@test_broken sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
+@test sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
 
 
 """
@@ -355,7 +355,7 @@ lb_simpl = structural_simplify(lb_connect)
 prob = ODEProblem(lb_simpl,[0.5,0.5,0.5],(0,10.0),[])
 sol = solve(prob,Tsit5())
 
-@test sol[1,10] ≈ -0.6246712806761001
+@test sol[1,10] ≈ -0.6246710908910991
 
 """
 CorticalBlox test
