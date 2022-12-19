@@ -10,9 +10,9 @@ and returns:
 """
 function phase_inter(phase_range,phase_data)
     if typeof(phase_data) == Matrix{Float64}
-        return CubicSplineInterpolation(phase_range,vec(phase_data))
+        return cubic_spline_interpolation(phase_range,vec(phase_data))
     end
-    return CubicSplineInterpolation(phase_range,phase_data)
+    return cubic_spline_interpolation(phase_range,phase_data)
 end
 
 """

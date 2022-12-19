@@ -1,4 +1,4 @@
-using Neuroblox, LinearAlgebra, OrdinaryDiffEq, GalacticOptim, GalacticOptimJL, GalacticOptimisers, Flux, ForwardDiff, Test
+using Neuroblox, LinearAlgebra, OrdinaryDiffEq, Optimization, OptimizationOptimJL, OptimizationOptimisers, Flux, ForwardDiff, Test
 
 @named Str = jansen_ritSC(τ=0.0022, H=20, λ=300, r=0.3)
 @named GPe = jansen_ritSC(τ=0.04, H=20, λ=400, r=0.1)
@@ -18,7 +18,7 @@ adj_matrix = [0 0 0 0;
 
 @named BG_Circuit = LinearConnections(sys=sys, adj_matrix=adj_matrix, connector=connect)
 
-sim_dur = 5.0 # Simulation time (seconds)
+sim_dur = 2.0 # Simulation time (seconds)
 prob = ODEProblem(structural_simplify(BG_Circuit), [], (0.0, sim_dur), [])
 
 # Fitting Procedure
@@ -27,14 +27,14 @@ ptrue = prob.p
 # Alter system parameters randomly
 pinit = ptrue .+ ptrue .* randn(length(prob.p)) ./ 100
 # Solve problem as normal
-data = solve(prob, Vern9(), abstol=1e-9, reltol=1e-9, saveat=0.01)
+data = solve(prob, Rodas4(), abstol=1e-9, reltol=1e-9, saveat=0.05)
 
 # Define loss function
 lb = 0.1 .* ptrue
 ub = 2 .* ptrue
 internalnorm(u,t) = sqrt(ForwardDiff.value(sum(abs2,u)))/length(u)
 function loss(p,_)
-    sol = solve(remake(prob,p=p), Vern9(), abstol=1e-9, reltol=1e-9, saveat=0.01)
+    sol = solve(remake(prob,p=p), Rodas4(), abstol=1e-9, reltol=1e-9, saveat=0.05)
     if sol.retcode != :Success
         Inf * abs(p[1])
     else
@@ -50,17 +50,17 @@ function cb(p,l)
     l < 0.01
 end
 
-optfun = OptimizationFunction(loss,GalacticOptim.AutoForwardDiff())
-optprob = OptimizationProblem(optfun,pinit,lb=lb,ub=ub)
+optfun = OptimizationFunction(loss,Optimization.AutoForwardDiff())
+optprob = OptimizationProblem(optfun,pinit)
 
 # loss(pinit,nothing)
 # loss(ptrue,nothing)
 
 # Solve optimization problem
-optsol = GalacticOptim.solve(optprob, GalacticOptimisers.Adam(0.0001),maxiters = 300, callback = cb)
+optsol = Optimization.solve(optprob, OptimizationOptimisers.Adam(0.0001),maxiters = 200, callback = cb)
 optprob2 = remake(optprob,u0 = optsol.u)
-optsol2 = GalacticOptim.solve(optprob2, BFGS(initial_stepnorm = 0.0001),maxiters = 300, callback = cb)
+optsol2 = Optimization.solve(optprob2, BFGS(initial_stepnorm = 0.0001),maxiters = 200, callback = cb)
 
 # Calculate squared error of fit
-@test norm(optsol.u - ptrue) < 16 # balance threshold value and maxiters for run time
+@test norm(optsol.u - ptrue) < 20 # balance threshold value and maxiters for run time
 #@test_broken !iszero(norm(optsol.u - pinit))

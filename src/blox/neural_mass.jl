@@ -8,6 +8,7 @@ mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     k::Num
     h::Num
     connector::Num
+    initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
         params = @parameters ω=ω ζ=ζ k=k h=h
@@ -15,7 +16,9 @@ mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(ω, ζ, k, h, odesys.x, odesys)
+        new(ω, ζ, k, h, odesys.x,
+            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
+            odesys)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
@@ -31,6 +34,7 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
     λ::Num
     r::Num
     connector::Num
+    initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
         params = @parameters τ=τ H=H λ=λ r=r
@@ -38,7 +42,9 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
         eqs    = [D(x) ~ y - ((2/τ)*x),
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(τ, H, λ, r, odesys.x, odesys)
+        new(τ, H, λ, r, odesys.x,
+            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
+            odesys)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
@@ -50,6 +56,7 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
     λ::Num
     r::Num
     connector::Num
+    initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
         params = @parameters τ=τ H=H λ=λ r=r
@@ -57,7 +64,9 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(τ, H, λ, r, odesys.x, odesys)
+        new(τ, H, λ, r, odesys.x,
+            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
+            odesys)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
@@ -169,12 +178,40 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
 
-mutable struct LauterBreakspearBlox <: NeuralMassBlox
+mutable struct LarterBreakspearBlox <: NeuralMassBlox
     C::Num
     δ_VZ::Num
+    T_Ca::Num
+    δ_Ca::Num
+    g_Ca::Num
+    V_Ca::Num
+    T_K::Num
+    δ_K::Num
+    g_K::Num
+    V_K::Num
+    T_Na::Num
+    δ_Na::Num
+    g_Na::Num
+    V_Na::Num
+    V_L::Num
+    g_L::Num
+    V_T::Num
+    Z_T::Num
+    Q_Vmax::Num
+    Q_Zmax::Num
+    IS::Num
+    a_ee::Num
+    a_ei::Num
+    a_ie::Num
+    a_ne::Num
+    a_ni::Num
+    b::Num
+    τ_K::Num
+    ϕ::Num
+    r_NMDA::Num
     connector::Num
     odesystem::ODESystem
-    function LauterBreakspearBlox(;name,
+    function LarterBreakspearBlox(;name,
                           T_Ca=-0.01,
                           δ_Ca=0.15,
                           g_Ca=1.0,
@@ -220,6 +257,6 @@ mutable struct LauterBreakspearBlox <: NeuralMassBlox
                   m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                   m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, δ_VZ, odesys.Q_V, odesys)
+        new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA, odesys.Q_V, odesys)
     end
 end

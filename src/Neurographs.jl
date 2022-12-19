@@ -74,7 +74,14 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
 end
 
-
+function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
+    psps = psp_amplitude .* exp.(-(t .- spiketimes) ./ τ)
+    eqs = []
+    for region_num in 1:length(sys)
+       push!(eqs, sys[region_num].jcn ~ sum(psps[:, region_num]))
+    end
+    return ODESystem(eqs, name=name, systems=sys)
+end
 
 function connectcomplexblox(bloxlist, adjacency_matrices ;name)
     nr = length(bloxlist)
