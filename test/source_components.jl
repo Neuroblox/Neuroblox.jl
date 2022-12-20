@@ -1,7 +1,7 @@
 using Neuroblox, OrdinaryDiffEq, Statistics
 
 """
-CosineBlox Source Test
+CosineSource Test
 """
 # Compare CosineBlox (_nb) to Cosine from MTK Standard Library
 @parameters t
