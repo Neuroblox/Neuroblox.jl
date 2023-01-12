@@ -15,7 +15,6 @@ mutable struct CosineSource
         new(f, a, phi, offset, tstart, source.output.u, source)
     end
 end
-const cosine_source = CosineSource
 
 #CosineBlox
 mutable struct CosineBlox
@@ -35,4 +34,40 @@ mutable struct CosineBlox
         new(amplitude, frequency, phase, odesys.u, odesys)
     end
 end
-const cosine_blox = CosineBlox
+
+#NoisyCosineBlox
+mutable struct NoisyCosineBlox
+    amplitude::Num
+    frequency::Num
+    connector::Num
+    odesystem::ODESystem
+    function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
+
+        sts    = @variables  u(t)=0.0 jcn(t)=0.0
+        params = @parameters amplitude=amplitude frequency=frequency
+
+        eqs    = [u   ~ amplitude * cos(2 * pi * frequency * (t) + jcn)]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+
+        new(amplitude, frequency, odesys.u, odesys)
+    end
+end
+
+#PhaseBlox
+mutable struct PhaseBlox
+    connector::Num
+    odesystem::ODESystem
+    function PhaseBlox(;name, phase_range=0, phase_data=0) 
+
+        data        = convert(Vector{Float64}, phase_data)
+        range       = convert(Vector{Float64}, phase_range)
+        phase_input = CubicSpline(data, range)
+
+        sts         = @variables  u(t)=0.0 jcn(t)=0.0
+
+        eqs         = [u ~ phase_input(t)]
+        odesys      = ODESystem(eqs, t, sts, []; name=name)
+
+        new(odesys.u, odesys)
+    end
+end
