@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -20,8 +20,10 @@ begin
 	Pkg.add("CSV")
 	Pkg.add("DataFrames")
 	Pkg.add("MAT")
+	Pkg.add("Plots")
+	Pkg.add("OrdinaryDiffEq")
 	Pkg.develop(path=joinpath(@__DIR__, "..", "..","..", "Neuroblox.jl"))
-    using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, CSV, DataFrames,LinearAlgebra, MAT, Random
+    using Plots, Neuroblox, OrdinaryDiffEq, CSV, DataFrames,LinearAlgebra, MAT, Random
 end
 
 # ╔═╡ 9b4e0bc6-4af6-4311-be1b-5948ec818b29
@@ -85,6 +87,12 @@ mysys.states
 # ╔═╡ d593209e-2fc8-40c0-883b-935b5512c779
 mysys.ps
 
+# ╔═╡ 5865eab8-fc50-417c-85e6-32a8915ce3cf
+C_list = [ s for s in mysys.ps if occursin("₊C", string(s))]
+
+# ╔═╡ 4d417746-9435-4ca9-9ce3-299dc848e5c1
+deltaVZ_list = [ s for s in mysys.ps if occursin("₊δ_VZ", string(s))]
+
 # ╔═╡ 41587582-f793-4198-af39-7cd0637d57cc
 md"""
 coup 
@@ -106,10 +114,10 @@ prob = ODEProblem(mysys,u0,(0.0,100.0),[])
 
 # ╔═╡ b201b708-908a-4321-8c06-da3b442af069
 begin
-	p_new = prob.p
-	for t_index in 1:78
-		p_new[(t_index-1)*2+1] = coup
-		p_new[(t_index-1)*2+2] = delta
+	p_new = Dict()
+	for (c,d) in zip(C_list,deltaVZ_list)
+		p_new[c] = coup
+		p_new[d] = delta
 	end
 	prob2 = remake(prob;p=p_new)
 	sol = solve(prob2,Rodas4(),saveat=0.1)
@@ -137,9 +145,11 @@ size(sol)
 # ╠═69920cca-0cd3-4761-92f5-8dcca67500dc
 # ╠═d8f367ad-52dd-4cc2-9c65-0f84cd22d62e
 # ╠═d593209e-2fc8-40c0-883b-935b5512c779
+# ╠═5865eab8-fc50-417c-85e6-32a8915ce3cf
+# ╠═4d417746-9435-4ca9-9ce3-299dc848e5c1
 # ╠═b201b708-908a-4321-8c06-da3b442af069
-# ╠═41587582-f793-4198-af39-7cd0637d57cc
 # ╠═649e0326-64d8-436e-818d-2705d16a74a0
 # ╠═9778982a-e706-457f-8723-703d6fefbdb0
+# ╟─41587582-f793-4198-af39-7cd0637d57cc
 # ╠═4545b94d-fd25-4a3d-ba30-faeff8c89b8c
 # ╠═1357d862-557b-4460-8c20-61c7ec9ef872
