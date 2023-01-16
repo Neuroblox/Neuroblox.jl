@@ -210,6 +210,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     ϕ::Num
     r_NMDA::Num
     connector::Num
+    initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function LarterBreakspearBlox(;name,
                           T_Ca=-0.01,
@@ -242,7 +243,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
                           ϕ=0.7,
                           r_NMDA=0.25,
                           C=0.35)
-        params = @parameters C=C δ_VZ=δ_VZ
+        params = @parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA
         sts    = @variables V(t) Z(t) W(t) jcn(t) Q_V(t) Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
 
         eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
@@ -257,6 +258,10 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
                   m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                   m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA, odesys.Q_V, odesys)
+        new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L,
+        g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA,
+        odesys.Q_V,
+        Dict(odesys.V => (-1.0,1.0), odesys.Z => (-1.0,1.0), odesys.W => (0.0,1.0)),
+        odesys)
     end
 end
