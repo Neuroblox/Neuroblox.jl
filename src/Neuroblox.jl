@@ -14,7 +14,7 @@ import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
-using Interpolations
+using Interpolations, DataInterpolations
 import Distributions
 using Random
 
