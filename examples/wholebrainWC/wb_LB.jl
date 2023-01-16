@@ -16,7 +16,7 @@ end
 
 blox = []
 for i = 1:78
-	lb = LauterBreakspearBlox(name=Symbol("LB$i"))
+	lb = LarterBreakspearBlox(name=Symbol("LB$i"))
 	push!(blox,lb)
 end
 

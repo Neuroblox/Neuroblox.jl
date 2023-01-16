@@ -212,7 +212,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     connector::Num
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
-    function LauterBreakspearBlox(;name,
+    function LarterBreakspearBlox(;name,
                           T_Ca=-0.01,
                           δ_Ca=0.15,
                           g_Ca=1.0,

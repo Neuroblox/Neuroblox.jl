@@ -1,13 +1,13 @@
 using Neuroblox, OrdinaryDiffEq, Statistics
 
 """
-CosineBlox Source Test
+CosineSource Test
 """
 # Compare CosineBlox (_nb) to Cosine from MTK Standard Library
 @parameters t
 @named int = Integrator()
 # CosineBlox
-@named src_nb   = cosine_source(f=1, a=2, phi=0, offset=1, tstart=2)
+@named src_nb   = CosineSource(f=1, a=2, phi=0, offset=1, tstart=2)
 @named iosys_nb = ODESystem([connect(src_nb.odesystem.output, int.input)], t, systems = [int, src_nb.odesystem])
 sys_nb = structural_simplify(iosys_nb)
 # Cosine MTK
