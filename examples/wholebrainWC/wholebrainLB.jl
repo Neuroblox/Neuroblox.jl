@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -20,8 +20,10 @@ begin
 	Pkg.add("CSV")
 	Pkg.add("DataFrames")
 	Pkg.add("MAT")
+	Pkg.add("Plots")
+	Pkg.add("OrdinaryDiffEq")
 	Pkg.develop(path=joinpath(@__DIR__, "..", "..","..", "Neuroblox.jl"))
-    using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, CSV, DataFrames,LinearAlgebra, MAT, Random
+    using Plots, Neuroblox, OrdinaryDiffEq, CSV, DataFrames,LinearAlgebra, MAT, Random
 end
 
 # ╔═╡ 9b4e0bc6-4af6-4311-be1b-5948ec818b29
@@ -43,11 +45,14 @@ clb = connLB["mean_structural_connectivity"]
 # ╔═╡ ef5dde28-2525-452e-9428-08f2708c36f5
 c = Matrix{Float64}(connectivity)
 
+# ╔═╡ 4acf3394-7d1d-4ead-9290-32d25af54dc8
+@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
+
 # ╔═╡ 706e0021-e86d-4e96-8b79-87277c628afd
 begin
 	blox = []
 	for i = 1:78
-	    lb = LauterBreakspearBlox(name=Symbol("LB$i"))
+	    lb = LarterBreakspearBlox(name=Symbol("LB$i"))
 	    push!(blox,lb)
 	end
 end
@@ -129,6 +134,7 @@ size(sol)
 # ╠═f43cde71-80f3-462b-b792-0be92f9f28bc
 # ╠═ef5dde28-2525-452e-9428-08f2708c36f5
 # ╠═4e617a58-6887-4782-941a-b2e387272d5b
+# ╠═4acf3394-7d1d-4ead-9290-32d25af54dc8
 # ╠═706e0021-e86d-4e96-8b79-87277c628afd
 # ╠═1abbb345-e14c-4501-9717-c09b25d73e91
 # ╠═abac20d3-bdcb-4ed6-b807-4278a72bc0d3

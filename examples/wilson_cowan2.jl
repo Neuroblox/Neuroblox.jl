@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -20,13 +20,12 @@ begin
     # activate the shared project environment
     Pkg.activate(@__DIR__)
     # instantiate, i.e. make sure that all packages are downloaded
-    Pkg.instantiate()
+    # Pkg.instantiate()
 	Pkg.add("OrdinaryDiffEq")
 	Pkg.add("MetaGraphs")
 	Pkg.add("Graphs")
 	Pkg.add("Plots")
 	Pkg.develop(path=joinpath(@__DIR__, "..", "..", "Neuroblox.jl"))
-	Pkg.add("OrdinaryDiffEq")
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, Printf
 end
 
@@ -94,12 +93,7 @@ $(@bind c22 html"<input type=range value=0.0 min=0 max=50 step=0.1>")
 # ╔═╡ 32d1b83e-acfa-4351-9bcf-bc4367781186
 begin
 	# set the parameters for the simulation using the sliders
-	p_new = prob.p
-	p_new[1] = c11
-	p_new[2] = c21
-	p_new[3] = c12
-	p_new[4] = c22
-	prob_new = remake(prob; p=p_new)
+	prob_new = remake(prob; p=[c[1,1] => c11, c[1,2] => c12, c[2,1] => c21, c[2,2] => c22])
 	sol = solve(prob_new, Rodas4())
 end
 
