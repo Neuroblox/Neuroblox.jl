@@ -20,7 +20,7 @@ Test for learningblox
 """
 
 ## Load Experimental Data
-data   = matread("test/phi_p1.mat")
+data   = matread("phi_p1.mat")
 pdata  = data["phi_p1"][1:10000]
 fs     = 1000
 prange = 0:(1/fs):(length(pdata)-1)*(1/fs)
