@@ -1,4 +1,4 @@
-using Neuroblox, Test
+using Neuroblox, MAT, ModelingToolkit, OrdinaryDiffEq, Test
 
 """
 Test for learningrate
