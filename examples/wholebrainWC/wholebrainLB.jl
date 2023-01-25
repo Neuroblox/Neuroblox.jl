@@ -88,18 +88,10 @@ mysys.states
 mysys.ps
 
 # ╔═╡ 5865eab8-fc50-417c-85e6-32a8915ce3cf
-C_list = [ s for s in mysys.ps if occursin("₊C", string(s))]
+C_list = [ s for s in mysys.ps if endswith("₊C", string(s))]
 
 # ╔═╡ 4d417746-9435-4ca9-9ce3-299dc848e5c1
-deltaVZ_list = [ s for s in mysys.ps if occursin("₊δ_VZ", string(s))]
-
-# ╔═╡ 41587582-f793-4198-af39-7cd0637d57cc
-md"""
-coup 
-$(@bind coup html"<input type=range value=0.5 min=0 max=1 step=0.01>")
-delta
-$(@bind delta html"<input type=range value=0.1 min=0 max=1 step=0.01>")
-"""
+deltaVZ_list = [ s for s in mysys.ps if endswith("₊δ_VZ", string(s))]
 
 # ╔═╡ 649e0326-64d8-436e-818d-2705d16a74a0
 begin
@@ -111,6 +103,14 @@ end
 
 # ╔═╡ 9778982a-e706-457f-8723-703d6fefbdb0
 prob = ODEProblem(mysys,u0,(0.0,100.0),[])
+
+# ╔═╡ 41587582-f793-4198-af39-7cd0637d57cc
+md"""
+coup 
+$(@bind coup html"<input type=range value=0.5 min=0 max=1 step=0.01>")
+delta
+$(@bind delta html"<input type=range value=0.1 min=0 max=1 step=0.01>")
+"""
 
 # ╔═╡ b201b708-908a-4321-8c06-da3b442af069
 begin
