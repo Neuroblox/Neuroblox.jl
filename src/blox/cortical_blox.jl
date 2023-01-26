@@ -217,7 +217,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     return syn_net, syn
 end
 
-mutable struct CorticalBlox
+mutable struct CorticalBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
     connector::Num # symbolic expression to connect with another blox
     output::Vector{Num} # list of symbols that we want to output for plotting
