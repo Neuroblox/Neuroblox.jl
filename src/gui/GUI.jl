@@ -134,4 +134,9 @@ function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings 
   )
 end
 
+function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
+  Dict(
+  )
+end
+
 end
