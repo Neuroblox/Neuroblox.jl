@@ -362,7 +362,11 @@ CorticalBlox test
 """
 @named cb = CorticalBlox(nblocks=6,blocksize=6)
 @test length(states(cb.odesystem)) == 222
-prob = ODEProblem(cb.odesystem, [], (0, 20))
+sys = [cb.odesystem]
+eqs = [sys[1].jcn ~ 0]
+@named cb_connect = ODESystem(eqs,systems=sys)
+cb_simpl = structural_simplify(cb_connect)
+prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test size(sol) == (222,41)
 

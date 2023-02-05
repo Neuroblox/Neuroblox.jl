@@ -114,7 +114,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
         ODESystem(eqs,t,sts,ps;name=name)
     end
 
-    function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix, input_ar=input_ar,inh_nrn = inh_nrn, inh_mod_nrn = inh_mod_nrn)
+    function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix, input_ar=input_ar,inh_nrn = inh_nrn, inh_mod_nrn = inh_mod_nrn, jcn=jcn)
         syn_eqs= [ 0~sys[1].V - sys[1].V]
 
         Nrns = length(adj_matrix[1,:])
@@ -142,7 +142,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
             end
 
             if inh_mod_nrn[ii]>0
-                eq2 = [0 ~ postsyn_nrn.Iasc - input_ar[inh_mod_nrn[ii]]];
+                eq2 = [0 ~ postsyn_nrn.Iasc - input_ar - jcn];
                 push!(syn_eqs,eq2[1])
             end
 
@@ -160,7 +160,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
 
         @named synaptic_network = compose(synaptic_eqs, sys_ode)
 
-        return structural_simplify(synaptic_network)   
+        return synaptic_network   
     end
 
     function ascending_input(t,freq,phase,amp=1.4)
@@ -178,6 +178,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     inh_mod_nrn[inhib_mod] = 1
 
     @parameters adj[1:Nrns*Nrns] = vec(syn)
+    @variables jcn(t)=0.0
 
     amp = 0.3
     freq=16	
@@ -213,7 +214,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     push!(nrn_network,nn)
     end
 
-    @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn, input_ar=asc_input, inh_nrn = inh_nrn, inh_mod_nrn=inh_mod_nrn)
+    @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn, input_ar=asc_input, inh_nrn = inh_nrn, inh_mod_nrn=inh_mod_nrn, jcn=jcn)
     return syn_net, syn
 end
 
