@@ -3,7 +3,7 @@ D = Differential(t)
 
 #creates an ODESystem of a cortical block that consist of
 # a number of winner-takes-all
-function cortical_blox(;name, nblocks=20, blocksize=6)
+function cortical_blox(;name, nblocks=6, blocksize=6)
 
     #creates weight matrix for cortical block of given number of wta blocks : nblocks
     #                                                and size of each block : blocksize
@@ -158,7 +158,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
 
         sys_ode = [sys[ii] for ii = 1:length(sys)]
 
-        @named synaptic_network = compose(synaptic_eqs, sys_ode)
+        synaptic_network = compose(synaptic_eqs, sys_ode;name=name)
 
         return synaptic_network   
     end
@@ -214,7 +214,7 @@ function cortical_blox(;name, nblocks=20, blocksize=6)
     push!(nrn_network,nn)
     end
 
-    @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn, input_ar=asc_input, inh_nrn = inh_nrn, inh_mod_nrn=inh_mod_nrn, jcn=jcn)
+    syn_net = synaptic_network(name=name,sys=nrn_network,adj_matrix=syn, input_ar=asc_input, inh_nrn = inh_nrn, inh_mod_nrn=inh_mod_nrn, jcn=jcn)
     return syn_net, syn
 end
 
