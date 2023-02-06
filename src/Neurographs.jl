@@ -106,3 +106,37 @@ function connectcomplexblox(bloxlist, adjacency_matrices ;name)
     
     return ODEfromGraph(g, name=name)
 end
+
+
+function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
+    # Create LearningBlox for each Region
+    regions = []
+    for r in eachindex(ROIs)
+        push!(regions, 
+            LearningBlox(
+                ω=parameters[:ω][r], d=parameters[:d][r], 
+                prange=vec(datasets[r][1]), pdata=vec(datasets[r][2]), 
+                ROI=ROIs[r], name=Symbol(ROIs[r])
+            )
+        )
+    end
+    # Connect Regions through an External Connection Weight
+    @parameters c_ext=c_ext
+    for r in eachindex(ROIs)
+        regions[r].adj[3,3] = c_ext*regions[1:end .!= r, :][1].sys[3].x
+    end
+    # Update Adjacency Matrix to Incorporate External Connections
+    eqs = []
+    for r in eachindex(ROIs)
+        for s in eachindex(regions[r].sys) 
+            push!(eqs, regions[r].sys[s].jcn ~ sum(regions[r].adj[:, s]))
+        end
+    end
+    # Compose Loop
+    sys = []
+    for r in eachindex(ROIs)
+        sys = vcat(sys, regions[r].sys)
+    end
+    # Return One ODESystem
+    return ODESystem(eqs, systems=sys, name=name)
+end
