@@ -219,6 +219,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     r_NMDA::Num
     connector::Num
     noDetail::Vector{Num}
+    detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function LarterBreakspearBlox(;name,
