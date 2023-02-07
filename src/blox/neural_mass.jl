@@ -8,7 +8,7 @@ mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     k::Num
     h::Num
     connector::Num
-    plot::Vector{Num}
+    noDetail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
@@ -35,7 +35,7 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
     λ::Num
     r::Num
     connector::Num
-    plot::Vector{Num}
+    noDetail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
@@ -58,7 +58,7 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
     λ::Num
     r::Num
     connector::Num
-    plot::Vector{Num}
+    noDetail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
@@ -88,7 +88,7 @@ mutable struct WilsonCowanBlox <: NeuralMassBlox
     θ_I::Num
     η::Num
     connector::Num
-    plot::Vector{Num}
+    noDetail::Vector{Num}
     odesystem::ODESystem
     function WilsonCowanBlox(;name,
                           τ_E=1.0,
@@ -214,7 +214,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     ϕ::Num
     r_NMDA::Num
     connector::Num
-    plot::Vector{Num}
+    noDetail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function LarterBreakspearBlox(;name,

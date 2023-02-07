@@ -222,12 +222,12 @@ mutable struct CorticalBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
     connector::Num # symbolic expression to connect with another blox
     output::Vector{Num} # list of symbols that we want to output for plotting
-    mean::Vector{String} # list of strings that we will take the mean over for plotting
+    mean::Vector{Num} # list of strings that we will take the mean over for plotting
     adjM::Array{Float64,2} # adjacency matrix
     odesystem::ODESystem
     function CorticalBlox(;name,nblocks=20, blocksize=6)
         odesys, adjm = cortical_blox(name=name,nblocks=nblocks, blocksize=blocksize)
-        statesV = [s for s in states(odesys) if contains(string(s),"V")]
-        new(sum(statesV), statesV, ["V(t)"], adjm, odesys)
+        statesV = [s for s in states(odesys) if contains(string(s),"V(t)")]
+        new(sum(statesV), statesV, statesV, adjm, odesys)
     end
 end
