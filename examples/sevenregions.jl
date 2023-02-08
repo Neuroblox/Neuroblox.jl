@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.22
 
 using Markdown
 using InteractiveUtils
@@ -88,7 +88,7 @@ AdjMatrixfromLinearNeuroGraph(g7)
 seven_regions_s = structural_simplify(seven_regions_gr)
 
 # ╔═╡ 1a48d894-f43b-4559-8844-50b6e1989bda
-sim_dur = 5.0 # Simulate for 10 Seconds
+sim_dur = 5.0 # Simulate for  Seconds
 
 # ╔═╡ 906a3f36-613c-465c-b7d1-6caa245cfe86
 prob = ODEProblem(seven_regions_s, [], (0,sim_dur), [])
@@ -99,33 +99,17 @@ prob.p
 # ╔═╡ 7e6ec3b2-a8a7-42a0-87fe-b069c5a66a46
 seven_regions_s.ps
 
-# ╔═╡ cb87381d-330d-4d01-b4f3-55e3a22b2356
-typeof(seven_regions_s.ps[6])
-
-# ╔═╡ fe5650bf-a7d3-44a4-b11f-511248c56b0d
-@parameters GPe₊H
-
 # ╔═╡ 0447ca7d-9dc0-4777-b4ac-adc2eb7d3c8a
 seven_regions_s.states
+
+# ╔═╡ 97cb10a8-2f84-4604-bc03-9c9e349224b2
+@parameters GPe₊H
 
 # ╔═╡ a1c1b45f-8692-4456-ab20-d72b3e44fc0d
 indexof(sym,syms) = findfirst(isequal(sym),syms)
 
 # ╔═╡ f039dc58-04ba-4682-8f87-86ec19bd8d2f
 parameters(seven_regions_s)
-
-# ╔═╡ 413e1cd3-00cf-4bb3-98f2-35fa323454cd
-begin
-	# get the indices of the parameters in the parameter list
-	bgth_idx = indexof(C_BG_Th,parameters(seven_regions_s))
-	corbgth_idx = indexof(C_Cor_BG_Th,parameters(seven_regions_s))
-	cor_idx = indexof(C_Cor,parameters(seven_regions_s))
-	bgthcor_idx = indexof(C_BG_Th_Cor,parameters(seven_regions_s))
-	gpeh_idx = indexof(GPe₊H,parameters(seven_regions_s))
-end
-
-# ╔═╡ c0d99849-ebe8-46b4-8a99-e981a2a4d5dc
-gpeh_idx
 
 # ╔═╡ b94c0e24-1793-4fe0-b84d-974d0c27113c
 md"""
@@ -142,11 +126,9 @@ $(@bind h html"<input type=range min=0 max=500 step=1>")
 # ╔═╡ 32d1b83e-acfa-4351-9bcf-bc4367781186
 begin
 	# set the parameters for the simulation using the sliders
-	p_new = prob.p
-	p_new[ corbgth_idx] = corbgth
-	p_new[gpeh_idx] = h
-	p_new[bgthcor_idx] = bgthcor
-	prob_new = remake(prob; p=p_new, u0=ones(14)*0.1)
+	prob_new = remake(prob; p=[C_Cor_BG_Th => corbgth,
+								C_BG_Th_Cor =>bgthcor,
+								GPe₊H => h], u0=ones(14)*0.1)
 	sol = solve(prob_new, Rodas4())
 end
 
@@ -184,13 +166,10 @@ end
 # ╠═906a3f36-613c-465c-b7d1-6caa245cfe86
 # ╠═dd455500-d1bf-443d-b589-d400b6844874
 # ╠═7e6ec3b2-a8a7-42a0-87fe-b069c5a66a46
-# ╠═cb87381d-330d-4d01-b4f3-55e3a22b2356
-# ╠═fe5650bf-a7d3-44a4-b11f-511248c56b0d
 # ╠═0447ca7d-9dc0-4777-b4ac-adc2eb7d3c8a
+# ╠═97cb10a8-2f84-4604-bc03-9c9e349224b2
 # ╠═a1c1b45f-8692-4456-ab20-d72b3e44fc0d
 # ╠═f039dc58-04ba-4682-8f87-86ec19bd8d2f
-# ╠═413e1cd3-00cf-4bb3-98f2-35fa323454cd
-# ╠═c0d99849-ebe8-46b4-8a99-e981a2a4d5dc
 # ╠═32d1b83e-acfa-4351-9bcf-bc4367781186
 # ╟─8accf027-0261-42e5-ac11-c066cfb57c43
 # ╟─b94c0e24-1793-4fe0-b84d-974d0c27113c
