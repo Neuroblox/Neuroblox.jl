@@ -21,7 +21,7 @@ begin
     # activate the shared project environment
     Pkg.activate(@__DIR__)
     # instantiate, i.e. make sure that all packages are downloaded
-    Pkg.instantiate()
+    #Pkg.instantiate()
 	Pkg.add("OrdinaryDiffEq")
 	Pkg.add("MetaGraphs")
 	Pkg.add("Graphs")
