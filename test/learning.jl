@@ -1,4 +1,4 @@
-using Neuroblox, Test
+using Neuroblox, MAT, ModelingToolkit, OrdinaryDiffEq, Test
 
 """
 Test for learningrate
@@ -14,6 +14,5 @@ learning_rate = learningrate(outcomes, windows)
 
 @test sum(learning_rate[1:windows-1]) == 0
 @test sum(learning_rate[windows]) == 100
-
 
 
