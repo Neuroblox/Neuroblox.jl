@@ -108,6 +108,7 @@ function connectcomplexblox(bloxlist, adjacency_matrices ;name)
 end
 
 
+## Create Learning Loop
 function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     # Create LearningBlox for each Region
     regions = []
@@ -116,14 +117,14 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
             LearningBlox(
                 ω=parameters[:ω][r], d=parameters[:d][r], 
                 prange=vec(datasets[r][1]), pdata=vec(datasets[r][2]), 
-                ROI=ROIs[r], name=Symbol(ROIs[r])
+                name=ROIs[r]
             )
         )
     end
     # Connect Regions through an External Connection Weight
     @parameters c_ext=c_ext
     for r in eachindex(ROIs)
-        regions[r].adj[3,3] = c_ext*regions[1:end .!= r, :][1].sys[3].x
+        regions[r].adj[size(regions[r].adj, 1), size(regions[r].adj, 2)] = c_ext*regions[1:end .!= r, :][1].sys[3].x
     end
     # Update Adjacency Matrix to Incorporate External Connections
     eqs = []

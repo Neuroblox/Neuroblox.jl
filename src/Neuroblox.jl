@@ -65,6 +65,7 @@ include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 include("blox/sources.jl")
+include("blox/rl_blox.jl")
 include("gui/GUI.jl")
 
 
@@ -120,10 +121,11 @@ end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFneuron, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox 
+export LearningBlox
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, ODEfromGraph, connectcomplexblox, spikeconnections, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph
+export LinearConnections, ODEfromGraph, connectcomplexblox, spikeconnections, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph, create_rl_loop
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
