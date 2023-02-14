@@ -270,7 +270,8 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L,
         g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA,
-        odesys.Q_V,[odesys.Q_V],[odesys.Q_Z,odesys.m_Ca,odesys.m_Na,odesys.m_K],
+        0.5*Q_Vmax*(1 + tanh((odesys.V-V_T)/δ_VZ)),
+        [odesys.V],[odesys.V, odesys.Z, odesys.W],
         Dict(odesys.V => (-1.0,1.0), odesys.Z => (-1.0,1.0), odesys.W => (0.0,1.0)),
         odesys)
     end
