@@ -227,7 +227,7 @@ mutable struct CorticalBlox <: NeuralMassBlox
     odesystem::ODESystem
     function CorticalBlox(;name,nblocks=20, blocksize=6)
         odesys, adjm = cortical_blox(name=name,nblocks=nblocks, blocksize=blocksize)
-        statesV = [s for s in states(odesys) if contains(string(s),"V(t)")]
-        new(sum(statesV), statesV, statesV, adjm, odesys)
+        statesV = [s for s in states.((odesys,), states(odesys)) if contains(string(s),"V(t)")]
+        new(sum(statesV)/length(statesV), statesV, statesV, adjm, odesys)
     end
 end
