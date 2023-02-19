@@ -31,6 +31,17 @@ begin
     using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs
 end
 
+# ╔═╡ 33e0f754-c653-4dd2-9ec6-7f68bf51d9e1
+md"""
+This model is based upon the paper:
+The role of coupling connections in a model of the cortico-basal
+ganglia-thalamocortical neural loop for the generation of beta
+oscillations
+Chen Liu, Changsong Zhou, Jiang Wang, Chris Fietkiewicz, Kenneth A. Loparo
+Neural Networks 123 (2020) 381–392
+https://doi.org/10.1016/j.neunet.2019.12.021
+"""
+
 # ╔═╡ 66460e85-1544-406b-9c79-773ab174a5cb
 begin
 	# Create Regions
@@ -156,6 +167,7 @@ end
 
 # ╔═╡ Cell order:
 # ╠═771d1460-c48a-11ec-10d4-c7c5dd2a9984
+# ╟─33e0f754-c653-4dd2-9ec6-7f68bf51d9e1
 # ╠═66460e85-1544-406b-9c79-773ab174a5cb
 # ╠═9aa9ae2b-b8a0-463d-8e9e-b3339b25a99d
 # ╠═f45de893-522a-4c0d-b1f0-9093623208ee

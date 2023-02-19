@@ -22,11 +22,23 @@ add_edge!(g,2,1,:weight,g_STN_GPe*g_GPe_STN)
 add_edge!(g,2,2,:weight,1.0)
 a = AdjMatrixfromLinearNeuroGraph(g)
 
+#create equivalent graph
+gg = MetaDiGraph()
+add_blox!(gg,GPe)
+add_blox!(gg,STN)
+add_edge!(gg,1,1,:weight,1.0)
+add_edge!(gg,1,2,:weight,g_STN_GPe)
+add_edge!(gg,2,1,:weight,g_STN_GPe*g_GPe_STN)
+add_edge!(gg,2,2,:weight,1.0)
+
 # I am not sure how to test that the two adjacency matrices are equal
 @test isequal(a,adj_matrix)
 
 @named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connect)
 @named two_regions_gr = ODEfromGraph(g)
+@named two_regions_grd = ODEfromGraphdirect(gg)
 
 @test typeof(two_regions) == ODESystem
 @test typeof(two_regions_gr) == ODESystem
+@test typeof(two_regions_grd) == ODESystem
+@test equations(two_regions_grd) == equations(two_regions_gr)
