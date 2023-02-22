@@ -54,7 +54,7 @@ Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
 AbstractFFTs = "1"
-Catalyst = "12"
+Catalyst = "12, 13"
 Combinatorics = "1"
 DSP = "0.7"
 DataFrames = "1.3"
