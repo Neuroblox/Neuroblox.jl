@@ -86,10 +86,8 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
     for (idx,s) in enumerate(sys)
         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
             weights = Num.(zeros(length(conn)))
-            for edge in edges(g)
-                if dst(edge)==idx # edge points towards current blox
-                    weights[src(edge)] = get_prop(g, edge, :weight)
-                end
+            for edge in inneighbors(g, s) # edges that point towards s
+                weights[src(edge)] = get_prop(g, edge, :weight)
             end
             push!(eqs, s.jcn ~ sum(conn .* weights))
         end
