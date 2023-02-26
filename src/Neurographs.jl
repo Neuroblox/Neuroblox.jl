@@ -86,8 +86,8 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
     for (v,s) in zip(vertices(g),sys)
         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
             weights = Num.(zeros(length(conn)))
-            for edge in inneighbors(g,v) # edges that point towards s
-                weights[src(edge)] = get_prop(g, edge, :weight)
+            for vn in inneighbors(g,v) # vertices that point towards s
+                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
             end
             push!(eqs, s.jcn ~ sum(conn .* weights))
         end
