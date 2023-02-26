@@ -51,6 +51,7 @@ end
 
 const NUMBER = "number"
 const STRING = "string"
+const INTEGER = "integer"
 
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   Dict(
@@ -162,6 +163,15 @@ end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
   Dict(
+  )
+end
+
+function arguments(::Type{Neuroblox.BandPassFilterBlox})
+  Dict(
+    :lb => NCAD(10, NUMBER, 0, 2000),
+    :ub => NCAD(10, NUMBER, 0, 2000),
+    :fs => NCAD(100, NUMBER, 1, 2000),
+    :order => NCAD(100, NUMBER, 1, 2000)
   )
 end
 
