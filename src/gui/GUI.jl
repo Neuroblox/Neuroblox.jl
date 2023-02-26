@@ -170,8 +170,15 @@ function arguments(::Type{Neuroblox.BandPassFilterBlox})
   Dict(
     :lb => NCAD(10, NUMBER, 0, 2000),
     :ub => NCAD(10, NUMBER, 0, 2000),
-    :fs => NCAD(100, NUMBER, 1, 2000),
-    :order => NCAD(100, NUMBER, 1, 2000)
+    :fs => NCAD(1000, NUMBER, 1, 10000),
+    :order => NCAD(100, INTEGER, 1, 2000)
+  )
+end
+
+function arguments(::Type{Neuroblox.PowerSpectrumBlox})
+  Dict(
+    :T => NCAD(10, NUMBER, 0, 2000),
+    :fs => NCAD(1000, NUMBER, 1, 10000),
   )
 end
 
