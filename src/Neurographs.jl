@@ -79,11 +79,19 @@ function ODEfromGraph(g::MetaDiGraph ;name)
 end
 
 function ODEfromGraphdirect(g::MetaDiGraph ;name)
-    blox = [get_prop(g, v, :blox) for v in vertices(g)]
-    conn = [c.connector for c in blox]
-    sys = [s.odesystem for s in blox]
+    vert = []
+    conn = Num[]
+    sys = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+            push!(vert,v)
+            push!(conn,b.connector)
+            push!(sys,b.odesystem)
+        end
+    end
     eqs = []
-    for (v,s) in zip(vertices(g),sys)
+    for (v,s) in zip(vert,sys)
         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
             weights = Num.(zeros(length(conn)))
             for vn in inneighbors(g,v) # vertices that point towards s
