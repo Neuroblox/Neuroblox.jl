@@ -99,7 +99,7 @@ end
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
 """
 function phaseangle(data)
-    d = Neuroblox.hilberttransform(data)
+    d     = DSP.hilbert(data)
     phase = angle.(d)
     return phase
 end
