@@ -325,7 +325,7 @@ Test for van der Pol generator.
 
 prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
-@test sol.retcode == :Success
+@test sol.retcode == SciMLBase.ReturnCode.Success
 
 """
 wilson_cowan test

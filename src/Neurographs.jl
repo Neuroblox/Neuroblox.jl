@@ -32,6 +32,10 @@ function add_blox!(g::AbstractNeuroGraph,blox)
     add_vertex!(g, :blox, blox)
 end
 
+function add_blox!(g::MetaDiGraph,blox)
+    add_vertex!(g, :blox, blox)
+end
+
 function joinmetagraphs(metagraphs::Vector{T}) where T <: Any
     ngraphs = length(metagraphs)
     
@@ -72,6 +76,31 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     connector = [s.connector for s in blox]
     adj = adjmatrixfromdigraph(g)
     return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
+end
+
+function ODEfromGraphdirect(g::MetaDiGraph ;name)
+    vert = []
+    conn = Num[]
+    sys = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+            push!(vert,v)
+            push!(conn,b.connector)
+            push!(sys,b.odesystem)
+        end
+    end
+    eqs = []
+    for (v,s) in zip(vert,sys)
+        if "jcn(t)" in string.(states(s)) # only connect systems with jcn
+            weights = Num.(zeros(length(conn)))
+            for vn in inneighbors(g,v) # vertices that point towards s
+                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
+            end
+            push!(eqs, s.jcn ~ sum(conn .* weights))
+        end
+    end
+    return ODESystem(eqs, name=name, systems=sys)
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
