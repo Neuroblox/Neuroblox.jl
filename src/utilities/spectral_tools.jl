@@ -104,11 +104,10 @@ end
 
 mutable struct HilbertTransformBlox <: SpectralUtilities
     data::Vector{Float64}
-    HTfunc::Function
     transformed_data::Vector{Float64}
-    function HilbertTransformBlox(;name, data=[])
+    function HilbertTransformBlox(;name, data=Float64[])
         transformed_data = DSP.hilbert(data)
-        new(data, HTfunc, transformed_data)
+        new(data, transformed_data)
     end
 end
 
@@ -123,12 +122,11 @@ end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
     data::Vector{Float64}
-    PAfunc::Function
     phase::Vector{Float64}
-    function PhaseAngleBlox(;name, data=[])
-        d = HilbertTransformBlox(data)
+    function PhaseAngleBlox(;name, data=Float64[])
+        d = Neuroblox.HilbertTransformBlox(data)
         phase = angle.(d)
-        new(data, PAfunc, phase)
+        new(data, phase)
     end
 end
 
