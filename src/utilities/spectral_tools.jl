@@ -94,22 +94,6 @@ mutable struct BandPassFilterBlox <: SpectralUtilities
     end
 end
 
-"""
-hilberttransform takes in time series data and hilbert transforms it using the DSP hilbert function.
-"""
-function hilberttransform(data)
-    transformed_data = DSP.hilbert(data)
-    return transformed_data
-end
-
-mutable struct HilbertTransformBlox <: SpectralUtilities
-    data::Vector{Float64}
-    transformed_data::Vector{Float64}
-    function HilbertTransformBlox(;name, data=Float64[])
-        transformed_data = DSP.hilbert(data)
-        new(data, transformed_data)
-    end
-end
 
 """
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
@@ -121,12 +105,13 @@ function phaseangle(data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
-    data::Vector{Float64}
-    phase::Vector{Float64}
-    function PhaseAngleBlox(;name, data=Float64[])
-        d = Neuroblox.HilbertTransformBlox(data)
-        phase = angle.(d)
-        new(data, phase)
+    input_data::Vector{Float64}
+    transformation_function::Function
+    phase_angle::Vector{Float64}
+    function PhaseAngleBlox(;name, input_data=Float64[], transformation_function=DSP.hilbert)
+        d           = transformation_function(input_data)
+        phase_angle = angle.(d)
+        new(input_data, transformation_function, phase_angle)
     end
 end
 
