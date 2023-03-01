@@ -182,11 +182,6 @@ function arguments(::Type{Neuroblox.PowerSpectrumBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.HilbertTransformBlox})
-  Dict(
-  )
-end
-
 function arguments(::Type{Neuroblox.PhaseAngleBlox})
   Dict(
   )

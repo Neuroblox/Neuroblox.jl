@@ -4,7 +4,6 @@ spectral_tools.jl
 This utility file contains the methods utilized for spectral data analysis.
     powerspectrum    : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
     bandpassfilter   : designs a bandpass filter and applies it to time series data with some given pass band
-    hilberttransform : performs a hilbert transform on time series data to get a complex signal
     phaseangle       : computes the phase angle on hilbert-transformed time series data
     complexwavelet   : generate a complex morlet wavelet
     mar2csd          : compute cross-spectral densities from multivariate auto-regressive model parameters
