@@ -61,7 +61,7 @@ mutable struct PowerSpectrumBlox <: SpectralUtilities
     method::String
     window::Union{Function,AbstractVector,Nothing}
     PSDfunc::Function
-    function PowerSpectrumBlox(T, fs, method, window)
+    function PowerSpectrumBlox(;name, T=20, fs=1000, method="periodogram", window="hanning")
         new(T, fs, method, window, powerspectrum)
     end
 end
@@ -89,7 +89,7 @@ mutable struct BandPassFilterBlox <: SpectralUtilities
     fs::Float64
     order::Int64
     BPFfunc::Function
-    function BandPassFilterBlox(lb,ub, fs, order)
+    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4)
         new(lb, ub, fs, order, bandpassfilter)
     end
 end
@@ -106,7 +106,7 @@ mutable struct HilbertTransformBlox <: SpectralUtilities
     data::Vector{Float64}
     HTfunc::Function
     transformed_data::Vector{Float64}
-    function HilbertTransformBlox(data)
+    function HilbertTransformBlox(;name, data=[])
         transformed_data = DSP.hilbert(data)
         new(data, HTfunc, transformed_data)
     end
@@ -125,7 +125,7 @@ mutable struct PhaseAngleBlox <: SpectralUtilities
     data::Vector{Float64}
     PAfunc::Function
     phase::Vector{Float64}
-    function PhaseAngleBlox(data)
+    function PhaseAngleBlox(;name, data=[])
         d = HilbertTransformBlox(data)
         phase = angle.(d)
         new(data, PAfunc, phase)
