@@ -187,7 +187,7 @@ function arguments(::Type{Neuroblox.HilbertTransformBlox})
   )
 end
 
-function arguments(::Tyoe{Neuroblox.PhaseAngleBlox})
+function arguments(::Type{Neuroblox.PhaseAngleBlox})
   Dict(
   )
 end
