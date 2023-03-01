@@ -104,10 +104,9 @@ function phaseangle(data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
-    data::Vector{Float64}
     transformation_function::Function
-    function PhaseAngleBlox(;name, data=Float64[], transformation_function=Neuroblox.phaseangle)
-        new(data, transformation_function)
+    function PhaseAngleBlox(;name, transformation_function=Neuroblox.phaseangle)
+        new(transformation_function)
     end
 end
 
