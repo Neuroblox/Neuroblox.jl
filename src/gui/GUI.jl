@@ -192,7 +192,4 @@ function arguments(::Type{Neuroblox.PhaseAngleBlox})
   )
 end
 
-
-end
-
 end
