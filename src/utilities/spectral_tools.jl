@@ -88,8 +88,8 @@ mutable struct BandPassFilterBlox <: SpectralUtilities
     fs::Float64
     order::Int64
     BPFfunc::Function
-    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4)
-        new(lb, ub, fs, order, bandpassfilter)
+    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, bpfunction=bandpassfilter)
+        new(lb, ub, fs, order, bpfunction)
     end
 end
 
@@ -104,13 +104,10 @@ function phaseangle(data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
-    input_data::Vector{Float64}
+    data::Vector{Float64}
     transformation_function::Function
-    phase_angle::Vector{Float64}
-    function PhaseAngleBlox(;name, input_data=Float64[], transformation_function=DSP.hilbert)
-        d           = transformation_function(input_data)
-        phase_angle = angle.(d)
-        new(input_data, transformation_function, phase_angle)
+    function PhaseAngleBlox(;name, data=Float64[], transformation_function=Neuroblox.phaseangle)
+        new(data, transformation_function)
     end
 end
 
