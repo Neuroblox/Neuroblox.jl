@@ -79,16 +79,6 @@ f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "peri
 @test pxx_signal[1:lb] < pxx[1:lb]
 @test pxx_signal[ub:100] < pxx[ub:100]
 
-"""
-hilberttransform test
-the imaginary part of the transformed data must sum to approximately zero
-"""
-data = matread(joinpath(@__DIR__, "lfp_test_data_phase.mat"))
-data = data["lfp_data"]
-transformed_signal = Neuroblox.hilberttransform(data)
-
-tol = 0.001
-@test sum(imag(transformed_signal)) < 0 + tol
 
 """
 phaseangle test

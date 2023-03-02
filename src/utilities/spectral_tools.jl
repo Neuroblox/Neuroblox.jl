@@ -4,7 +4,6 @@ spectral_tools.jl
 This utility file contains the methods utilized for spectral data analysis.
     powerspectrum    : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
     bandpassfilter   : designs a bandpass filter and applies it to time series data with some given pass band
-    hilberttransform : performs a hilbert transform on time series data to get a complex signal
     phaseangle       : computes the phase angle on hilbert-transformed time series data
     complexwavelet   : generate a complex morlet wavelet
     mar2csd          : compute cross-spectral densities from multivariate auto-regressive model parameters
@@ -89,26 +88,26 @@ mutable struct BandPassFilterBlox <: SpectralUtilities
     fs::Float64
     order::Int64
     BPFfunc::Function
-    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4)
-        new(lb, ub, fs, order, bandpassfilter)
+    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, bpfunction=bandpassfilter)
+        new(lb, ub, fs, order, bpfunction)
     end
 end
 
-"""
-hilberttransform takes in time series data and hilbert transforms it using the DSP hilbert function.
-"""
-function hilberttransform(data)
-    transformed_data = DSP.hilbert(data)
-    return transformed_data
-end
 
 """
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
 """
 function phaseangle(data)
-    d = Neuroblox.hilberttransform(data)
+    d     = DSP.hilbert(data)
     phase = angle.(d)
     return phase
+end
+
+mutable struct PhaseAngleBlox <: SpectralUtilities
+    transformation_function::Function
+    function PhaseAngleBlox(;name, transformation_function=Neuroblox.phaseangle)
+        new(transformation_function)
+    end
 end
 
 """

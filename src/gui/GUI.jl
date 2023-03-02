@@ -182,4 +182,9 @@ function arguments(::Type{Neuroblox.PowerSpectrumBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.PhaseAngleBlox})
+  Dict(
+  )
+end
+
 end
