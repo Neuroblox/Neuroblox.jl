@@ -74,7 +74,7 @@ It has the following inputs:
     fs: sampling frequency
     order: filter order
 """
-function bandpassfilter(data, lb, ub, fs, order)
+function bandpassfilter(;data, lb=0.0, ub=1000.0, fs=1000.0, order=4)
     responsetype = Bandpass(lb, ub, fs=fs)
     order = Int(ceil(0.5*order))
     designmethod = Butterworth(order)
@@ -97,7 +97,7 @@ end
 """
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
 """
-function phaseangle(data)
+function phaseangle(;data)
     d     = DSP.hilbert(data)
     phase = angle.(d)
     return phase
@@ -105,7 +105,7 @@ end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
     transformation_function::Function
-    function PhaseAngleBlox(;name, transformation_function=Neuroblox.phaseangle)
+    function PhaseAngleBlox(;name, transformation_function=phaseangle)
         new(transformation_function)
     end
 end
