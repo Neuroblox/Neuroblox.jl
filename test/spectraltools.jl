@@ -73,7 +73,7 @@ f, pxx = Neuroblox.powerspectrum(data, length(data), 1000, "periodogram", hannin
 
 lb = 12
 ub = 30
-signal = Neuroblox.bandpassfilter(data, lb, ub, 1000, 4)
+signal = Neuroblox.bandpassfilter(data=data, lb=lb, ub=ub, fs=1000, order=4)
 f_signal, pxx_signal = Neuroblox.powerspectrum(signal, length(data), 1000, "periodogram", hanning)
 
 @test pxx_signal[1:lb] < pxx[1:lb]
@@ -86,7 +86,7 @@ the imaginary part of the transformed data must sum to approximately zero
 """
 data = matread(joinpath(@__DIR__, "lfp_test_data_phase.mat"))
 data = data["lfp_data"]
-phase = Neuroblox.phaseangle(data)
+phase = Neuroblox.phaseangle(data=data)
 
 @test minimum(phase) > -pi
 @test maximum(phase) < pi
