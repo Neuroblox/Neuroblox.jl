@@ -6,7 +6,7 @@ the average value of the power spectral density within a certain
 frequency band ([lb, ub]).
 """
 function ARVTarget(data, lb, ub, fs, order, control_bin)
-    signal = Neuroblox.bandpassfilter(data, lb, ub, fs, order)
+    signal = Neuroblox.bandpassfilter(data=data, lb=lb, ub=ub, fs=fs, order=order)
     f, pxx = Neuroblox.powerspectrum(signal, control_bin, fs, "periodogram", hanning)
     lbs = Int(ceil(lb*length(f)/500))
     ubs = Int(ceil(ub*length(f)/500))
@@ -25,8 +25,8 @@ function CDVTarget(data, lb, ub, fs, order)
     if typeof(data) == Matrix{Float64}
         data = vec(data)
     end
-    signal = Neuroblox.bandpassfilter(data, lb, ub, fs, order)
-    phi = Neuroblox.phaseangle(signal)
+    signal = Neuroblox.bandpassfilter(data=data, lb=lb, ub=ub, fs=fs, order=order)
+    phi = Neuroblox.phaseangle(data=signal)
     circular_location = exp.(im*phi)
     return circular_location
 end
@@ -41,8 +41,8 @@ function PDVTarget(data, lb, ub, fs, order)
     if typeof(data) == Matrix{Float64}
         data = vec(data)
     end
-    signal = Neuroblox.bandpassfilter(data, lb, ub, fs, order)
-    phi = Neuroblox.phaseangle(signal)
+    signal = Neuroblox.bandpassfilter(data=data, lb=lb, ub=ub, fs=fs, order=order)
+    phi = Neuroblox.phaseangle(data=signal)
     return phi
 end
 
@@ -59,9 +59,9 @@ function PLVTarget(data1, data2, lb, ub, fs, order)
     if typeof(data2) == Matrix{Float64}
         data2 = vec(data2)
     end
-    signal1 = Neuroblox.bandpassfilter(data1, lb, ub, fs, order)
-    signal2 = Neuroblox.bandpassfilter(data2, lb, ub, fs, order)
-    dphi    = Neuroblox.phaseangle(signal1) .- Neuroblox.phaseangle(signal2)
+    signal1 = Neuroblox.bandpassfilter(data=data1, lb=lb, ub=ub, fs=fs, order=order)
+    signal2 = Neuroblox.bandpassfilter(data=data2, ls=lb, ub=ub, fs=fs, order=order)
+    dphi    = Neuroblox.phaseangle(data=signal1) .- Neuroblox.phaseangle(data=signal2)
     PLV     = abs(mean(exp.(im*dphi)))
     return PLV
 end
@@ -74,8 +74,8 @@ function ACVTarget(data1, data2, lb, ub, fs, order)
         data2 = vec(data2)
     end
     avg_coh(x)  = dropdims(mean(coherence(x); dims=3); dims=3)
-    signal1 = Neuroblox.bandpassfilter(data1, lb, ub, fs, order)
-    signal2 = Neuroblox.bandpassfilter(data2, lb, ub, fs, order)
+    signal1 = Neuroblox.bandpassfilter(data=data1, lb=lb, ub=ub, fs=fs, order=order)
+    signal2 = Neuroblox.bandpassfilter(data=data2, lb=lb, ub=ub, fs=fs, order=order)
     signals = Matrix{Float64}(undef, 2, length(signal1))
     signals[1,:] = signal1
     signals[2,:] = signal2
