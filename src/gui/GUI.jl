@@ -168,10 +168,10 @@ end
 
 function arguments(::Type{Neuroblox.BandPassFilterBlox})
   Dict(
-    :lb => NCAD(10, NUMBER, 0, 2000),
-    :ub => NCAD(10, NUMBER, 0, 2000),
+    :lb => NCAD(10, NUMBER, 0, 500),
+    :ub => NCAD(10, NUMBER, 0, 500),
     :fs => NCAD(1000, NUMBER, 1, 10000),
-    :order => NCAD(100, INTEGER, 1, 2000)
+    :order => NCAD(4, INTEGER, 1, 2000)
   )
 end
 

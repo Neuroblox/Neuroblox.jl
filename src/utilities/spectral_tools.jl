@@ -75,6 +75,10 @@ It has the following inputs:
     order: filter order
 """
 function bandpassfilter(;data, lb=0.0, ub=1000.0, fs=1000.0, order=4)
+    # return unfiltered data when parameters are bad
+    if (lb >= ub) | (ub > fs / 2)
+        return data
+    end
     responsetype = Bandpass(lb, ub, fs=fs)
     order = Int(ceil(0.5*order))
     designmethod = Butterworth(order)
@@ -83,16 +87,16 @@ function bandpassfilter(;data, lb=0.0, ub=1000.0, fs=1000.0, order=4)
 end
 
 mutable struct BandPassFilterBlox <: SpectralUtilities
+    name::String
     lb::Float64
     ub::Float64
     fs::Float64
     order::Int64
-    BPFfunc::Function
-    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, bpfunction=bandpassfilter)
-        new(lb, ub, fs, order, bpfunction)
+    util_func::Function
+    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, util_func=bandpassfilter)
+        new(string(name),lb, ub, fs, order, util_func)
     end
 end
-
 
 """
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
@@ -104,9 +108,10 @@ function phaseangle(;data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
-    transformation_function::Function
-    function PhaseAngleBlox(;name, transformation_function=phaseangle)
-        new(transformation_function)
+    name::String
+    util_func::Function
+    function PhaseAngleBlox(;name, util_func=phaseangle)
+        new(string(name),util_func)
     end
 end
 
