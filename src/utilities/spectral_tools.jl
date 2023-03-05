@@ -87,12 +87,11 @@ mutable struct BandPassFilterBlox <: SpectralUtilities
     ub::Float64
     fs::Float64
     order::Int64
-    BPFfunc::Function
-    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, bpfunction=bandpassfilter)
-        new(lb, ub, fs, order, bpfunction)
+    util_func::Function
+    function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, util_func=bandpassfilter)
+        new(lb, ub, fs, order, util_func)
     end
 end
-
 
 """
 phaseangle takes in time series data, hilbert transforms it, and estimates the phase angle.
@@ -104,9 +103,9 @@ function phaseangle(;data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
-    transformation_function::Function
-    function PhaseAngleBlox(;name, transformation_function=phaseangle)
-        new(transformation_function)
+    util_func::Function
+    function PhaseAngleBlox(;name, util_func=phaseangle)
+        new(util_func)
     end
 end
 
