@@ -75,6 +75,10 @@ It has the following inputs:
     order: filter order
 """
 function bandpassfilter(;data, lb=0.0, ub=1000.0, fs=1000.0, order=4)
+    # return unfiltered data when parameters are bad
+    if (lb >= ub) | (ub > fs / 2)
+        return data
+    end
     responsetype = Bandpass(lb, ub, fs=fs)
     order = Int(ceil(0.5*order))
     designmethod = Butterworth(order)
