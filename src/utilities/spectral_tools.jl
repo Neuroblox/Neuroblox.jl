@@ -83,13 +83,14 @@ function bandpassfilter(;data, lb=0.0, ub=1000.0, fs=1000.0, order=4)
 end
 
 mutable struct BandPassFilterBlox <: SpectralUtilities
+    name::String
     lb::Float64
     ub::Float64
     fs::Float64
     order::Int64
     util_func::Function
     function BandPassFilterBlox(;name,lb=0.0,ub=1000.0, fs=1000, order=4, util_func=bandpassfilter)
-        new(lb, ub, fs, order, util_func)
+        new(string(name),lb, ub, fs, order, util_func)
     end
 end
 
@@ -103,9 +104,10 @@ function phaseangle(;data)
 end
 
 mutable struct PhaseAngleBlox <: SpectralUtilities
+    name::String
     util_func::Function
     function PhaseAngleBlox(;name, util_func=phaseangle)
-        new(util_func)
+        new(string(name),util_func)
     end
 end
 
