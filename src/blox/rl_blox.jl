@@ -17,7 +17,11 @@ mutable struct LearningBlox
         blox  = [Phase, Cosine, NeuralMass]
         sys   = [s.odesystem for s in blox]
         # Set Internal Connections
-        g     = [0 1 0; 0 0 1; 0 0 0]
+        # Columns = Inputs (Sinks); Rows = Outputs (Sources)
+               # P C NM
+        g     = [0 1 0; # P  
+                 0 0 1; # C 
+                 0 0 0] # NM      
         adj   = g .* [s.connector for s in blox]
         # Return Properties
         new(ω, d, prange, pdata, adj, sys)
