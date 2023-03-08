@@ -1,6 +1,6 @@
 module GUI
 
-using Neuroblox
+using Neuroblox, OrderedCollections
 
 # constants
 
@@ -167,7 +167,7 @@ function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings f
 end
 
 function arguments(::Type{Neuroblox.BandPassFilterBlox})
-  Dict(
+  OrderedDict(
     :lb => NCAD(10, NUMBER, 0, 500),
     :ub => NCAD(10, NUMBER, 0, 500),
     :fs => NCAD(1000, NUMBER, 1, 10000),
