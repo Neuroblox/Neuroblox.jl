@@ -54,7 +54,7 @@ const STRING = "string"
 const INTEGER = "integer"
 
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
-  Dict(
+  OrderedDict(
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi)),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0),
     :k => NCAD(625*(2*pi), NUMBER, (2*pi), 22500*(2*pi)),
@@ -63,7 +63,7 @@ function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
 end
 
 function arguments(::Type{Neuroblox.JansenRitCBlox})
-  Dict(
+  OrderedDict(
     :τ => NCAD(0.001, NUMBER, 0.001, 2.0),
     :H => NCAD(20.0, NUMBER, 0.0, 500.0),
     :λ => NCAD(5.0, NUMBER, 1.0, 25.0),
@@ -72,7 +72,7 @@ function arguments(::Type{Neuroblox.JansenRitCBlox})
 end
 
 function arguments(::Type{Neuroblox.JansenRitSCBlox})
-  Dict(
+  OrderedDict(
     :τ => NCAD(0.014, NUMBER, 0.001, 0.1),
     :H => NCAD(20.0, NUMBER, 0.0, 500.0),
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0),
@@ -81,7 +81,7 @@ function arguments(::Type{Neuroblox.JansenRitSCBlox})
 end
 
 function arguments(::Type{Neuroblox.WilsonCowanBlox})
-  Dict(
+  OrderedDict(
     :τ_E => NCAD(1.0, NUMBER, 1.0, 100.0),
     :τ_I => NCAD(1.0, NUMBER, 1.0, 100.0),
     :a_E => NCAD(1.2, NUMBER, 1.0, 100.0),
@@ -97,7 +97,7 @@ function arguments(::Type{Neuroblox.WilsonCowanBlox})
 end
 
 function arguments(::Type{Neuroblox.LarterBreakspearBlox})
-  Dict(
+  OrderedDict(
     :C => NCAD(0.35, NUMBER, 0.0, 1.0),
     :δ_VZ => NCAD(0.61, NUMBER, 0.1, 2.0),
     :T_Ca => NCAD(-0.01, NUMBER, 0.02, -0.04),
@@ -130,7 +130,7 @@ function arguments(::Type{Neuroblox.LarterBreakspearBlox})
 end
 
 function arguments(::Type{Neuroblox.NextGenerationBlox})
-  Dict(
+  OrderedDict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0),
     :Δ => NCAD(1.0, NUMBER, 0.01, 100.0),
     :η_0 => NCAD(5.0, NUMBER, 0.01, 20.0),
@@ -141,7 +141,7 @@ function arguments(::Type{Neuroblox.NextGenerationBlox})
 end
 
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
-  Dict(
+  OrderedDict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0),
     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0),
     :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0),
@@ -153,7 +153,7 @@ function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings f
 end
 
 function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings for the arguments
-  Dict(
+  OrderedDict(
     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0),
     :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0),
 	  :w => NCAD(-10.0, NUMBER, -20.0, 0.0),
@@ -162,7 +162,7 @@ function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings 
 end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
-  Dict(
+  OrderedDict(
   )
 end
 
@@ -176,7 +176,7 @@ function arguments(::Type{Neuroblox.BandPassFilterBlox})
 end
 
 function arguments(::Type{Neuroblox.PowerSpectrumBlox})
-  Dict(
+  OrderedDict(
     :T => NCAD(10, NUMBER, 0, 2000),
     :fs => NCAD(1000, NUMBER, 1, 10000),
   )
