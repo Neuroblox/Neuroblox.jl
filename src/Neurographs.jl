@@ -89,7 +89,7 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     popfirst!(syn_eqs)
     @named synaptic_eqs = ODESystem(syn_eqs,t)
     synaptic_network = compose(synaptic_eqs, sys;name=name)
-    return structural_simplify(synaptic_network)   
+    return synaptic_network   
 end
 
 function ODEfromGraph(g::LinearNeuroGraph ;name)
