@@ -165,8 +165,6 @@ mutable struct HHNeuronExciBlox <: NeuronBlox
 	end
 end	
 
-const hh_exci_neuron = HHNeuronExciBlox
-
 mutable struct HHNeuronInhibBlox <: NeuronBlox
 	E_syn::Num
     G_syn::Num
@@ -201,7 +199,6 @@ mutable struct HHNeuronInhibBlox <: NeuronBlox
 	end
 end	
 
-const hh_inhib_neuron = HHNeuronInhibBlox
 	
 
 
