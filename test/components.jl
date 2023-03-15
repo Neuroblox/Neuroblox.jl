@@ -345,7 +345,7 @@ adj = [0 1 0
 sys = [s.odesystem for s in assembly]
 connect = [s.connector for s in assembly]       
 @named neuron_net = SynapticConnections(sys=sys, adj_matrix=adj, connector=connect)
-sol=simulate(structural_simplify(neuron_net),[],(0,10),[],solver=Vern7())
+sol=simulate(structural_simplify(neuron_net),[],(0,10),[],Vern7())
 
 @test typeof(neuron_net)==ODESystem
-@test sol[:,1][end]==10 
+@test sol[:,1][end] ≈ 10.0 
