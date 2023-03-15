@@ -58,3 +58,21 @@ add_edge!(ggb,2,3,:weight,1.0)
 @test equations(two_regions_grd) == equations(two_regions_gr)
 @test equations(two_regions_grd) == equations(two_regions_grdb)
 
+"""
+test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
+"""
+
+nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4)
+nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6)
+nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_in=2, freq=3)
+
+#create equivalent graph
+gg = MetaDiGraph()
+add_blox!(gg,nn1)
+add_blox!(gg,nn2)
+add_blox!(gg,nn3)
+add_edge!(gg,1,2,:weight,1.0)
+add_edge!(gg,2,3,:weight,1.0)
+add_edge!(gg,3,1,:weight,.2)
+
+# add your test to see whether you get the same ODESystem
