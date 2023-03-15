@@ -238,82 +238,6 @@ sol = solve(prob, AutoVern7(Rodas4())) #pass keyword arguments to solver
 @test length(sol.prob.p[21]) == 11
 
 
-"""
-leaky integrate integrate and fire neuron if_neuron() test.
-This test generates 5 excitatory and 1 inhibitory neurons and connects them into winner take all
-network. It then simulates their activity.
-"""
-
-# generate if_neurons 
-# parameters 
-Nrns = 6
-E_syn=zeros(1,Nrns);	 #synaptic reversal potentials is property of presynaptic neuron
-E_syn[6] =-70;
-
-G_syn = 0.4*ones(1,Nrns); #synaptic conductance is property of presynaptic neuron
-G_syn[6] = 5;
-
-I_in = zeros(Nrns); #input currents
-for ii = 1:5
-    I_in[ii] = 25*rand();
-end
-I_in[6] = 0.85;
-freq = zeros(Nrns);
-freq[6] = 5;
-
-phase = zeros(Nrns);
-phase[6] = pi
-    
-τ = 5*ones(Nrns); # postsynaptic potential time constants
-τ[6] = 70;
-
-nrn_network=[]
-for ii = 1:Nrns
-    nn = if_neuron(name=Symbol("nrn$ii"),E_syn=E_syn[ii],G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii], phase=phase[ii], τ=τ[ii])
-    push!(nrn_network,nn.odesystem)
-end
-
-# adjacency matrix 
-syn =  zeros(Nrns,Nrns);
-syn[end,1:end-1].=1;
-syn[1:end-1,end].=1;
-
-#connect the neurons
-@named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn)
-@test typeof(syn_net) == ODESystem
-@test length(states(syn_net)) == 5*Nrns
-
-# simulate
-sim_dur =  50.0
-sol = simulate(syn_net, [], (0.0, sim_dur), [])
-@test sol[end,1] == sim_dur
-
-"""
-hh_neuron_excitatory() and hh_neuron_inhibitory() test.
-This test generates 5 excitatory and 1 inhibitory hh neurons and connects them into winner take all
-network. It then simulates their activity.
-"""
-hh_nrn_network=[]
-for ii = 1:5
-    nn = hh_neuron_excitatory(name=Symbol("hh_nrn$ii"),E_syn=0,G_syn=3,I_in=I_in[ii],freq=0, phase=0, τ=5)
-    push!(hh_nrn_network,nn)
-end
-nn = hh_neuron_inhibitory(name=Symbol("hh_nrn6"),E_syn=-70,G_syn=23,I_in=0.85,freq=4, phase=pi, τ=70)
-push!(hh_nrn_network,nn)
-
-# adjacency matrix 
-syn =  zeros(Nrns,Nrns);
-syn[end,1:end-1].=1;
-syn[1:end-1,end].=1;
-
-#connect the neurons
-@named hh_syn_net = synaptic_network(sys=hh_nrn_network,adj_matrix=syn)
-@test typeof(hh_syn_net) == ODESystem
-
-# simulate
-sim_dur =  50.0
-sol = simulate(hh_syn_net, [], (0.0, sim_dur), [])
-@test sol[end,1] == sim_dur
 
 """
 van_der_pol.jl test
@@ -405,3 +329,23 @@ cb = DiscreteCallback(condition,affect!)
 
 sol = solve(phase_ode,Tsit5(),callback=cb)
 @test sol[2,:][5] ≈ 13.49728948607267
+
+
+"""
+test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
+"""
+
+nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4)
+nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6)
+nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_in=2, freq=3)
+assembly = [nn1, nn2, nn3]
+adj = [0 1 0
+       0 0 1
+       0.2 0 0]
+sys = [s.odesystem for s in assembly]
+connect = [s.connector for s in assembly]       
+@named neuron_net = SynapticConnections(sys=sys, adj_matrix=adj, connector=connect)
+sol=simulate(structural_simplify(neuron_net),[],(0,10),[],solver=Vern7())
+
+@test typeof(neuron_net)==ODESystem
+@test sol[:,1][end]==10 

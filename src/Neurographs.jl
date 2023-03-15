@@ -62,6 +62,36 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=conn
     return ODESystem(eqs, name=name, systems=sys)
 end
 
+function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
+    adj = adj_matrix .* connector
+    syn_eqs = [ 0~sys[1].V - sys[1].V]
+    Nrns = length(sys)
+    for ii = 1:Nrns
+        # for sparse adj matrices it is efficient to only consider presynaptic neurons for computing synaptic input
+        presyn = findall(x-> x>0.0, adj_matrix[:,ii])
+        wts = adj_matrix[presyn,ii]
+        presyn_nrn = sys[presyn]
+        postsyn_nrn = sys[ii]
+        if length(presyn)>0
+            ind = collect(1:length(presyn))
+            eqs = [postsyn_nrn.Isyn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
+                   postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            push!(syn_eqs,eqs[1])
+            push!(syn_eqs,eqs[2])
+        else
+            eqs = [postsyn_nrn.Isyn~0,
+                  postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            push!(syn_eqs,eqs[1])
+            push!(syn_eqs,eqs[2])
+        end
+        
+    end
+    popfirst!(syn_eqs)
+    @named synaptic_eqs = ODESystem(syn_eqs,t)
+    synaptic_network = compose(synaptic_eqs, sys;name=name)
+    return synaptic_network   
+end
+
 function ODEfromGraph(g::LinearNeuroGraph ;name)
     blox = [get_prop(g.graph, v, :blox) for v in vertices(g.graph)]
     sys = [s.odesystem for s in blox]
