@@ -289,33 +289,6 @@ sol = simulate(syn_net, [], (0.0, sim_dur), [])
 @test sol[end,1] == sim_dur
 
 """
-hh_neuron_excitatory() and hh_neuron_inhibitory() test.
-This test generates 5 excitatory and 1 inhibitory hh neurons and connects them into winner take all
-network. It then simulates their activity.
-"""
-hh_nrn_network=[]
-for ii = 1:5
-    nn = hh_neuron_excitatory(name=Symbol("hh_nrn$ii"),E_syn=0,G_syn=3,I_in=I_in[ii],freq=0, phase=0, τ=5)
-    push!(hh_nrn_network,nn)
-end
-nn = hh_neuron_inhibitory(name=Symbol("hh_nrn6"),E_syn=-70,G_syn=23,I_in=0.85,freq=4, phase=pi, τ=70)
-push!(hh_nrn_network,nn)
-
-# adjacency matrix 
-syn =  zeros(Nrns,Nrns);
-syn[end,1:end-1].=1;
-syn[1:end-1,end].=1;
-
-#connect the neurons
-@named hh_syn_net = synaptic_network(sys=hh_nrn_network,adj_matrix=syn)
-@test typeof(hh_syn_net) == ODESystem
-
-# simulate
-sim_dur =  50.0
-sol = simulate(hh_syn_net, [], (0.0, sim_dur), [])
-@test sol[end,1] == sim_dur
-
-"""
 van_der_pol.jl test
 
 Test for van der Pol generator.
