@@ -83,8 +83,10 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        push!(vert, v)
-        push!(sys, b.odesystem)
+        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+            push!(vert, v)
+            push!(sys, b.odesystem)
+        end
     end
     eqs = []
     for (v, s) in zip(vert, sys)
