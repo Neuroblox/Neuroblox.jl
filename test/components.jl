@@ -295,6 +295,18 @@ sol = solve(prob, Vern7(), saveat=0.5)
 @test size(sol) == (222,41)
 
 """
+CorticalBloxNew test
+"""
+@named cb = CorticalBloxNew(nblocks=6,blocksize=6)
+sys = cb.odesystem
+cb_simpl = structural_simplify(sys)
+@test length(states(cb_simpl)) == 222
+prob = ODEProblem(cb_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (222,41)
+
+
+"""
 ts_outputs.jl test
 
 Test for time-series output tests.
