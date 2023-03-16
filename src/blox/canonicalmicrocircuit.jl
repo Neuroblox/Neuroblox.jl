@@ -30,13 +30,16 @@ end
 mutable struct cmc
     τ::Vector{Num}
     r::Vector{Num}
+    connector::Symbolics.Arr{Num}
+    bloxinput::Symbolics.Arr{Num}
     odesystem::ODESystem
-    lngraph::MetaDiGraph
     function cmc(;name, τ=[0.002, 0.002, 0.016, 0.028], r=[2.0/3.0, 2.0/3.0, 2.0/3.0, 2.0/3.0])
-        ss = jansen_rit_spm12(τ=τ[1], r=r[1], name=Symbol(String(name)*"_ss"))  # spiny stellate
-        sp = jansen_rit_spm12(τ=τ[2], r=r[2], name=Symbol(String(name)*"_sp"))  # superficial pyramidal
-        ii = jansen_rit_spm12(τ=τ[3], r=r[3], name=Symbol(String(name)*"_ii"))  # inhibitory interneurons granular layer
-        dp = jansen_rit_spm12(τ=τ[4], r=r[4], name=Symbol(String(name)*"_dp"))  # deep pyramidal
+        @variables jcn(t)[1:4], x(t)[1:4]
+
+        @named ss = jansen_rit_spm12(τ=τ[1], r=r[1])  # spiny stellate
+        @named sp = jansen_rit_spm12(τ=τ[2], r=r[2])  # superficial pyramidal
+        @named ii = jansen_rit_spm12(τ=τ[3], r=r[3])  # inhibitory interneurons granular layer
+        @named dp = jansen_rit_spm12(τ=τ[4], r=r[4])  # deep pyramidal
 
         g = MetaDiGraph()
         add_vertex!(g, Dict(:blox => ss, :name => name))
@@ -55,7 +58,20 @@ mutable struct cmc
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        odesys = ODEfromGraph(g, name=name)
-        new(τ, r, odesys, g)
+        @named odecmc = ODEfromGraphdirect(g)
+
+        # the following lines are incorrect because jcn's are already assigned in ODEfromGraphdirect.
+        eqs = [
+            ss.odesystem.jcn ~ jcn[1]
+            sp.odesystem.jcn ~ jcn[2]
+            ii.odesystem.jcn ~ jcn[3]
+            dp.odesystem.jcn ~ jcn[4]
+            ss.connector ~ x[1]
+            sp.connector ~ x[2]
+            ii.connector ~ x[3]
+            dp.connector ~ x[4]
+        ]
+        odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
+        new(τ, r, odesys.x, odesys.jcn, odesys)
     end
 end
