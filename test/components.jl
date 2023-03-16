@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, Random
+using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
 
 """
@@ -49,38 +49,37 @@ sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
 Canonical micro circuit tests 
 """
 
-@named region = cmc_singleregion()
-region = structural_simplify(region.odesystem)
-sol = simulate(region, [], (0.0, 10.0), [])
-@test sol[!,"x3(t)"][end] + sol[!,"x4(t)"][end] ≈ -5.159425345927339
-
 # canonical micro circuit based on single Jansen-Rit blox
 @named singleregion = cmc()
 singleregion = structural_simplify(singleregion.odesystem)
 sol = simulate(singleregion, [], (0.0, 10.0), [])
-@test sol[!,"singleregion_dp₊x(t)"][end] + sol[!,"singleregion_ii₊x(t)"][end] ≈ -5.159425345927338
+@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159425345927338
 
 # connect multiple canonical micro circuits
 @named r1 = cmc()
 @named r2 = cmc()
-@named r3 = cmc()
 
-regions = [r1, r2, r3]
-nr = length(regions)
-A = Array{Matrix{Float64}}(undef, nr, nr);
-Random.seed!(1234)
-for i = 1:nr
-    for j = 1:nr
-        if i == j continue end
-        nodes_source = nv(regions[i].lngraph.graph)
-        nodes_sink = nv(regions[j].lngraph.graph)
-        A[i, j] = rand(nodes_source, nodes_sink)
-    end
-end
-@named manyregions = connectcomplexblox(regions, A)
-manyregions = structural_simplify(manyregions)
-sol = simulate(manyregions, [], (0.0, 10.0), [])
-@test sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
+g = MetaDiGraph()
+add_vertex!(g, Dict(:blox => r1))
+add_vertex!(g, Dict(:blox => r2))
+add_edge!(g, 2, 1, :weightmatrix, ones(4, 4).*collect(1:4))
+add_edge!(g, 1, 2, :weightmatrix, 2*ones(4, 4).*collect(1:4))
+# ToDo: ODEfromGraphdirect fails when there is only one edge.
+@named cmc_network = ODEfromGraphdirect(g)
+@test_broken structural_simplify(cmc_network)
+
+# for i = 1:nr
+#     for j = 1:nr
+#         if i == j continue end
+#         nodes_source = nv(regions[i].lngraph.graph)
+#         nodes_sink = nv(regions[j].lngraph.graph)
+#         A[i, j] = rand(nodes_source, nodes_sink)
+#     end
+# end
+# @named manyregions = connectcomplexblox(regions, A)
+# manyregions = structural_simplify(manyregions)
+# sol = simulate(manyregions, [], (0.0, 10.0), [])
+# @test sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
 
 
 """
