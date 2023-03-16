@@ -12,7 +12,7 @@ D = Differential(t)
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct jansen_rit_spm12
+mutable struct jansen_rit_spm12 <: Blox
     τ::Num
     r::Num
     connector::Num
@@ -27,7 +27,7 @@ mutable struct jansen_rit_spm12
     end
 end
 
-mutable struct cmc
+mutable struct cmc <: Blox
     τ::Vector{Num}
     r::Vector{Num}
     connector::Symbolics.Arr{Num}
