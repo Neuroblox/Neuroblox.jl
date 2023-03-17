@@ -51,9 +51,14 @@ Canonical micro circuit tests
 
 # canonical micro circuit based on single Jansen-Rit blox
 @named singleregion = cmc()
-singleregion = structural_simplify(singleregion.odesystem)
-sol = simulate(singleregion, [], (0.0, 10.0), [])
-@test sol[!,"dp₊x(t)"][end] + sol[!,"ii₊x(t)"][end] ≈ -5.159425345927338
+eqs = []
+for bi in singleregion.bloxinput
+    push!(eqs, bi ~ 0)
+end
+@named singleregionODE = ODESystem(eqs, systems=[singleregion.odesystem])
+singleregionODE = structural_simplify(singleregionODE)
+sol = simulate(singleregionODE, [], (0.0, 10.0), [])
+@test sol[!,"singleregion₊dp₊x(t)"][end] + sol[!,"singleregion₊ii₊x(t)"][end] ≈ -5.159425345927338
 
 # connect multiple canonical micro circuits
 @named r1 = cmc()
@@ -62,11 +67,17 @@ sol = simulate(singleregion, [], (0.0, 10.0), [])
 g = MetaDiGraph()
 add_vertex!(g, Dict(:blox => r1))
 add_vertex!(g, Dict(:blox => r2))
-add_edge!(g, 2, 1, :weightmatrix, ones(4, 4).*collect(1:4))
-add_edge!(g, 1, 2, :weightmatrix, 2*ones(4, 4).*collect(1:4))
+add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0;
+                                   0 0 0 0;
+                                   0 0 0 0;
+                                   0 1 0 0])
+add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
+                                   0 0 0 -1;
+                                   0 0 0 -1;
+                                   0 0 0  0])
 # ToDo: ODEfromGraphdirect fails when there is only one edge.
-@named cmc_network = ODEfromGraphdirect(g)
-@test_broken structural_simplify(cmc_network)
+@named cmc_network = ODEfromGraphdirect_tmp(g)
+cmc_network = structural_simplify(cmc_network)
 
 # for i = 1:nr
 #     for j = 1:nr
