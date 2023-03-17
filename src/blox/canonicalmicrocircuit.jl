@@ -58,20 +58,53 @@ mutable struct cmc <: Blox
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        @named odecmc = ODEfromGraphdirect(g)
-
+        @named odecmc = ODEfromGraphdirect(g, jcn)
+        # conn = [ss.connector, sp.connector, ii.connector, dp.connector]
         # the following lines are incorrect because jcn's are already assigned in ODEfromGraphdirect.
         eqs = [
-            ss.odesystem.jcn ~ jcn[1]
-            sp.odesystem.jcn ~ jcn[2]
-            ii.odesystem.jcn ~ jcn[3]
-            dp.odesystem.jcn ~ jcn[4]
-            ss.connector ~ x[1]
-            sp.connector ~ x[2]
-            ii.connector ~ x[3]
-            dp.connector ~ x[4]
+            x[1] ~ ss.connector
+            x[2] ~ sp.connector
+            x[3] ~ ii.connector
+            x[4] ~ dp.connector
         ]
         odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
         new(τ, r, odesys.x, odesys.jcn, odesys)
     end
 end
+
+@named foo = cmc()
+equations(foo.odesystem)
+states(foo.odesystem)
+
+
+using ModelingToolkit
+
+@variables t
+D = Differential(t)
+
+function linearneuralmass(;name)
+    states = @variables x(t) jcn(t)
+    eqs = D(x) ~ jcn
+    odesys = ODESystem(eqs, t, states, []; name=name)
+    return odesys, odesys.x
+end
+
+function complexblox(;name)
+    @named l1 = linearneuralmass()
+    @named l2 = linearneuralmass()
+    @variables jcn(t)[1:2]
+    @variables y(t)[1:2]
+
+    eqs = [l1[1].jcn ~ l2[1].x + jcn[1], l2[1].jcn ~ jcn[2],
+           y[1] ~ l1[2], y[2] ~ l2[2]]
+
+    odes = ODESystem(eqs, systems=[l1[1], l2[1]], name=name)
+    return odes, odes.y
+end
+
+@named com1 = complexblox()
+@named com2 = complexblox()
+
+eqs = [com1[1].jcn[1] ~ com2[2][1], com1[1].jcn[2] ~ com2[2][2], com2[1].jcn[1] ~ 0, com2[1].jcn[2] ~ 0]
+@named foo = ODESystem(eqs, systems=[com1[1], com2[1]])
+structural_simplify(foo)
