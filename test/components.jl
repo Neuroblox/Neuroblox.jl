@@ -285,14 +285,23 @@ sol = solve(prob,Tsit5())
 CorticalBlox test
 """
 @named cb = CorticalBlox(nblocks=6,blocksize=6)
-sys = [cb.odesystem]
-eqs = [sys[1].jcn ~ 0]
-@named cb_connect = ODESystem(eqs,systems=sys)
-cb_simpl = structural_simplify(cb_connect)
+cb_simpl = structural_simplify(cb.odesystem)
 @test length(states(cb_simpl)) == 222
 prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test size(sol) == (222,41)
+
+"""
+CorticalBloxNew test
+"""
+@named cb = CorticalBloxNew(nblocks=6,blocksize=6)
+sys = cb.odesystem
+cb_simpl = structural_simplify(sys)
+@test length(states(cb_simpl)) == 222
+prob = ODEProblem(cb_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (222,41)
+
 
 """
 ts_outputs.jl test
@@ -348,4 +357,5 @@ connect = [s.connector for s in assembly]
 sol=simulate(structural_simplify(neuron_net),[],(0,10),[],Vern7())
 
 @test typeof(neuron_net)==ODESystem
-@test sol[:,1][end] ≈ 10.0 
+@test sol[:,1][end] ≈ 10.0
+

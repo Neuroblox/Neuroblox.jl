@@ -120,12 +120,12 @@ function random_initials(odesys::ODESystem, blox)
 end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, cmc, cmc_singleregion, next_generation, thetaneuron, qif_neuron, if_neuron, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFneuron, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox
+export IFNeuronBlox, LIFneuron, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox, CorticalBloxNew
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphdirect, connectcomplexblox, spikeconnections, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph, create_rl_loop
+export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphdirect, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph, create_rl_loop
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError

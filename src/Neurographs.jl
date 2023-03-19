@@ -114,7 +114,7 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+        if isa(b, Neuroblox.Blox) # only use vertices of type NeuronBlox for ODESystem
             push!(vert,v)
             push!(conn,b.connector)
             push!(sys,b.odesystem)
@@ -128,6 +128,35 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
                 weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
             end
             push!(eqs, s.jcn ~ sum(conn .* weights))
+        end
+    end
+    return ODESystem(eqs, name=name, systems=sys)
+end
+
+function ODEfromGraphNeuron(g::MetaDiGraph ;name)
+    vert = []
+    conn = Num[]
+    sys = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if isa(b, Neuroblox.NeuronBlox) # only use vertices of type Blox for ODESystem
+            push!(vert,v)
+            push!(conn,b.connector)
+            push!(sys,b.odesystem)
+        end
+    end
+    eqs = []
+    for (v,s) in zip(vert,sys)
+        if "jcn(t)" in string.(states(s)) # only connect systems with jcn
+            weights = Num.(zeros(length(conn)))
+            volt_diff = Num.(zeros(length(conn)))
+            for vn in inneighbors(g,v) # vertices that point towards s
+                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
+                vn_int = vn[1] # because vn is a one element Arrray not a single integer
+                volt_diff[vn] = sys[vn_int].E_syn - s.V
+            end
+            push!(eqs, s.Isyn ~ sum(conn .* weights .* volt_diff))
+            push!(eqs, s.jcn ~ s.Isyn)
         end
     end
     return ODESystem(eqs, name=name, systems=sys)
