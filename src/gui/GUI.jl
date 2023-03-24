@@ -142,6 +142,19 @@ function arguments(::Type{Neuroblox.NextGenerationBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+  OrderedDict(
+    :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1),
+    :τ_sp => NCAD(0.002, NUMBER, 0.0001, 0.1),
+    :τ_ii => NCAD(0.016, NUMBER, 0.0001, 0.1),
+    :τ_dp => NCAD(0.028, NUMBER, 0.0001, 0.1),
+    :r_ss => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
+    :r_sp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
+    :r_ii => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
+    :r_dp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0)
+  )
+end
+
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
