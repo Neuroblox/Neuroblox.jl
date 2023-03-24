@@ -12,7 +12,7 @@ D = Differential(t)
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct jansen_rit_spm12 <: Blox
+mutable struct jansen_rit_spm12
     τ::Num
     r::Num
     connector::Num
@@ -27,19 +27,25 @@ mutable struct jansen_rit_spm12 <: Blox
     end
 end
 
-mutable struct cmc <: Blox
-    τ::Vector{Num}
-    r::Vector{Num}
+mutable struct CanonicalMicroCircuitBlox <: Blox
+    τ_ss::Num
+    τ_sp::Num
+    τ_ii::Num
+    τ_dp::Num
+    r_ss::Num
+    r_sp::Num
+    r_ii::Num
+    r_dp::Num
     connector::Symbolics.Arr{Num}
     bloxinput::Symbolics.Arr{Num}
     odesystem::ODESystem
-    function cmc(;name, τ=[0.002, 0.002, 0.016, 0.028], r=[2.0/3.0, 2.0/3.0, 2.0/3.0, 2.0/3.0])
+    function CanonicalMicroCircuitBlox(;name, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
         @variables jcn(t)[1:4], x(t)[1:4]
 
-        @named ss = jansen_rit_spm12(τ=τ[1], r=r[1])  # spiny stellate
-        @named sp = jansen_rit_spm12(τ=τ[2], r=r[2])  # superficial pyramidal
-        @named ii = jansen_rit_spm12(τ=τ[3], r=r[3])  # inhibitory interneurons granular layer
-        @named dp = jansen_rit_spm12(τ=τ[4], r=r[4])  # deep pyramidal
+        @named ss = jansen_rit_spm12(τ=τ_ss, r=r_ss)  # spiny stellate
+        @named sp = jansen_rit_spm12(τ=τ_sp, r=r_sp)  # superficial pyramidal
+        @named ii = jansen_rit_spm12(τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
+        @named dp = jansen_rit_spm12(τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
         add_vertex!(g, Dict(:blox => ss, :name => name))
@@ -59,8 +65,6 @@ mutable struct cmc <: Blox
         add_edge!(g, 4, 4, :weight, -200.0)
 
         @named odecmc = ODEfromGraphdirect(g, jcn)
-        # conn = [ss.connector, sp.connector, ii.connector, dp.connector]
-        # the following lines are incorrect because jcn's are already assigned in ODEfromGraphdirect.
         eqs = [
             x[1] ~ ss.connector
             x[2] ~ sp.connector
@@ -68,43 +72,6 @@ mutable struct cmc <: Blox
             x[4] ~ dp.connector
         ]
         odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
-        new(τ, r, odesys.x, odesys.jcn, odesys)
+        new(τ_ss, τ_sp, τ_ii, τ_dp, r_ss, r_sp, r_ii, r_dp, odesys.x, odesys.jcn, odesys)
     end
 end
-
-@named foo = cmc()
-equations(foo.odesystem)
-states(foo.odesystem)
-
-
-using ModelingToolkit
-
-@variables t
-D = Differential(t)
-
-function linearneuralmass(;name)
-    states = @variables x(t) jcn(t)
-    eqs = D(x) ~ jcn
-    odesys = ODESystem(eqs, t, states, []; name=name)
-    return odesys, odesys.x
-end
-
-function complexblox(;name)
-    @named l1 = linearneuralmass()
-    @named l2 = linearneuralmass()
-    @variables jcn(t)[1:2]
-    @variables y(t)[1:2]
-
-    eqs = [l1[1].jcn ~ l2[1].x + jcn[1], l2[1].jcn ~ jcn[2],
-           y[1] ~ l1[2], y[2] ~ l2[2]]
-
-    odes = ODESystem(eqs, systems=[l1[1], l2[1]], name=name)
-    return odes, odes.y
-end
-
-@named com1 = complexblox()
-@named com2 = complexblox()
-
-eqs = [com1[1].jcn[1] ~ com2[2][1], com1[1].jcn[2] ~ com2[2][2], com2[1].jcn[1] ~ 0, com2[1].jcn[2] ~ 0]
-@named foo = ODESystem(eqs, systems=[com1[1], com2[1]])
-structural_simplify(foo)

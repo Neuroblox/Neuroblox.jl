@@ -104,6 +104,7 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
 end
 
 function ODEfromGraphdirect_tmp(g::MetaDiGraph ;name)
+    # TODO: ODEfromGraphdirect fails when there is only one edge.
     vert = []
     sys = []
     bloxinput = []
@@ -146,10 +147,8 @@ function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
-            push!(vert, v)
-            push!(sys, b.odesystem)
-        end
+        push!(vert, v)
+        push!(sys, b.odesystem)
     end
     eqs = []
     for (i, (v, s)) in enumerate(zip(vert, sys))
@@ -168,7 +167,7 @@ function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
             else
                 input = Num(0)
                 for vn in inneighbors(g, v) # vertices that point towards s
-                    input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
+                    input += get_prop(g, vn, :blox).connector * get_prop(g, vn, v, :weight)
                 end
                 push!(eqs, s.jcn ~ input + jcn[i])
             end
