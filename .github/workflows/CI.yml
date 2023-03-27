@@ -8,11 +8,19 @@ on:
       - master
 jobs:
   test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        group:
+          - All
+        version:
+          - '1'
+          - '1.6'
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
         with:
-          version: 1
+          version: ${{ matrix.version }}
       - uses: actions/cache@v3
         env:
           cache-name: cache-artifacts
