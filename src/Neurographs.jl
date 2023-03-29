@@ -130,7 +130,9 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
             push!(eqs, s.jcn ~ sum(conn .* weights))
         end
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    @show eqs
+    @show sys
+    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function ODEfromGraphNeuron(g::MetaDiGraph ;name)
@@ -159,7 +161,7 @@ function ODEfromGraphNeuron(g::MetaDiGraph ;name)
             push!(eqs, s.jcn ~ s.Isyn)
         end
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
@@ -168,7 +170,7 @@ function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, sp
     for region_num in 1:length(sys)
        push!(eqs, sys[region_num].jcn ~ sum(psps[:, region_num]))
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function connectcomplexblox(bloxlist, adjacency_matrices ;name)
