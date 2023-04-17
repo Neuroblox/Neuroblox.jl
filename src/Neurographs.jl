@@ -62,6 +62,36 @@ function LinearConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=conn
     return ODESystem(eqs, name=name, systems=sys)
 end
 
+function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
+    adj = adj_matrix .* connector
+    syn_eqs = [ 0~sys[1].V - sys[1].V]
+    Nrns = length(sys)
+    for ii = 1:Nrns
+        # for sparse adj matrices it is efficient to only consider presynaptic neurons for computing synaptic input
+        presyn = findall(x-> x>0.0, adj_matrix[:,ii])
+        wts = adj_matrix[presyn,ii]
+        presyn_nrn = sys[presyn]
+        postsyn_nrn = sys[ii]
+        if length(presyn)>0
+            ind = collect(1:length(presyn))
+            eqs = [postsyn_nrn.Isyn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
+                   postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            push!(syn_eqs,eqs[1])
+            push!(syn_eqs,eqs[2])
+        else
+            eqs = [postsyn_nrn.Isyn~0,
+                  postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            push!(syn_eqs,eqs[1])
+            push!(syn_eqs,eqs[2])
+        end
+        
+    end
+    popfirst!(syn_eqs)
+    @named synaptic_eqs = ODESystem(syn_eqs,t)
+    synaptic_network = compose(synaptic_eqs, sys;name=name)
+    return synaptic_network   
+end
+
 function ODEfromGraph(g::LinearNeuroGraph ;name)
     blox = [get_prop(g.graph, v, :blox) for v in vertices(g.graph)]
     sys = [s.odesystem for s in blox]
@@ -84,7 +114,7 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+        if isa(b, Neuroblox.Blox) # only use vertices of type NeuronBlox for ODESystem
             push!(vert,v)
             push!(conn,b.connector)
             push!(sys,b.odesystem)
@@ -100,7 +130,38 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
             push!(eqs, s.jcn ~ sum(conn .* weights))
         end
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    @show eqs
+    @show sys
+    return ODESystem(eqs, t, name=name, systems=sys)
+end
+
+function ODEfromGraphNeuron(g::MetaDiGraph ;name)
+    vert = []
+    conn = Num[]
+    sys = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if isa(b, Neuroblox.NeuronBlox) # only use vertices of type Blox for ODESystem
+            push!(vert,v)
+            push!(conn,b.connector)
+            push!(sys,b.odesystem)
+        end
+    end
+    eqs = []
+    for (v,s) in zip(vert,sys)
+        if "jcn(t)" in string.(states(s)) # only connect systems with jcn
+            weights = Num.(zeros(length(conn)))
+            volt_diff = Num.(zeros(length(conn)))
+            for vn in inneighbors(g,v) # vertices that point towards s
+                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
+                vn_int = vn[1] # because vn is a one element Arrray not a single integer
+                volt_diff[vn] = sys[vn_int].E_syn - s.V
+            end
+            push!(eqs, s.Isyn ~ sum(conn .* weights .* volt_diff))
+            push!(eqs, s.jcn ~ s.Isyn)
+        end
+    end
+    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function ODEfromGraphdirect_tmp(g::MetaDiGraph ;name)
@@ -182,7 +243,7 @@ function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, sp
     for region_num in 1:length(sys)
        push!(eqs, sys[region_num].jcn ~ sum(psps[:, region_num]))
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function connectcomplexblox(bloxlist, adjacency_matrices ;name)
