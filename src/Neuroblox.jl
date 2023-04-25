@@ -53,7 +53,6 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
-include("utilities/helperfunctions.jl")
 include("control/controlerror.jl")
 include("measurement_models/fmri.jl")
 include("functional_connectivity_estimators/spectralDCM.jl")
@@ -120,7 +119,7 @@ function random_initials(odesys::ODESystem, blox)
 end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, CanonicalMicroCircuitBlox, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFneuron, QIFNeuronBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox
+export IFNeuronBlox, LIFneuron, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox, CorticalBloxNew
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
@@ -129,7 +128,6 @@ export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphdirect,
 export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export sigmoid
 export hemodynamics!, boldsignal
 export variationalbayes
 export simulate, random_initials
