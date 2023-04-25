@@ -9,6 +9,9 @@
 @parameters t
 D = Differential(t)
 
+# define a sigmoid function
+sigmoid(x::Real, r::Real) = one(x) / (one(x) + exp(-r*x))
+
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
@@ -17,7 +20,7 @@ mutable struct jansen_rit_spm12
     r::Num
     connector::Num
     odesystem::ODESystem
-    function jansen_rit_spm12(;name, τ=0.0, r=2.0/3.0)
+    function jansen_rit_spm12(;name, τ=1.0, r=2.0/3.0)
         params = @parameters τ=τ
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
