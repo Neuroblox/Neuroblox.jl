@@ -87,6 +87,27 @@ cmc_network = structural_simplify(cmc_network)
 sol = simulate(cmc_network, [], (0.0, 10.0), [])
 @test sum(sol[end, 2:end]) ≈ -4827.086868187682
 
+# now connect canonical micro circuits with symbolic weight matrices
+g = MetaDiGraph()
+add_vertex!(g, Dict(:blox => r1))
+add_vertex!(g, Dict(:blox => r2))
+
+A_forward = [0 1 0 0;
+             0 0 0 0;
+             0 0 0 0;
+             0 1 0 0]
+A_backward = [0 0 0  0;
+              0 0 0 -1;
+              0 0 0 -1;
+              0 0 0  0]
+@parameters wm_forward[1:length(A_forward)] = vec(A_forward) 
+add_edge!(g, 1, 2, :weightmatrix, reshape(wm_forward, 4, 4))
+@parameters wm_backward[1:length(A_backward)] = vec(A_backward) 
+add_edge!(g, 2, 1, :weightmatrix, reshape(wm_backward, 4, 4))
+
+@named cmc_network = ODEfromGraphdirect_tmp(g)
+cmc_network = structural_simplify(cmc_network)
+
 
 """
 Components Test for Cortical-Subcortical Jansen-Rit blox
