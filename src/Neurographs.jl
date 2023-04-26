@@ -130,9 +130,80 @@ function ODEfromGraphdirect(g::MetaDiGraph ;name)
             push!(eqs, s.jcn ~ sum(conn .* weights))
         end
     end
-    @show eqs
-    @show sys
     return ODESystem(eqs, t, name=name, systems=sys)
+end
+
+function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
+    vert = []
+    sys = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        push!(vert, v)
+        push!(sys, b.odesystem)
+    end
+    eqs = []
+    for (i, (v, s)) in enumerate(zip(vert, sys))
+        if any(occursin.("jcn(t)", string.(states(s)))) # only connect systems with jcn
+            if s.jcn isa Symbolics.Arr
+                input = []
+                for vn in inneighbors(g, v) # vertices that point towards s
+                    M = get_prop(g, vn, v, :weightmatrix)
+                    connector = get_prop(g, vn, :blox).connector
+                    push!(input, M*connector)
+                end
+                input = sum(input)
+                for i = 1:length(s.jcn)
+                    push!(eqs, s.jcn[i] ~ input[i])
+                end
+            else
+                input = Num(0)
+                for vn in inneighbors(g, v) # vertices that point towards s
+                    input += get_prop(g, vn, :blox).connector * get_prop(g, vn, v, :weight)
+                end
+                push!(eqs, s.jcn ~ input + jcn[i])
+            end
+        end
+    end
+    return compose(ODESystem(eqs; name=:connected), sys; name=name)
+end
+
+function ODEfromGraphdirect_tmp(g::MetaDiGraph ;name)
+    # TODO: ODEfromGraphdirect fails when there is only one edge.
+    vert = []
+    sys = []
+    bloxinput = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
+            push!(vert, v)
+            push!(sys, b.odesystem)
+            push!(bloxinput, b.bloxinput)
+        end
+    end
+    eqs = []
+    for (v, s, bi) in zip(vert, sys, bloxinput)
+        if any(occursin.("jcn(t)", string.(states(s)))) # only connect systems with jcn
+            if s.jcn isa Symbolics.Arr
+                input = []
+                for vn in inneighbors(g, v) # vertices that point towards s
+                    M = get_prop(g, vn, v, :weightmatrix)
+                    connector = get_prop(g, vn, :blox).connector
+                    push!(input, M*connector)
+                end
+                input = sum(input)
+                for i = 1:length(s.jcn)
+                    push!(eqs, bi[i] ~ input[i])
+                end
+            else
+                input = Num(0)
+                for vn in inneighbors(g, v) # vertices that point towards s
+                    input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
+                end
+                push!(eqs, s.jcn ~ input)
+            end
+        end
+    end
+    return ODESystem(eqs, name=name, systems=sys)
 end
 
 function ODEfromGraphNeuron(g::MetaDiGraph ;name)

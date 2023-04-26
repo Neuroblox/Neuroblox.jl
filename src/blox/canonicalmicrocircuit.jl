@@ -9,6 +9,9 @@
 @parameters t
 D = Differential(t)
 
+# define a sigmoid function
+sigmoid(x::Real, r::Real) = one(x) / (one(x) + exp(-r*x))
+
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
@@ -17,7 +20,7 @@ mutable struct jansen_rit_spm12
     r::Num
     connector::Num
     odesystem::ODESystem
-    function jansen_rit_spm12(;name, τ=0.0, r=2.0/3.0)
+    function jansen_rit_spm12(;name, τ=1.0, r=2.0/3.0)
         params = @parameters τ=τ
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
@@ -27,16 +30,25 @@ mutable struct jansen_rit_spm12
     end
 end
 
-mutable struct cmc
-    τ::Vector{Num}
-    r::Vector{Num}
+mutable struct CanonicalMicroCircuitBlox <: Blox
+    τ_ss::Num
+    τ_sp::Num
+    τ_ii::Num
+    τ_dp::Num
+    r_ss::Num
+    r_sp::Num
+    r_ii::Num
+    r_dp::Num
+    connector::Symbolics.Arr{Num}
+    bloxinput::Symbolics.Arr{Num}
     odesystem::ODESystem
-    lngraph::MetaDiGraph
-    function cmc(;name, τ=[0.002, 0.002, 0.016, 0.028], r=[2.0/3.0, 2.0/3.0, 2.0/3.0, 2.0/3.0])
-        ss = jansen_rit_spm12(τ=τ[1], r=r[1], name=Symbol(String(name)*"_ss"))  # spiny stellate
-        sp = jansen_rit_spm12(τ=τ[2], r=r[2], name=Symbol(String(name)*"_sp"))  # superficial pyramidal
-        ii = jansen_rit_spm12(τ=τ[3], r=r[3], name=Symbol(String(name)*"_ii"))  # inhibitory interneurons granular layer
-        dp = jansen_rit_spm12(τ=τ[4], r=r[4], name=Symbol(String(name)*"_dp"))  # deep pyramidal
+    function CanonicalMicroCircuitBlox(;name, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
+        @variables jcn(t)[1:4], x(t)[1:4]
+
+        @named ss = jansen_rit_spm12(τ=τ_ss, r=r_ss)  # spiny stellate
+        @named sp = jansen_rit_spm12(τ=τ_sp, r=r_sp)  # superficial pyramidal
+        @named ii = jansen_rit_spm12(τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
+        @named dp = jansen_rit_spm12(τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
         add_vertex!(g, Dict(:blox => ss, :name => name))
@@ -55,7 +67,14 @@ mutable struct cmc
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        odesys = ODEfromGraph(g, name=name)
-        new(τ, r, odesys, g)
+        @named odecmc = ODEfromGraphdirect(g, jcn)
+        eqs = [
+            x[1] ~ ss.connector
+            x[2] ~ sp.connector
+            x[3] ~ ii.connector
+            x[4] ~ dp.connector
+        ]
+        odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
+        new(τ_ss, τ_sp, τ_ii, τ_dp, r_ss, r_sp, r_ii, r_dp, odesys.x, odesys.jcn, odesys)
     end
 end

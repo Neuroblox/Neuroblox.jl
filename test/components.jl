@@ -1,4 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, Random
+using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
 
 """
@@ -47,40 +47,66 @@ sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
 
 """
 Canonical micro circuit tests 
+
+first create a single canonical micro circuit and simulate. Then create a two region model and connect two
+to form the circuit that is given in Figure 4 of Bastos et al. 2015.
 """
 
-@named region = cmc_singleregion()
-region = structural_simplify(region.odesystem)
-sol = simulate(region, [], (0.0, 10.0), [])
-@test sol[!,"x3(t)"][end] + sol[!,"x4(t)"][end] ≈ -5.159425345927339
-
 # canonical micro circuit based on single Jansen-Rit blox
-@named singleregion = cmc()
-singleregion = structural_simplify(singleregion.odesystem)
-sol = simulate(singleregion, [], (0.0, 10.0), [])
-@test sol[!,"singleregion_dp₊x(t)"][end] + sol[!,"singleregion_ii₊x(t)"][end] ≈ -5.159425345927338
-
-# connect multiple canonical micro circuits
-@named r1 = cmc()
-@named r2 = cmc()
-@named r3 = cmc()
-
-regions = [r1, r2, r3]
-nr = length(regions)
-A = Array{Matrix{Float64}}(undef, nr, nr);
-Random.seed!(1234)
-for i = 1:nr
-    for j = 1:nr
-        if i == j continue end
-        nodes_source = nv(regions[i].lngraph.graph)
-        nodes_sink = nv(regions[j].lngraph.graph)
-        A[i, j] = rand(nodes_source, nodes_sink)
-    end
+@named singleregion = CanonicalMicroCircuitBlox()
+eqs = []
+for bi in singleregion.bloxinput
+    push!(eqs, bi ~ 0)
 end
-@named manyregions = connectcomplexblox(regions, A)
-manyregions = structural_simplify(manyregions)
-sol = simulate(manyregions, [], (0.0, 10.0), [])
-@test sol[!,"r1_ss₊x(t)"][10] + sol[!,"r2_sp₊y(t)"][10] + sol[!,"r3_dp₊x(t)"][10] ≈ -350.89065248035655
+@named singleregionODE = ODESystem(eqs, systems=[singleregion.odesystem])
+singleregionODE = structural_simplify(singleregionODE)
+sol = simulate(singleregionODE, [], (0.0, 10.0), [])
+# TODO: it would be nicer if this was without the singleregion namespace...
+@test sol[!,"singleregion₊dp₊x(t)"][end] + sol[!,"singleregion₊ii₊x(t)"][end] ≈ -5.159425345927338
+
+
+# connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
+@named r1 = CanonicalMicroCircuitBlox()
+@named r2 = CanonicalMicroCircuitBlox()
+
+g = MetaDiGraph()
+add_vertex!(g, Dict(:blox => r1))
+add_vertex!(g, Dict(:blox => r2))
+add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0;
+                                   0 0 0 0;
+                                   0 0 0 0;
+                                   0 1 0 0])
+add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
+                                   0 0 0 -1;
+                                   0 0 0 -1;
+                                   0 0 0  0])
+# TODO: ODEfromGraphdirect fails when there is only one edge.
+@named cmc_network = ODEfromGraphdirect_tmp(g)
+cmc_network = structural_simplify(cmc_network)
+
+sol = simulate(cmc_network, [], (0.0, 10.0), [])
+@test sum(sol[end, 2:end]) ≈ -4827.086868187682
+
+# now connect canonical micro circuits with symbolic weight matrices
+g = MetaDiGraph()
+add_vertex!(g, Dict(:blox => r1))
+add_vertex!(g, Dict(:blox => r2))
+
+A_forward = [0 1 0 0;
+             0 0 0 0;
+             0 0 0 0;
+             0 1 0 0]
+A_backward = [0 0 0  0;
+              0 0 0 -1;
+              0 0 0 -1;
+              0 0 0  0]
+@parameters wm_forward[1:length(A_forward)] = vec(A_forward) 
+add_edge!(g, 1, 2, :weightmatrix, reshape(wm_forward, 4, 4))
+@parameters wm_backward[1:length(A_backward)] = vec(A_backward) 
+add_edge!(g, 2, 1, :weightmatrix, reshape(wm_backward, 4, 4))
+
+@named cmc_network = ODEfromGraphdirect_tmp(g)
+cmc_network = structural_simplify(cmc_network)
 
 
 """
