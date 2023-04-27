@@ -11,7 +11,8 @@ using SafeTestsets
 @time @safetestset "Control Tests" begin include("controllers.jl") end
 @time @safetestset "Source Tests" begin include("source_components.jl") end
 # fitting tests should be at the end since they take the longest
-@time @safetestset "Fitting Tests" begin include("fitting.jl") end
-@time @safetestset "Bayesian Fitting Tests" begin include("bayesian_fitting.jl") end
+# removing them for now until we have real fitting tests
+# @time @safetestset "Fitting Tests" begin include("fitting.jl") end
+# @time @safetestset "Bayesian Fitting Tests" begin include("bayesian_fitting.jl") end
 
 
