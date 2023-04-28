@@ -1,22 +1,22 @@
-# define all possible neurographs
-abstract type AbstractNeuroGraph end
-struct LinearNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
-struct OtherNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
+# # define all possible neurographs
+# abstract type AbstractNeuroGraph end
+# struct LinearNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
+# struct OtherNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
 
-# method forwarding to handle AbstractNeuroGraph
-Graphs.add_edge!(g::AbstractNeuroGraph, x...) = add_edge!(g.graph, x...)
-Graphs.add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
-Graphs.rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
+# # method forwarding to handle AbstractNeuroGraph
+# Graphs.add_edge!(g::AbstractNeuroGraph, x...) = add_edge!(g.graph, x...)
+# Graphs.add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
+# Graphs.rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
 
-function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
-    myadj = map(Num, adjacency_matrix(g.graph))
-    for edge in edges(g.graph)
-        s = src(edge)
-        d = dst(edge)
-        myadj[s,d] = get_prop(g.graph, edge, :weight)
-    end
-    return myadj
-end
+# function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
+#     myadj = map(Num, adjacency_matrix(g.graph))
+#     for edge in edges(g.graph)
+#         s = src(edge)
+#         d = dst(edge)
+#         myadj[s,d] = get_prop(g.graph, edge, :weight)
+#     end
+#     return myadj
+# end
 
 function adjmatrixfromdigraph(g::MetaDiGraph)
     myadj = map(Num, adjacency_matrix(g))
@@ -28,9 +28,9 @@ function adjmatrixfromdigraph(g::MetaDiGraph)
     return myadj
 end
 
-function add_blox!(g::AbstractNeuroGraph,blox)
-    add_vertex!(g, :blox, blox)
-end
+# function add_blox!(g::AbstractNeuroGraph,blox)
+#     add_vertex!(g, :blox, blox)
+# end
 
 function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
@@ -92,13 +92,13 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     return synaptic_network   
 end
 
-function ODEfromGraph(g::LinearNeuroGraph ;name)
-    blox = [get_prop(g.graph, v, :blox) for v in vertices(g.graph)]
-    sys = [s.odesystem for s in blox]
-    connector = [s.connector for s in blox]
-    adj = AdjMatrixfromLinearNeuroGraph(g)
-    return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
-end
+# function ODEfromGraph(g::LinearNeuroGraph ;name)
+#     blox = [get_prop(g.graph, v, :blox) for v in vertices(g.graph)]
+#     sys = [s.odesystem for s in blox]
+#     connector = [s.connector for s in blox]
+#     adj = AdjMatrixfromLinearNeuroGraph(g)
+#     return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
+# end
 
 function ODEfromGraph(g::MetaDiGraph ;name)
     blox = [get_prop(g, v, :blox) for v in vertices(g)]

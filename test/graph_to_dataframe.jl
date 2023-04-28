@@ -10,7 +10,7 @@ harmonic oscillator neural mass blox
 @parameters g_GPe_STN=1.0 g_STN_GPe=1.0
 
 #create graph
-g = LinearNeuroGraph(MetaDiGraph())
+g = MetaDiGraph()
 add_blox!(g,GPe)
 add_blox!(g,STN)
 add_edge!(g,1,1,:weight,1.0)
@@ -39,7 +39,7 @@ jansen rit neural mass blox
 @parameters C_Cor=3 C_BG_Th=3 C_Cor_BG_Th=9.75 C_BG_Th_Cor=9.75
 
 # Create Graph
-g = LinearNeuroGraph(MetaDiGraph())
+g = MetaDiGraph()
 add_blox!(g,Str)
 add_blox!(g,GPe)
 add_blox!(g,STN)
