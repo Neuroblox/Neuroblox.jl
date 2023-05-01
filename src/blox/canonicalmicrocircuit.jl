@@ -51,10 +51,10 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
         @named dp = jansen_rit_spm12(τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
-        add_vertex!(g, Dict(:blox => ss, :name => name))
-        add_vertex!(g, Dict(:blox => sp, :name => name))
-        add_vertex!(g, Dict(:blox => ii, :name => name))
-        add_vertex!(g, Dict(:blox => dp, :name => name))
+        add_vertex!(g, Dict(:blox => ss, :name => name, :jcn => jcn[1]))
+        add_vertex!(g, Dict(:blox => sp, :name => name, :jcn => jcn[2]))
+        add_vertex!(g, Dict(:blox => ii, :name => name, :jcn => jcn[3]))
+        add_vertex!(g, Dict(:blox => dp, :name => name, :jcn => jcn[4]))
 
         add_edge!(g, 1, 1, :weight, -800.0)
         add_edge!(g, 2, 1, :weight, -800.0)
@@ -67,7 +67,7 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        @named odecmc = ODEfromGraph(g, jcn)
+        @named odecmc = ODEfromGraph(g)
         eqs = [
             x[1] ~ ss.connector
             x[2] ~ sp.connector

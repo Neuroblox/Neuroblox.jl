@@ -128,6 +128,9 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                     for vn in inneighbors(g, v) # vertices that point towards s
                         input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
                     end
+                    if haskey(props(g,v),:jcn)
+                        input += get_prop(g,v,:jcn)
+                    end
                     push!(eqs, s.jcn ~ input)
                 end
             end
