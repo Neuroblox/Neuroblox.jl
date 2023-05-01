@@ -68,39 +68,6 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     return synaptic_network   
 end
 
-# function ODEfromGraph(g::MetaDiGraph ;name)
-#     blox = [get_prop(g, v, :blox) for v in vertices(g)]
-#     sys = [s.odesystem for s in blox]
-#     connector = [s.connector for s in blox]
-#     adj = adjmatrixfromdigraph(g)
-#     return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
-# end
-
-# function ODEfromGraph(g::MetaDiGraph ;name)
-#     vert = []
-#     conn = Num[]
-#     sys = []
-#     for v in vertices(g)
-#         b = get_prop(g, v, :blox)
-#         if isa(b, Neuroblox.Blox) # only use vertices of type NeuronBlox for ODESystem
-#             push!(vert,v)
-#             push!(conn,b.connector)
-#             push!(sys,b.odesystem)
-#         end
-#     end
-#     eqs = []
-#     for (v,s) in zip(vert,sys)
-#         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
-#             weights = Num.(zeros(length(conn)))
-#             for vn in inneighbors(g,v) # vertices that point towards s
-#                 weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
-#             end
-#             push!(eqs, s.jcn ~ sum(conn .* weights))
-#         end
-#     end
-#     return ODESystem(eqs, t, name=name, systems=sys)
-# end
-
 function ODEfromGraph(g::MetaDiGraph, jcn; name)
     vert = []
     sys = []
@@ -134,45 +101,6 @@ function ODEfromGraph(g::MetaDiGraph, jcn; name)
     end
     return compose(ODESystem(eqs; name=:connected), sys; name=name)
 end
-
-# function ODEfromGraph(g::MetaDiGraph ;name)
-#     # TODO: ODEfromGraphdirect fails when there is only one edge.
-#     vert = []
-#     sys = []
-#     bloxinput = []
-#     for v in vertices(g)
-#         b = get_prop(g, v, :blox)
-#         if isa(b, Neuroblox.Blox) # only use vertices of type Blox for ODESystem
-#             push!(vert, v)
-#             push!(sys, b.odesystem)
-#             push!(bloxinput, b.bloxinput)
-#         end
-#     end
-#     eqs = []
-#     for (v, s, bi) in zip(vert, sys, bloxinput)
-#         if any(occursin.("jcn(t)", string.(states(s)))) # only connect systems with jcn
-#             if s.jcn isa Symbolics.Arr
-#                 input = []
-#                 for vn in inneighbors(g, v) # vertices that point towards s
-#                     M = get_prop(g, vn, v, :weightmatrix)
-#                     connector = get_prop(g, vn, :blox).connector
-#                     push!(input, M*connector)
-#                 end
-#                 input = sum(input)
-#                 for i = 1:length(s.jcn)
-#                     push!(eqs, bi[i] ~ input[i])
-#                 end
-#             else
-#                 input = Num(0)
-#                 for vn in inneighbors(g, v) # vertices that point towards s
-#                     input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
-#                 end
-#                 push!(eqs, s.jcn ~ input)
-#             end
-#         end
-#     end
-#     return ODESystem(eqs, name=name, systems=sys)
-# end
 
 function ODEfromGraph(g::MetaDiGraph ;name)
     eqs = []
@@ -208,30 +136,52 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     return ODESystem(eqs, name=name, systems=sys)
 end
 
+# function ODEfromGraphNeuron(g::MetaDiGraph ;name)
+#     vert = []
+#     conn = Num[]
+#     sys = []
+#     for v in vertices(g)
+#         b = get_prop(g, v, :blox)
+#         if isa(b, Neuroblox.NeuronBlox) # only use vertices of type Blox for ODESystem
+#             push!(vert,v)
+#             push!(conn,b.connector)
+#             push!(sys,b.odesystem)
+#         end
+#     end
+#     eqs = []
+#     for (v,s) in zip(vert,sys)
+#         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
+#             weights = Num.(zeros(length(conn)))
+#             volt_diff = Num.(zeros(length(conn)))
+#             for vn in inneighbors(g,v) # vertices that point towards s
+#                 weights[vn] = get_prop(g, vn, v, :weight)
+#                 vn_int = vn[1] # because vn is a one element Arrray not a single integer
+#                 volt_diff[vn] = sys[vn_int].E_syn - s.V
+#             end
+#             push!(eqs, s.Isyn ~ sum(conn .* weights .* volt_diff))
+#             push!(eqs, s.jcn ~ s.Isyn)
+#         end
+#     end
+#     return ODESystem(eqs, t, name=name, systems=sys)
+# end
+
 function ODEfromGraphNeuron(g::MetaDiGraph ;name)
-    vert = []
-    conn = Num[]
     sys = []
+    eqs = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
         if isa(b, Neuroblox.NeuronBlox) # only use vertices of type Blox for ODESystem
-            push!(vert,v)
-            push!(conn,b.connector)
-            push!(sys,b.odesystem)
-        end
-    end
-    eqs = []
-    for (v,s) in zip(vert,sys)
-        if "jcn(t)" in string.(states(s)) # only connect systems with jcn
-            weights = Num.(zeros(length(conn)))
-            volt_diff = Num.(zeros(length(conn)))
-            for vn in inneighbors(g,v) # vertices that point towards s
-                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
-                vn_int = vn[1] # because vn is a one element Arrray not a single integer
-                volt_diff[vn] = sys[vn_int].E_syn - s.V
+            s = b.odesystem
+            push!(sys, s)
+            if any(occursin.("jcn(t)", string.(states(s))))
+                input = Num(0)
+                for vn in inneighbors(g, v) # vertices that point towards s
+                    bn = get_prop(g, vn, :blox)
+                    input += bn.connector * get_prop(g, vn, v, :weight) * (bn.odesystem.E_syn - s.V)
+                end
+                push!(eqs, s.Isyn ~ input)
+                push!(eqs, s.jcn ~ s.Isyn)
             end
-            push!(eqs, s.Isyn ~ sum(conn .* weights .* volt_diff))
-            push!(eqs, s.jcn ~ s.Isyn)
         end
     end
     return ODESystem(eqs, t, name=name, systems=sys)
