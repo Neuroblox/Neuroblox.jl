@@ -176,10 +176,12 @@ end
 
 function ODEfromGraph(g::MetaDiGraph ;name)
     eqs = []
+    sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
         if isa(b, Neuroblox.Blox)
             s = b.odesystem
+            push!(sys, s)
             if any(occursin.("jcn(t)", string.(states(s)))) # only connect systems with jcn
                 if s.jcn isa Symbolics.Arr
                     bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr
