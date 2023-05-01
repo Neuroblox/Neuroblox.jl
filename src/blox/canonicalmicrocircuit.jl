@@ -67,7 +67,7 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        @named odecmc = ODEfromGraphdirect(g, jcn)
+        @named odecmc = ODEfromGraph(g, jcn)
         eqs = [
             x[1] ~ ss.connector
             x[2] ~ sp.connector

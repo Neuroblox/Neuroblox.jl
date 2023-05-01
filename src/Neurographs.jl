@@ -101,7 +101,7 @@ end
 #     return ODESystem(eqs, t, name=name, systems=sys)
 # end
 
-function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
+function ODEfromGraph(g::MetaDiGraph, jcn; name)
     vert = []
     sys = []
     for v in vertices(g)
