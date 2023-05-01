@@ -1,23 +1,3 @@
-# # define all possible neurographs
-# abstract type AbstractNeuroGraph end
-# struct LinearNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
-# struct OtherNeuroGraph <: AbstractNeuroGraph; graph::MetaDiGraph end
-
-# # method forwarding to handle AbstractNeuroGraph
-# Graphs.add_edge!(g::AbstractNeuroGraph, x...) = add_edge!(g.graph, x...)
-# Graphs.add_vertex!(g::AbstractNeuroGraph, x...) = add_vertex!(g.graph, x...)
-# Graphs.rem_vertex!(g::AbstractNeuroGraph, x...) = rem_vertex!(g.graph, x...)
-
-# function AdjMatrixfromLinearNeuroGraph(g::LinearNeuroGraph)
-#     myadj = map(Num, adjacency_matrix(g.graph))
-#     for edge in edges(g.graph)
-#         s = src(edge)
-#         d = dst(edge)
-#         myadj[s,d] = get_prop(g.graph, edge, :weight)
-#     end
-#     return myadj
-# end
-
 function adjmatrixfromdigraph(g::MetaDiGraph)
     myadj = map(Num, adjacency_matrix(g))
     for edge in edges(g)
@@ -27,10 +7,6 @@ function adjmatrixfromdigraph(g::MetaDiGraph)
     end
     return myadj
 end
-
-# function add_blox!(g::AbstractNeuroGraph,blox)
-#     add_vertex!(g, :blox, blox)
-# end
 
 function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
@@ -92,46 +68,38 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     return synaptic_network   
 end
 
-# function ODEfromGraph(g::LinearNeuroGraph ;name)
-#     blox = [get_prop(g.graph, v, :blox) for v in vertices(g.graph)]
+# function ODEfromGraph(g::MetaDiGraph ;name)
+#     blox = [get_prop(g, v, :blox) for v in vertices(g)]
 #     sys = [s.odesystem for s in blox]
 #     connector = [s.connector for s in blox]
-#     adj = AdjMatrixfromLinearNeuroGraph(g)
+#     adj = adjmatrixfromdigraph(g)
 #     return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
 # end
 
-function ODEfromGraph(g::MetaDiGraph ;name)
-    blox = [get_prop(g, v, :blox) for v in vertices(g)]
-    sys = [s.odesystem for s in blox]
-    connector = [s.connector for s in blox]
-    adj = adjmatrixfromdigraph(g)
-    return LinearConnections(name=name, sys=sys, adj_matrix=adj, connector=connector)
-end
-
-function ODEfromGraphdirect(g::MetaDiGraph ;name)
-    vert = []
-    conn = Num[]
-    sys = []
-    for v in vertices(g)
-        b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) # only use vertices of type NeuronBlox for ODESystem
-            push!(vert,v)
-            push!(conn,b.connector)
-            push!(sys,b.odesystem)
-        end
-    end
-    eqs = []
-    for (v,s) in zip(vert,sys)
-        if "jcn(t)" in string.(states(s)) # only connect systems with jcn
-            weights = Num.(zeros(length(conn)))
-            for vn in inneighbors(g,v) # vertices that point towards s
-                weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
-            end
-            push!(eqs, s.jcn ~ sum(conn .* weights))
-        end
-    end
-    return ODESystem(eqs, t, name=name, systems=sys)
-end
+# function ODEfromGraph(g::MetaDiGraph ;name)
+#     vert = []
+#     conn = Num[]
+#     sys = []
+#     for v in vertices(g)
+#         b = get_prop(g, v, :blox)
+#         if isa(b, Neuroblox.Blox) # only use vertices of type NeuronBlox for ODESystem
+#             push!(vert,v)
+#             push!(conn,b.connector)
+#             push!(sys,b.odesystem)
+#         end
+#     end
+#     eqs = []
+#     for (v,s) in zip(vert,sys)
+#         if "jcn(t)" in string.(states(s)) # only connect systems with jcn
+#             weights = Num.(zeros(length(conn)))
+#             for vn in inneighbors(g,v) # vertices that point towards s
+#                 weights[vn] = get_prop(g, Graphs.SimpleGraphs.SimpleEdge(vn,v), :weight)
+#             end
+#             push!(eqs, s.jcn ~ sum(conn .* weights))
+#         end
+#     end
+#     return ODESystem(eqs, t, name=name, systems=sys)
+# end
 
 function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
     vert = []
@@ -167,7 +135,7 @@ function ODEfromGraphdirect(g::MetaDiGraph, jcn; name)
     return compose(ODESystem(eqs; name=:connected), sys; name=name)
 end
 
-function ODEfromGraphdirect_tmp(g::MetaDiGraph ;name)
+function ODEfromGraph(g::MetaDiGraph ;name)
     # TODO: ODEfromGraphdirect fails when there is only one edge.
     vert = []
     sys = []
@@ -267,7 +235,6 @@ function connectcomplexblox(bloxlist, adjacency_matrices ;name)
     
     return ODEfromGraph(g, name=name)
 end
-
 
 ## Create Learning Loop
 function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)

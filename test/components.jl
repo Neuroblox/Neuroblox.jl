@@ -81,7 +81,7 @@ add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
                                    0 0 0 -1;
                                    0 0 0  0])
 # TODO: ODEfromGraphdirect fails when there is only one edge.
-@named cmc_network = ODEfromGraphdirect_tmp(g)
+@named cmc_network = ODEfromGraphdirect(g)
 cmc_network = structural_simplify(cmc_network)
 
 sol = simulate(cmc_network, [], (0.0, 10.0), [])
