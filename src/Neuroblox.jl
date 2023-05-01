@@ -124,8 +124,8 @@ export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphdirect, ODEfromGraphdirect_tmp, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, AdjMatrixfromLinearNeuroGraph, adjmatrixfromdigraph, create_rl_loop
-export AbstractNeuroGraph, LinearNeuroGraph, AdjMatrixfromLinearNeuroGraph, add_blox!
+export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
+export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export hemodynamics!, boldsignal

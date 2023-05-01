@@ -39,15 +39,13 @@ add_edge!(ggb,2,3,:weight,1.0)
 
 @named two_regions = LinearConnections(sys=sys,adj_matrix=adj_matrix, connector=connect)
 @named two_regions_gr = ODEfromGraph(g)
-@named two_regions_grd = ODEfromGraphdirect(g)
-@named two_regions_grdb = ODEfromGraphdirect(ggb)
+@named two_regions_grdb = ODEfromGraph(ggb)
 
 @test typeof(two_regions) == ODESystem
 @test typeof(two_regions_gr) == ODESystem
-@test typeof(two_regions_grd) == ODESystem
 @test typeof(two_regions_grdb) == ODESystem
-@test equations(two_regions_grd) == equations(two_regions_gr)
-@test equations(two_regions_grd) == equations(two_regions_grdb)
+@test equations(two_regions) == equations(two_regions_gr)
+@test equations(two_regions_gr) == equations(two_regions_grdb)
 
 """
 test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
