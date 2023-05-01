@@ -136,7 +136,7 @@ function ODEfromGraph(g::MetaDiGraph ;name)
             end
         end
     end
-    return ODESystem(eqs, name=name, systems=sys)
+    return compose(ODESystem(eqs; name=:connected), sys; name=name)
 end
 
 # function ODEfromGraphNeuron(g::MetaDiGraph ;name)
