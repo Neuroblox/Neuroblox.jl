@@ -40,7 +40,7 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
     r_ii::Num
     r_dp::Num
     connector::Symbolics.Arr{Num}
-    bloxinput::Symbolics.Arr{Num}
+    bloxinput::Vector{Num}
     odesystem::ODESystem
     function CanonicalMicroCircuitBlox(;name, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
         @variables jcn(t)[1:4], x(t)[1:4]
@@ -74,7 +74,7 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
             x[3] ~ ii.connector
             x[4] ~ dp.connector
         ]
-        odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
-        new(τ_ss, τ_sp, τ_ii, τ_dp, r_ss, r_sp, r_ii, r_dp, odesys.x, odesys.jcn, odesys)
+        odesys = extend(ODESystem(eqs, t, name=:connected), odecmc, name=name)
+        new(τ_ss, τ_sp, τ_ii, τ_dp, r_ss, r_sp, r_ii, r_dp, odesys.x, [odesys.jcn[1],odesys.jcn[2],odesys.jcn[3],odesys.jcn[4]], odesys)
     end
 end
