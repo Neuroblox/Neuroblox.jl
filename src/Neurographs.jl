@@ -107,7 +107,7 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox)
+        if isa(b, Neuroblox.Blox) || isa(b, Neuroblox.NBComponent)
             s = b.odesystem
             push!(sys, s)
             @show states(s)
