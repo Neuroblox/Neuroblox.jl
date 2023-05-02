@@ -15,7 +15,7 @@ sigmoid(x::Real, r::Real) = one(x) / (one(x) + exp(-r*x))
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct jansen_rit_spm12
+mutable struct jansen_rit_spm12 <: NBComponent
     τ::Num
     r::Num
     connector::Num
@@ -30,7 +30,7 @@ mutable struct jansen_rit_spm12
     end
 end
 
-mutable struct CanonicalMicroCircuitBlox <: Blox
+mutable struct CanonicalMicroCircuitBlox <: SuperBlox
     τ_ss::Num
     τ_sp::Num
     τ_ii::Num
@@ -51,10 +51,10 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
         @named dp = jansen_rit_spm12(τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
-        add_vertex!(g, Dict(:blox => ss, :name => name))
-        add_vertex!(g, Dict(:blox => sp, :name => name))
-        add_vertex!(g, Dict(:blox => ii, :name => name))
-        add_vertex!(g, Dict(:blox => dp, :name => name))
+        add_vertex!(g, Dict(:blox => ss, :name => name, :jcn => jcn[1]))
+        add_vertex!(g, Dict(:blox => sp, :name => name, :jcn => jcn[2]))
+        add_vertex!(g, Dict(:blox => ii, :name => name, :jcn => jcn[3]))
+        add_vertex!(g, Dict(:blox => dp, :name => name, :jcn => jcn[4]))
 
         add_edge!(g, 1, 1, :weight, -800.0)
         add_edge!(g, 2, 1, :weight, -800.0)
@@ -67,14 +67,14 @@ mutable struct CanonicalMicroCircuitBlox <: Blox
         add_edge!(g, 3, 4, :weight, -400.0)
         add_edge!(g, 4, 4, :weight, -200.0)
 
-        @named odecmc = ODEfromGraphdirect(g, jcn)
+        @named odecmc = ODEfromGraph(g)
         eqs = [
             x[1] ~ ss.connector
             x[2] ~ sp.connector
             x[3] ~ ii.connector
             x[4] ~ dp.connector
         ]
-        odesys = extend(ODESystem(eqs, name=:connected), odecmc, name=name)
+        odesys = extend(ODESystem(eqs, t, name=:connected), odecmc, name=name)
         new(τ_ss, τ_sp, τ_ii, τ_dp, r_ss, r_sp, r_ii, r_dp, odesys.x, odesys.jcn, odesys)
     end
 end

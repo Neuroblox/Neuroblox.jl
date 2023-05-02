@@ -81,7 +81,7 @@ add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
                                    0 0 0 -1;
                                    0 0 0  0])
 # TODO: ODEfromGraphdirect fails when there is only one edge.
-@named cmc_network = ODEfromGraphdirect_tmp(g)
+@named cmc_network = ODEfromGraph(g)
 cmc_network = structural_simplify(cmc_network)
 
 sol = simulate(cmc_network, [], (0.0, 10.0), [])
@@ -105,9 +105,8 @@ add_edge!(g, 1, 2, :weightmatrix, reshape(wm_forward, 4, 4))
 @parameters wm_backward[1:length(A_backward)] = vec(A_backward) 
 add_edge!(g, 2, 1, :weightmatrix, reshape(wm_backward, 4, 4))
 
-@named cmc_network = ODEfromGraphdirect_tmp(g)
+@named cmc_network = ODEfromGraph(g)
 cmc_network = structural_simplify(cmc_network)
-
 
 """
 Components Test for Cortical-Subcortical Jansen-Rit blox
