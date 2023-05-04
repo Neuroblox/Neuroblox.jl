@@ -162,7 +162,7 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                 else
                     if s.jcn isa Symbolics.Arr
                         bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr
-                        input = [eltype(s.jcn)(Num.(zeros(length(s.jcn))))]
+                        input = [Symbolics.Arr(Num.(zeros(length(s.jcn))))]
                         for vn in inneighbors(g, v) # vertices that point towards s
                             M = get_prop(g, vn, v, :weightmatrix)
                             connector = get_prop(g, vn, :blox).connector
