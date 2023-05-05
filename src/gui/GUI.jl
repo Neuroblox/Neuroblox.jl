@@ -144,14 +144,14 @@ end
 
 function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
   OrderedDict(
-    :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1),
-    :τ_sp => NCAD(0.002, NUMBER, 0.0001, 0.1),
-    :τ_ii => NCAD(0.016, NUMBER, 0.0001, 0.1),
-    :τ_dp => NCAD(0.028, NUMBER, 0.0001, 0.1),
-    :r_ss => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
-    :r_sp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
-    :r_ii => NCAD(2.0/3.0, NUMBER, 0.1, 5.0),
-    :r_dp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0)
+    :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
+    :τ_sp => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
+    :τ_ii => NCAD(0.016, NUMBER, 0.0001, 0.1,[]),
+    :τ_dp => NCAD(0.028, NUMBER, 0.0001, 0.1,[]),
+    :r_ss => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+    :r_sp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+    :r_ii => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+    :r_dp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[])
   )
 end
 
@@ -200,9 +200,14 @@ end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :nblocks => NCAD(10, INTEGER, 1, 40, []),
-    :blocksize => NCAD(6, INTEGER, 1, 40, []),
-    :lfp => NCAD("Average", MENU,1 ,3 ,["Average", "Gaussian", "Peaked"])
+    :τ_ss => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :τ_sp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :τ_ii => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :τ_dp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :r_ss => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :r_sp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :r_i => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :r_dp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
   )
 end
 
