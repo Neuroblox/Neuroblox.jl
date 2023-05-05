@@ -102,43 +102,6 @@ function ODEfromGraph(g::MetaDiGraph, jcn; name)
     return compose(ODESystem(eqs; name=:connected), sys; name=name)
 end
 
-# function ODEfromGraph(g::MetaDiGraph ;name)
-#     eqs = []
-#     sys = []
-#     for v in vertices(g)
-#         b = get_prop(g, v, :blox)
-#         if isa(b, Neuroblox.Blox) || isa(b, Neuroblox.NBComponent)
-#             s = b.odesystem
-#             push!(sys, s)
-#             if any(occursin.("jcn(t)", string.(states(s)))) # only connect systems with jcn
-#                 if s.jcn isa Symbolics.Arr
-#                     bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr
-#                     input = []
-#                     for vn in inneighbors(g, v) # vertices that point towards s
-#                         M = get_prop(g, vn, v, :weightmatrix)
-#                         connector = get_prop(g, vn, :blox).connector
-#                         push!(input, M*connector)
-#                     end
-#                     input = sum(input)
-#                     for i = 1:length(s.jcn)
-#                         push!(eqs, bi[i] ~ input[i])
-#                     end
-#                 else
-#                     input = Num(0)
-#                     for vn in inneighbors(g, v) # vertices that point towards s
-#                         input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
-#                     end
-#                     if haskey(props(g,v),:jcn)
-#                         input += get_prop(g,v,:jcn)
-#                     end
-#                     push!(eqs, s.jcn ~ input)
-#                 end
-#             end
-#         end
-#     end
-#     return compose(ODESystem(eqs, t; name=:connected), sys; name=name)
-# end
-
 function ODEfromGraph(g::MetaDiGraph ;name)
     eqs = []
     sys = []
@@ -187,28 +150,6 @@ function ODEfromGraph(g::MetaDiGraph ;name)
         end
     end
     return compose(ODESystem(eqs, t; name=:connected), sys; name=name)
-end
-
-function ODEfromGraphNeuron(g::MetaDiGraph ;name)
-    sys = []
-    eqs = []
-    for v in vertices(g)
-        b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.NeuronBlox) # only use vertices of type Blox for ODESystem
-            s = b.odesystem
-            push!(sys, s)
-            if any(occursin.("jcn(t)", string.(states(s))))
-                input = Num(0)
-                for vn in inneighbors(g, v) # vertices that point towards s
-                    bn = get_prop(g, vn, :blox)
-                    input += bn.connector * get_prop(g, vn, v, :weight) * (bn.odesystem.E_syn - s.V)
-                end
-                push!(eqs, s.Isyn ~ input)
-                push!(eqs, s.jcn ~ s.Isyn)
-            end
-        end
-    end
-    return ODESystem(eqs, t, name=name, systems=sys)
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
