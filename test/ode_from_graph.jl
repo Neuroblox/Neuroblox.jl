@@ -72,7 +72,7 @@ add_edge!(gg,1,2,:weight,1.0)
 add_edge!(gg,2,3,:weight,1.0)
 add_edge!(gg,3,1,:weight,.2)
 
-@named neuron_net_graph = ODEfromGraphNeuron(gg)
+@named neuron_net_graph = ODEfromGraph(gg)
 
 # add your test to see whether you get the same ODESystem
 @test typeof(neuron_net) == ODESystem
