@@ -128,7 +128,7 @@ mutable struct LIFneuron
     	spike = [V ~ θ] => (lif_affect!, [V], [V_L, st, strain], nothing)
 
 		odesys = ODESystem(eqs, t, sts, par; continuous_events=spike, name=name)
-		new(I_in, V_L, τ, R, θ, odesys.jcn, [odesys.V],[odesys.V],Dict{Num, Tuple{Float64, Float64}}(),odesys)
+		new(I_in, V_L, τ, R, θ, odesys.V, [odesys.V],[odesys.V],Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end
 
