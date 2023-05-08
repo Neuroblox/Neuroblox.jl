@@ -26,7 +26,7 @@ mutable struct QIFNeuronBlox <: NeuronBlox
 	    ]
    		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
 		odesys = ODESystem(eqs,t,sts,ps,continuous_events=[ev];name=name)
-		new(C, E_syn, G_syn, ω, τ, odesys.V, 
+		new(C, E_syn, G_syn, ω, τ, odesys.G, 
 		[odesys.V],[odesys.V, odesys.G],Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end

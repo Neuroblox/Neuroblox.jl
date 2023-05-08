@@ -209,7 +209,7 @@ nrn_network=[]
 Δω = 0.042
 
 for ii = 1:N_nrn
-	 nn = qif_neuron(name=Symbol("nrn$ii"),C=30.0,E_syn=-10,G_syn=1,ω=rand(Cauchy(ω₀,Δω)),τ=35)
+	 nn = QIFNeuronBlox(name=Symbol("nrn$ii"),C=30.0,E_syn=-10,G_syn=1,ω=rand(Cauchy(ω₀,Δω)),τ=35)
      push!(nrn_network,nn.odesystem)
 end
 
@@ -247,7 +247,7 @@ nrn_network=[]
 nrn_spiketimes=[]
 
 for i = 1:N
-    nn = LIFneuron(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
+    nn = LIFneuronBlox(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
     push!(nrn_network, nn.odesystem)
 	push!(nrn_spiketimes, nn.odesystem.st)
 end
@@ -281,7 +281,7 @@ wilson_cowan test
 
 Test for Wilson-Cowan model
 """
-@named WC = wilson_cowan()
+@named WC = WilsonCowanBlox()
 sys = [WC.odesystem]
 eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
 @named WC_sys = ODESystem(eqs,systems=sys)
