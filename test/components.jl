@@ -247,7 +247,7 @@ nrn_network=[]
 nrn_spiketimes=[]
 
 for i = 1:N
-    nn = LIFneuronBlox(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
+    nn = LIFNeuronBlox(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
     push!(nrn_network, nn.odesystem)
 	push!(nrn_spiketimes, nn.odesystem.st)
 end
