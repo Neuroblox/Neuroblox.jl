@@ -10,6 +10,9 @@ mutable struct QIFNeuronBlox <: NeuronBlox
     ω::Num
 	τ::Num
     connector::Num
+	noDetail::Vector{Num}
+    detail::Vector{Num}
+	initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
 	function QIFNeuronBlox(;name,C=1.0,E_syn=0, G_syn=1,ω=0,τ=10)
 
@@ -23,10 +26,10 @@ mutable struct QIFNeuronBlox <: NeuronBlox
 	    ]
    		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
 		odesys = ODESystem(eqs,t,sts,ps,continuous_events=[ev];name=name)
-		new(C, E_syn, G_syn, ω, τ, odesys.V, odesys)
+		new(C, E_syn, G_syn, ω, τ, odesys.G, 
+		[odesys.V],[odesys.V, odesys.G],Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end
-const qif_neuron = QIFNeuronBlox
 
 """
 thetaneuron has the following parameters:
@@ -63,6 +66,9 @@ mutable struct IFNeuronBlox <: NeuronBlox
 	phase::Num
 	τ::Num
     connector::Num
+	noDetail::Vector{Num}
+    detail::Vector{Num}
+	initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
 	function IFNeuronBlox(;name,C=1.0,E_syn=0,G_syn=0.2,I_in=0,freq=0,phase=0,τ=10)
 
@@ -78,11 +84,10 @@ mutable struct IFNeuronBlox <: NeuronBlox
 		  	]
     		ev = [V~θ] => [V~Eₘ,z~G_syn,Cₜ~10]
 		odesys = ODESystem(eqs,t,sts,ps,continuous_events=[ev];name=name)
-		new(C, E_syn, G_syn, I_in, freq, phase, τ, odesys.V, odesys)
+		new(C, E_syn, G_syn, I_in, freq, phase, τ, odesys.G,
+		[odesys.V],[odesys.V, odesys.G],Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end
-const if_neuron = IFNeuronBlox
-
 
 """
 Standard Leaky Integrate and Fire neuron model.
@@ -101,15 +106,18 @@ parameters:
 returns:
     an ODE System
 """
-mutable struct LIFneuron
+mutable struct LIFNeuronBlox <: NeuronBlox
 	I_in::Num
 	V_L::Num
 	τ::Num
 	R::Num
 	θ::Num
     connector::Num
+	noDetail::Vector{Num}
+    detail::Vector{Num}
+	initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
-	function LIFneuron(;name, I_in=0, V_L=-70.0, τ=10.0, R=100.0, θ = -10.0)
+	function LIFNeuronBlox(;name, I_in=0, V_L=-70.0, τ=10.0, R=100.0, θ = -10.0)
 		sts = @variables V(t) = -70.0 jcn(t) = 0.0
 		par = @parameters I_in=I_in V_L=V_L R=R τ=τ st=-Inf strain=[]
 		eqs = [
@@ -125,7 +133,7 @@ mutable struct LIFneuron
     	spike = [V ~ θ] => (lif_affect!, [V], [V_L, st, strain], nothing)
 
 		odesys = ODESystem(eqs, t, sts, par; continuous_events=spike, name=name)
-		new(I_in, V_L, τ, R, θ, odesys.jcn, odesys)
+		new(I_in, V_L, τ, R, θ, odesys.V, [odesys.V],[odesys.V],Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end
 
@@ -139,6 +147,9 @@ mutable struct HHNeuronExciBlox <: NeuronBlox
 	phase::Num
 	τ::Num
 	connector::Num
+	noDetail::Vector{Num}
+    detail::Vector{Num}
+	initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
 	function HHNeuronExciBlox(;name,E_syn=0.0,G_syn=3,I_in=0,freq=0,phase=0,τ=5)
 	        
@@ -161,7 +172,9 @@ mutable struct HHNeuronExciBlox <: NeuronBlox
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
 			  ]
 		odesys=ODESystem(eqs,t,sts,ps;name=name)
-		new(E_syn, G_syn, I_in, freq, phase, τ, odesys.G, odesys)
+		new(E_syn, G_syn, I_in, freq, phase, τ, odesys.G,
+			[odesys.V], [odesys.V, odesys.G],
+			Dict{Num, Tuple{Float64, Float64}}(),odesys)
 	end
 end	
 
@@ -173,6 +186,9 @@ mutable struct HHNeuronInhibBlox <: NeuronBlox
 	phase::Num
 	τ::Num
     connector::Num
+	noDetail::Vector{Num}
+    detail::Vector{Num}
+	initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
 	function HHNeuronInhibBlox(;name,E_syn=-70.0,G_syn=11.5,I_in=0,freq=0,phase=0,τ=70)
 	        
@@ -195,7 +211,9 @@ mutable struct HHNeuronInhibBlox <: NeuronBlox
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
 			  ]
 		odesys=ODESystem(eqs,t,sts,ps;name=name)
-		new(E_syn, G_syn, I_in, freq, phase, τ, odesys.G, odesys)
+		new(E_syn, G_syn, I_in, freq, phase, τ, odesys.G,
+			[odesys.V], [odesys.V, odesys.G],
+			Dict{Num, Tuple{Float64, Float64}}(), odesys)
 	end
 end	
 

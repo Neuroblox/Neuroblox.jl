@@ -176,6 +176,16 @@ function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings 
   )
 end
 
+function arguments(::Type{Neuroblox.LIFNeuronBlox}) #TODO: add correct settings for the arguments
+  OrderedDict(
+    :I_in => NCAD(0.0, NUMBER, -5.0, 5.0,[]),
+    :V_L => NCAD(-70.0, NUMBER, -90, -10,[]),
+    :τ => NCAD(10.0, NUMBER, 0.01, 100.0,[]),
+    :R => NCAD(100.0, NUMBER, 0.01, 200.0,[]),
+    :θ => NCAD(-10.0, NUMBER, -20, 20.0,[]),
+  )
+end
+
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
