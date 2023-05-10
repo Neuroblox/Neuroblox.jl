@@ -16,7 +16,7 @@ mutable struct QIFNeuronBlox <: NeuronBlox
     odesystem::ODESystem
 	function QIFNeuronBlox(;name,C=1.0,E_syn=0, G_syn=1,ω=0,τ=10)
 
-    	sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 Isyn(t)=0.0
+    	sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 Isyn(t)=0.0 jcn(t)=0.0
 		ps = @parameters C=C ω=ω I_in=(ω*C/2)^2 Eₘ=0.0 Vᵣₑₛ=-70.0 θ=25 τ₁=τ τ₂=τ E_syn=E_syn G_syn=G_syn
 	
 		eqs = [
@@ -72,7 +72,7 @@ mutable struct IFNeuronBlox <: NeuronBlox
     odesystem::ODESystem
 	function IFNeuronBlox(;name,C=1.0,E_syn=0,G_syn=0.2,I_in=0,freq=0,phase=0,τ=10)
 
-		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 spt(t)=0 Cₜ(t) = 0 Isyn(t)=0 
+		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 spt(t)=0.0 Cₜ(t) = 0.0 Isyn(t)=0 jcn(t)=0.0
 		ps = @parameters C=C I_in = I_in Eₘ = -70.0 Rₘ = 100.0 θ = -50.0 τ₁=0.1 τ₂=τ E_syn=E_syn G_syn=G_syn phase=phase τᵣ=3
 
 		eqs = [

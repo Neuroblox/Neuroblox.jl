@@ -127,8 +127,6 @@ mutable struct WilsonCowanBlox <: NeuralMassBlox
         new(τ_E,τ_I,a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, [odesys.E],[odesys.E, odesys.I],odesys)
     end
 end
-# this assignment is temporary until all the code is changed to the new name
-const wilson_cowan = WilsonCowanBlox
 
 mutable struct NextGenerationBlox <: NeuralMassBlox
     C::Num
