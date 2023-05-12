@@ -23,6 +23,7 @@ abstract type Blox end # Blox is the abstract type for Blox that are displayed i
 abstract type NBComponent end
 abstract type BloxConnection end
 abstract type BloxUtilities end
+abstract type Merger end
 
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
 abstract type NeuronBlox <: Blox end

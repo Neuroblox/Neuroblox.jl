@@ -55,6 +55,11 @@ const STRING = "string"
 const INTEGER = "integer"
 const MENU = "menu"
 
+function arguments(::Type{Neuroblox.Merger})
+  OrderedDict(
+  )
+end
+
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   OrderedDict(
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
