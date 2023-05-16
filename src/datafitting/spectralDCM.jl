@@ -13,6 +13,11 @@ spm_logdet       : mimick SPM12's way to compute the logarithm of the determinan
 variationalbayes : main routine that computes the variational Bayes estimate of model parameters
 """
 
+using LinearAlgebra
+using ToeplitzMatrices
+using MAT
+using ExponentialUtilities
+
 function transferfunction_fmri(w, sts, derivatives, params)   # relates to: spm_dcm_mtf.m
 
     C = params[:C]
@@ -28,6 +33,7 @@ function transferfunction_fmri(w, sts, derivatives, params)   # relates to: spm_
     A[[(i-1)*nd+i for i=1:nd]] -= exp.(A_tmp)/2 + A_tmp
     ∂f[idx_A] = A
     # if I eventually need also the change of variables rather than just the derivative then here is where to fix it! 
+    Main.foo[] = C;
     dfdu = [diagm(C);
             zeros(size(∂f, 1)-nd, length(C))]
 
@@ -70,10 +76,10 @@ function csd_approx(w, sts, derivatives, param)
     # priors of spectral parameters
     # ln(α) and ln(β), region specific fluctuations: ln(γ)
     nw = length(w)
-    nd = size(x, 1)
     α = param[:lnα]
     β = param[:lnβ]
     γ = param[:lnγ]
+    nd = length(γ)
     # define function that implements spectra given in equation (2) of the paper "A DCM for resting state fMRI".
 
     # neuronal fluctuations, intrinsic noise (Gu) (1/f or AR(1) form)

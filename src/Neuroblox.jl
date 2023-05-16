@@ -17,6 +17,8 @@ using OrdinaryDiffEq, DataFrames
 using Interpolations, DataInterpolations
 import Distributions
 using Random
+using OrderedCollections
+
 
 # define abstract types for Neuroblox
 abstract type Blox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -57,8 +59,8 @@ include("Neurographs.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("control/controlerror.jl")
-include("measurement_models/fmri.jl")
-include("functional_connectivity_estimators/spectralDCM.jl")
+include("measurementmodels/fmri.jl")
+include("datafitting/spectralDCM.jl")
 include("blox/neural_mass.jl")
 include("blox/cortical_blox.jl")
 include("blox/canonicalmicrocircuit.jl")
@@ -131,7 +133,8 @@ export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron,
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export hemodynamics!, boldsignal
+export Hemodynamics, LinHemo, boldsignal
+export vecparam, unvecparam, csd_Q
 export variationalbayes
 export simulate, random_initials
 
