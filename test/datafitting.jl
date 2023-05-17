@@ -1,8 +1,12 @@
 using Neuroblox, Test, Graphs, MetaGraphs, OrderedCollections, LinearAlgebra
 using MAT
 
-function Base.vec(x::T) where (T <: Real)
-    return x*ones(1)
+function vec_helper(x)
+    return vec(x)
+end
+
+function vec_helper(x::T) where (T <: Real)
+    return x*ones(T, 1)
 end
 
 ### DEFINE SEVERAL VARIABLES AND PRIORS TO GET STARTED ###
@@ -68,7 +72,7 @@ derivatives = Dict(:∂f => jac_f, :∂g => grad_g_full)
 
 modelparam = OrderedDict{Any, Any}()
 for par in parameters(f)
-    while Symbolics.getdefaultval(par) isa Sym
+    while Symbolics.getdefaultval(par) isa Sym || Symbolics.getdefaultval(par) isa Num
         par = Symbolics.getdefaultval(par)
     end
     modelparam[par] = Symbolics.getdefaultval(par)
@@ -125,7 +129,7 @@ priors = Dict(:μ => modelparam,
               :Σ => Dict(
                          :Πθ_pr => inv(θΣ),           # prior model parameter precision
                          :Πλ_pr => Πλ_p,              # prior metaparameter precision
-                         :μλ_pr => vec(vars["hE"]),   # prior metaparameter mean
+                         :μλ_pr => vec_helper(vars["hE"]),   # prior metaparameter mean
                          :Q => Q                      # decomposition of model parameter covariance
                         )
              );

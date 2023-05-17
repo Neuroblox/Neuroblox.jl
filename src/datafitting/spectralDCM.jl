@@ -183,7 +183,7 @@ mutable struct vb_state
     Σθ::Matrix{Float64}
 end
 
-function vecparam(param::OrderedDict{Any,Any})
+function vecparam(param::OrderedDict{Any, Any})
     flatparam = Float64[]
     for v in values(param)
         if (typeof(v) <: Array)
