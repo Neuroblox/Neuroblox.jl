@@ -15,7 +15,7 @@ nr = nd ÷ 5        # number of brain regions
 dx = zeros(nr, 4, ns);
 J = zeros(nd-nr, nd-nr, ns);
 for i = 1:ns
-    dx[:,:,i], J[:,:,i] = hemodynamics!(dx[:,:,i], reshape(x[i,(nr+1):end],nr,4), x[i, 1:nr], decay, transit)
+    dx[:,:,i], J[:,:,i] = Hemodynamics!(reshape(x[i,(nr+1):end],nr,4), x[i, 1:nr], decay, transit)
 end
 
 @test matvars["dfdx256"][nr+1:end,nr+1:end] ≈ J[:,:,256]
@@ -25,7 +25,7 @@ end
 
 
 lnϵ = 0
-x = x[2:end,:]
+x = x[2:end, :]
 ns = size(x,1)
 fMRI = zeros(ns,nr);
 gradient = zeros(ns, nr, 2nr);
