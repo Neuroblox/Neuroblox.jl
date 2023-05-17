@@ -33,7 +33,6 @@ function transferfunction_fmri(w, sts, derivatives, params)   # relates to: spm_
     A[[(i-1)*nd+i for i=1:nd]] -= exp.(A_tmp)/2 + A_tmp
     ∂f[idx_A] = A
     # if I eventually need also the change of variables rather than just the derivative then here is where to fix it! 
-    Main.foo[] = C;
     dfdu = [diagm(C);
             zeros(size(∂f, 1)-nd, length(C))]
 
