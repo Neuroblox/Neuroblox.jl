@@ -72,7 +72,7 @@ derivatives = Dict(:∂f => jac_f, :∂g => grad_g_full)
 
 modelparam = OrderedDict{Any, Any}()
 for par in parameters(f)
-    while Symbolics.getdefaultval(par) isa Sym || Symbolics.getdefaultval(par) isa Num
+    while Symbolics.getdefaultval(par) isa Num
         par = Symbolics.getdefaultval(par)
     end
     modelparam[par] = Symbolics.getdefaultval(par)
