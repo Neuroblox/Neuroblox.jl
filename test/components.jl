@@ -372,3 +372,15 @@ sol=simulate(structural_simplify(neuron_net),[],(0,10),[],Vern7())
 @test typeof(neuron_net)==ODESystem
 @test sol[:,1][end] ≈ 10.0
 
+"""
+test for WinnerTakeAllBlox
+"""
+inp = 5*rand(5)
+@named wta= WinnerTakeAllBlox(I_in=inp)
+sys = wta.odesystem
+wta_simp=structural_simplify(sys)
+prob = ODEProblem(wta_simp,[],(0,10))
+sol = solve(prob, Vern7(), saveat=0.1)
+
+@test typeof(wta_simp)==ODESystem
+@test sol.t[end]==10

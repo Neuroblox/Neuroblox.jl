@@ -70,6 +70,7 @@ include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 include("blox/sources.jl")
 include("blox/rl_blox.jl")
+include("blox/winnertakeall.jl")
 include("gui/GUI.jl")
 
 
@@ -124,7 +125,7 @@ function random_initials(odesys::ODESystem, blox)
 end
 
 export LinearNeuralMassBlox, harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, CanonicalMicroCircuitBlox, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox
+export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox, WinnerTakeAllBlox
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
