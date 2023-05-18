@@ -60,6 +60,12 @@ function arguments(::Type{Neuroblox.Merger})
   )
 end
 
+function arguments(::Type{Neuroblox.LinearNeuralMassBlox})
+  OrderedDict(
+    :τ => NCAD(0.01, NUMBER, 1.0, 10.0,[]),
+  )
+end
+
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   OrderedDict(
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),

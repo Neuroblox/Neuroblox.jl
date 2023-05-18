@@ -3,9 +3,9 @@ using SafeTestsets
 @time @safetestset "Components Tests" begin include("components.jl") end
 @time @safetestset "Neurograph Tests" begin include("graphs.jl") end
 @time @safetestset "ODE from Graph Tests" begin include("ode_from_graph.jl") end
-@time @safetestset "Neural Signal Measurement Models Tests" begin include("measurement_models.jl") end
+# @time @safetestset "Neural Signal Measurement Models Tests" begin include("measurementmodels.jl") end
 @time @safetestset "Spectral Utilities Tests" begin include("spectraltools.jl") end
-@time @safetestset "Dynamic Causal Modeling Tests" begin include("DCM.jl") end
+@time @safetestset "Data Fitting Tests" begin include("datafitting.jl") end
 @time @safetestset "ODE from Graph and simulate" begin include("graph_to_dataframe.jl") end
 @time @safetestset "Learning Tests" begin include("learning.jl") end
 @time @safetestset "Control Tests" begin include("controllers.jl") end

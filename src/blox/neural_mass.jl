@@ -1,16 +1,16 @@
 @parameters t
 D = Differential(t)
 
-mutable struct LinearNeuralMassBlox
-    τ::Num
+mutable struct LinearNeuralMassBlox <: NeuralMassBlox
+    # τ::Num
     connector::Num
     odesystem::ODESystem
-    function linearneuralmass(;name, τ=1.0)
-        params = @parameters τ=τ
+    function LinearNeuralMassBlox(;name)
+        # params = @parameters τ=τ
         states = @variables x(t) jcn(t)
-        eqs = D(x) ~ τ * jcn
-        odesys = ODESystem(eqs, t, states, params; name=name)
-        new(τ, odesys.x, odesys)
+        eqs = D(x) ~ jcn
+        odesys = ODESystem(eqs, t, states, []; name=name)
+        new(odesys.x, odesys)
     end
 end
 
