@@ -60,6 +60,16 @@ function arguments(::Type{Neuroblox.Merger})
   )
 end
 
+function arguments(::Type{Neuroblox.LinHemo})
+  OrderedDict(
+  )
+end
+
+function arguments(::Type{Neuroblox.Hemodynamics})
+  OrderedDict(
+  )
+end
+
 function arguments(::Type{Neuroblox.LinearNeuralMassBlox})
   OrderedDict(
     :τ => NCAD(0.01, NUMBER, 1.0, 10.0,[]),
