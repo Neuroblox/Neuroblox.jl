@@ -70,6 +70,11 @@ function arguments(::Type{Neuroblox.Hemodynamics})
   )
 end
 
+function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
+  OrderedDict(
+  )
+end
+
 function arguments(::Type{Neuroblox.LinearNeuralMassBlox})
   OrderedDict(
     :τ => NCAD(0.01, NUMBER, 1.0, 10.0,[]),
