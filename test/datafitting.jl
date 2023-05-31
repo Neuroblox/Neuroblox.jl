@@ -138,4 +138,5 @@ priors = Dict(:μ => modelparam,
 results = variationalbayes(sts, y_csd, derivatives, freqs, V, p, priors, 128)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
-@test (results.F < vars["F"]*0.999) & (results.F > vars["F"]*1.001)
+@test results.F < vars["F"]*0.99
+@test results.F > vars["F"]*1.01
