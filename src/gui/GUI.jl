@@ -41,11 +41,11 @@ function icon(::Type{T}) where T
 end
 
 function inputs(::Type{T}) where T
-  [Dict(:name => "Default IN")]
+  String[]
 end
 
 function outputs(::Type{T}) where T
-  [Dict(:name => "Default OUT")]
+  String[]
 end
 
 # methods
@@ -181,6 +181,14 @@ function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
   )
 end
 
+function inputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+  ["in1","in2","in3","in4"]
+end
+
+function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+  ["out1","out2","out3","out4"]
+end
+
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
@@ -236,14 +244,9 @@ end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :τ_ss => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :τ_sp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :τ_ii => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :τ_dp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :r_ss => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :r_sp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :r_i => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-    :r_dp => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :nblocks => NCAD(10, INTEGER, 1, 40, []),
+    :blocksize => NCAD(6, INTEGER, 1, 40, []),
+    :lfp => NCAD("Average", MENU,1 ,3 ,["Average", "Gaussian", "Peaked"])
   )
 end
 
