@@ -72,6 +72,16 @@ end
 
 function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
   OrderedDict(
+    :BlockSize => NCAD(5, INTEGER, 1, 40, []),
+    :E_syn_exci => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+    :G_syn_exci => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+    :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
+	  :τ_exci => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+    :E_syn_inhib => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+    :G_syn_inhib => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+	  :τ_inhib => NCAD(0.105, NUMBER, 0.01, 2.0,[])
   )
 end
 
