@@ -72,7 +72,7 @@ end
 
 function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
   OrderedDict(
-    :BlockSize => NCAD(5, INTEGER, 1, 40, []),
+    # :BlockSize => NCAD(5, INTEGER, 1, 40, []),
     :E_syn_exci => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
     :G_syn_exci => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
     :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
@@ -83,6 +83,14 @@ function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
     :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
 	  :τ_inhib => NCAD(0.105, NUMBER, 0.01, 2.0,[])
   )
+end
+
+function inputs(::Type{Neuroblox.WinnerTakeAllBlox})
+  ["in1","in2","in3","in4","in5"]
+end
+
+function outputs(::Type{Neuroblox.WinnerTakeAllBlox})
+  ["out1","out2","out3","out4","out5"]
 end
 
 function arguments(::Type{Neuroblox.LinearNeuralMassBlox})

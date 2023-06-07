@@ -73,7 +73,6 @@ mutable struct LinHemo <: SuperBlox
     end
 end
 
-
 # function hemodynamics(;name, lnκ=0.0, lnτ=0.0)
 #     #= hemodynamic parameters
 #         H(1) - signal decay                                   d(ds/dt)/ds)
