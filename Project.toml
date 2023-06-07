@@ -118,4 +118,4 @@ Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [targets]
-test = ["LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "Optim", "Optimization", "OptimizationOptimJL", "OptimizationOptimisers", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]
+test = ["DifferentialEquations","LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "Optim", "Optimization", "OptimizationOptimJL", "OptimizationOptimisers", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]

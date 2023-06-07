@@ -1,5 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
-
+using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
 """
 neuralmass.jl test
@@ -275,6 +274,22 @@ Test for van der Pol generator.
 prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 @test sol.retcode == SciMLBase.ReturnCode.Success
+
+"""
+stochastic.jl test
+
+Test for OUBlox generator.
+"""
+
+@named ou1 = OUBlox()
+sys = [ou1.system]
+eqs = [sys[1].jcn ~ 0.0]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_ou)
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:]) > 0.0 # there should be variance
 
 """
 wilson_cowan test

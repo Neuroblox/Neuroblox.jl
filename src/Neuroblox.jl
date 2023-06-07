@@ -71,6 +71,7 @@ include("blox/ts_outputs.jl")
 include("blox/sources.jl")
 include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
+include("blox/stochastic.jl")
 include("gui/GUI.jl")
 
 
@@ -129,6 +130,7 @@ export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInh
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
+export OUBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
 export add_blox!
