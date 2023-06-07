@@ -135,6 +135,8 @@ priors = Dict(:μ => modelparam,
              );
 
 ### Compute the variational Bayes with Laplace approximation ###
+using JLD2
+save_object("debugDCMprior.jld2", priors)
 results = variationalbayes(sts, y_csd, derivatives, freqs, V, p, priors, 128)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
