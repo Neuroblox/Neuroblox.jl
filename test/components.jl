@@ -287,9 +287,20 @@ eqs = [sys[1].jcn ~ 0.0]
 @named ou1connected = compose(System(eqs;name=:connected),sys)
 ousimpl = structural_simplify(ou1connected)
 prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
-sol = solve(prob_ou)
+sol = solve(prob_ou,alg_hints = [:stiff])
 @test sol.retcode == SciMLBase.ReturnCode.Success
 @test std(sol[1,:]) > 0.0 # there should be variance
+
+# connect OU process to Neural Mass Blox
+@named jr = JansenRitCBlox()
+sys = [ou1.system, jr.odesystem]
+eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_oujr = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_oujr, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[2,:]) > 0.0 # there should be variance
 
 """
 wilson_cowan test
