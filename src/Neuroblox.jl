@@ -130,7 +130,7 @@ export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInh
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
-export OUBlox
+export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
 export add_blox!

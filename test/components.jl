@@ -302,6 +302,17 @@ sol = solve(prob_oujr, alg_hints = [:stiff])
 @test sol.retcode == SciMLBase.ReturnCode.Success
 @test std(sol[2,:]) > 0.0 # there should be variance
 
+# test OU coupling blox
+@named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
+sys = [ou1.system, oucp.system]
+eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_oucp, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+
 """
 wilson_cowan test
 

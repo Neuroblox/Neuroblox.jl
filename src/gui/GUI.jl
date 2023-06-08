@@ -107,6 +107,14 @@ function arguments(::Type{Neuroblox.OUBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.OUCouplingBlox})
+  OrderedDict(
+    :μ => NCAD(0.0, NUMBER, -100.0, 100.0,[]),
+    :τ => NCAD(1.0, NUMBER, 0.00001,10,[]),
+    :σ => NCAD(1.0, NUMBER, 0.00001,10,[])
+  )
+end
+
 function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   OrderedDict(
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
