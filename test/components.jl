@@ -282,7 +282,7 @@ Test for OUBlox generator.
 """
 
 @named ou1 = OUBlox()
-sys = [ou1.system]
+sys = [ou1.odesystem]
 eqs = [sys[1].jcn ~ 0.0]
 @named ou1connected = compose(System(eqs;name=:connected),sys)
 ousimpl = structural_simplify(ou1connected)
@@ -293,7 +293,7 @@ sol = solve(prob_ou,alg_hints = [:stiff])
 
 # connect OU process to Neural Mass Blox
 @named jr = JansenRitCBlox()
-sys = [ou1.system, jr.odesystem]
+sys = [ou1.odesystem, jr.odesystem]
 eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
 @named ou1connected = compose(System(eqs;name=:connected),sys)
 ousimpl = structural_simplify(ou1connected)
@@ -304,7 +304,7 @@ sol = solve(prob_oujr, alg_hints = [:stiff])
 
 # test OU coupling blox
 @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
-sys = [ou1.system, oucp.system]
+sys = [ou1.odesystem, oucp.odesystem]
 eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
 @named ou1connected = compose(System(eqs;name=:connected),sys)
 ousimpl = structural_simplify(ou1connected)
@@ -318,7 +318,7 @@ sol = solve(prob_oucp, alg_hints = [:stiff])
 @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
 @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
 @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-sys = [ou1.system, ou2.system, oucp1.system, oucp2.system]
+sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
 eqs = [sys[1].jcn ~ oucp1.connector,
         sys[2].jcn ~ oucp2.connector,
         sys[3].jcn ~ ou2.connector,
