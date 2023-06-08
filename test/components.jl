@@ -313,6 +313,24 @@ sol = solve(prob_oucp, alg_hints = [:stiff])
 @test sol.retcode == SciMLBase.ReturnCode.Success
 @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
 
+# test a larger system
+@named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+@named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+@named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
+@named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
+sys = [ou1.system, ou2.system, oucp1.system, oucp2.system]
+eqs = [sys[1].jcn ~ oucp1.connector,
+        sys[2].jcn ~ oucp2.connector,
+        sys[3].jcn ~ ou2.connector,
+        sys[4].jcn ~ ou1.connector]
+@named ouconnected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ouconnected)
+prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
+sol = solve(prob_ouconnect, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+@test cor(sol[1,:],sol[2,:]) < 0.0 # Pearson correlation should be negative
+
 """
 wilson_cowan test
 
