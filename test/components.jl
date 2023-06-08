@@ -1,5 +1,4 @@
-using Neuroblox, OrdinaryDiffEq, StochasticDiffEq, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
-
+using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
 """
 neuralmass.jl test
@@ -275,6 +274,62 @@ Test for van der Pol generator.
 prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
 sol = solve(prob_vdp,EM(),dt=0.1)
 @test sol.retcode == SciMLBase.ReturnCode.Success
+
+"""
+stochastic.jl test
+
+Test for OUBlox generator.
+"""
+
+@named ou1 = OUBlox()
+sys = [ou1.system]
+eqs = [sys[1].jcn ~ 0.0]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_ou,alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:]) > 0.0 # there should be variance
+
+# connect OU process to Neural Mass Blox
+@named jr = JansenRitCBlox()
+sys = [ou1.system, jr.odesystem]
+eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_oujr = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_oujr, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[2,:]) > 0.0 # there should be variance
+
+# test OU coupling blox
+@named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
+sys = [ou1.system, oucp.system]
+eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+@named ou1connected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ou1connected)
+prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+sol = solve(prob_oucp, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+
+# test a larger system
+@named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+@named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+@named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
+@named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
+sys = [ou1.system, ou2.system, oucp1.system, oucp2.system]
+eqs = [sys[1].jcn ~ oucp1.connector,
+        sys[2].jcn ~ oucp2.connector,
+        sys[3].jcn ~ ou2.connector,
+        sys[4].jcn ~ ou1.connector]
+@named ouconnected = compose(System(eqs;name=:connected),sys)
+ousimpl = structural_simplify(ouconnected)
+prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
+sol = solve(prob_ouconnect, alg_hints = [:stiff])
+@test sol.retcode == SciMLBase.ReturnCode.Success
+@test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+@test cor(sol[1,:],sol[2,:]) < 0.0 # Pearson correlation should be negative
 
 """
 wilson_cowan test

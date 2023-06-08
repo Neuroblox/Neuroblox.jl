@@ -99,6 +99,7 @@ julia = "1.8"
 
 [extras]
 CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -118,4 +119,4 @@ Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [targets]
-test = ["LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "Optim", "Optimization", "OptimizationOptimJL", "OptimizationOptimisers", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]
+test = ["DifferentialEquations","LinearAlgebra", "ForwardDiff", "Distributions", "Flux", "Random", "SparseArrays", "Optim", "Optimization", "OptimizationOptimJL", "OptimizationOptimisers", "OrdinaryDiffEq", "StochasticDiffEq", "SafeTestsets", "Turing", "Test", "Tracker"]
