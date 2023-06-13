@@ -4,7 +4,7 @@
 @parameters t
 D = Differential(t)
 
-mutable struct WinnerTakeAllBlox <: SuperBlox
+mutable struct WinnerTakeAllBlox <: NBComponent
     BlockSize::Num
     E_syn_exci::Num
     E_syn_inhib::Num

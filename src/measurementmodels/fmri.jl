@@ -23,7 +23,7 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 ### Return variables ###
 returns an ODESystem of the biophysical model for the hemodynamics
 """
-mutable struct Hemodynamics <: NeuralMassBlox
+mutable struct Hemodynamics <: NBComponent
     lnκ::Num
     lnτ::Num
     connector::Num
@@ -53,7 +53,7 @@ mutable struct Hemodynamics <: NeuralMassBlox
 end
 
 
-mutable struct LinHemo <: SuperBlox
+mutable struct LinHemo <: NBComponent
     lnκ::Num
     lnτ::Num
     connector::Num

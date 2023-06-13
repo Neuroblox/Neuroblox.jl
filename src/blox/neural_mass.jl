@@ -1,7 +1,7 @@
 @parameters t
 D = Differential(t)
 
-mutable struct LinearNeuralMassBlox <: NeuralMassBlox
+mutable struct LinearNeuralMassBlox <: NBComponent
     # τ::Num
     connector::Num
     odesystem::ODESystem

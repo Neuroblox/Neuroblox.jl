@@ -106,7 +106,7 @@ parameters:
 returns:
     an ODE System
 """
-mutable struct LIFNeuronBlox <: NeuronBlox
+mutable struct LIFNeuronBlox <: NBComponent
 	I_in::Num
 	V_L::Num
 	τ::Num
