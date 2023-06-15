@@ -15,7 +15,7 @@ variationalbayes : main routine that computes the variational Bayes estimate of 
 
 using LinearAlgebra
 using ToeplitzMatrices
-using MAT, JLD2
+using MAT
 using ExponentialUtilities
 
 function transferfunction_fmri(w, sts, derivatives, params)   # relates to: spm_dcm_mtf.m
@@ -32,9 +32,9 @@ function transferfunction_fmri(w, sts, derivatives, params)   # relates to: spm_
     A_tmp = A[[(i-1)*nd+i for i=1:nd]]
     A[[(i-1)*nd+i for i=1:nd]] -= exp.(A_tmp)/2 + A_tmp
     ∂f[idx_A] = A
-    # if I eventually need also the change of variables rather than just the derivative then here is where to fix it! 
-    dfdu = [diagm(C);
-            zeros(size(∂f, 1)-nd, length(C))]
+
+    dfdu = zeros(size(∂f, 1), length(C))
+    dfdu[CartesianIndex.([(idx[2][1], idx[1]) for idx in enumerate(idx_A[[(i-1)*nd+i for i=1:nd]])])] = C
 
     F = eigen(Symbolics.value.(∂f), sortby=nothing, permute=true)
     Λ = F.values
@@ -250,7 +250,6 @@ function variationalbayes(sts, y, derivatives, w, V, p, priors, niter)    # rela
         dfdθ = transpose(reshape(dfdθ, np, ny))
         norm_dfdθ = matlab_norm(dfdθ, Inf);      # NB that the norm in Julia is different from MATLAB. For consistency with SPM12 we reimplemented it here
         revert = isnan(norm_dfdθ) || norm_dfdθ > exp(32);
-        save_object("debugDCMjacobian.jld2", (dfdθ, f))
         if revert && k > 1
             for i = 1:4
                 # reset expansion point and increase regularization
@@ -329,7 +328,6 @@ function variationalbayes(sts, y, derivatives, w, V, p, priors, niter)    # rela
 
             dλ = [min(max(x, -1.0), 1.0) for x in dλ]      # probably precaution for numerical instabilities?
             λ = λ + dλ
-            save_object("debugDCMdlambda.jld2", (dFdλ, dλ))
 
             dF = dot(dFdλ, dλ)
             # NB: it is unclear as to whether this is being reached. In this first tests iterations seem to be 
