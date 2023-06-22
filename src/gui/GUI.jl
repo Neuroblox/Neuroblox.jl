@@ -133,6 +133,10 @@ function arguments(::Type{Neuroblox.JansenRitCBlox})
   )
 end
 
+function outputs(::Type{Neuroblox.JansenRitCBlox})
+  ["out"]
+end
+
 function arguments(::Type{Neuroblox.JansenRitSCBlox})
   OrderedDict(
     :τ => NCAD(0.014, NUMBER, 0.001, 0.1,[]),
@@ -140,6 +144,10 @@ function arguments(::Type{Neuroblox.JansenRitSCBlox})
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[]),
     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[])
   )
+end
+
+function outputs(::Type{Neuroblox.JansenRitSCBlox})
+  ["out"]
 end
 
 function arguments(::Type{Neuroblox.WilsonCowanBlox})
