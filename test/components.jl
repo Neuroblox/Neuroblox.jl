@@ -67,6 +67,7 @@ sol = simulate(singleregionODE, [], (0.0, 10.0), [])
 # connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
 @named r1 = CanonicalMicroCircuitBlox()
 @named r2 = CanonicalMicroCircuitBlox()
+@named jr = JansenRitCBlox()
 
 g = MetaDiGraph()
 add_vertex!(g, Dict(:blox => r1))
@@ -85,6 +86,16 @@ cmc_network = structural_simplify(cmc_network)
 
 sol = simulate(cmc_network, [], (0.0, 10.0), [])
 @test sum(sol[end, 2:end]) ≈ -4827.086868187682
+
+# now add a Neural mass model with one output and one input
+add_vertex!(g, Dict(:blox => jr))
+add_edge!(g, 3, 1, :weightmatrix, [0; 0; 0; 1])
+add_edge!(g, 3, 3, :weight, -1)
+
+@named cmc_network2 = ODEfromGraph(g)
+cmc_network2 = structural_simplify(cmc_network2)
+sol = simulate(cmc_network2, [], (0.0, 10.0), [])
+@test sum(sol[end, 2:end]) ≈ -4827.086868204555
 
 # now connect canonical micro circuits with symbolic weight matrices
 g = MetaDiGraph()
