@@ -125,10 +125,13 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                 else
                     if s.jcn isa Symbolics.Arr
                         bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr
-                        input = [typeof(s.jcn)(zeros(Num,length(s.jcn)))]
+                        input = [zeros(Num,length(s.jcn))]
                         for vn in inneighbors(g, v) # vertices that point towards s
                             M = get_prop(g, vn, v, :weightmatrix)
                             connector = get_prop(g, vn, :blox).connector
+                            if connector isa Symbolics.Arr
+                                connector = collect(connector)
+                            end
                             push!(input, M*connector)
                         end
                         input = sum(input)
