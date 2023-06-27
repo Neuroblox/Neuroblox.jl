@@ -132,7 +132,7 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                             if connector isa Symbolics.Arr
                                 connector = collect(connector)
                             end
-                            push!(input, M*connector)
+                            push!(input, vec(M*connector))
                         end
                         input = sum(input)
                         for i = 1:length(s.jcn)
