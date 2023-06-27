@@ -40,12 +40,15 @@ function icon(::Type{T}) where T
   string(ICONPATH, label(T), ".svg")
 end
 
+# the standard neural mass blox has one input and one output
+# please define your specific inputs and outputs when the blox
+# is different
 function inputs(::Type{T}) where T
-  String[]
+  ["in"]
 end
 
 function outputs(::Type{T}) where T
-  String[]
+  ["out"]
 end
 
 # methods
@@ -133,10 +136,6 @@ function arguments(::Type{Neuroblox.JansenRitCBlox})
   )
 end
 
-function outputs(::Type{Neuroblox.JansenRitCBlox})
-  ["out"]
-end
-
 function arguments(::Type{Neuroblox.JansenRitSCBlox})
   OrderedDict(
     :τ => NCAD(0.014, NUMBER, 0.001, 0.1,[]),
@@ -144,10 +143,6 @@ function arguments(::Type{Neuroblox.JansenRitSCBlox})
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[]),
     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[])
   )
-end
-
-function outputs(::Type{Neuroblox.JansenRitSCBlox})
-  ["out"]
 end
 
 function arguments(::Type{Neuroblox.WilsonCowanBlox})
@@ -224,11 +219,11 @@ function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
 end
 
 function inputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
-  ["in1","in2","in3","in4"]
+  ["in_ss","in_sp","in_ii","in_sp"]
 end
 
 function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
-  ["out1","out2","out3","out4"]
+  ["out_ss","out_sp","out_ii","out_sp"]
 end
 
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
