@@ -137,8 +137,7 @@ export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export Hemodynamics, LinHemo, boldsignal
-export vecparam, unvecparam, csd_Q
-export variationalbayes
+export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 
 end
