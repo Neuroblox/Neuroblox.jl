@@ -401,24 +401,35 @@ Performs a variational inference to fit a cross spectral density. Current implem
 (ToDo: generalize to different VI algorithms)
 
 Input:
-- data            : Dataframe with column names corresponding to the regions of measurement.
-- neuraldynmodel  : MTK model, it is an ODESystem or a System (haven't tested with System yet).
-- parameters: Dataframe of parameters with the following columns:
--- name: corresponds to MTK model name
--- mean: corresponds to prior mean value
--- var : corresponds to the prior variances
+- data             : Dataframe with column names corresponding to the regions of measurement.
+- neuraldynmodel   : MTK model, it is an ODESystem or a System (haven't tested with System yet).
+- observationmodel : MTK model that defines measurement function (ex. bold signal). 
+                     Current implementation limits to one measurement functional form for all regions.
+- initcond         : Dictionary of initial conditions, numerical values for all states
+- csdsetup         : Dictionary of parameters required for the computation of the cross spectral density
+-- dt              : sampling interval
+-- freq            : frequencies at which to evaluate the CSD
+-- p               : order parameter of the multivariate autoregression model
+- params           : Dataframe of parameters with the following columns:
+-- name            : corresponds to MTK model name
+-- mean            : corresponds to prior mean value
+-- variance        : corresponds to the prior variances
+- hyperparams      : Dataframe of parameters with the following columns:
+-- Πλ_pr           : prior precision matrix for λ hyperparameter(s)
+-- μλ_pr           : prior mean(s) for λ hyperparameter(s)
 """
 function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, params, hyperparams)
     # compute cross-spectral density
     y = Matrix(data);
     nd = ncol(data);                     # dimension of the data, number of regions
-    dt = csdsetup["dt"];                 # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
-    freqs = csdsetup["freq"];            # frequencies at which the CSD is evaluated
-    p = csdsetup["p"];                   # order of MAR
+    dt = csdsetup[:dt];                 # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
+    freqs = csdsetup[:freq];            # frequencies at which the CSD is evaluated
+    p = csdsetup[:p];                   # order of MAR
     mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, freqs, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
 
     jac_f = calculate_jacobian(neuraldynmodel)
+    # the following line is relevant for shared parameters accross regions
     # jac_f = substitute(jac_f, Dict([p for p in parameters(f) if occursin("κ", string(p))] .=> lnκ))
 
     grad_g = calculate_jacobian(observationmodel)[2:end]
