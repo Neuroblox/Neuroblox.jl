@@ -70,12 +70,13 @@ sol = simulate(singleregionODE, [], (0.0, 10.0), [])
 @named jr = JansenRitCBlox()
 
 g = MetaDiGraph()
-add_vertex!(g, Dict(:blox => r1))
-add_vertex!(g, Dict(:blox => r2))
-add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0;
+add_vertex!(g, Dict(:blox => r1))    # V1 (see fig. 4 in Bastos et al. 2015)
+add_vertex!(g, Dict(:blox => r2))    # V4 (see fig. 4 in Bastos et al. 2015)
+# define connections from column (source) to row (sink)
+add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0;    # superficial pyramidal to spiny stellate
                                    0 0 0 0;
                                    0 0 0 0;
-                                   0 1 0 0])
+                                   0 1 0 0])   # superficial pyramidal to deep pyramidal
 add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
                                    0 0 0 -1;
                                    0 0 0 -1;

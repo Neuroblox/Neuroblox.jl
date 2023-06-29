@@ -84,7 +84,7 @@ function csd_approx(w, sts, derivatives, param)
     # neuronal fluctuations, intrinsic noise (Gu) (1/f or AR(1) form)
     Gu = zeros(nw, nd, nd)
     Gn = zeros(nw, nd, nd)
-    G = w.^(-exp(α[2]))    # spectrum of hidden dynamics
+    G = w.^(-exp(α[2]))       # spectrum of hidden dynamics
     G /= sum(G)
     for i = 1:nd
         Gu[:, i, i] .+= exp(α[1])*G
@@ -394,4 +394,89 @@ function variationalbayes(sts, y, derivatives, w, V, p, priors, niter)    # rela
     state.Σθ = V*Σθ*V'
     state.μθ_po = μθ_po
     return state
+end
+
+"""
+Performs a variational inference to fit a cross spectral density. Current implementation provides a Variational Laplace fit. 
+(ToDo: generalize to different VI algorithms)
+
+Input:
+- data             : Dataframe with column names corresponding to the regions of measurement.
+- neuraldynmodel   : MTK model, it is an ODESystem or a System (haven't tested with System yet).
+- observationmodel : MTK model that defines measurement function (ex. bold signal). 
+                     Current implementation limits to one measurement functional form for all regions.
+- initcond         : Dictionary of initial conditions, numerical values for all states
+- csdsetup         : Dictionary of parameters required for the computation of the cross spectral density
+-- dt              : sampling interval
+-- freq            : frequencies at which to evaluate the CSD
+-- p               : order parameter of the multivariate autoregression model
+- params           : Dataframe of parameters with the following columns:
+-- name            : corresponds to MTK model name
+-- mean            : corresponds to prior mean value
+-- variance        : corresponds to the prior variances
+- hyperparams      : Dataframe of parameters with the following columns:
+-- Πλ_pr           : prior precision matrix for λ hyperparameter(s)
+-- μλ_pr           : prior mean(s) for λ hyperparameter(s)
+"""
+function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, params, hyperparams)
+    # compute cross-spectral density
+    y = Matrix(data);
+    nd = ncol(data);                     # dimension of the data, number of regions
+    dt = csdsetup[:dt];                 # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
+    freqs = csdsetup[:freq];            # frequencies at which the CSD is evaluated
+    p = csdsetup[:p];                   # order of MAR
+    mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
+    y_csd = mar2csd(mar, freqs, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
+
+    jac_f = calculate_jacobian(neuraldynmodel)
+    # the following line is relevant for shared parameters accross regions
+    # jac_f = substitute(jac_f, Dict([p for p in parameters(f) if occursin("κ", string(p))] .=> lnκ))
+
+    grad_g = calculate_jacobian(observationmodel)[2:end]
+
+    # define values of states
+    all_s = states(neuraldynmodel)
+
+    obs_states = states(observationmodel)
+    statesubs = merge.([Dict(obs_states[2] => s) for s in all_s if occursin(string(obs_states[2]), string(s))],
+                    [Dict(obs_states[3] => s) for s in all_s if occursin(string(obs_states[3]), string(s))])
+
+    # gradient of g for all regions, note that the measurement model g is defined region independent, here it is extended to all regions
+    grad_g_full = Num.(zeros(nd, length(all_s)))
+    for (i, s) in enumerate(all_s)
+        dim = parse(Int64, string(s)[2])
+        if occursin.(string(obs_states[2]), string(s))
+            grad_g_full[dim, i] = substitute(grad_g[1], statesubs[dim])
+        elseif occursin.(string(obs_states[3]), string(s))
+            grad_g_full[dim, i] = substitute(grad_g[2], statesubs[dim])
+        end
+    end
+    derivatives = Dict(:∂f => jac_f, :∂g => grad_g_full)
+
+    θΣ = diagm(vecparam(OrderedDict(params.name .=> params.variance)))
+    # depending on the definition of the priors (note that we take it from the SPM12 code), some dimensions are set to 0 and thus are not changed.
+    # Extract these dimensions and remove them from the remaining computation. I find this a bit odd and further thoughts would be necessary to understand
+    # to what extend this is a the most reasonable approach. 
+    idx = findall(x -> x != 0, θΣ);
+    V = zeros(size(θΣ, 1), length(idx));
+    order = sortperm(θΣ[idx], rev=true);
+    idx = idx[order];
+    for i = 1:length(idx)
+        V[idx[i][1], i] = 1.0
+    end
+    θΣ = V'*θΣ*V;       # reduce dimension by removing columns and rows that are all 0
+
+    ### Collect prior means and covariances ###
+    Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
+    priors = Dict(:μ => OrderedDict(params.name .=> params.mean),
+                  :Σ => Dict(
+                            :Πθ_pr => inv(θΣ),               # prior model parameter precision
+                            :Πλ_pr => hyperparams[:Πλ_pr],   # prior metaparameter precision
+                            :μλ_pr => hyperparams[:μλ_pr],   # prior metaparameter mean
+                            :Q => Q                          # decomposition of model parameter covariance
+                            )
+                );
+
+    ### Compute the variational Bayes with Laplace approximation ###
+    return variationalbayes(initcond, y_csd, derivatives, freqs, V, p, priors, 128)
 end
