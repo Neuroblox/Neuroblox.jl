@@ -141,7 +141,12 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                     else
                         input = Num(0)
                         for vn in inneighbors(g, v) # vertices that point towards s
-                            input += get_prop(g,vn,:blox).connector * get_prop(g, vn, v, :weight)
+                            connector = get_prop(g,vn,:blox).connector
+                            if connector isa Symbolics.Arr
+                                input += sum(vec(get_prop(g, vn, v, :weightmatrix)*collect(connector)))
+                            else
+                                input += connector * get_prop(g, vn, v, :weight)
+                            end
                         end
                         if haskey(props(g,v),:jcn)
                             input += get_prop(g,v,:jcn)

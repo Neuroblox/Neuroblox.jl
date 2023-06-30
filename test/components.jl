@@ -70,18 +70,18 @@ sol = simulate(singleregionODE, [], (0.0, 10.0), [])
 @named jr = JansenRitCBlox()
 
 g = MetaDiGraph()
-add_vertex!(g, Dict(:blox => r1))    # V1 (see fig. 4 in Bastos et al. 2015)
-add_vertex!(g, Dict(:blox => r2))    # V4 (see fig. 4 in Bastos et al. 2015)
+add_vertex!(g, Dict(:blox => r1)) # V1 (see fig. 4 in Bastos et al. 2015)
+add_vertex!(g, Dict(:blox => r2)) # V4 (see fig. 4 in Bastos et al. 2015)
+add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0; # superficial pyramidal to spiny stellate
+                                   0 0 0 0;
+                                   0 0 0 0;
+                                   0 1 0 0]) # superficial pyramidal to deep pyramidal
 # define connections from column (source) to row (sink)
-add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0;    # superficial pyramidal to spiny stellate
-                                   0 0 0 0;
-                                   0 0 0 0;
-                                   0 1 0 0])   # superficial pyramidal to deep pyramidal
-add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0;
+add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0; 
                                    0 0 0 -1;
                                    0 0 0 -1;
                                    0 0 0  0])
-# TODO: ODEfromGraphdirect fails when there is only one edge.
+
 @named cmc_network = ODEfromGraph(g)
 cmc_network = structural_simplify(cmc_network)
 
@@ -91,12 +91,13 @@ sol = simulate(cmc_network, [], (0.0, 10.0), [])
 # now add a Neural mass model with one output and one input
 add_vertex!(g, Dict(:blox => jr))
 add_edge!(g, 3, 1, :weightmatrix, [0; 0; 0; 1])
+add_edge!(g, 1, 3, :weightmatrix, [[1 0 0 0];])
 add_edge!(g, 3, 3, :weight, -1)
 
 @named cmc_network2 = ODEfromGraph(g)
 cmc_network2 = structural_simplify(cmc_network2)
 sol = simulate(cmc_network2, [], (0.0, 10.0), [])
-@test sum(sol[end, 2:end]) ≈ -4827.086868204555
+@test sum(sol[end, 2:end]) ≈ -4823.399802568824
 
 # now connect canonical micro circuits with symbolic weight matrices
 g = MetaDiGraph()
