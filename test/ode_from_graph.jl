@@ -1,7 +1,7 @@
 using Neuroblox, Test, SparseArrays, Graphs, MetaGraphs
 
-@named GPe = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named GPe = HarmonicOscillatorBlox()
+@named STN = HarmonicOscillatorBlox()
 @named BP = BandPassFilterBlox()
 
 # Connect Regions through Adjacency Matrix
