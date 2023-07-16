@@ -1,11 +1,11 @@
-function parameter_list(para_dict)
-    params = []
-    for (n,v) in para_dict
-         if typeof(v) == Num
-            push!(params, ParentScope(v))
+function scope_dict(para_dict)
+    para_dict_copy = copy(para_dict)
+    for (n,v) in para_dict_copy
+        if typeof(v) == Num
+            para_dict_copy[n] = ParentScope(v)
         else
-            push!(params, (@parameters $n=v)[1])
+            para_dict_copy[n] = (@parameters $n=v)[1]
         end
     end
-    return params
+    return para_dict_copy
 end
