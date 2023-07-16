@@ -54,11 +54,15 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        params = @parameters τ=τ H=H λ=λ r=r
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ,:H => H,:λ => λ,:r => r))
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
+        odesys = ODESystem(eqs, t, sts, values(para_dict); name=name)
         new(τ, H, λ, r, odesys.x,[odesys.x],[odesys.x,odesys.y],
             Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
             odesys)
@@ -78,11 +82,15 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
-        params = @parameters τ=τ H=H λ=λ r=r
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ,:H => H,:λ => λ,:r => r))
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
+        odesys = ODESystem(eqs, t, sts, values(para_dict); name=name)
         new(τ, H, λ, r, odesys.x,[odesys.x],[odesys.x,odesys.y],
             Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
             odesys)

@@ -1,7 +1,7 @@
 using Neuroblox, Test, SparseArrays, Graphs, MetaGraphs
 
-@named GPe = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=0.1)
-@named STN = harmonic_oscillator(ω=4*2*π, ζ=1, k=(4*2*π)^2, h=1)
+@named GPe = HarmonicOscillatorBlox()
+@named STN = HarmonicOscillatorBlox()
 @named BP = BandPassFilterBlox()
 
 # Connect Regions through Adjacency Matrix
@@ -78,3 +78,18 @@ add_edge!(gg,3,1,:weight,.2)
 @test typeof(neuron_net) == ODESystem
 @test typeof(neuron_net_graph) == ODESystem
 @test equations(neuron_net) == equations(neuron_net_graph)
+
+# parameter sharing test
+@parameters λ=400.0
+@named jr1 = JansenRitSCBlox(τ=0.014, H=20.0, λ=λ, r=0.1)
+@named jr2 = JansenRitSCBlox(τ=0.014, H=20.0, λ=λ, r=0.1)
+jg = MetaDiGraph()
+add_blox!(jg,jr1)
+add_blox!(jg,jr2)
+add_edge!(jg,1,2,:weight,1.0)
+add_edge!(jg,2,1,:weight,2.0)
+add_edge!(jg,1,1,:weight,-1.0)
+add_edge!(jg,2,2,:weight,-2.0)
+@named jg_graph = ODEfromGraph(jg)
+jg_graph_s = structural_simplify(jg_graph)
+@test length(parameters(jg_graph_s))==7

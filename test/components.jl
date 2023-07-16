@@ -127,11 +127,11 @@ Components Test for Cortical-Subcortical Jansen-Rit blox
 """
 
 # Create Regions
-@named GPe       = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
-@named STN       = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi       = jansen_ritC(τ=0.014, H=20, λ=400, r=0.1)
-@named Thalamus  = jansen_ritSC(τ=0.002, H=10, λ=20, r=5)
-@named PFC       = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
+@named GPe       = JansenRitCBlox(τ=0.04, H=20, λ=400, r=0.1)
+@named STN       = JansenRitCBlox(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi       = JansenRitCBlox(τ=0.014, H=20, λ=400, r=0.1)
+@named Thalamus  = JansenRitSCBlox(τ=0.002, H=10, λ=20, r=5)
+@named PFC       = JansenRitSCBlox(τ=0.001, H=20, λ=5, r=0.15)
 
 # Connect Regions through Adjacency Matrix
 blox = [GPe, STN, GPi, Thalamus, PFC]
