@@ -24,8 +24,7 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 returns an ODESystem of the biophysical model for the hemodynamics
 """
 mutable struct Hemodynamics <: NBComponent
-    lnκ::Num
-    lnτ::Num
+    p_dict::Dict{Symbol,Union{Real,Num}}
     connector::Num
     odesystem::ODESystem
     function Hemodynamics(;name, lnκ=0.0, lnτ=0.0)
@@ -37,8 +36,9 @@ mutable struct Hemodynamics <: NBComponent
             H(5) - resting state oxygen extraction                (E0)
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-
-        params = @parameters lnκ=lnκ lnτ=lnτ
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:lnκ => lnκ,:lnτ => lnτ))
+        lnκ=para_dict[:lnκ]
+        lnτ=para_dict[:lnτ]
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
 
         eqs = [
@@ -47,19 +47,22 @@ mutable struct Hemodynamics <: NBComponent
             D(lnν) ~ (exp(lnf) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
-        odesys = ODESystem(eqs, t, states, params; name=name)
-        new(lnκ, lnτ, Num(0), odesys)
+        odesys = ODESystem(eqs, t, states, values(para_dict); name=name)
+        new(para_dict, Num(0), odesys)
     end
 end
 
 
 mutable struct LinHemo <: NBComponent
-    lnκ::Num
-    lnτ::Num
+    p_dict::Dict{Symbol,Union{Real,Num}}
     connector::Num
     bloxinput::Num
     odesystem::ODESystem
     function LinHemo(;name, lnκ=0.0, lnτ=0.0)
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:lnκ => lnκ,:lnτ => lnτ))
+        lnκ=para_dict[:lnκ]
+        lnτ=para_dict[:lnτ]
+
         @variables jcn(t)
         @named nmm = LinearNeuralMassBlox()
         @named hemo = Hemodynamics(;lnκ=lnκ, lnτ=lnτ)
@@ -69,7 +72,7 @@ mutable struct LinHemo <: NBComponent
         add_vertex!(g, :blox, hemo)
         add_edge!(g, 1, 2, :weight, 1.0)
         linhemo = ODEfromGraph(g; name=name)
-        new(lnκ, lnτ, linhemo.nmm₊x, linhemo.jcn, linhemo)
+        new(para_dict, linhemo.nmm₊x, linhemo.jcn, linhemo)
     end
 end
 
