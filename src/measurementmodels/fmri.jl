@@ -24,7 +24,7 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 returns an ODESystem of the biophysical model for the hemodynamics
 """
 mutable struct Hemodynamics <: NBComponent
-    p_dict::Dict{Symbol,Union{Real,Num}}
+    p_dict::Dict{Symbol, Union{Real, Num}}
     connector::Num
     odesystem::ODESystem
     function Hemodynamics(;name, lnκ=0.0, lnτ=0.0)
@@ -36,7 +36,7 @@ mutable struct Hemodynamics <: NBComponent
             H(5) - resting state oxygen extraction                (E0)
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:lnκ => lnκ,:lnτ => lnτ))
+        para_dict = scope_dict(Dict{Symbol, Union{Real,Num}}(:lnκ => lnκ, :lnτ => lnτ))
         lnκ=para_dict[:lnκ]
         lnτ=para_dict[:lnτ]
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
@@ -54,15 +54,10 @@ end
 
 
 mutable struct LinHemo <: NBComponent
-    p_dict::Dict{Symbol,Union{Real,Num}}
     connector::Num
     bloxinput::Num
     odesystem::ODESystem
     function LinHemo(;name, lnκ=0.0, lnτ=0.0)
-        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:lnκ => lnκ,:lnτ => lnτ))
-        lnκ=para_dict[:lnκ]
-        lnτ=para_dict[:lnτ]
-
         @variables jcn(t)
         @named nmm = LinearNeuralMassBlox()
         @named hemo = Hemodynamics(;lnκ=lnκ, lnτ=lnτ)
@@ -72,32 +67,9 @@ mutable struct LinHemo <: NBComponent
         add_vertex!(g, :blox, hemo)
         add_edge!(g, 1, 2, :weight, 1.0)
         linhemo = ODEfromGraph(g; name=name)
-        new(para_dict, linhemo.nmm₊x, linhemo.jcn, linhemo)
+        new(linhemo.nmm₊x, linhemo.jcn, linhemo)
     end
 end
-
-# function hemodynamics(;name, lnκ=0.0, lnτ=0.0)
-#     #= hemodynamic parameters
-#         H(1) - signal decay                                   d(ds/dt)/ds)
-#         H(2) - autoregulation                                 d(ds/dt)/df)
-#         H(3) - transit time                                   (t0)
-#         H(4) - exponent for Fout(v)                           (alpha)
-#         H(5) - resting state oxygen extraction                (E0)
-#     =#
-#     H = [0.64, 0.32, 2.00, 0.32, 0.4]
-
-#     params = @parameters lnκ=lnκ lnτ=lnτ
-#     states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
-
-#     eqs = [
-#         D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
-#         D(lnf) ~ s / exp(lnf),
-#         D(lnν) ~ (exp(lnf) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
-#         D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
-#     ]
-
-#     return ODESystem(eqs, t, states, params; name=name)
-# end
 
 """
 BOLD signal model as described in: 

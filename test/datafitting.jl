@@ -9,11 +9,10 @@ nd = ncol(data)                         # number of dimensions
 
 ########## assemble the model ##########
 
-# TODO: figure out a good way to deal with shared parameters over regions
-# @parameters lnκ=0.0     # define brain-wide decay parameter for hemodynamics
+@parameters lnκ=0.0     # define brain-wide decay parameter for hemodynamics
 g = MetaDiGraph()
 for ii = 1:nd
-    region = LinHemo(;name=Symbol("r$ii"))
+    region = LinHemo(;name=Symbol("r$ii"), lnκ=lnκ)
     add_blox!(g, region)
 end
 
@@ -83,4 +82,4 @@ results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperp
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @show results.F, vars["F"]
 @test results.F < vars["F"]*0.99
-@test_broken results.F > vars["F"]*1.01
+@test results.F > vars["F"]*1.01
