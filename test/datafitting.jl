@@ -38,9 +38,9 @@ end
 
 modelparam = OrderedDict()
 for par in parameters(neuronmodel)
-    while Symbolics.getdefaultval(par) isa Num
-        par = Symbolics.getdefaultval(par)
-    end
+    # while Symbolics.getdefaultval(par) isa Num
+    #     par = Symbolics.getdefaultval(par)
+    # end
     modelparam[par] = Symbolics.getdefaultval(par)
 end
 # Noise parameter mean
@@ -77,6 +77,7 @@ hyperparams = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter pr
                   )
 
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"])
+foo = Ref{Any}()
 results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###

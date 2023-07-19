@@ -1,4 +1,6 @@
 module Neuroblox
+using RuntimeGeneratedFunctions
+RuntimeGeneratedFunctions.init(@__MODULE__)
 
 using Reexport
 @reexport using ModelingToolkit
