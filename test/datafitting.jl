@@ -78,6 +78,7 @@ hyperparams = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter pr
 
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"])
 foo = Ref{Any}()
+bar = Ref{Any}()
 results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
