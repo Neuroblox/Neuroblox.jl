@@ -119,6 +119,8 @@ function transferfunction_fmri(w, idx_A, derivatives, params)
 
     C /= 16.0   # TODO: unclear why C is devided by 16 but see spm_fx_fmri.m:49
     Main.bar[] = derivatives[:∂f], params
+    @show nd
+    @show nd
     ∂f = derivatives[:∂f](params[1:(nd^2+nd+1)]) #convert(Array{Real}, substitute(derivatives[:∂f], params))
 
     dfdu = zeros(eltype(C), size(∂f, 1), length(C))
@@ -532,12 +534,13 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     end
 
     idx_A = findall(occursin.("A[", string.(jac_f)))
-    derivatives = Dict(:∂f => generate_jacobian(neuraldynmodel, expression = Val{true})[1],
+    derivatives = Dict(:∂f => generate_jacobian(neuraldynmodel, expression = Val{false})[1],
                        :∂g => eval(Symbolics.build_function(substitute(grad_g_full, initcond), params.name[end])[1]))
-    tmp = derivatives[:∂f]
-    Main.foo[] = tmp, initcond, params
+    df = derivatives[:∂f]
     tmp = [v for v in values(initcond)]
-    derivatives[:∂f] = p -> derivatives[:∂f](tmp, p, t)
+    dfp(pp) = df(tmp, pp, t)
+    @show dfp(rand(13))
+    derivatives[:∂f] = dfp
     θΣ = diagm(vecparam(OrderedDict(params.name .=> params.variance)))
     # depending on the definition of the priors (note that we take it from the SPM12 code), some dimensions are set to 0 and thus are not changed.
     # Extract these dimensions and remove them from the remaining computation. I find this a bit odd and further thoughts would be necessary to understand
