@@ -457,7 +457,7 @@ sol = solve(prob, Vern7(), saveat=0.1)
 test for basic MPR Blox
 """
 freq = 50 #range is 20 = 25Hz, 50 = 10Hz
-@named mpr=NextGenerationMPRBlox(ω=50)
+@named mpr=NextGenerationMPRBlox(ω=π/freq)
 sys = mpr.odesystem
 mpr_simp = structural_simplify(sys)
 prob = ODEProblem(mpr_simp, [], (0, 1000))
