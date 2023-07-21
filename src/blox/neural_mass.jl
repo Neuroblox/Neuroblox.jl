@@ -153,6 +153,26 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
 
+# Primitive MPR (QIF) Next-Gen NMM blox for oscillation generation
+mutable struct NextGenerationMPRBlox <: NeuralMassBlox
+    Δ::Num
+    η::Num
+    J::Num
+    I0::Num
+    ω::Num
+    connector::Num
+    odesystem::ODESystem
+    function NextGenerationMPRBlox(;name, Δ=1, η=-5, J=15, I0=3, ω=π/20)
+        params = @parameters Δ=Δ η=η J=J I0 = I0 ω=ω
+        sts = @variables r(t)=0 v(t)=-2
+        eqs = [D(r) ~ (Δ/π) + 2*r*v
+               D(v) ~ v^2 + η + J*r + I0*sin(ω*t)-(π*r)^2]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(Δ,η,J,I0,ω,odesys.v,odesys)
+    end
+
+end
+
 mutable struct LarterBreakspearBlox <: NeuralMassBlox
     C::Num
     δ_VZ::Num

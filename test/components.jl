@@ -452,3 +452,15 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 @test typeof(wta_simp)==ODESystem
 @test sol.t[end]==10
+
+"""
+test for basic MPR Blox
+"""
+freq = 50 #range is 20 = 25Hz, 50 = 10Hz
+@named mpr=NextGenerationMPRBlox(ω=50)
+sys = mpr.odesystem
+mpr_simp = structural_simplify(sys)
+prob = ODEProblem(mpr_simp, [], (0, 1000))
+sol = solve(prob, Vern7(), saveat=1)
+
+@test typeof(prob)==ODESystem
