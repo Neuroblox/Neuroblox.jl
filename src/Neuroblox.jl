@@ -55,13 +55,16 @@ abstract type BloxConnectComplex <: BloxConnection end
 abstract type BloxConnectMultiFloat <: BloxConnection end
 abstract type BloxConnectMultiComplex <: BloxConnection end
 
+# dictionary type for Blox parameters
+Para_dict = Dict{Symbol,Union{Float64,Int64,Num}}
+
 include("Neurographs.jl")
+include("blox/blox_utilities.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
 include("datafitting/spectralDCM.jl")
-include("blox/blox_utilities.jl")
 include("blox/neural_mass.jl")
 include("blox/cortical_blox.jl")
 include("blox/canonicalmicrocircuit.jl")
