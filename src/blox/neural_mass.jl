@@ -12,16 +12,16 @@ mutable struct LinearNeuralMassBlox <: NBComponent
     end
 end
 
-mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
+mutable struct HarmonicOscillatorBlox{T} <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
-    p_dict::Para_dict
+    p_dict::T
     connector::Num
     noDetail::Vector{Num}
     detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
-        para_dict = scope_dict!(Para_dict(:ω => ω,:ζ => ζ,:k => k,:h => h))
+        para_dict = scope_dict!(Dict(:ω => ω,:ζ => ζ,:k => k,:h => h))
         ω=para_dict[:ω]
         ζ=para_dict[:ζ]
         k=para_dict[:k]
@@ -42,15 +42,15 @@ const harmonic_oscillator = HarmonicOscillatorBlox
 # function gui.icon(Type::HarmonicOscillatorBlox)
 #    return HarmonicOscillatorImage
 
-mutable struct JansenRitCBlox <: NeuralMassBlox
-    p_dict::Para_dict
+mutable struct JansenRitCBlox{T} <: NeuralMassBlox
+    p_dict::T
     connector::Num
     noDetail::Vector{Num}
     detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        para_dict = scope_dict!(Para_dict(:τ => τ,:H => H,:λ => λ,:r => r))
+        para_dict = scope_dict!(Dict(:τ => τ,:H => H,:λ => λ,:r => r))
         τ=para_dict[:τ]
         H=para_dict[:H]
         λ=para_dict[:λ]
@@ -67,15 +67,15 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const jansen_ritC = JansenRitCBlox
 
-mutable struct  JansenRitSCBlox <: NeuralMassBlox
-    p_dict::Para_dict
+mutable struct  JansenRitSCBlox{T} <: NeuralMassBlox
+    p_dict::T
     connector::Num
     noDetail::Vector{Num}
     detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
-        para_dict = scope_dict!(Para_dict(:τ => τ,:H => H,:λ => λ,:r => r))
+        para_dict = scope_dict!(Dict(:τ => τ,:H => H,:λ => λ,:r => r))
         τ=para_dict[:τ]
         H=para_dict[:H]
         λ=para_dict[:λ]
