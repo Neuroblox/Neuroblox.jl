@@ -24,7 +24,7 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 returns an ODESystem of the biophysical model for the hemodynamics
 """
 mutable struct Hemodynamics{T} <: NBComponent
-    p_dict::T
+    p_dict::Dict{Symbol,T}
     connector::Num
     odesystem::ODESystem
     function Hemodynamics(;name, lnκ=0.0, lnτ=0.0)
@@ -36,7 +36,7 @@ mutable struct Hemodynamics{T} <: NBComponent
             H(5) - resting state oxygen extraction                (E0)
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        para_dict = scope_dict!(Dict(:lnκ => lnκ, :lnτ => lnτ))
+        para_dict = scope_dict!(Dict{Symbol,T}(:lnκ => lnκ, :lnτ => lnτ))
         lnκ=para_dict[:lnκ]
         lnτ=para_dict[:lnτ]
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
@@ -48,7 +48,7 @@ mutable struct Hemodynamics{T} <: NBComponent
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
         odesys = ODESystem(eqs, t, states, values(para_dict); name=name)
-        new(para_dict, Num(0), odesys)
+        new{typeof(para_dict)}(para_dict, Num(0), odesys)
     end
 end
 
