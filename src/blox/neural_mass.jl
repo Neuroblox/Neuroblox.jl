@@ -30,7 +30,7 @@ mutable struct HarmonicOscillatorBlox{T} <: NeuralMassBlox
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         odesys = ODESystem(eqs, t, sts, values(para_dict); name=name)
-        new{typeof(para_dict)}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
+        new{}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
             Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
             odesys)
     end
@@ -59,7 +59,7 @@ mutable struct JansenRitCBlox{T} <: NeuralMassBlox
         eqs    = [D(x) ~ y - ((2/τ)*x),
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, values(para_dict); name=name)
-        new{typeof(para_dict)}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
+        new{}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
             Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
             odesys)
     end
@@ -84,7 +84,7 @@ mutable struct  JansenRitSCBlox{T} <: NeuralMassBlox
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, values(para_dict); name=name)
-        new{typeof(para_dict)}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
+        new{}(para_dict, odesys.x,[odesys.x],[odesys.x,odesys.y],
             Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
             odesys)
     end

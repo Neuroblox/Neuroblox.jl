@@ -48,7 +48,7 @@ mutable struct Hemodynamics{T} <: NBComponent
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
         odesys = ODESystem(eqs, t, states, values(para_dict); name=name)
-        new{typeof(para_dict)}(para_dict, Num(0), odesys)
+        new{}(para_dict, Num(0), odesys)
     end
 end
 
