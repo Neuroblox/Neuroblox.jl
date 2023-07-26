@@ -36,7 +36,7 @@ mutable struct Hemodynamics{T} <: NBComponent
             H(5) - resting state oxygen extraction                (E0)
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        para_dict = scope_dict!(Dict{Symbol,T}(:lnκ => lnκ, :lnτ => lnτ))
+        para_dict = scope_dict!(Dict(:lnκ => lnκ, :lnτ => lnτ))
         lnκ=para_dict[:lnκ]
         lnτ=para_dict[:lnτ]
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
