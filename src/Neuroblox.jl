@@ -56,7 +56,7 @@ abstract type BloxConnectMultiFloat <: BloxConnection end
 abstract type BloxConnectMultiComplex <: BloxConnection end
 
 # dictionary type for Blox parameters
-Para_dict = Dict{Symbol, <: Real}
+Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
 include("Neurographs.jl")
 include("blox/blox_utilities.jl")
