@@ -144,7 +144,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
         Z = ModelingToolkit.unwrap(Z)
         g = ModelingToolkit.unwrap(g)
         C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
-        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*Z))
+        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys)
@@ -152,6 +152,105 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
 end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
+
+mutable struct NextGenerationBloxCoupled <: NeuralMassBlox
+    η_0e::Num
+    η_0i::Num
+    Δ_E::Num
+    Δ_I::Num
+    v_synE::Num
+    v_synI::Num
+    κ_EE::Num
+    κ_EI::Num
+    κ_IE::Num
+    κ_II::Num
+    α_invEE::Num
+    α_invEI::Num
+    α_invIE::Num
+    α_invII::Num
+    τ_E::Num
+    τ_I::Num
+    connector::Num
+    odesystem::ODESystem
+    function NextGenerationBloxCoupled(;name, η_0e=1.6, η_0i=1, Δ_E=0.2, Δ_I=0.2, v_synE=10, v_synI=-12, κ_EE=1, κ_EI=2, κ_IE=1.5, κ_II=2, α_invEE=3, α_invEI=3, α_invIE=10, α_invII=10, τ_E=12, τ_I=18)
+        params = @parameters η_0e=η_0e η_0i=η_0i Δ_E=Δ_E Δ_I=Δ_I v_synE=v_synE v_synI=v_synI κ_EE=κ_EE κ_EI=κ_EI κ_IE=κ_IE κ_II=κ_II α_invEE=α_invEE α_invEI=α_invEI α_invIE=α_invIE α_invII=α_invII τ_E=τ_E τ_I=τ_I
+        sts = @variables Z_E(t)=0.5 Z_I(t)=0.5 g_EE(t)=1.6 g_EI(t)=1.6 g_IE(t)=1.6 g_II(t)=1.6
+        eqs = [D(Z_E) ~ (1/τ_E)*((-im*((Z_E-1)^2)/2)) #+ ((((Z_E^2+1)^2)/2)*(-Δ_E+(-im*η_0e)))) #+ ((im*((Z_E+1)^2)/2)*v_synE*g_EE) - (((Z_E^2-1)/2)*g_EE) + ((im*((Z_E+1)^2)/2)*v_synI*g_EI) - (((Z_E^2-1)/2)*g_EI))
+               D(Z_I) ~ 0 #(1/τ_I)*((-im*((Z_I-1)^2)/2) + ((((Z_I^2+1)^2)/2)*(-Δ_I+(-im*η_0i)))) #+ ((im*((Z_I+1)^2)/2)*v_synE*g_IE) - (((Z_I^2-1)/2)*g_IE) + ((im*((Z_I+1)^2)/2)*v_synI*g_II) - (((Z_I^2-1)/2)*g_II))
+               D(g_EE) ~ α_invEE*((κ_EE/(τ_E*pi))*(1-abs(Z_E)^2)/(1+Z_E+conj(Z_E)+abs(Z_E)^2) - g_EE)
+               D(g_EI) ~ α_invEI*((κ_EI/(τ_I*pi))*(1-abs(Z_I)^2)/(1+Z_I+conj(Z_I)+abs(Z_I)^2) - g_EI)
+               D(g_IE) ~ α_invIE*((κ_IE/(τ_E*pi))*(1-abs(Z_E)^2)/(1+Z_E+conj(Z_E)+abs(Z_E)^2) - g_IE)
+               D(g_II) ~ α_invII*((κ_II/(τ_I*pi))*(1-abs(Z_I)^2)/(1+Z_I+conj(Z_I)+abs(Z_I)^2) - g_II)]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(η_0e, η_0i, Δ_E, Δ_I, v_synE, v_synI, κ_EE, κ_EI, κ_IE, κ_II, α_invEE, α_invEI, α_invIE, α_invII, τ_E, τ_I, odesys.Z_E, odesys)
+    end
+end
+
+# Notation from Chen and Campbell 2022
+# Parameters come from Table 1 and Figure 1 caption
+mutable struct NextGenerationBloxIz <: NeuralMassBlox
+    α::Num
+    Δ::Num
+    η::Num
+    I_ext::Num
+    g_syn::Num
+    a::Num
+    s_jump::Num
+    v_peak::Num
+    τ_s::Num
+    e_r::Num
+    b::Num
+    w_jump::Num
+    v_reset::Num
+    connector::Num
+    odesystem::ODESystem
+    function NextGenerationBloxIz(;name, α=0.6215, Δ=0.02, η=0.12, I_ext=0, g_syn=1.2308, a=0.0077, s_jump=1.2308, v_peak=200, τ_s=2.6, e_r=1, b=-0.0062, w_jump=0.0189, v_reset=-200)
+        params = @parameters α=α g_syn=g_syn a=a s_jump=s_jump v_peak=v_peak τ_s=τ_s e_r=e_r b=b w_jump=w_jump v_reset=v_reset
+        sts = @variables r(t)=0 v(t)=0 w(t)=0 s(t)=0
+        eqs = [D(r) ~ Δ/π + 2*r*v - (α+g_syn*s)*r
+                D(v) ~ v^2 - α*v - w + η + I_ext + g_syn*s*(e_r-v)-(π*r)^2
+                D(w) ~ a*(b*v-w)+w_jump*r
+                D(s) ~ -s/τ_s + s_jump*r]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(α, Δ, η, I_ext, g_syn, a, s_jump, v_peak, τ_s, e_r, b, w_jump, v_reset, odesys.v, odesys)
+    end
+end
+
+# Old version to ask a question about during coding meeting
+# mutable struct NextGenerationBloxEI <: NeuralMassBlox
+#     η_0e::Num
+#     η_0i::Num
+#     Δ_E::Num
+#     Δ_I::Num
+#     v_synE::Num
+#     v_synI::Num
+#     κ_EE::Num
+#     κ_EI::Num
+#     κ_IE::Num
+#     κ_II::Num
+#     α_invEE::Num
+#     α_invEI::Num
+#     α_invIE::Num
+#     α_invII::Num
+#     τ_E::Num
+#     τ_I::Num
+#     connector::Num
+#     odesystem::ODESystem
+#     function NextGenerationBloxEI(;name, η_0e=1.6, η_0i=1, Δ_E=0.2, Δ_I=0.2, v_synE=10, v_synI=-12, κ_EE=1, κ_EI=2, κ_IE=1.5, κ_II=2, α_invEE=3, α_invEI=3, α_invIE=10, α_invII=10, τ_E=12, τ_I=18)
+#         params = @parameters η_0e=η_0e η_0i=η_0i Δ_E=Δ_E Δ_I=Δ_I v_synE=v_synE v_synI=v_synI κ_EE=κ_EE κ_EI=κ_EI κ_IE=κ_IE κ_II=κ_II α_invEE=α_invEE α_invEI=α_invEI α_invIE=α_invIE α_invII=α_invII τ_E=τ_E τ_I=τ_I
+#         sts = @variables Z_E(t)=0.5 Z_I(t)=0.5 g_EE(t)=1.6 g_EI(t)=1.6 g_IE(t)=1.6 g_II(t)=1.6
+#         f(z, δ, η) = (-im*((z-1)^2)/2) + ((((z^2+1)^2)/2)*(-δ+(-im*η)))
+#         g(z, g_xx, v_syn) = ((im*((z+1)^2)/2)*v_syn*g_xx) - (((z^2-1)/2)*g_xx)
+#         eqs = [D(Z_E) ~ (1/τ_E)*(f(Z_E, Δ_E, η_0e) + g(Z_E, g_EE, v_synE) + g(Z_E, g_EI, v_synI))
+#                D(Z_I) ~ (1/τ_I)*(f(Z_I, Δ_I, η_0i) + g(Z_I, g_IE, v_synE) + g(Z_I, g_II, v_synI))
+#                D(g_EE) ~ α_invEE*((κ_EE/(τ_E*pi))*(1-abs(Z_E)^2)/(1+Z_E+conj(Z_E)+abs(Z_E)^2) - g_EE)
+#                D(g_EI) ~ α_invEI*((κ_EI/(τ_I*pi))*(1-abs(Z_I)^2)/(1+Z_I+conj(Z_I)+abs(Z_I)^2) - g_EI)
+#                D(g_IE) ~ α_invIE*((κ_IE/(τ_E*pi))*(1-abs(Z_E)^2)/(1+Z_E+conj(Z_E)+abs(Z_E)^2) - g_IE)
+#                D(g_II) ~ α_invII*((κ_II/(τ_I*pi))*(1-abs(Z_I)^2)/(1+Z_I+conj(Z_I)+abs(Z_I)^2) - g_II)]
+#         odesys = ODESystem(eqs, t, sts, params; name=name)
+#         new(η_0e, η_0i, Δ_E, Δ_I, v_synE, v_synI, κ_EE, κ_EI, κ_IE, κ_II, α_invEE, α_invEI, α_invIE, α_invII, τ_E, τ_I, odesys.Z_E, odesys)
+#     end
+# end
 
 # Primitive MPR (QIF) Next-Gen NMM blox for oscillation generation
 mutable struct NextGenerationMPRBlox <: NeuralMassBlox

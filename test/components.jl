@@ -464,3 +464,16 @@ prob = ODEProblem(mpr_simp, [], (0, 1000))
 sol = solve(prob, Vern7(), saveat=1)
 
 @test typeof(prob)==ODESystem
+
+"""
+test for NextGen excitatory-inhibitory coupled mass
+"""
+κ_II = 2
+@named next_genEI = NextGenerationBloxCoupled(κ_II=κ_II)
+sys = next_genEI.odesystem
+next_genEI_simp = structural_simplify(sys)
+prob = ODEProblem(next_genEI_simp, [], (0, 1000))
+sol = solve(prob, Vern7(), saveat=1)
+@test typeof(prob)==ODESystem
+
+"""
