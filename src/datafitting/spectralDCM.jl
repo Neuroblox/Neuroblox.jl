@@ -16,55 +16,16 @@ variationalbayes : main routine that computes the variational Bayes estimate of 
 using ForwardDiff
 using ForwardDiff: Dual
 using ForwardDiff: Partials
-using FFTW: ifft
 using LinearAlgebra: Eigen
 using LinearAlgebra
 using RuntimeGeneratedFunctions
 # using ToeplitzMatrices
-# using ExponentialUtilities
+using ExponentialUtilities
 
 ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
 using ChainRules: _eigen_norm_phase_fwd!
 tagtype(::Dual{T,V,N}) where {T,V,N} = T
 
-
-function idft(x::AbstractArray)
-    """discrete inverse fourier transform"""
-    N = size(x)[1]
-    out = Array{eltype(x)}(undef,N)
-    for n in 0:N-1
-        out[n+1] = 1/N*sum([x[k+1]*exp(2*im*π*k*n/N) for k in 0:N-1])
-    end
-    return out
-end
-
-function FFTW.ifft(x::Array{Complex{Dual{T, P, N}}}) where {T, P, N}
-    return ifft(real(x)) + 1im*ifft(imag(x))
-end
-
-function FFTW.ifft(x::Array{Dual{T, P, N}}) where {T, P, N}
-    v = (tmp->tmp.value).(x)
-    iftx = ifft(v)
-    iftrp = Array{Partials}(undef, length(x))
-    iftip = Array{Partials}(undef, length(x))
-    local iftrp_agg, iftip_agg
-    for i = 1:N
-        dx = (tmp->tmp.partials[i]).(x)
-        iftdx = ifft(dx)
-        if i == 1
-            iftrp_agg = real(iftdx) .* dx
-            iftip_agg = (1im * imag(iftdx)) .* dx
-        else
-            iftrp_agg = cat(iftrp_agg, real(iftdx) .* dx, dims=2)
-            iftip_agg = cat(iftip_agg, (1im * imag(iftdx)) .* dx, dims=2)
-        end
-    end
-    for i = 1:length(x)
-        iftrp[i] = Partials(Tuple(iftrp_agg[i, :]))
-        iftip[i] = Partials(Tuple(iftip_agg[i, :]))
-    end
-    return Complex.(Dual{T, P, N}.(real(iftx), iftrp), Dual{T, P, N}.(imag(iftx), iftip))
-end
 
 function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     nd = size(M, 1)
@@ -116,10 +77,11 @@ end
 function transferfunction_fmri(w, idx_A, derivatives, params)
     nd = Int(sqrt(length(idx_A)))
     C = params[(6+2nd+nd^2):(5+3nd+nd^2)]
-
     C /= 16.0   # TODO: unclear why C is devided by 16 but see spm_fx_fmri.m:49
-    Main.bar[] = derivatives[:∂f], params
-    ∂f = derivatives[:∂f](params[1:(nd^2+nd+1)]) #convert(Array{Real}, substitute(derivatives[:∂f], params))
+    ∂f = derivatives[:∂f](params[1:(nd^2+nd+1)])   #convert(Array{Real}, substitute(derivatives[:∂f], params))
+    if ∂f isa Vector
+        ∂f = reshape(∂f, nd*5, nd*5)     # TODO: generalize this to arbitrary number of states! This is specific for LinHemo!
+    end
 
     dfdu = zeros(eltype(C), size(∂f, 1), length(C))
     dfdu[CartesianIndex.([(idx[2][1], idx[1]) for idx in enumerate(idx_A[[(i-1)*nd+i for i=1:nd]])])] = C
@@ -510,34 +472,20 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, freqs, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
 
-    jac_f = calculate_jacobian(neuraldynmodel)
-    grad_g = calculate_jacobian(observationmodel)[2:end]
-
-    # define values of states
-    all_s = states(neuraldynmodel)
-
-    obs_states = states(observationmodel)
-    statesubs = merge.([Dict(obs_states[2] => s) for s in all_s if occursin(string(obs_states[2]), string(s))],
-                    [Dict(obs_states[3] => s) for s in all_s if occursin(string(obs_states[3]), string(s))])
-    
-    # gradient of g for all regions, note that the measurement model g is defined region independent, here it is extended to all regions
-    grad_g_full = Num.(zeros(nd, length(all_s)))
-    for (i, s) in enumerate(all_s)
-        dim = parse(Int64, string(s)[2])
-        if occursin.(string(obs_states[2]), string(s))
-            grad_g_full[dim, i] = substitute(grad_g[1], statesubs[dim])
-        elseif occursin.(string(obs_states[3]), string(s))
-            grad_g_full[dim, i] = substitute(grad_g[2], statesubs[dim])
+    grad_full = function(p, grad, sts, nd)
+        tmp = zeros(typeof(p), nd, length(sts))
+        for i in 1:nd
+            tmp[i, (i-1)*5 .+ (4:5)] = grad(vcat([1], sts[(i-1)*5 .+ (5:-1:4)]), p, t)[3:-1:2]
         end
+        return tmp
     end
+    jac_f = generate_jacobian(neuraldynmodel, expression = Val{false})[1]
+    grad_g = generate_jacobian(observationmodel, expression = Val{false})[1]
+    
+    statevals = [v for v in values(initcond)]
+    derivatives = Dict(:∂f => par -> jac_f(statevals, par, t),
+                       :∂g => par -> grad_full(par, grad_g, statevals, nd))
 
-    idx_A = findall(occursin.("A[", string.(jac_f)))
-    derivatives = Dict(:∂f => generate_jacobian(neuraldynmodel, expression = Val{true})[1],
-                       :∂g => eval(Symbolics.build_function(substitute(grad_g_full, initcond), params.name[end])[1]))
-    tmp = derivatives[:∂f]
-    Main.foo[] = tmp, initcond, params
-    tmp = [v for v in values(initcond)]
-    derivatives[:∂f] = p -> derivatives[:∂f](tmp, p, t)
     θΣ = diagm(vecparam(OrderedDict(params.name .=> params.variance)))
     # depending on the definition of the priors (note that we take it from the SPM12 code), some dimensions are set to 0 and thus are not changed.
     # Extract these dimensions and remove them from the remaining computation. I find this a bit odd and further thoughts would be necessary to understand
@@ -561,7 +509,9 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
               :Q => Q                          # decomposition of model parameter covariance
               )
             );
-    
+
+    idx_A = findall(occursin.("A[", string.(calculate_jacobian(neuraldynmodel))))
+
     ### Compute the variational Bayes with Laplace approximation ###
     return variationalbayes(idx_A, y_csd, derivatives, freqs, V, p, priors, 128)
 end
