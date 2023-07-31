@@ -22,6 +22,7 @@ mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
         params = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
+        ω, ζ, k, h = params
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         odesys = ODESystem(eqs, t, sts, params; name=name)
@@ -46,6 +47,7 @@ mutable struct JansenRitCBlox <: NeuralMassBlox
     function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
         params = progress_scope(@parameters τ=τ H=H λ=λ r=r)
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
+        τ, H, λ, r = params
         eqs    = [D(x) ~ y - ((2/τ)*x),
                 D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
@@ -66,6 +68,7 @@ mutable struct  JansenRitSCBlox <: NeuralMassBlox
     function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
         params = progress_scope(@parameters τ=τ H=H λ=λ r=r)
         sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
+        τ, H, λ, r = params
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
