@@ -36,9 +36,10 @@ mutable struct Hemodynamics <: NBComponent
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
         params = progress_scope(@parameters lnκ=lnκ lnτ=lnτ)
-
-        states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
         lnκ, lnτ = params # assign the modified parameters
+        
+        states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
+        
         eqs = [
             D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
             D(lnf) ~ s / exp(lnf),
