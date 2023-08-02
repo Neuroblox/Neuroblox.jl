@@ -35,9 +35,9 @@ mutable struct Hemodynamics <: NBComponent
             H(5) - resting state oxygen extraction                (E0)
         =#
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        params = progress_scope(@parameters lnκ=lnκ lnτ=lnτ)
+        params = progress_scope(@parameters lnκ=lnκ lnτ=lnτ; lvl=1)
         lnκ, lnτ = params # assign the modified parameters
-        
+
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
         
         eqs = [
