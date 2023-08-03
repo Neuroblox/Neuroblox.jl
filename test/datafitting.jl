@@ -19,7 +19,11 @@ end
 # add symbolic weights
 @parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"])
 for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
-    add_edge!(g, idx[1], idx[2], :weight, A[i])
+    if idx[1] == idx[2]
+        add_edge!(g, idx[1], idx[2], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12
+    else
+        add_edge!(g, idx[1], idx[2], :weight, A[i])
+    end
 end
 # compose model
 @named neuronmodel = ODEfromGraph(g)

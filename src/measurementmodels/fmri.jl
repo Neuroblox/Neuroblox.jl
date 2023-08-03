@@ -34,12 +34,14 @@ mutable struct Hemodynamics <: NBComponent
             H(4) - exponent for Fout(v)                           (alpha)
             H(5) - resting state oxygen extraction                (E0)
         =#
-        H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        params = progress_scope(@parameters lnκ=lnκ lnτ=lnτ; lvl=1)
-        lnκ, lnτ = params # assign the modified parameters
 
-        states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
+        H = [0.64, 0.32, 2.00, 0.32, 0.4]
+        params = progress_scope(lnκ, lnτ)  # progress scope if needed
+        params = compileparameterlist(lnκ=params[1], lnτ=params[2])  # finally compile all parameters
+        lnκ, lnτ = params  # assign the modified parameters
         
+        states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
+
         eqs = [
             D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
             D(lnf) ~ s / exp(lnf),
@@ -56,9 +58,10 @@ mutable struct LinHemo <: NBComponent
     bloxinput::Num
     odesystem::ODESystem
     function LinHemo(;name, lnκ=0.0, lnτ=0.0)
-        @variables jcn(t)
+        params = progress_scope(lnκ, lnτ)
+        @named hemo = Hemodynamics(;lnκ=params[1], lnτ=params[2])
         @named nmm = LinearNeuralMassBlox()
-        @named hemo = Hemodynamics(;lnκ=lnκ, lnτ=lnτ)
+        @variables jcn(t)
 
         g = MetaDiGraph()
         add_vertex!(g, Dict(:blox => nmm, :jcn => jcn))
