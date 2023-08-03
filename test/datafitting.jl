@@ -9,10 +9,10 @@ nd = ncol(data)                         # number of dimensions
 
 ########## assemble the model ##########
 
-@parameters lnκ=0.0     # define brain-wide decay parameter for hemodynamics
+@parameters κ=0.0     # define brain-wide decay parameter for hemodynamics
 g = MetaDiGraph()
 for ii = 1:nd
-    region = LinHemo(;name=Symbol("r$ii"), lnκ=lnκ)
+    region = LinHemo(;name=Symbol("r$ii"), lnκ=κ)
     add_blox!(g, region)
 end
 
@@ -24,23 +24,27 @@ end
 # compose model
 @named neuronmodel = ODEfromGraph(g)
 neuronmodel = structural_simplify(neuronmodel)
+
 # measurement model
 @named bold = boldsignal()
 
 # attribute initial conditions to states
 all_s = states(neuronmodel)
-initcond = Dict{typeof(all_s[1]), eltype(x)}()
-for i in 1:nd
-    for (j, s) in enumerate(all_s[occursin.("r$i", string.(all_s))])
+initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
+rnames = []
+map(x->push!(rnames, split(string(x), "₊")[1]), all_s); 
+rnames = unique(rnames);
+for (i, r) in enumerate(rnames)
+    for (j, s) in enumerate(all_s[r .== map(x -> x[1], split.(string.(all_s), "₊"))])   # TODO: fix this solution, it is not robust!!
         initcond[s] = x[i, j]
     end
 end
 
 modelparam = OrderedDict()
 for par in parameters(neuronmodel)
-    while Symbolics.getdefaultval(par) isa Num
-        par = Symbolics.getdefaultval(par)
-    end
+    # while Symbolics.getdefaultval(par) isa Num
+    #     par = Symbolics.getdefaultval(par)
+    # end
     modelparam[par] = Symbolics.getdefaultval(par)
 end
 # Noise parameter mean
