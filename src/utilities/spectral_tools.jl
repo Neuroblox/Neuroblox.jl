@@ -201,7 +201,7 @@ function mar2csd(mar, freqs)
     nd = size(Σ, 1)
     w  = 2pi*freqs/sf
     nf = length(w)
-	csd = zeros(ComplexF64, nf, nd, nd)
+	csd = zeros(eltype(Σ), nf, nd, nd)
 	for i = 1:nf
 		af_tmp = la.I
 		for k = 1:p
@@ -214,6 +214,19 @@ function mar2csd(mar, freqs)
     return csd
 end
 
+
+"""
+Plain implementation of idft because AD dispatch versions for ifft don't work still!
+"""
+function idft(x::AbstractArray)
+    """discrete inverse fourier transform"""
+    N = size(x)[1]
+    out = Array{eltype(x)}(undef,N)
+    for n in 0:N-1
+        out[n+1] = 1/N*sum([x[k+1]*exp(2*im*π*k*n/N) for k in 0:N-1])
+    end
+    return out
+end
 
 """
 This function converts a cross-spectral density (CSD) into a multivariate auto-regression (MAR) model. It first transforms the CSD into its
@@ -239,15 +252,15 @@ function csd2mar(csd, w, dt, p)
     N = ceil(Int64, ns/2/dw)
     gj = findall(x -> x > 0 && x < (N + 1), w)
     gi = gj .+ (ceil(Int64, w[1]) - 1)    # TODO: figure out what's the purpose of this!
-    g = zeros(ComplexF64, N)
+    g = zeros(eltype(csd), N)
 
     # transform to cross-correlation function
-    ccf = zeros(ComplexF64, N*2+1, size(csd,2), size(csd,3))
+    ccf = zeros(eltype(csd), N*2+1, size(csd,2), size(csd,3))
     for i = 1:size(csd, 2)
         for j = 1:size(csd, 3)
             g[gi] = csd[gj,i,j]
-            f = ifft(g)
-            f = ifft(vcat([0.0im; g; conj(g[end:-1:1])]))
+            f = idft(g)
+            f = idft(vcat([0.0im; g; conj(g[end:-1:1])]))
             ccf[:,i,j] = real.(fftshift(f))*N*dw
         end
     end
@@ -258,8 +271,8 @@ function csd2mar(csd, w, dt, p)
     n = (N - 1) ÷ 2
     p = min(p, n - 1)
     ccf = ccf[(1:n) .+ n,:,:]
-    A = zeros(m*p, m)
-    B = zeros(m*p, m*p)
+    A = zeros(eltype(csd), m*p, m)
+    B = zeros(eltype(csd), m*p, m*p)
     for i = 1:m
         for j = 1:m
             A[((i-1)*p+1):i*p, j] = ccf[(1:p) .+ 1, i, j]

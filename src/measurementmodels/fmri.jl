@@ -24,7 +24,6 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 returns an ODESystem of the biophysical model for the hemodynamics
 """
 mutable struct Hemodynamics <: NBComponent
-    p_dict::Dict{Symbol, Union{Real, Num}}
     connector::Num
     odesystem::ODESystem
     function Hemodynamics(;name, lnκ=0.0, lnτ=0.0)
@@ -35,10 +34,12 @@ mutable struct Hemodynamics <: NBComponent
             H(4) - exponent for Fout(v)                           (alpha)
             H(5) - resting state oxygen extraction                (E0)
         =#
+
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        para_dict = scope_dict(Dict{Symbol, Union{Real,Num}}(:lnκ => lnκ, :lnτ => lnτ))
-        lnκ=para_dict[:lnκ]
-        lnτ=para_dict[:lnτ]
+        params = progress_scope(lnκ, lnτ)  # progress scope if needed
+        params = compileparameterlist(lnκ=params[1], lnτ=params[2])  # finally compile all parameters
+        lnκ, lnτ = params  # assign the modified parameters
+        
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
 
         eqs = [
@@ -47,20 +48,20 @@ mutable struct Hemodynamics <: NBComponent
             D(lnν) ~ (exp(lnf) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
-        odesys = ODESystem(eqs, t, states, values(para_dict); name=name)
-        new(para_dict, Num(0), odesys)
+        odesys = ODESystem(eqs, t, states, params; name=name)
+        new(Num(0), odesys)
     end
 end
-
 
 mutable struct LinHemo <: NBComponent
     connector::Num
     bloxinput::Num
     odesystem::ODESystem
     function LinHemo(;name, lnκ=0.0, lnτ=0.0)
-        @variables jcn(t)
+        params = progress_scope(lnκ, lnτ)
+        @named hemo = Hemodynamics(;lnκ=params[1], lnτ=params[2])
         @named nmm = LinearNeuralMassBlox()
-        @named hemo = Hemodynamics(;lnκ=lnκ, lnτ=lnτ)
+        @variables jcn(t)
 
         g = MetaDiGraph()
         add_vertex!(g, Dict(:blox => nmm, :jcn => jcn))

@@ -1,11 +1,58 @@
-function scope_dict(para_dict::Dict{Symbol, Union{Real,Num}})
-    para_dict_copy = copy(para_dict)
-    for (n,v) in para_dict_copy
-        if typeof(v) == Num
-            para_dict_copy[n] = ParentScope(v)
+function progress_scope(params; lvl=0)
+    para_list = []
+    for p in params
+        pp = ModelingToolkit.unwrap(p)
+        if ModelingToolkit.hasdefault(pp)
+            d = ModelingToolkit.getdefault(pp)
+            if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
+                if lvl==0
+                    pp = ParentScope(pp)
+                else
+                    pp = DelayParentScope(pp,lvl)
+                end
+            end
+        end
+        push!(para_list,ModelingToolkit.wrap(pp))
+    end
+    return para_list
+end
+
+"""
+This function progresses the scope of parameters and leaves floating point values untouched
+"""
+function progress_scope(args...)
+    paramlist = []
+    for p in args
+        if p isa Float64
+            push!(paramlist, p)
         else
-            para_dict_copy[n] = (@parameters $n=v)[1]
+            p = ParentScope(p)
+            # pp = ModelingToolkit.unwrap(p)
+            # if ModelingToolkit.hasdefault(pp)
+            #     d = ModelingToolkit.getdefault(pp)
+            #     if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
+            #         pp = ParentScope(pp)
+            #     end
+            # end
+            # push!(para_list,ModelingToolkit.wrap(pp))
+            push!(paramlist, p)
         end
     end
-    return para_dict_copy
+    return paramlist
+end
+
+"""
+    This function compiles already existing parameters with floats after making them parameters.
+    Keyword arguments are used because parameter definition requires names, not just values
+"""
+function compileparameterlist(;kwargs...)
+    paramlist = []
+    for (kw, v) in kwargs
+        if v isa Float64
+            paramlist = vcat(paramlist, @parameters $kw = v)
+        else
+            paramlist = vcat(paramlist, v)
+        end
+    end
+    return paramlist
 end
