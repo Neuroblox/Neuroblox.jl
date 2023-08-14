@@ -15,7 +15,7 @@ sigmoid(x::Real, r::Real) = one(x) / (one(x) + exp(-r*x))
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct jansen_rit_spm12 <: NBComponent
+mutable struct jansen_rit_spm12 <: AbstractComponent
     τ::Num
     r::Num
     connector::Num

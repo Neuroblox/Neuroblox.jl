@@ -1,8 +1,10 @@
+abstract type AbstractInhNeuronBlox <: AbstractNeuronBlox end
+abstract type AbstractExciNeuronBlox <: AbstractNeuronBlox end
 @parameters t
 D = Differential(t)
 
 #Quadratic Integrate and Fire neurons 
-mutable struct QIFNeuronBlox <: NeuronBlox
+mutable struct QIFNeuronBlox <: AbstractNeuronBlox
     # all parameters are Num as to allow symbolic expressions
     C::Num
     E_syn::Num
@@ -56,7 +58,7 @@ function theta_neuron(;name, η=η, α_inv=α_inv, k=k)
 end
 
 # Leaky Integrate and Fire neuron with synaptic dynamics
-mutable struct IFNeuronBlox <: NeuronBlox
+mutable struct IFNeuronBlox <: AbstractNeuronBlox
     # all parameters are Num as to allow symbolic expressions
     C::Num
     E_syn::Num
@@ -106,7 +108,7 @@ parameters:
 returns:
     an ODE System
 """
-mutable struct LIFNeuronBlox <: NBComponent
+mutable struct LIFNeuronBlox <: AbstractComponent
 	I_in::Num
 	V_L::Num
 	τ::Num
@@ -139,19 +141,8 @@ end
 
 # Hodgkin-Huxley neurons 
 
-mutable struct HHNeuronExciBlox <: NeuronBlox
-	E_syn::Num
-    G_syn::Num
-	I_in::Num
-	freq::Num
-	phase::Num
-	τ::Num
-	connector::Num
-	noDetail::Vector{Num}
-    detail::Vector{Num}
-	initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-	function HHNeuronExciBlox(;name,E_syn=0.0,G_syn=3,I_in=0,freq=0,phase=0,τ=5)
+struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
+	namespace::N
 	        
 		sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Isyn(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0
 		ps = @parameters E_syn=E_syn G_Na = 52 G_K  = 20 G_L = 0.1 E_Na = 55 E_K = -90 E_L = -60 G_syn = G_syn V_shift = 10 V_range = 35 τ₁ = 0.1 τ₂ = τ τ₃ = 2000 I_in = I_in freq = freq phase = phase
@@ -178,19 +169,8 @@ mutable struct HHNeuronExciBlox <: NeuronBlox
 	end
 end	
 
-mutable struct HHNeuronInhibBlox <: NeuronBlox
-	E_syn::Num
-    G_syn::Num
-	I_in::Num
-	freq::Num
-	phase::Num
-	τ::Num
-    connector::Num
-	noDetail::Vector{Num}
-    detail::Vector{Num}
-	initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-	function HHNeuronInhibBlox(;name,E_syn=-70.0,G_syn=11.5,I_in=0,freq=0,phase=0,τ=70)
+mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
+	namespace::N
 	        
 		sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Isyn(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0
 		ps = @parameters E_syn=E_syn G_Na = 52 G_K  = 20 G_L = 0.1 E_Na = 55 E_K = -90 E_L = -60 G_syn = G_syn V_shift = 0 V_range = 35 τ₁ = 0.1 τ₂ = τ τ₃ = 2000 I_in=I_in freq = freq phase = phase

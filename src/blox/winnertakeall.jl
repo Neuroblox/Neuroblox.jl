@@ -4,21 +4,8 @@
 @parameters t
 D = Differential(t)
 
-mutable struct WinnerTakeAllBlox <: NBComponent
-    BlockSize::Num
-    E_syn_exci::Num
-    E_syn_inhib::Num
-    G_syn_exci::Num
-    G_syn_inhib::Num
-    I_in::Vector{Num}
-	freq::Vector{Num}
-	phase::Vector{Num}
-    τ_exci::Num
-    τ_inhib::Num
-    connector::Symbolics.Arr{Num}
-    bloxinput::Symbolics.Arr{Num}
-    odesystem::ODESystem
-    function WinnerTakeAllBlox(;name,BlockSize=5,E_syn_exci=0.0,E_syn_inhib=-70,G_syn_exci=3.0,G_syn_inhib=3.0,I_in=zeros(BlockSize),freq=zeros(BlockSize),phase=zeros(BlockSize),τ_exci=5,τ_inhib=70)  
+mutable struct WinnerTakeAllBlox{N, P, S, C} <: AbstractComponent
+    namespace::N
         
         @variables in(t)[1:BlockSize], out(t)[1:BlockSize]
 

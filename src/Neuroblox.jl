@@ -21,16 +21,16 @@ using OrderedCollections
 
 
 # define abstract types for Neuroblox
-abstract type Blox end # Blox is the abstract type for Blox that are displayed in the GUI
-abstract type NBComponent end
+abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
+abstract type AbstractComponent end
 abstract type BloxConnection end
 abstract type BloxUtilities end
 abstract type Merger end
 
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
-abstract type NeuronBlox <: Blox end
-abstract type NeuralMassBlox <: Blox end
-abstract type SuperBlox <: Blox end
+abstract type AbstractNeuronBlox <: AbstractBlox end
+abstract type NeuralMassBlox <: AbstractBlox end
+abstract type SuperBlox <: AbstractBlox end
 # abstract type SourceBlox <: Blox end will be added later
 
 # we define these in neural_mass.jl

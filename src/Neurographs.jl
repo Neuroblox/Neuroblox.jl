@@ -107,15 +107,15 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) || isa(b, Neuroblox.NBComponent)
+        if isa(b, AbstractBlox) || isa(b, Neuroblox.AbstractComponent)
             s = b.odesystem
             push!(sys, s)
             if any(occursin.("jcn(t)", string.(states(s))))
-                if isa(b, Neuroblox.NeuronBlox)
+                if isa(b, AbstractNeuronBlox)
                     input = Num(0)
                     for vn in inneighbors(g, v) # vertices that point towards s
                         bn = get_prop(g, vn, :blox)
-                        if !isa(bn, Neuroblox.NeuronBlox) # only neurons can be inputs to neurons
+                        if !isa(bn, AbstractNeuronBlox) # only neurons can be inputs to neurons
                             continue
                         end
                         input += bn.connector * get_prop(g, vn, v, :weight) * (bn.odesystem.E_syn - s.V)
