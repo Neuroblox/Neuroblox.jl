@@ -15,10 +15,12 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 using Interpolations, DataInterpolations
-import Distributions
+using Distributions
 using Random
 using OrderedCollections
 
+using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
+import ModelingToolkit: inputs, outputs, nameof
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
