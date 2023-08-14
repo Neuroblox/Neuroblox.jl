@@ -94,16 +94,68 @@ function cortical_blox(;name, nblocks=6, blocksize=6)
     return syn_net, syn
 end
 
-mutable struct CorticalBlox <: NeuralMassBlox
-    # all parameters are Num as to allow symbolic expressions
-    connector::Num # symbolic expression to connect with another blox
-    output::Vector{Num} # list of symbols that we want to output for plotting
-    mean::Vector{Num} # list of strings that we will take the mean over for plotting
-    adjM::Array{Float64,2} # adjacency matrix
-    odesystem::ODESystem
-    function CorticalBlox(;name,nblocks=10, blocksize=6, lfp="Average")
-        odesys, adjm = cortical_blox(name=name,nblocks=nblocks, blocksize=blocksize)
-        statesV = [s for s in states.((odesys,), states(odesys)) if contains(string(s),"V(t)")]
-        new(sum(statesV)/length(statesV), statesV, statesV, adjm, odesys)
+struct CorticalBlox{N, P, S, C} <: AbstractComponent
+    namespace::N
+    parts::Vector{P}
+    odesystem::S
+    connector::C
+    P_connect::Float64
+
+    function CorticalBlox(;
+        name, 
+        namespace = nothing,
+        N_exci = 5,
+        N_wta = 2,
+        E_syn_exci=0.0,
+        E_syn_inhib=-70,
+        G_syn_exci=3.0,
+        G_syn_inhib=3.0,
+        I_in=zeros(N_exci),
+        freq=zeros(N_exci),
+        phase=zeros(N_exci),
+        τ_exci=5,
+        τ_inhib=70
+    )
+        
+        P_connect = 1 / (N_exci * N_wta)
+
+        wtas = map(Base.OneTo(N_wta)) do i
+            WinnerTakeAllBlox(;
+                name = Symbol("wta$i"), 
+                namespace = namespaced_name(namespace, name),
+                N_exci = 5,
+                P_connect,
+                E_syn_exci,
+                E_syn_inhib,
+                G_syn_exci,
+                G_syn_inhib,
+                I_in = rand(N_exci),
+                freq = zeros(N_exci),
+                phase = zeros(N_exci),
+                τ_exci,
+                τ_inhib    
+            )
+        end
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), wtas)
+
+        idxs = Base.OneTo(N_wta)
+        for i in idxs
+            add_edge!.(Ref(g), i, setdiff(idxs, i), :weight, 1.0)
+        end
+
+        # Construct a BloxConnector object from the graph
+        # containing all connection equations from lower levels and this level.
+        bc = connector_from_graph(g)
+        # If a namespace is not provided, assume that this is the highest level
+        # and construct the ODEsystem from the graph.
+        # If there is a higher namespace, construct only a subsystem containing the parts of this level
+        # and propagate the BloxConnector object `bc` to the higher level 
+        # to potentially add more terms to the same connections.
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(wtas; name)
+
+        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc)
     end
 end
+
