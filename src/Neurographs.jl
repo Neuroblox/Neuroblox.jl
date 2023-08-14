@@ -50,13 +50,13 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
         postsyn_nrn = sys[ii]
         if length(presyn)>0
             ind = collect(1:length(presyn))
-            eqs = [postsyn_nrn.Isyn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
-                   postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            eqs = [postsyn_nrn.I_syn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
+                   postsyn_nrn.jcn~postsyn_nrn.I_syn]
             push!(syn_eqs,eqs[1])
             push!(syn_eqs,eqs[2])
         else
-            eqs = [postsyn_nrn.Isyn~0,
-                  postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            eqs = [postsyn_nrn.I_syn~0,
+                  postsyn_nrn.jcn~postsyn_nrn.I_syn]
             push!(syn_eqs,eqs[1])
             push!(syn_eqs,eqs[2])
         end
@@ -120,8 +120,8 @@ function ODEfromGraph(g::MetaDiGraph ;name)
                         end
                         input += bn.connector * get_prop(g, vn, v, :weight) * (bn.odesystem.E_syn - s.V)
                     end
-                    push!(eqs, s.Isyn ~ input)
-                    push!(eqs, s.jcn ~ s.Isyn)
+                    push!(eqs, s.I_syn ~ input)
+                    push!(eqs, s.jcn ~ s.I_syn)
                 else
                     if s.jcn isa Symbolics.Arr
                         bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr

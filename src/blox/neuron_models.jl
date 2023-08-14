@@ -18,11 +18,11 @@ mutable struct QIFNeuronBlox <: AbstractNeuronBlox
     odesystem::ODESystem
 	function QIFNeuronBlox(;name,C=1.0,E_syn=0, G_syn=1,ω=0,τ=10)
 
-    	sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 Isyn(t)=0.0 jcn(t)=0.0
+    	sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 I_syn(t)=0.0 jcn(t)=0.0
 		ps = @parameters C=C ω=ω I_in=(ω*C/2)^2 Eₘ=0.0 Vᵣₑₛ=-70.0 θ=25 τ₁=τ τ₂=τ E_syn=E_syn G_syn=G_syn
 	
 		eqs = [
-		 	D(V) ~ ((V-Eₘ)^2+I_in+Isyn)/C,
+		 	D(V) ~ ((V-Eₘ)^2+I_in+I_syn)/C,
 		 	D(G)~(-1/τ₂)*G + z,
 	        D(z)~(-1/τ₁)*z
 	    ]
@@ -74,11 +74,11 @@ mutable struct IFNeuronBlox <: AbstractNeuronBlox
     odesystem::ODESystem
 	function IFNeuronBlox(;name,C=1.0,E_syn=0,G_syn=0.2,I_in=0,freq=0,phase=0,τ=10)
 
-		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 spt(t)=0.0 Cₜ(t) = 0.0 Isyn(t)=0 jcn(t)=0.0
+		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 spt(t)=0.0 Cₜ(t) = 0.0 I_syn(t)=0 jcn(t)=0.0
 		ps = @parameters C=C I_in = I_in Eₘ = -70.0 Rₘ = 100.0 θ = -50.0 τ₁=0.1 τ₂=τ E_syn=E_syn G_syn=G_syn phase=phase τᵣ=3
 
 		eqs = [
-		    	D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + Isyn)/(C+Cₜ),
+		    	D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + I_syn)/(C+Cₜ),
 		    	D(G)~(-1/τ₂)*G + z,
 	        	D(z)~(-1/τ₁)*z,
 				D(spt)~0,
@@ -155,7 +155,7 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+Isyn, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -183,7 +183,7 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+Isyn, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
