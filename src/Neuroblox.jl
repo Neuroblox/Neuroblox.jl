@@ -60,8 +60,6 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 # dictionary type for Blox parameters
 Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
-include("Neurographs.jl")
-include("blox/blox_utilities.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("control/controlerror.jl")
@@ -79,7 +77,9 @@ include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
 include("blox/stochastic.jl")
 include("gui/GUI.jl")
-
+include("blox/blox_utilities.jl")
+include("blox/connections.jl")
+include("Neurographs.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
