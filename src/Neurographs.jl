@@ -160,6 +160,45 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     return compose(ODESystem(eqs, t; name=:connected), sys; name=name)
 end
 
+function get_blox(g::MetaDiGraph)
+    map(vertices(g)) do v
+        get_prop(g, v, :blox)
+    end
+end
+
+function get_sys(g::MetaDiGraph)
+    map(vertices(g)) do v
+        b = get_prop(g, v, :blox)
+        get_sys(b)
+    end
+end
+
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
+    @variables t
+    blox_syss = get_sys(g)
+    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
+end
+
+function system_from_parts(parts::AbstractVector; name)
+    @variables t
+    return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
+end
+
+function connector_from_graph(g::MetaDiGraph)
+    bloxs = get_blox(g)
+    link = BloxConnector(bloxs)
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        for vn in inneighbors(g, v)
+            bn = get_prop(g, vn, :blox)
+            w = get_prop(g, vn, v, :weight)
+            link(bn, b; weight = w)
+        end
+    end
+
+    return link
+end
+
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
     psps = psp_amplitude .* exp.(-(t .- spiketimes) ./ τ)
     eqs = []
