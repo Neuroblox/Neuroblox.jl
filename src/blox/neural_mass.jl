@@ -175,6 +175,16 @@ mutable struct NextGenerationBloxCoupled <: NeuralMassBlox
     function NextGenerationBloxCoupled(;name, η_0e=1.6, η_0i=1, Δ_E=0.2, Δ_I=0.2, v_synE=10, v_synI=-12, κ_EE=1, κ_EI=2, κ_IE=1.5, κ_II=2, α_invEE=3, α_invEI=3, α_invIE=10, α_invII=10, τ_E=12, τ_I=18)
         params = @parameters η_0e=η_0e η_0i=η_0i Δ_E=Δ_E Δ_I=Δ_I v_synE=v_synE v_synI=v_synI κ_EE=κ_EE κ_EI=κ_EI κ_IE=κ_IE κ_II=κ_II α_invEE=α_invEE α_invEI=α_invEI α_invIE=α_invIE α_invII=α_invII τ_E=τ_E τ_I=τ_I
         sts = @variables Z_E(t)=0.5 Z_I(t)=0.5 g_EE(t)=1.6 g_EI(t)=1.6 g_IE(t)=1.6 g_II(t)=1.6
+        
+        Z_E = ModelingToolkit.unwrap(Z_E)
+        Z_I = ModelingToolkit.unwrap(Z_I)
+        g_EE = ModelingToolkit.unwrap(g_EE)
+        g_EI = ModelingToolkit.unwrap(g_EI)
+        g_IE = ModelingToolkit.unwrap(g_IE)
+        g_II = ModelingToolkit.unwrap(g_II)
+        η_0e, η_0i, Δ_E, Δ_I, v_synE, v_synI, κ_EE, κ_EI, κ_IE, κ_II, α_invEE, α_invEI, α_invIE, α_invII, τ_E, τ_I  = map(ModelingToolkit.unwrap, [η_0e, η_0i, Δ_E, Δ_I, v_synE, v_synI, κ_EE, κ_EI, κ_IE, κ_II, α_invEE, α_invEI, α_invIE, α_invII, τ_E, τ_I])
+        
+        
         eqs = [D(Z_E) ~ (1/τ_E)*((-im*((Z_E-1)^2)/2)) #+ ((((Z_E^2+1)^2)/2)*(-Δ_E+(-im*η_0e)))) #+ ((im*((Z_E+1)^2)/2)*v_synE*g_EE) - (((Z_E^2-1)/2)*g_EE) + ((im*((Z_E+1)^2)/2)*v_synI*g_EI) - (((Z_E^2-1)/2)*g_EI))
                D(Z_I) ~ 0 #(1/τ_I)*((-im*((Z_I-1)^2)/2) + ((((Z_I^2+1)^2)/2)*(-Δ_I+(-im*η_0i)))) #+ ((im*((Z_I+1)^2)/2)*v_synE*g_IE) - (((Z_I^2-1)/2)*g_IE) + ((im*((Z_I+1)^2)/2)*v_synI*g_II) - (((Z_I^2-1)/2)*g_II))
                D(g_EE) ~ α_invEE*((κ_EE/(τ_E*pi))*(1-abs(Z_E)^2)/(1+Z_E+conj(Z_E)+abs(Z_E)^2) - g_EE)
