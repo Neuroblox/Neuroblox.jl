@@ -11,7 +11,7 @@ CosineSource Test
 @named iosys_nb = ODESystem([connect(src_nb.odesystem.output, int.input)], t, systems = [int, src_nb.odesystem])
 sys_nb = structural_simplify(iosys_nb)
 # Cosine MTK
-@named src     = Cosine(frequency=1, amplitude=2, phase=0, offset=1, start_time=2)
+@named src     = Blocks.Cosine(frequency=1, amplitude=2, phase=0, offset=1, start_time=2)
 @named iosys   = ODESystem([connect(src.output, int.input)], t, systems = [int, src])
 sys = structural_simplify(iosys)
 # Compare Results
