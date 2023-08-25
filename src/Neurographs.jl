@@ -173,6 +173,11 @@ function get_sys(g::MetaDiGraph)
     end
 end
 
+function system_from_graph(g::MetaDiGraph; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
+end
+
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
     @variables t
     blox_syss = get_sys(g)
