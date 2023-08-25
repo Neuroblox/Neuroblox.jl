@@ -145,5 +145,6 @@ export learningrate, ControlError
 export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
+export system_from_graph
 
 end
