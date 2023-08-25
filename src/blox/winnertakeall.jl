@@ -1,10 +1,11 @@
-# creates a winner-take-all local circuit found in neocortex
-# typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
-# and recieve feedback inhibition from that interneuron
-@parameters t
-D = Differential(t)
+"""
+    WinnerTakeAllBlox
 
-mutable struct WinnerTakeAllBlox{N, P, S, C} <: AbstractComponent
+Creates a winner-take-all local circuit found in neocortex,
+typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
+and receive feedback inhibition from that interneuron.
+"""
+struct WinnerTakeAllBlox{N, P, S, C} <: AbstractComponent
     namespace::N
     parts::Vector{P}
     odesystem::S
