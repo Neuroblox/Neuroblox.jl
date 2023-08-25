@@ -110,7 +110,6 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
         E_syn_inhib=-70,
         G_syn_exci=3.0,
         G_syn_inhib=3.0,
-        I_in=zeros(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5,
@@ -130,8 +129,8 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
                 G_syn_exci,
                 G_syn_inhib,
                 I_in = rand(N_exci),
-                freq = zeros(N_exci),
-                phase = zeros(N_exci),
+                freq,
+                phase,
                 τ_exci,
                 τ_inhib    
             )
