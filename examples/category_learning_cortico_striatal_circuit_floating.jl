@@ -60,7 +60,7 @@ end
 
 # ╔═╡ 61c5b42a-8723-4334-a3ba-8c8558b11284
 function HH_neuron_wang_excit(;name,E_syn=0.0,G_syn=2,I_in=0,freq=0,phase=0,τ=10)
-	sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Isyn(t)=0.0 G(t)=0.0 z(t)=0.0  
+	sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 I_syn(t)=0.0 G(t)=0.0 z(t)=0.0  
 	
 	ps = @parameters E_syn=E_syn G_Na = 52 G_K  = 20 G_L = 0.1 E_Na = 55 E_K = -90 E_L = -60 G_syn = G_syn V_shift = 10 V_range = 35 τ_syn = 10 τ₁ = 0.1 τ₂ = τ I_in = I_in freq=freq phase=phase
 	
@@ -82,7 +82,7 @@ G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 
 	
 	eqs = [ 
-		   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000+phase)+1)+Isyn, 
+		   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000+phase)+1)+I_syn, 
 	       D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 	       D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 	       D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -95,7 +95,7 @@ end
 
 # ╔═╡ 3be21966-09e5-46be-995c-c53e49d0a3c2
 function HH_neuron_wang_inhib(;name,E_syn=0.0,G_syn=2, I_in=0, τ=10)
-	sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Iasc(t) = 0.0 Isyn(t)=0.0 G(t)=0 z(t)=0 
+	sts = @variables V(t)=-65.00 n(t)=0.32 m(t)=0.05 h(t)=0.59 Iasc(t) = 0.0 I_syn(t)=0.0 G(t)=0 z(t)=0 
 	ps = @parameters E_syn=E_syn G_Na = 52 G_K  = 20 G_L = 0.1 E_Na = 55 E_K = -90 E_L = -60 G_syn = G_syn V_shift = -0 V_range = 35 τ_syn = 10 τ₁ = 0.1 τ₂ = τ 
 	
 		αₙ(v) = 0.01*(v+38)/(1-exp(-(v+38)/10))
@@ -116,7 +116,7 @@ function HH_neuron_wang_inhib(;name,E_syn=0.0,G_syn=2, I_in=0, τ=10)
 G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	
 	eqs = [ 
-		   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in+Iasc+Isyn, 
+		   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in+Iasc+I_syn, 
 	       D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 	       D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 	       D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -385,14 +385,14 @@ function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix, input_ar=input_
         if length(presyn)>0
 					
 		    ind = [i for i = 1:length(presyn)];
-	      #  eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p],ind)-postsyn_nrn.Isyn]
+	      #  eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p],ind)-postsyn_nrn.I_syn]
            # push!(syn_eqs,eq[1])
 
-			eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*adj[(presyn[p]-1)*Nrns + ii],ind)-postsyn_nrn.Isyn]
+			eq = [0 ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*adj[(presyn[p]-1)*Nrns + ii],ind)-postsyn_nrn.I_syn]
             push!(syn_eqs,eq[1])
 			
 		else
-		    eq = [0~postsyn_nrn.Isyn];
+		    eq = [0~postsyn_nrn.I_syn];
 		    push!(syn_eqs,eq[1]);
 		 
 		end
