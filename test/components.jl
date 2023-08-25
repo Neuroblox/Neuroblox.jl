@@ -377,12 +377,12 @@ sol = solve(prob,Tsit5())
 """
 CorticalBlox test
 """
-@named cb = CorticalBlox(nblocks=6,blocksize=6)
+@named cb = CorticalBlox(N_wta=6, N_exci=6)
 cb_simpl = structural_simplify(cb.odesystem)
-@test length(states(cb_simpl)) == 222
+@test length(states(cb_simpl)) == 216
 prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test size(sol) == (222,41)
+@test size(sol) == (216, 41)
 
 """
 ts_outputs.jl test
