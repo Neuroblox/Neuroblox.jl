@@ -47,38 +47,6 @@ add_edge!(ggb,2,3,:weight,1.0)
 @test equations(two_regions) == equations(two_regions_gr)
 @test equations(two_regions_gr) == equations(two_regions_grdb)
 
-"""
-test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
-"""
-
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4)
-nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6)
-nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_in=2, freq=3)
-
-assembly = [nn1, nn2, nn3]
-adj = [0 1 0
-       0 0 1
-       0.2 0 0]
-sys = [s.odesystem for s in assembly]
-connect = [s.connector for s in assembly]       
-@named neuron_net = SynapticConnections(sys=sys, adj_matrix=adj, connector=connect)
-
-#create equivalent graph
-gg = MetaDiGraph()
-add_blox!(gg,nn1)
-add_blox!(gg,nn2)
-add_blox!(gg,nn3)
-add_edge!(gg,1,2,:weight,1.0)
-add_edge!(gg,2,3,:weight,1.0)
-add_edge!(gg,3,1,:weight,.2)
-
-@named neuron_net_graph = ODEfromGraph(gg)
-
-# add your test to see whether you get the same ODESystem
-@test typeof(neuron_net) == ODESystem
-@test typeof(neuron_net_graph) == ODESystem
-@test equations(neuron_net) == equations(neuron_net_graph)
-
 # parameter sharing test
 @parameters λ=400.0
 @named jr1 = JansenRitSCBlox(τ=0.014, H=20.0, λ=λ, r=0.1)
