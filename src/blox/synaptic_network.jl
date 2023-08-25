@@ -8,9 +8,9 @@ function synaptic_network(;name, sys=sys, adj_matrix=adj_matrix)
 
         if length(presyn)>0
             ind = collect(1:length(presyn));
-            push!(syn_eqs, 0 ~ sum(p -> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p], ind) - postsyn_nrn.Isyn)
+            push!(syn_eqs, 0 ~ sum(p -> (presyn_nrn[p].E_syn-postsyn_nrn.V)*presyn_nrn[p].G*wts[p], ind) - postsyn_nrn.I_syn)
         else
-            push!(syn_eqs,0 ~ postsyn_nrn.Isyn);
+            push!(syn_eqs,0 ~ postsyn_nrn.I_syn);
         end
     end
 
