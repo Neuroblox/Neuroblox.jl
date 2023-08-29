@@ -99,7 +99,7 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
     parts::Vector{P}
     odesystem::S
     connector::C
-    P_connect::Float64
+    mean::Vector{Num}
 
     function CorticalBlox(;
         name, 
@@ -154,7 +154,19 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(wtas; name)
 
-        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc)
+        # TO DO : m is a subset of states to be plotted in the GUI. 
+        # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
+        # since it is not an essential part of the blox.
+        m = if isnothing(namespace) 
+            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        else
+            @variables t
+            # HACK : Need to define an empty system to add the correct namespace to states.
+            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
+            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
+            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        end
+
+        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc, m)
     end
 end
-
