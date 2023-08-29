@@ -56,3 +56,107 @@ function compileparameterlist(;kwargs...)
     end
     return paramlist
 end
+
+function get_exci_neurons(wta::WinnerTakeAllBlox)
+    mapreduce(x -> get_exci_neurons(x), vcat, wta.parts)
+end
+
+function get_inh_neurons(wta::WinnerTakeAllBlox)
+    mapreduce(x -> get_inh_neurons(x), vcat, wta.parts)
+end
+
+get_exci_neurons(n::AbstractExciNeuronBlox) = n
+get_exci_neurons(n) = []
+
+get_inh_neurons(n::AbstractInhNeuronBlox) = n
+get_inh_neurons(n) = []
+
+get_sys(blox) = blox.odesystem
+
+function get_namespaced_sys(blox)
+    sys = get_sys(blox)
+    ODESystem(
+        equations(sys), 
+        independent_variable(sys), 
+        states(sys), 
+        parameters(sys); 
+        name = namespaced_name(inner_namespaceof(blox), nameof(blox))
+    ) 
+end
+
+nameof(blox) = (nameof ∘ get_sys)(blox)
+
+namespaceof(blox) = blox.namespace
+
+"""
+    Returns the complete namespace EXCLUDING the outermost (highest) level.
+    This is useful for manually preparing equations (e.g. connections, see BloxConnector),
+    that will later be composed and will automatically get the outermost namespace.
+""" 
+function inner_namespaceof(blox)
+    parts = split((string ∘ namespaceof)(blox), '₊')
+    if length(parts) == 1
+        return nothing
+    else
+        return join(parts[2:end], '₊')
+    end
+end
+
+namespaced_name(parent_name, name) = Symbol(parent_name, :₊, name)
+namespaced_name(::Nothing, name) = Symbol(name)
+
+function find_eq(eqs::AbstractVector{<:Equation}, lhs)
+    findfirst(eqs) do eq
+        lhs_vars = get_variables(eq.lhs)
+        length(lhs_vars) == 1 && isequal(only(lhs_vars), lhs)
+    end
+end
+
+"""
+    Returns the equations for all input variables of a system, 
+    assuming they have a form like : `sys.input_variable ~ ...`
+    so only the input appears on the LHS.
+
+    Input equations are namespaced by the inner namespace of blox
+    and then they are returned. This way during system `compose` downstream,
+    the higher-level namespaces will be added to them.
+
+    If blox isa AbstractComponent, it is assumed that it contains a `connector` field,
+    which holds a `BloxConnector` object with all relevant connections 
+    from lower levels and this level.
+"""
+function input_equations(blox)
+    sys = get_sys(blox)
+    inps = inputs(sys)
+    sys_eqs = equations(sys)
+    eqs = map(inps) do inp
+        idx = find_eq(sys_eqs, inp)
+        if isnothing(idx)
+            namespace_equation(
+                inp ~ 0, 
+                nothing, 
+                namespaced_name(inner_namespaceof(blox), nameof(blox))
+            )
+        else
+            namespace_equation(
+                sys_eqs[idx], 
+                nothing, 
+                namespaced_name(inner_namespaceof(blox), nameof(blox))
+            )
+        end
+    end
+
+    return eqs
+end
+
+input_equations(blox::AbstractComponent) = blox.connector.eqs
+
+weight_parameters(blox) = Num[]
+weight_parameters(blox::AbstractComponent) = blox.connector.params
+
+function get_inputs(blox)
+    sys = get_sys(blox)
+    inp = inputs(sys) 
+    n = nameof(sys)
+    return renamespace.(Ref(n), inp)
+end

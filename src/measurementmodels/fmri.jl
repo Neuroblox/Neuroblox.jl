@@ -23,7 +23,7 @@ lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parame
 ### Return variables ###
 returns an ODESystem of the biophysical model for the hemodynamics
 """
-mutable struct Hemodynamics <: NBComponent
+mutable struct Hemodynamics <: AbstractComponent
     connector::Num
     odesystem::ODESystem
     function Hemodynamics(;name, lnκ=0.0, lnτ=0.0)
@@ -53,7 +53,8 @@ mutable struct Hemodynamics <: NBComponent
     end
 end
 
-mutable struct LinHemo <: NBComponent
+
+mutable struct LinHemo <: AbstractComponent
     connector::Num
     bloxinput::Num
     odesystem::ODESystem

@@ -377,12 +377,12 @@ sol = solve(prob,Tsit5())
 """
 CorticalBlox test
 """
-@named cb = CorticalBlox(nblocks=6,blocksize=6)
+@named cb = CorticalBlox(N_wta=6, N_exci=6)
 cb_simpl = structural_simplify(cb.odesystem)
-@test length(states(cb_simpl)) == 222
+@test length(states(cb_simpl)) == 216
 prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test size(sol) == (222,41)
+@test size(sol) == (216, 41)
 
 """
 ts_outputs.jl test
@@ -424,20 +424,25 @@ sol = solve(phase_ode,Tsit5(),callback=cb)
 """
 test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
 """
-
 nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4)
 nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6)
 nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_in=2, freq=3)
 assembly = [nn1, nn2, nn3]
-adj = [0 1 0
-       0 0 1
-       0.2 0 0]
-sys = [s.odesystem for s in assembly]
-connect = [s.connector for s in assembly]       
-@named neuron_net = SynapticConnections(sys=sys, adj_matrix=adj, connector=connect)
-sol=simulate(structural_simplify(neuron_net),[],(0,10),[],Vern7())
 
-@test typeof(neuron_net)==ODESystem
+# Adjacency matrix : 
+#adj = [0 1 0
+#       0 0 1
+#       0.2 0 0]
+g = MetaDiGraph()
+add_blox!.(Ref(g), assembly)
+add_edge!(g, 1, 2, :weight, 1)
+add_edge!(g, 2, 3, :weight, 1)
+add_edge!(g, 3, 1, :weight, 0.2)
+      
+@named neuron_net = system_from_graph(g)
+sol = simulate(structural_simplify(neuron_net), [], (0, 10), [], Vern7())
+
+@test neuron_net isa ODESystem
 @test sol[:,1][end] ≈ 10.0
 
 """

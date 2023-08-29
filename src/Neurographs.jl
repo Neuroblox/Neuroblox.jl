@@ -50,13 +50,13 @@ function SynapticConnections(;name, sys=sys, adj_matrix=adj_matrix, connector=co
         postsyn_nrn = sys[ii]
         if length(presyn)>0
             ind = collect(1:length(presyn))
-            eqs = [postsyn_nrn.Isyn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
-                   postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            eqs = [postsyn_nrn.I_syn ~ sum(p-> (presyn_nrn[p].E_syn-postsyn_nrn.V)*adj[presyn[p],ii],ind),
+                   postsyn_nrn.jcn~postsyn_nrn.I_syn]
             push!(syn_eqs,eqs[1])
             push!(syn_eqs,eqs[2])
         else
-            eqs = [postsyn_nrn.Isyn~0,
-                  postsyn_nrn.jcn~postsyn_nrn.Isyn]
+            eqs = [postsyn_nrn.I_syn~0,
+                  postsyn_nrn.jcn~postsyn_nrn.I_syn]
             push!(syn_eqs,eqs[1])
             push!(syn_eqs,eqs[2])
         end
@@ -107,21 +107,21 @@ function ODEfromGraph(g::MetaDiGraph ;name)
     sys = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
-        if isa(b, Neuroblox.Blox) || isa(b, Neuroblox.NBComponent)
+        if isa(b, AbstractBlox) || isa(b, Neuroblox.AbstractComponent)
             s = b.odesystem
             push!(sys, s)
             if any(occursin.("jcn(t)", string.(states(s))))
-                if isa(b, Neuroblox.NeuronBlox)
+                if isa(b, AbstractNeuronBlox)
                     input = Num(0)
                     for vn in inneighbors(g, v) # vertices that point towards s
                         bn = get_prop(g, vn, :blox)
-                        if !isa(bn, Neuroblox.NeuronBlox) # only neurons can be inputs to neurons
+                        if !isa(bn, AbstractNeuronBlox) # only neurons can be inputs to neurons
                             continue
                         end
                         input += bn.connector * get_prop(g, vn, v, :weight) * (bn.odesystem.E_syn - s.V)
                     end
-                    push!(eqs, s.Isyn ~ input)
-                    push!(eqs, s.jcn ~ s.Isyn)
+                    push!(eqs, s.I_syn ~ input)
+                    push!(eqs, s.jcn ~ s.I_syn)
                 else
                     if s.jcn isa Symbolics.Arr
                         bi = b.bloxinput # bloxinput only exists if s.jcn isa Symbolics.Arr
@@ -158,6 +158,50 @@ function ODEfromGraph(g::MetaDiGraph ;name)
         end
     end
     return compose(ODESystem(eqs, t; name=:connected), sys; name=name)
+end
+
+function get_blox(g::MetaDiGraph)
+    map(vertices(g)) do v
+        get_prop(g, v, :blox)
+    end
+end
+
+function get_sys(g::MetaDiGraph)
+    map(vertices(g)) do v
+        b = get_prop(g, v, :blox)
+        get_sys(b)
+    end
+end
+
+function system_from_graph(g::MetaDiGraph; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
+end
+
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
+    @variables t
+    blox_syss = get_sys(g)
+    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
+end
+
+function system_from_parts(parts::AbstractVector; name)
+    @variables t
+    return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
+end
+
+function connector_from_graph(g::MetaDiGraph)
+    bloxs = get_blox(g)
+    link = BloxConnector(bloxs)
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        for vn in inneighbors(g, v)
+            bn = get_prop(g, vn, :blox)
+            w = get_prop(g, vn, v, :weight)
+            link(bn, b; weight = w)
+        end
+    end
+
+    return link
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)

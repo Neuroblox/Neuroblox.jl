@@ -15,22 +15,24 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq, DataFrames
 using Interpolations, DataInterpolations
-import Distributions
+using Distributions
 using Random
 using OrderedCollections
 
+using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
+import ModelingToolkit: inputs, outputs, nameof
 
 # define abstract types for Neuroblox
-abstract type Blox end # Blox is the abstract type for Blox that are displayed in the GUI
-abstract type NBComponent end
+abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
+abstract type AbstractComponent end
 abstract type BloxConnection end
 abstract type BloxUtilities end
 abstract type Merger end
 
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
-abstract type NeuronBlox <: Blox end
-abstract type NeuralMassBlox <: Blox end
-abstract type SuperBlox <: Blox end
+abstract type AbstractNeuronBlox <: AbstractBlox end
+abstract type NeuralMassBlox <: AbstractBlox end
+abstract type SuperBlox <: AbstractBlox end
 # abstract type SourceBlox <: Blox end will be added later
 
 # we define these in neural_mass.jl
@@ -58,8 +60,6 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 # dictionary type for Blox parameters
 Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
-include("Neurographs.jl")
-include("blox/blox_utilities.jl")
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("control/controlerror.jl")
@@ -77,7 +77,9 @@ include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
 include("blox/stochastic.jl")
 include("gui/GUI.jl")
-
+include("blox/blox_utilities.jl")
+include("blox/connections.jl")
+include("Neurographs.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -143,5 +145,6 @@ export learningrate, ControlError
 export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
+export system_from_graph
 
 end
