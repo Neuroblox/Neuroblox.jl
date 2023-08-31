@@ -57,12 +57,12 @@ function compileparameterlist(;kwargs...)
     return paramlist
 end
 
-function get_exci_neurons(wta::WinnerTakeAllBlox)
-    mapreduce(x -> get_exci_neurons(x), vcat, wta.parts)
+function get_exci_neurons(b::AbstractComponent)
+    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
 end
 
-function get_inh_neurons(wta::WinnerTakeAllBlox)
-    mapreduce(x -> get_inh_neurons(x), vcat, wta.parts)
+function get_inh_neurons(b::AbstractComponent)
+    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
 get_exci_neurons(n::AbstractExciNeuronBlox) = n
