@@ -77,5 +77,40 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
     end
 end
 
+struct SuperCortical{N, P, S, C} <: AbstractComponent
+    namespace::N
+    parts::Vector{P}
+    odesystem::S
+    connector::C
+    mean::Vector{Num}
+
+    function SuperCortical(; name, N_cb, N_wta, out_degree=1, namespace=nothing)
+        cbs = map(Base.OneTo(N_cb)) do i
+            CorticalBlox(; name=Symbol("cb$i"), namespace=namespaced_name(namespace, name), N_wta, out_degree)
+        end
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), cbs)
+
+        idxs = Base.OneTo(N_cb)
+        for i in idxs
+            add_edge!.(Ref(g), i, setdiff(idxs, i), :weight, 1.0)
+        end
+
+        bc = connector_from_graph(g)
+
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(cbs; name)
+
+        m = if isnothing(namespace) 
+            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        else
+            @variables t
+            # HACK : Need to define an empty system to add the correct namespace to states.
+            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
+            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
+            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        end
+
+        new{typeof(namespace), eltype(cbs), typeof(sys), typeof(bc)}(namespace, cbs, sys, bc, m)
     end
 end
