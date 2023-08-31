@@ -28,7 +28,7 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
             WinnerTakeAllBlox(;
                 name=Symbol("wta$i"), 
                 namespace=namespaced_name(namespace, name),
-                N_exci=5,
+                N_exci,
                 P_connect,
                 E_syn_exci,
                 E_syn_inhib,
