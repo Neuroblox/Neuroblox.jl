@@ -19,6 +19,8 @@ using Distributions
 using Random
 using OrderedCollections
 
+using StatsBase: sample
+
 using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
 import ModelingToolkit: inputs, outputs, nameof
 
