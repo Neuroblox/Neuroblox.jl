@@ -51,6 +51,28 @@ function (bc::BloxConnector)(
     end
 end
 
+function (bc::BloxConnector)(
+    cb_out::CorticalBlox,
+    cb_in::CorticalBlox;
+    weight = 1
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    out_degree = cb_out.out_degree
+    in_degree = Int(ceil(out_degree * length(neurons_in) / length(neurons_out)))
+    outgoing_connections = zeros(Int, length(neurons_in))
+    for neuron_postsyn in neurons_in
+        rem = findall(x -> x < out_degree, outgoing_connections)
+        idx = sample(rem, min(in_degree, length(rem)))
+
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; weight)
+        end
+        outgoing_connections[idx] .+= 1
+    end
+end
+
 function accumulate_equation!(bc::BloxConnector, eq)
     lhs = eq.lhs
     idx = find_eq(bc.eqs, lhs)
