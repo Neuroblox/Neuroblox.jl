@@ -1,111 +1,17 @@
-@parameters t
-D = Differential(t)
-
-#creates an ODESystem of a cortical block that consist of
-# a number of winner-takes-all
-function cortical_blox(;name, nblocks=6, blocksize=6)
-
-    #creates weight matrix for cortical block of given number of wta blocks : nblocks
-    #                                                and size of each block : blocksize
-    #returns : 
-    # 	      syn : weight matrix of size Nrns
-    # 		  inhib: indices of feedback inhibitory neurons
-    # 		  targ: indices of excitatory (target) neurons
-    # 		  inhib_mod: indices of modulatory inhibitory neurons
-
-    function cb_adj_gen(nblocks = 16, blocksize = 6)
-        Nrns = blocksize*nblocks+1;
-
-        #block
-        mat = zeros(blocksize,blocksize);
-        mat[1:end-1,end].=7;
-        mat[end,1:end-1].=1;
-
-        #disjointed blocks
-        syn = zeros(Nrns,Nrns);
-        for ii = 1:nblocks;
-            syn[(ii-1)*blocksize+1:(ii*blocksize),(ii-1)*blocksize+1:(ii*blocksize)] = mat;
-        end
-
-        inhib = [kk*blocksize for kk = 1:nblocks]
-
-        tot = [kk for kk=1:(Nrns-1)]
-        targ = setdiff(tot,inhib);
-
-        for ii = 1:nblocks
-            md = [kk for kk = 1+(ii-1)*blocksize : ii*blocksize];
-            tt = setdiff(targ,md);
-            
-            for jj = 1:blocksize-1
-                
-                for ll = 1:length(tt)
-                    rr = rand()
-                    if rr <= 1/length(tt)
-                        syn[md[jj],tt[ll]] = 1
-                    end
-                end
-            end
-        end
-
-        inhib_asc=Nrns;
-        syn[inhib_asc,inhib] .= 1;
-
-        return syn, inhib, targ, inhib_asc;
-    
-    end
-   
-    syn, inhib, targ, inhib_asc = cb_adj_gen(nblocks,blocksize)
-
-    Nrns = length(syn[:,1])
-    inh_nrn = zeros(Nrns)
-    inh_asc_nrn = zeros(Nrns)
-    inh_nrn[inhib] .= 1
-    inh_asc_nrn[inhib_asc] = 1
-
-    #constant current amplitudes that feed into excitatory (target) neurons
-
-    input_pat = (1 .+ sign.(rand(length(targ)) .- 0.8))/2
-    I_in = zeros(Nrns)
-    I_in[targ] .= (4 .+2*randn(length(targ))).*input_pat
-    I_in[inhib_asc] = 0.3
-
-    freq = zeros(Nrns)
-    freq[inhib_asc] = 16
-
-    G_syn=3*ones(Nrns);
-    G_syn[inhib] .= 11;
-    G_syn[inhib_asc] = 40;
-
-   
-    nrn_network=[]
-    for ii = 1:Nrns
-        if (inh_nrn[ii]>0) || (inh_asc_nrn[ii]>0)
-           nn = HHNeuronInhibBlox(name=Symbol("nrn$ii"),G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii]) 
-        else
-           nn = HHNeuronExciBlox(name=Symbol("nrn$ii"),G_syn=G_syn[ii],I_in=I_in[ii],freq=freq[ii]) 
-        end
-        push!(nrn_network,nn)
-    end
-    
-    sys = [s.odesystem for s in nrn_network]
-    connect = [s.connector for s in nrn_network] 
-    
-    @named syn_net = SynapticConnections(sys=sys, adj_matrix=syn, connector=connect)
-    return syn_net, syn
-end
-
 struct CorticalBlox{N, P, S, C} <: AbstractComponent
     namespace::N
     parts::Vector{P}
     odesystem::S
     connector::C
     mean::Vector{Num}
+    out_degree::Int
 
     function CorticalBlox(;
         name, 
-        namespace = nothing,
-        N_exci = 5,
-        N_wta = 2,
+        N_wta,
+        out_degree=1,
+        namespace=nothing,
+        N_exci=5,
         E_syn_exci=0.0,
         E_syn_inhib=-70,
         G_syn_exci=3.0,
@@ -120,9 +26,9 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
 
         wtas = map(Base.OneTo(N_wta)) do i
             WinnerTakeAllBlox(;
-                name = Symbol("wta$i"), 
-                namespace = namespaced_name(namespace, name),
-                N_exci = 5,
+                name=Symbol("wta$i"), 
+                namespace=namespaced_name(namespace, name),
+                N_exci,
                 P_connect,
                 E_syn_exci,
                 E_syn_inhib,
@@ -167,6 +73,44 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
             [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
         end
 
-        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc, m)
+        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc, m, out_degree)
+    end
+end
+
+struct SuperCortical{N, P, S, C} <: AbstractComponent
+    namespace::N
+    parts::Vector{P}
+    odesystem::S
+    connector::C
+    mean::Vector{Num}
+
+    function SuperCortical(; name, N_cb, N_wta, out_degree=1, namespace=nothing)
+        cbs = map(Base.OneTo(N_cb)) do i
+            CorticalBlox(; name=Symbol("cb$i"), namespace=namespaced_name(namespace, name), N_wta, out_degree)
+        end
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), cbs)
+
+        idxs = Base.OneTo(N_cb)
+        for i in idxs
+            add_edge!.(Ref(g), i, setdiff(idxs, i), :weight, 1.0)
+        end
+
+        bc = connector_from_graph(g)
+
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(cbs; name)
+
+        m = if isnothing(namespace) 
+            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        else
+            @variables t
+            # HACK : Need to define an empty system to add the correct namespace to states.
+            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
+            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
+            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        end
+
+        new{typeof(namespace), eltype(cbs), typeof(sys), typeof(bc)}(namespace, cbs, sys, bc, m)
     end
 end

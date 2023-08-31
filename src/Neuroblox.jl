@@ -19,6 +19,8 @@ using Distributions
 using Random
 using OrderedCollections
 
+using StatsBase: sample
+
 using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
 import ModelingToolkit: inputs, outputs, nameof
 
@@ -131,14 +133,19 @@ function random_initials(odesys::ODESystem, blox)
     return u0
 end
 
-export LinearNeuralMassBlox, harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, CanonicalMicroCircuitBlox, next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, CorticalBlox, WinnerTakeAllBlox
+export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, 
+    next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
+    hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
+export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
+    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, 
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
+export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, 
+    connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
