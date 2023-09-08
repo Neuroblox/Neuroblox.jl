@@ -1,9 +1,9 @@
 using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
 # test blox
-@named PY  = JansenRitCBloxDelay(τ=0.001, H=20, λ=5, r=0.15)
-@named EI  = JansenRitCBloxDelay(τ=0.01, H=20, λ=5, r=5)
-@named II  = JansenRitCBloxDelay(τ=2.0, H=60, λ=5, r=5)
+@named PY  = JansenRitBlox(τ=0.001, H=20, λ=5, r=0.15)
+@named EI  = JansenRitBlox(τ=0.01, H=20, λ=5, r=5)
+@named II  = JansenRitBlox(τ=2.0, H=60, λ=5, r=5)
 
 # test graphs
 g = MetaDiGraph()

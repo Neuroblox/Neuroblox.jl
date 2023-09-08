@@ -90,7 +90,8 @@ mutable struct JansenRitBlox
     odesystem
     namespace
     function JansenRitBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
+        # Does this need a progress_scope of some sort?
+        para_dict = Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r)
         τ=para_dict[:τ]
         H=para_dict[:H]
         λ=para_dict[:λ]
