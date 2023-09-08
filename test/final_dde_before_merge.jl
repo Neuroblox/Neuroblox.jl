@@ -46,6 +46,13 @@ function inner_namespaceof(blox)
     end
 end
 
+function find_eq(eqs::AbstractVector{<:Equation}, lhs)
+    findfirst(eqs) do eq
+        lhs_vars = get_variables(eq.lhs)
+        length(lhs_vars) == 1 && isequal(only(lhs_vars), lhs)
+    end
+end
+
 # redefined to be used for delays
 function input_equations(blox)
     sys = get_sys(blox)
@@ -124,6 +131,55 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+function accumulate_equation!(bc::BloxConnector, eq)
+    lhs = eq.lhs
+    idx = find_eq(bc.eqs, lhs)
+    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
+
+end
+
+# Neurographs.jl
+function get_sys(g::MetaDiGraph)
+    map(vertices(g)) do v
+        b = get_prop(g, v, :blox)
+        get_sys(b)
+    end
+end
+
+function system_from_graph(g::MetaDiGraph; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
+end
+
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
+    @variables t
+    blox_syss = get_sys(g)
+    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
+end
+
+function get_blox(g::MetaDiGraph)
+    map(vertices(g)) do v
+        get_prop(g, v, :blox)
+    end
+end
+
+# switch to system_from_graph
+function connector_from_graph(g::MetaDiGraph)
+    bloxs = get_blox(g)
+    link = BloxConnector(bloxs)
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        for vn in inneighbors(g, v)
+            bn = get_prop(g, vn, :blox)
+            w = get_prop(g, vn, v, :weight)
+            d = get_prop(g, vn, v, :delay) # CHANGE HERE
+            link(bn, b; weight = w, delay = d)
+        end
+    end
+
+    return link
+end 
+
 
 ### MERGED SO FAR ###
 
@@ -151,60 +207,7 @@ mutable struct JansenRitCBloxDelay
     end
 end
 
-# switch to system_from_graph
-function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_blox(g)
-    link = BloxConnector(bloxs)
-    for v in vertices(g)
-        b = get_prop(g, v, :blox)
-        for vn in inneighbors(g, v)
-            bn = get_prop(g, vn, :blox)
-            w = get_prop(g, vn, v, :weight)
-            d = get_prop(g, vn, v, :delay) # CHANGE HERE
-            link(bn, b; weight = w, delay = d)
-        end
-    end
 
-    return link
-end 
-
-function get_sys(g::MetaDiGraph)
-    map(vertices(g)) do v
-        b = get_prop(g, v, :blox)
-        get_sys(b)
-    end
-end
-
-function system_from_graph(g::MetaDiGraph; name)
-    bc = connector_from_graph(g)
-    return system_from_graph(g, bc; name)
-end
-
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
-    @variables t
-    blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
-end
-
-function accumulate_equation!(bc::BloxConnector, eq)
-    lhs = eq.lhs
-    idx = find_eq(bc.eqs, lhs)
-    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
-
-end
-
-function find_eq(eqs::AbstractVector{<:Equation}, lhs)
-    findfirst(eqs) do eq
-        lhs_vars = get_variables(eq.lhs)
-        length(lhs_vars) == 1 && isequal(only(lhs_vars), lhs)
-    end
-end
-
-function get_blox(g::MetaDiGraph)
-    map(vertices(g)) do v
-        get_prop(g, v, :blox)
-    end
-end
 
 # test blox
 @named PY  = JansenRitCBloxDelay(τ=0.001, H=20, λ=5, r=0.15)
