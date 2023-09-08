@@ -80,35 +80,6 @@ function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
 end
 
-
-### MERGED SO FAR ###
-
-# neural_mass.jl
-mutable struct JansenRitCBloxDelay
-    p_dict::Dict{Symbol,Union{Real,Num}}
-    eqs::Vector{Equation}
-    sts::Vector{Any}
-    connector
-    jcn
-    odesystem
-    namespace
-    function JansenRitCBloxDelay(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
-        τ=para_dict[:τ]
-        H=para_dict[:H]
-        λ=para_dict[:λ]
-        r=para_dict[:r]
-        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
-        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesystem = System(eqs, name=name)
-        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
-    end
-end
-
-
-
-
 weight_parameters(blox) = Num[]
 
 # connections.jl
@@ -151,6 +122,33 @@ function (bc::BloxConnector)(
     eq = sys_in.jcn ~ x(t-τ)*w
     
     accumulate_equation!(bc, eq)
+end
+
+
+### MERGED SO FAR ###
+
+
+# neural_mass.jl
+mutable struct JansenRitCBloxDelay
+    p_dict::Dict{Symbol,Union{Real,Num}}
+    eqs::Vector{Equation}
+    sts::Vector{Any}
+    connector
+    jcn
+    odesystem
+    namespace
+    function JansenRitCBloxDelay(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
+        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesystem = System(eqs, name=name)
+        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
+    end
 end
 
 # switch to system_from_graph
