@@ -30,6 +30,33 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    jc::JansenRitCBlox, 
+    bloxin; 
+    weight = 1,
+    delay = 0
+)
+    # Need t for the delay term
+    @variables t
+
+    sys_out = get_namespaced_sys(jc)
+    sys_in = get_namespaced_sys(bloxin)
+
+    # Define & accumulate delay parameter
+    τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
+    τ = only(@parameters $(τ_name)=delay)
+    push!(bc.params, τ)
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.params, w)
+
+    x = namespace_expr(jc.connector, nothing, nameof(sys_out))
+    eq = sys_in.jcn ~ x(t-τ)*w
+    
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
     wta_in::WinnerTakeAllBlox; 
     weight = 1

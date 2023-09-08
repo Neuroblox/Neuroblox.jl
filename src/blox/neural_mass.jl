@@ -80,6 +80,30 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const jansen_ritSC = JansenRitSCBlox
 
+# Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
+mutable struct JansenRitBlox
+    p_dict
+    eqs
+    sts
+    connector
+    jcn
+    odesystem
+    namespace
+    function JansenRitBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
+        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesystem = System(eqs, name=name)
+        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
+    end
+end
+
+
 mutable struct WilsonCowanBlox <: NeuralMassBlox
     τ_E::Num
     τ_I::Num

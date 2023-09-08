@@ -21,7 +21,7 @@ using OrderedCollections
 
 using StatsBase: sample
 
-using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
+using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation, namespace_expr
 import ModelingToolkit: inputs, outputs, nameof
 
 # define abstract types for Neuroblox
