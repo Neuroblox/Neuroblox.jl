@@ -129,19 +129,24 @@ function input_equations(blox)
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
+
+    @variables t # needed for IV in namespace_equation
+
     eqs = map(inps) do inp
         idx = find_eq(sys_eqs, inp)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
                 nothing, 
-                namespaced_name(inner_namespaceof(blox), nameof(blox))
+                namespaced_name(inner_namespaceof(blox), nameof(blox));
+                ivs = t # needed to un-namespace t in new MTK recursion
             )
         else
             namespace_equation(
                 sys_eqs[idx], 
                 nothing, 
-                namespaced_name(inner_namespaceof(blox), nameof(blox))
+                namespaced_name(inner_namespaceof(blox), nameof(blox));
+                ivs = t # needed to un-namespace t in new MTK recursion
             )
         end
     end
