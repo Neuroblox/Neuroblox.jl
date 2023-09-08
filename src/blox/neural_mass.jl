@@ -83,8 +83,6 @@ const jansen_ritSC = JansenRitSCBlox
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 mutable struct JansenRitBlox
     p_dict
-    eqs
-    sts
     connector
     jcn
     odesystem
@@ -96,14 +94,15 @@ mutable struct JansenRitBlox
         H=para_dict[:H]
         λ=para_dict[:λ]
         r=para_dict[:r]
-        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
+        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
         eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
                D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         odesystem = System(eqs, name=name)
-        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
+        #can't use outputs because x(t) is Num by then
+        #wrote inputs similarly to keep consistent
+        new(para_dict, sts[1], sts[3], odesystem, nothing)
     end
 end
-
 
 mutable struct WilsonCowanBlox <: NeuralMassBlox
     τ_E::Num
