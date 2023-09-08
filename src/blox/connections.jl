@@ -15,7 +15,8 @@ end
 function (bc::BloxConnector)(
     HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
     HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
-    weight = 1
+    weight = 1,
+    delay = 0
 )
     sys_out = get_namespaced_sys(HH_out)
     sys_in = get_namespaced_sys(HH_in)
@@ -59,7 +60,8 @@ end
 function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
     wta_in::WinnerTakeAllBlox; 
-    weight = 1
+    weight = 1,
+    delay = 0
 )
     neurons_in = get_exci_neurons(wta_in)
     neurons_out = get_exci_neurons(wta_out)
@@ -81,7 +83,8 @@ end
 function (bc::BloxConnector)(
     cb_out::CorticalBlox,
     cb_in::CorticalBlox;
-    weight = 1
+    weight = 1,
+    delay = 0
 )
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
