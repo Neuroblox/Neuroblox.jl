@@ -5,6 +5,29 @@ import ModelingToolkit: inputs, outputs, nameof
 @variables t
 D = Differential(t)
 
+# neural_mass.jl
+mutable struct JansenRitCBloxDelay
+    p_dict::Dict{Symbol,Union{Real,Num}}
+    eqs::Vector{Equation}
+    sts::Vector{Any}
+    connector
+    jcn
+    odesystem
+    namespace
+    function JansenRitCBloxDelay(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
+        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
+        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesystem = System(eqs, name=name)
+        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
+    end
+end
+
 # blox_utilities.jl
 namespaced_name(parent_name, name) = Symbol(parent_name, :₊, name)
 namespaced_name(nothing, name) = Symbol(name)
@@ -180,35 +203,6 @@ function connector_from_graph(g::MetaDiGraph)
     return link
 end 
 
-
-### MERGED SO FAR ###
-
-
-# neural_mass.jl
-mutable struct JansenRitCBloxDelay
-    p_dict::Dict{Symbol,Union{Real,Num}}
-    eqs::Vector{Equation}
-    sts::Vector{Any}
-    connector
-    jcn
-    odesystem
-    namespace
-    function JansenRitCBloxDelay(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        para_dict = scope_dict(Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r))
-        τ=para_dict[:τ]
-        H=para_dict[:H]
-        λ=para_dict[:λ]
-        r=para_dict[:r]
-        sts = @variables x(..)=1.0 y(t)=1.0 jcn(t)=0.0 [input=true]
-        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesystem = System(eqs, name=name)
-        new(para_dict, eqs, sts, sts[1], sts[3], odesystem, nothing)
-    end
-end
-
-
-
 # test blox
 @named PY  = JansenRitCBloxDelay(τ=0.001, H=20, λ=5, r=0.15)
 @named EI  = JansenRitCBloxDelay(τ=0.01, H=20, λ=5, r=5)
@@ -232,6 +226,8 @@ prob = DDEProblem(sys,
     constant_lags = [1])
 alg = MethodOfSteps(Tsit5())
 sol_mtk = solve(prob, alg, reltol = 1e-7, abstol = 1e-10, saveat=0.001)
+
+### MERGED SO FAR ###
 
 # Notes for 9/6 meeting
 
