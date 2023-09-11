@@ -197,7 +197,7 @@ function connector_from_graph(g::MetaDiGraph)
         for vn in inneighbors(g, v)
             bn = get_prop(g, vn, :blox)
             w = get_prop(g, vn, v, :weight)
-            d = get_prop(g, vn, v, :delay)
+            d = has_prop(g, vn, v, :delay) ? get_prop(g, vn, v, :delay) : 0
             link(bn, b; weight = w, delay = d)
         end
     end
