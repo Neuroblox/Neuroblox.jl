@@ -87,8 +87,15 @@ mutable struct JansenRitBlox
     jcn
     odesystem
     namespace
-    function JansenRitBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        # Does this need a progress_scope of some sort?
+    function JansenRitBlox(;name, τ=nothing, H=nothing, λ=nothing, r=nothing, cortical=true)
+        # default parameters are for cortical Jansen Rit
+        # Checking for nothing parameters has no runtime cost per Chris in this post
+        # https://stackoverflow.com/questions/45445455/what-is-the-best-practices-way-to-check-if-optional-arguments-are-used-in-a-fu
+        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
+        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
+        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
+
         para_dict = Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r)
         τ=para_dict[:τ]
         H=para_dict[:H]

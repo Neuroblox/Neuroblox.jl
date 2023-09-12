@@ -109,3 +109,14 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
 
 end
+
+# Helper to collect delays from BloxConnector params
+function get_delays(bc::BloxConnector)
+    delays = []
+    for p in bc.params
+        if occursin("τ", string(p))
+            push!(delays, p)
+        end
+    end
+    return delays
+end
