@@ -101,4 +101,22 @@ prob = DDEProblem(final_system_sys,
 alg = MethodOfSteps(Vern7())
 sol_dde_no_delays = solve(prob, alg, saveat=0.001)
 sol2 = DataFrame(sol_dde_no_delays)
-@test sol2[!, "GPi₊x(t)"][4] ≈ -0.48421810231972134
+@test isapprox(sol2[!, "GPi₊x(t)"][500:1000], sol[!, "GPi₊x(t)"][500:1000], rtol=1e-8)
+
+
+# Alternative version using adjacency matrix
+g2 = MetaDiGraph()
+add_blox_list!(g2, blox)
+create_adjacency_edges!(g2, adj_matrix_lin)
+
+(final_system, final_delays) = system_from_graph(g2, params, true; name=:final_system)
+sim_dur = 10.0 # Simulate for 10 Seconds
+final_system_sys = structural_simplify(final_system)
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=0.001)
+sol3 = DataFrame(sol_dde_no_delays)
+@test isapprox(sol3[!, "GPi₊x(t)"][500:1000], sol[!, "GPi₊x(t)"][500:1000], rtol=1e-8)

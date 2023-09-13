@@ -155,7 +155,7 @@ end
 input_equations(blox::AbstractComponent) = blox.connector.eqs
 
 weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.params
+weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
 
 function get_inputs(blox)
     sys = get_sys(blox)
