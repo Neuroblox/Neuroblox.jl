@@ -173,12 +173,18 @@ function get_sys(g::MetaDiGraph)
     end
 end
 
-# Additional dispatach if delays are needed from BloxConnector
+# Additional dispatch if delays are needed from BloxConnector
 function system_from_graph(g::MetaDiGraph, return_delays::Bool; name)
     if return_delays
         bc = connector_from_graph(g)
         return (system_from_graph(g, bc; name), get_delays(bc))
     end
+end
+
+# Additional dispatch if extra parameters are passed for edge definitions
+function system_from_graph(g::MetaDiGraph, params::Vector{Num}; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
 end
 
 function system_from_graph(g::MetaDiGraph; name)
@@ -189,8 +195,16 @@ end
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], params(bc); name), blox_syss)
 end
+
+# Additional dispatch if extra parameters are passed for edge definitions
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector, params::Vector{Num}; name)
+    @variables t
+    blox_syss = get_sys(g)
+    return compose(ODESystem(bc.eqs, t, [], [params(bc)..., params...]; name), blox_syss)
+end
+
 
 function system_from_parts(parts::AbstractVector; name)
     @variables t
@@ -278,4 +292,30 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     end
     # Return One ODESystem
     return ODESystem(eqs, systems=sys, name=name)
+end
+
+function add_blox_list!(g::MetaDiGraph, bloxlist)
+    for b in bloxlist
+        add_blox!(g, b)
+    end
+end
+
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix)
+    for i = 1:size(adj_matrix, 1)
+        for j = 1:size(adj_matrix, 2)
+            if adj_matrix[i, j] != 0
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j]))
+            end
+        end
+    end
+end
+
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix, delay_matrix)
+    for i = 1:size(adj_matrix, 1)
+        for j = 1:size(adj_matrix, 2)
+            if adj_matrix[i, j] != 0
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :delay => delay_matrix[i, j]))
+            end
+        end
+    end
 end

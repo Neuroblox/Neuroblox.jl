@@ -138,7 +138,7 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
-    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, JansenRitBlox, LarterBreakspearBlox, 
+    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, JansenRitBlox, LarterBreakspearBlox, LarterBreakspearBloxv2,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
@@ -154,5 +154,6 @@ export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph
+export create_adjacency_edges!, add_blox_list!
 
 end
