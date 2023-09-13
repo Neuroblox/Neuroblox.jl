@@ -52,51 +52,29 @@ same thing as the old simulate call with AutoVern7(Rodas4() since there are no d
 @named EI  = JansenRitBlox(τ=0.01, H=20, λ=5, r=5)
 @named PY  = JansenRitBlox(cortical=true) # default parameters cortical Jansen Rit blox
 @named II  = JansenRitBlox(τ=2.0, H=60, λ=5, r=5)
+blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 
 # test graphs
 g = MetaDiGraph()
-add_blox!(g, Str)
-add_blox!(g, GPe)
-add_blox!(g, STN)
-add_blox!(g, GPi)
-add_blox!(g, Th)
-add_blox!(g, EI)
-add_blox!(g, PY)
-add_blox!(g, II)
+add_blox_list!(g, blox)
 
-# Would be great to make a function to do edges from an adjacency matrix - future update
-# Symbolic weights aren't collected properly - discuss!
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+# Store parameters to be passed later on
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
-# add_edge!(g, 2, 1, Dict(:weight => -0.5*C_BG_Th))
-# add_edge!(g, 2, 2, Dict(:weight => -0.5*C_BG_Th))
-# add_edge!(g, 2, 3, Dict(:weight => C_BG_Th))
-# add_edge!(g, 3, 2, Dict(:weight => -0.5*C_BG_Th))
-# add_edge!(g, 3, 7, Dict(:weight => C_Cor_BG_Th))
-# add_edge!(g, 4, 2, Dict(:weight => -0.5*C_BG_Th))
-# add_edge!(g, 4, 3, Dict(:weight => C_BG_Th))
-# add_edge!(g, 5, 4, Dict(:weight => -0.5*C_BG_Th))
-# add_edge!(g, 6, 5, Dict(:weight => C_BG_Th_Cor))
-# add_edge!(g, 6, 7, Dict(:weight => 6*C_Cor))
-# add_edge!(g, 7, 6, Dict(:weight => 4.8*C_Cor))
-# add_edge!(g, 7, 8, Dict(:weight => -1.5*C_Cor))
-# add_edge!(g, 8, 7, Dict(:weight => 1.5*C_Cor))
-# add_edge!(g, 8, 8, Dict(:weight => 3.3*C_Cor))
-
-add_edge!(g, 2, 1, Dict(:weight => -0.5*60))
-add_edge!(g, 2, 2, Dict(:weight => -0.5*60))
-add_edge!(g, 2, 3, Dict(:weight => 60))
-add_edge!(g, 3, 2, Dict(:weight => -0.5*60))
-add_edge!(g, 3, 7, Dict(:weight => 5))
-add_edge!(g, 4, 2, Dict(:weight => -0.5*60))
-add_edge!(g, 4, 3, Dict(:weight => 60))
-add_edge!(g, 5, 4, Dict(:weight => -0.5*60))
-add_edge!(g, 6, 5, Dict(:weight => 5))
-add_edge!(g, 6, 7, Dict(:weight => 6*60))
-add_edge!(g, 7, 6, Dict(:weight => 4.8*60))
-add_edge!(g, 7, 8, Dict(:weight => -1.5*60))
-add_edge!(g, 8, 7, Dict(:weight => 1.5*60))
-add_edge!(g, 8, 8, Dict(:weight => 3.3*60))
+add_edge!(g, 2, 1, Dict(:weight => -0.5*C_BG_Th))
+add_edge!(g, 2, 2, Dict(:weight => -0.5*C_BG_Th))
+add_edge!(g, 2, 3, Dict(:weight => C_BG_Th))
+add_edge!(g, 3, 2, Dict(:weight => -0.5*C_BG_Th))
+add_edge!(g, 3, 7, Dict(:weight => C_Cor_BG_Th))
+add_edge!(g, 4, 2, Dict(:weight => -0.5*C_BG_Th))
+add_edge!(g, 4, 3, Dict(:weight => C_BG_Th))
+add_edge!(g, 5, 4, Dict(:weight => -0.5*C_BG_Th))
+add_edge!(g, 6, 5, Dict(:weight => C_BG_Th_Cor))
+add_edge!(g, 6, 7, Dict(:weight => 6*C_Cor))
+add_edge!(g, 7, 6, Dict(:weight => 4.8*C_Cor))
+add_edge!(g, 7, 8, Dict(:weight => -1.5*C_Cor))
+add_edge!(g, 8, 7, Dict(:weight => 1.5*C_Cor))
+add_edge!(g, 8, 8, Dict(:weight => 3.3*C_Cor))
 
 # add_edge!(g, 2, 1, Dict(:weight => -0.5*60, :delay => 0.01))
 # add_edge!(g, 2, 2, Dict(:weight => -0.5*60, :delay => 0.01))
@@ -113,15 +91,13 @@ add_edge!(g, 8, 8, Dict(:weight => 3.3*60))
 # add_edge!(g, 8, 7, Dict(:weight => 1.5*60, :delay => 0.01))
 # add_edge!(g, 8, 8, Dict(:weight => 3.3*60, :delay => 0.01))
 
-@named final_system = system_from_graph(g)
-@named final_system_delays = system_from_graph(g, true)
-final_system_delays = final_system_delays[2]
+(final_system, final_delays) = system_from_graph(g, params, true; name=:final_system)
 sim_dur = 10.0 # Simulate for 10 Seconds
 final_system_sys = structural_simplify(final_system)
 prob = DDEProblem(final_system_sys,
     [],
     (0.0, sim_dur),
-    constant_lags = final_system_delays)
+    constant_lags = final_delays)
 alg = MethodOfSteps(Vern7())
 sol_dde_no_delays = solve(prob, alg, saveat=0.001)
 sol2 = DataFrame(sol_dde_no_delays)
