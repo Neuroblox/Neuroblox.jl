@@ -12,7 +12,6 @@ function LinearConnectionsLB(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     return @named Circuit = ODESystem(eqs, systems = sys)
 end
 
-
 adj = [0 1 0 0 0;
        0 0 1 0 0;
        0 0 0 1 0;
@@ -43,10 +42,13 @@ plot(sol.t,sol[1,:],label=false,ylim=(-1,1))
 
 blox2 = []
 
-for i = 1:5
+for i = 1:2
     lb = LarterBreakspearBloxv2(name=Symbol("LB$i"))
     push!(blox2,lb)
 end
+
+adj_temp = [0 1;
+            1 0]
 
 g = MetaDiGraph()
 add_blox_list!(g, blox2)

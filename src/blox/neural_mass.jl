@@ -315,7 +315,7 @@ mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
                   m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
                   m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                   m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
-        odesys = ODESystem(eqs, t, sts, params; name=Symbol(name))
+        odesys = System(eqs; name=name)
         new(params, sts[5], sts[4], odesys, nothing)
     end
 end
