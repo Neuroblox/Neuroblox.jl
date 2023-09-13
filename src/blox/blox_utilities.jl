@@ -134,13 +134,13 @@ function input_equations(blox)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
-                nothing, 
+                sys, 
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         else
             namespace_equation(
                 sys_eqs[idx], 
-                nothing, 
+                sys, 
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         end
