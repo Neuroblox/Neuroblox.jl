@@ -137,16 +137,14 @@ function input_equations(blox)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
-                nothing, 
-                namespaced_name(inner_namespaceof(blox), nameof(blox));
-                ivs = t # needed to un-namespace t in new MTK recursion
+                sys, 
+                namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         else
             namespace_equation(
                 sys_eqs[idx], 
-                nothing, 
-                namespaced_name(inner_namespaceof(blox), nameof(blox));
-                ivs = t # needed to un-namespace t in new MTK recursion
+                sys, 
+                namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         end
     end
