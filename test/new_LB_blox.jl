@@ -1,4 +1,4 @@
-using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, LinearAlgebra, Random
+using Plots, Neuroblox, OrdinaryDiffEq, MetaGraphs, Graphs, LinearAlgebra, Random, DataFrames, Test
 
 
 function LinearConnectionsLB(;name, sys=sys, adj_matrix=adj_matrix, connector=connector)
