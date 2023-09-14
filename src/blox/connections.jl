@@ -53,7 +53,7 @@ function (bc::BloxConnector)(
     w = only(@parameters $(w_name)=weight)
     push!(bc.weights, w)
 
-    x = namespace_expr(jc.connector, nothing, nameof(sys_out))
+    x = namespace_expr(jc.connector, sys_out, nameof(sys_out))
     eq = sys_in.jcn ~ x(t-τ)*w
     
     accumulate_equation!(bc, eq)
@@ -75,7 +75,8 @@ function (bc::BloxConnector)(
         w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
-        eq = sys_in.jcn ~ bloxout.connector*w
+        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
+        eq = sys_in.jcn ~ x*w
     else
         # Define & accumulate delay parameter
         # Don't accumulate if zero
@@ -87,7 +88,7 @@ function (bc::BloxConnector)(
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
 
-        x = namespace_expr(bloxout.connector, nothing, nameof(sys_out))
+        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x(t-τ)*w
     end
     

@@ -6,7 +6,6 @@ function LinearConnectionsLB(;name, sys=sys, adj_matrix=adj_matrix, connector=co
     eqs = []
     for region_num in 1:length(sys)
 		norm_factor = sum(adj_matrix[:, region_num])
-		# @show num_conn
     	push!(eqs, sys[region_num].jcn ~ sum(adj[:, region_num])/norm_factor)
     end
     return @named Circuit = ODESystem(eqs, systems = sys)
@@ -37,24 +36,24 @@ u0 = collect(Iterators.flatten(zip(uv,uz,uw)))
 
 prob = ODEProblem(mysys,u0,(0.0,5e2),[])
 sol = solve(prob,AutoVern7(Rodas4()),saveat=0.1)
-
-plot(sol.t,sol[1,:],label=false,ylim=(-1,1))
+dsol = DataFrame(sol)
 
 blox2 = []
 
-for i = 1:2
+for i = 1:5
     lb = LarterBreakspearBloxv2(name=Symbol("LB$i"))
     push!(blox2,lb)
 end
 
-adj_temp = [0 1;
-            1 0]
+adj_temp = adj
 
 g = MetaDiGraph()
 add_blox_list!(g, blox2)
-create_adjacency_edges!(g, adj)
+create_adjacency_edges!(g, adj_temp)
 @named mysys2 = system_from_graph(g)
 mysys2 = structural_simplify(mysys2)
 prob2 = ODEProblem(mysys2,u0,(0.0,5e2),[])
 sol2 = solve(prob2,AutoVern7(Rodas4()),saveat=0.1)
-plot(sol2.t,sol2[1,:],label=false,ylim=(-1,1)
+dsol2 = DataFrame(sol2)
+
+@test isapprox(dsol2[!, "LB2₊V(t)"][100:end], dsol[!, "LB2₊V(t)"][100:end], rtol=1e-8)

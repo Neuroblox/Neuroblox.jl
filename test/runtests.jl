@@ -11,6 +11,7 @@ using SafeTestsets
 @time @safetestset "Control Tests" begin include("controllers.jl") end
 @time @safetestset "Source Tests" begin include("source_components.jl") end
 @time @safetestset "New Jansen-Rit Tests" begin include("jansen_rit_component_tests.jl") end
+@time @safetestset "New Larter-Breakspear Tests" begin include("new_LB_blox.jl") end
 # fitting tests should be at the end since they take the longest
 # removing them for now until we have real fitting tests
 # @time @safetestset "Fitting Tests" begin include("fitting.jl") end
