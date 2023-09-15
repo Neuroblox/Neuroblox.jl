@@ -142,7 +142,7 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
-    stim::DotStimulus,
+    stim::ImageStimulus,
     neuron::Union{HHNeuronExciBlox, HHNeuronInhibBlox};
     weight = 1,
     delay = 0
@@ -154,7 +154,7 @@ function (bc::BloxConnector)(
 
     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
     w = only(@parameters $(w_name)=weight)
-    push!(bc.params, w)
+    push!(bc.weights, w)
 
     eq = sys_in.I_in ~ w * dots[stim.currect_dot]
 
@@ -163,7 +163,7 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
-    stim::DotStimulus,
+    stim::ImageStimulus,
     cb::CorticalBlox;
     weight = 1,
     delay = 0
