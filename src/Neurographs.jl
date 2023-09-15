@@ -318,7 +318,7 @@ function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}) where {T
     end
 end
 
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix, delay_matrix)
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}, delay_matrix) where {T}
     for i = 1:size(adj_matrix, 1)
         for j = 1:size(adj_matrix, 2)
             if !isequal(adj_matrix[i, j], 0) #use isequal because != doesn't work for symbolics
