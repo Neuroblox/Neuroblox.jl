@@ -146,7 +146,7 @@ export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInh
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, JansenRitBlox, LarterBreakspearBlox, LarterBreakspearBloxv2,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, DotStimulus
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox

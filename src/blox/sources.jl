@@ -72,12 +72,12 @@ mutable struct PhaseBlox
     end
 end
 
-mutable struct DotStimulus{S}
+mutable struct ImageStimulus{S}
     const namespace
     const odesystem::S
     currect_dot::Int
 
-    function DotStimulus(; file, name, namespace, dt, t_stimulus, t_pause)
+    function ImageStimulus(; file, name, namespace, dt, t_stimulus, t_pause)
         S = readdlm(file, ',')
         
         sources = [
