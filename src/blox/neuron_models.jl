@@ -153,8 +153,9 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			h(t)=0.59 
 			I_syn(t)=0.0 
 			[input=true] 
+            I_in(t)=I_in
+            [input=true]
 			G(t)=0.0 
-			[output=true] 
 			z(t)=0.0
 		end
 		ps = @parameters begin 
@@ -171,7 +172,6 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
-			I_in = I_in 
 			freq = freq 
 			phase = phase
 		end
