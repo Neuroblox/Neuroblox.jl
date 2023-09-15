@@ -321,7 +321,7 @@ end
 function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}, delay_matrix) where {T}
     for i = 1:size(adj_matrix, 1)
         for j = 1:size(adj_matrix, 2)
-            if !isequal(adj_matrix[i, j], 0) #use isequal because != doesn't work for symbolics
+            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
                 add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :delay => delay_matrix[i, j]))
             end
         end
