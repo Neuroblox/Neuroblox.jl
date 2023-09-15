@@ -23,7 +23,8 @@ using DelayDiffEq
 using StatsBase: sample
 
 using ModelingToolkit: get_namespace, get_systems, renamespace, 
-                    namespace_equation, namespace_variables, AbstractODESystem
+                    namespace_equation, namespace_variables, namespace_expr,
+                    AbstractODESystem
 import ModelingToolkit: inputs, nameof
 
 using ModelingToolkitStandardLibrary.Blocks: SampledData
