@@ -150,5 +150,5 @@ end
 
 # Helper to merge delays and weights into a single vector
 function params(bc::BloxConnector)
-    return vcat(bc.weights..., bc.delays...)
+    return vcat(bc.weights, bc.delays)
 end
