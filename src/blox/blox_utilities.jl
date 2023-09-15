@@ -129,6 +129,9 @@ function input_equations(blox)
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
+
+    @variables t # needed for IV in namespace_equation
+
     eqs = map(inps) do inp
         idx = find_eq(sys_eqs, inp)
         if isnothing(idx)
@@ -152,7 +155,7 @@ end
 input_equations(blox::AbstractComponent) = blox.connector.eqs
 
 weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.params
+weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
 
 function get_inputs(blox)
     sys = get_sys(blox)
