@@ -18,10 +18,11 @@ using Interpolations, DataInterpolations
 using Distributions
 using Random
 using OrderedCollections
+using DelayDiffEq
 
 using StatsBase: sample
 
-using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
+using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation, namespace_expr
 import ModelingToolkit: inputs, outputs, nameof
 
 # define abstract types for Neuroblox
@@ -137,7 +138,7 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
-    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, 
+    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, JansenRitBlox, LarterBreakspearBlox, LarterBreakspearBloxv2,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
@@ -153,5 +154,6 @@ export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph
+export create_adjacency_edges!, add_blox_list!
 
 end

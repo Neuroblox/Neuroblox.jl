@@ -80,6 +80,38 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const jansen_ritSC = JansenRitSCBlox
 
+# Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
+mutable struct JansenRitBlox
+    p_dict
+    connector
+    jcn
+    odesystem
+    namespace
+    function JansenRitBlox(;name, τ=nothing, H=nothing, λ=nothing, r=nothing, cortical=true)
+        # default parameters are for cortical Jansen Rit
+        # Checking for nothing parameters has no runtime cost per Chris in this post
+        # ; kwargs...
+        # https://stackoverflow.com/questions/45445455/what-is-the-best-practices-way-to-check-if-optional-arguments-are-used-in-a-fu
+        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
+        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
+        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
+
+        para_dict = Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r)
+        τ=para_dict[:τ]
+        H=para_dict[:H]
+        λ=para_dict[:λ]
+        r=para_dict[:r]
+        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesystem = System(eqs, name=name)
+        #can't use outputs because x(t) is Num by then
+        #wrote inputs similarly to keep consistent
+        new(para_dict, sts[1], sts[3], odesystem, nothing)
+    end
+end
+
 mutable struct WilsonCowanBlox <: NeuralMassBlox
     τ_E::Num
     τ_I::Num
@@ -229,5 +261,61 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
         [odesys.V],[odesys.V, odesys.Z, odesys.W],
         Dict(odesys.V => (-1.0,1.0), odesys.Z => (-1.0,1.0), odesys.W => (0.0,1.0)),
         odesys)
+    end
+end
+
+mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
+    params
+    connector
+    jcn
+    odesystem
+    namespace
+    function LarterBreakspearBloxv2(;name,
+                          T_Ca=-0.01,
+                          δ_Ca=0.15,
+                          g_Ca=1.0,
+                          V_Ca=1.0,
+                          T_K=0.0,
+                          δ_K=0.3,
+                          g_K=2.0,
+                          V_K=-0.7,
+                          T_Na=0.3,
+                          δ_Na=0.15,
+                          g_Na=6.7,
+                          V_Na=0.53,
+                          V_L=-0.5,
+                          g_L=0.5,
+                          V_T=0.0,
+                          Z_T=0.0,
+                          δ_VZ=0.61,
+                          Q_Vmax=1.0,
+                          Q_Zmax=1.0,
+                          IS = 0.3,
+                          a_ee=0.36,
+                          a_ei=2.0,
+                          a_ie=2.0,
+                          a_ne=1.0,
+                          a_ni=0.4,
+                          b=0.1,
+                          τ_K=1.0,
+                          ϕ=0.7,
+                          r_NMDA=0.25,
+                          C=0.35)
+        params = @parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA
+        sts    = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
+
+        eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
+                          g_K * W * (V - V_K) - g_L * (V - V_L) -
+                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
+                          a_ie * Z * Q_Z + a_ne * IS,
+                  D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
+                  D(W) ~ ϕ * (m_K - W) / τ_K,
+                  Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
+                  Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
+                  m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
+                  m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
+                  m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
+        odesys = System(eqs; name=name)
+        new(params, sts[5], sts[4], odesys, nothing)
     end
 end

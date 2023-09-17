@@ -173,6 +173,28 @@ function get_sys(g::MetaDiGraph)
     end
 end
 
+# Additional dispatch if delays are needed from BloxConnector
+function system_from_graph(g::MetaDiGraph, return_delays::Bool; name)
+    if return_delays
+        bc = connector_from_graph(g)
+        return (system_from_graph(g, bc; name), bc.delays)
+    end
+end
+
+# Additional dispatch if delays are needed from BloxConnector
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}, return_delays::Bool; name)
+    if return_delays
+        bc = connector_from_graph(g)
+        return (system_from_graph(g, bc, p; name), bc.delays)
+    end
+end
+
+# Additional dispatch if extra parameters are passed for edge definitions
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc, p; name)
+end
+
 function system_from_graph(g::MetaDiGraph; name)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc; name)
@@ -181,8 +203,16 @@ end
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], bc.params; name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], params(bc); name), blox_syss)
 end
+
+# Additional dispatch if extra parameters are passed for edge definitions
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name)
+    @variables t
+    blox_syss = get_sys(g)
+    return compose(ODESystem(bc.eqs, t, [], [params(bc)..., p...]; name), blox_syss)
+end
+
 
 function system_from_parts(parts::AbstractVector; name)
     @variables t
@@ -197,7 +227,8 @@ function connector_from_graph(g::MetaDiGraph)
         for vn in inneighbors(g, v)
             bn = get_prop(g, vn, :blox)
             w = get_prop(g, vn, v, :weight)
-            link(bn, b; weight = w)
+            d = has_prop(g, vn, v, :delay) ? get_prop(g, vn, v, :delay) : 0
+            link(bn, b; weight = w, delay = d)
         end
     end
 
@@ -269,4 +300,30 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     end
     # Return One ODESystem
     return ODESystem(eqs, systems=sys, name=name)
+end
+
+function add_blox_list!(g::MetaDiGraph, bloxlist)
+    for b in bloxlist
+        add_blox!(g, b)
+    end
+end
+
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}) where {T}
+    for i = 1:size(adj_matrix, 1)
+        for j = 1:size(adj_matrix, 2)
+            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j]))
+            end
+        end
+    end
+end
+
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}, delay_matrix) where {T}
+    for i = 1:size(adj_matrix, 1)
+        for j = 1:size(adj_matrix, 2)
+            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :delay => delay_matrix[i, j]))
+            end
+        end
+    end
 end
