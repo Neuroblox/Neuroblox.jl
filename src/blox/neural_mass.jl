@@ -164,7 +164,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
         Z = ModelingToolkit.unwrap(Z)
         g = ModelingToolkit.unwrap(g)
         C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
-        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*Z))
+        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys)
