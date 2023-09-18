@@ -1,11 +1,11 @@
 using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
-@named WC1 = WilsonCowan()
-@named WC2 = WilsonCowan()
+@named LB1 = LarterBreakspear()
+@named LB2 = LarterBreakspear()
 
 adj = [0 1; 1 0]
 g = MetaDiGraph()
-add_blox_list!(g, [WC1, WC2])
+add_blox_list!(g, [LB1, LB2])
 create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)

@@ -99,6 +99,25 @@ prob = ODEProblem(sys, [], (0.0, sim_dur), [])
 sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
 @test sol.retcode == ReturnCode.Success
 
+"""
+Larter-Breakspear model test
+"""
+@named LB1 = LarterBreakspear()
+@named LB2 = LarterBreakspear()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [LB1, LB2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
 
 
 """
@@ -370,22 +389,6 @@ sol = solve(prob_ouconnect, alg_hints = [:stiff])
 @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
 @test cor(sol[1,:],sol[2,:]) < 0.0 # Pearson correlation should be negative
 
-
-"""
-Larter-Breakspear model test
-"""
-@named lb = LarterBreakspearBlox()
-sys = [lb.odesystem]
-eqs = [sys[1].jcn ~ 0]
-@named lb_connect = ODESystem(eqs,systems=sys)
-lb_simpl = structural_simplify(lb_connect)
-
-@test length(states(lb_simpl)) == 3
-
-prob = ODEProblem(lb_simpl,[0.5,0.5,0.5],(0,10.0),[])
-sol = solve(prob,Tsit5())
-
-@test sol[1,10] ≈ -0.6246710908910991
 
 """
 CorticalBlox test
