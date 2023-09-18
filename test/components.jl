@@ -24,7 +24,8 @@ create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)
 sys = structural_simplify(sys)
-prob = ODEProblem(sys, [0.2, 0.4, 0.6, 0.8], (0.0, 5e2), [])
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
 sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
 @test sol.retcode == ReturnCode.Success
 
@@ -78,6 +79,26 @@ testing random inital conditions for neural mass blox
 # No equativalent for this test just yet because random_initials and simulate don't work on new blox
 # sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
 # @test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
+
+"""
+New Wilson-Cowan test
+"""
+@named WC1 = WilsonCowan()
+@named WC2 = WilsonCowan()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [WC1, WC2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
 
 
 """
@@ -349,19 +370,6 @@ sol = solve(prob_ouconnect, alg_hints = [:stiff])
 @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
 @test cor(sol[1,:],sol[2,:]) < 0.0 # Pearson correlation should be negative
 
-"""
-wilson_cowan test
-
-Test for Wilson-Cowan model
-"""
-@named WC = WilsonCowanBlox()
-sys = [WC.odesystem]
-eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
-@named WC_sys = ODESystem(eqs,systems=sys)
-WC_sys_s = structural_simplify(WC_sys)
-prob = ODEProblem(WC_sys_s, [], (0,sim_dur), [])
-sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
-#@test sol[1,end] ≈ 0.17513685727060388
 
 """
 Larter-Breakspear model test

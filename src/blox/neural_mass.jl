@@ -273,7 +273,13 @@ struct JansenRit <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function JansenRit(;name, τ=nothing, H=nothing, λ=nothing, r=nothing, cortical=true)
+    function JansenRit(;name, 
+                        τ=nothing, 
+                        H=nothing, 
+                        λ=nothing, 
+                        r=nothing, 
+                        cortical=true)
+
         τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
         H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
@@ -287,6 +293,35 @@ struct JansenRit <: NeuralMassBlox
         sys = System(eqs, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent
+        new(p, sts[1], sts[3], sys, nothing)
+    end
+end
+
+mutable struct WilsonCowan <: NeuralMassBlox
+    params
+    connector
+    jcn
+    odesystem
+    namespace
+    function WilsonCowan(;name,
+                          τ_E=1.0,
+                          τ_I=1.0,
+                          a_E=1.2,
+                          a_I=2.0,
+                          c_EE=5.0,
+                          c_IE=6.0,
+                          c_EI=10.0,
+                          c_II=1.0,
+                          θ_E=2.0,
+                          θ_I=3.5,
+                          η=1.0)
+        p = progress_scope(@parameters τ_E=τ_E τ_I=τ_I a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η)
+
+        τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
+        sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t)=0.0 [input=true] #P(t)=0.0
+        eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
+               D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
+        sys = System(eqs, name=name)
         new(p, sts[1], sts[3], sys, nothing)
     end
 end
