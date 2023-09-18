@@ -236,6 +236,18 @@ end
 New versions of blox begin here!
 """
 
+struct LinearNeuralMass <: AbstractBlox
+    connector
+    jcn
+    odesystem
+    function LinearNeuralMass(;name)
+        sts = @variables x(t) jcn(t)
+        eqs = [D(x) ~ jcn]
+        sys = System(eqs, name=name)
+        new(sts[1], sts[2], sys)
+    end
+end
+
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: AbstractBlox
     params
@@ -254,10 +266,10 @@ struct JansenRit <: AbstractBlox
         sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
         eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
                D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesystem = System(eqs, name=name)
+        sys = System(eqs, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent
-        new(p, sts[1], sts[3], odesystem, nothing)
+        new(p, sts[1], sts[3], sys, nothing)
     end
 end
 
