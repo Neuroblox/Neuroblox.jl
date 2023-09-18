@@ -249,7 +249,7 @@ struct LinearNeuralMass <: NeuralMassBlox
     end
 end
 
-mutable struct HarmonicOscillator <: NeuralMassBlox
+struct HarmonicOscillator <: NeuralMassBlox
     params
     connector
     jcn
@@ -297,7 +297,7 @@ struct JansenRit <: NeuralMassBlox
     end
 end
 
-mutable struct WilsonCowan <: NeuralMassBlox
+struct WilsonCowan <: NeuralMassBlox
     params
     connector
     jcn
@@ -326,13 +326,13 @@ mutable struct WilsonCowan <: NeuralMassBlox
     end
 end
 
-mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
+struct LarterBreakspear <: NeuralMassBlox
     params
     connector
     jcn
     odesystem
     namespace
-    function LarterBreakspearBloxv2(;name,
+    function LarterBreakspear(;name,
                           T_Ca=-0.01,
                           δ_Ca=0.15,
                           g_Ca=1.0,
@@ -363,21 +363,23 @@ mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
                           ϕ=0.7,
                           r_NMDA=0.25,
                           C=0.35)
-        params = @parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA
-        sts    = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
+        p = progress_scope(@parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA)
+        C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
+        
+        sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
 
-        eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
-                          g_K * W * (V - V_K) - g_L * (V - V_L) -
-                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
-                          a_ie * Z * Q_Z + a_ne * IS,
-                  D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
-                  D(W) ~ ϕ * (m_K - W) / τ_K,
-                  Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
-                  Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
-                  m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
-                  m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
-                  m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
-        odesys = System(eqs; name=name)
-        new(params, sts[5], sts[4], odesys, nothing)
+        eqs = [ D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
+                         g_K * W * (V - V_K) - g_L * (V - V_L) -
+                        (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
+                         a_ie * Z * Q_Z + a_ne * IS,
+                D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
+                D(W) ~ ϕ * (m_K - W) / τ_K,
+                Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
+                Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
+                m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
+                m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
+                m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
+        sys = System(eqs; name=name)
+        new(p, sts[5], sts[4], sys, nothing)
     end
 end
