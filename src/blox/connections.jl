@@ -33,7 +33,7 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
-    jc::JansenRitBlox, 
+    jc::JansenRit, 
     bloxin; 
     weight = 1,
     delay = 0

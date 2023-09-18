@@ -173,20 +173,10 @@ function get_sys(g::MetaDiGraph)
     end
 end
 
-# Additional dispatch if delays are needed from BloxConnector
-function system_from_graph(g::MetaDiGraph, return_delays::Bool; name)
-    if return_delays
-        bc = connector_from_graph(g)
-        return (system_from_graph(g, bc; name), bc.delays)
-    end
-end
-
-# Additional dispatch if delays are needed from BloxConnector
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}, return_delays::Bool; name)
-    if return_delays
-        bc = connector_from_graph(g)
-        return (system_from_graph(g, bc, p; name), bc.delays)
-    end
+# Helper function to get delays from a graph
+function graph_delays(g::MetaDiGraph)
+    bc = connector_from_graph(g)
+    return bc.delays
 end
 
 # Additional dispatch if extra parameters are passed for edge definitions
