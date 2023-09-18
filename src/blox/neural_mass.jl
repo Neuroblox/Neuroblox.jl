@@ -236,20 +236,38 @@ end
 New versions of blox begin here!
 """
 
-struct LinearNeuralMass <: AbstractBlox
+struct LinearNeuralMass <: NeuralMassBlox
     connector
     jcn
     odesystem
+    namespace
     function LinearNeuralMass(;name)
-        sts = @variables x(t) jcn(t)
+        sts = @variables x(t) [output=true] jcn(t) [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, name=name)
-        new(sts[1], sts[2], sys)
+        new(sts[1], sts[2], sys, nothing)
+    end
+end
+
+mutable struct HarmonicOscillator <: NeuralMassBlox
+    params
+    connector
+    jcn
+    odesystem
+    namespace
+    function HarmonicOscillator(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
+        p = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
+        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
+        ω, ζ, k, h = p
+        eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
+                  D(y) ~ -(ω^2)*x]
+        sys = System(eqs, name=name)
+        new(p, sts[1], sts[3], sys, nothing)
     end
 end
 
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
-struct JansenRit <: AbstractBlox
+struct JansenRit <: NeuralMassBlox
     params
     connector
     jcn

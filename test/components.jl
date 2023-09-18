@@ -14,6 +14,40 @@ neuralmass.jl test
 @named PY  = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
 @named II  = jansen_ritSC(τ=2.0, H=60, λ=5, r=5)
 
+@named lm1 = LinearNeuralMass()
+@test typeof(lm1) == LinearNeuralMass
+
+"""
+New HarmonicOscillator
+"""
+@named osc1 = HarmonicOscillator()
+@named osc2 = HarmonicOscillator()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [osc1, osc2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+prob = ODEProblem(sys, [0.2, 0.4, 0.6, 0.8], (0.0, 5e2), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
+
+"""
+New Jansen-Rit tests
+"""
+
+# test new Jansen-Rit blox
+@named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
+@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
 # Connect Regions through Adjacency Matrix
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 sys = [s.odesystem for s in blox]
