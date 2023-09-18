@@ -71,3 +71,21 @@ mutable struct PhaseBlox
         new(odesys.u, odesys)
     end
 end
+
+mutable struct ImageStimulus{S}
+    const namespace
+    const odesystem::S
+    currect_dot::Int
+
+    function ImageStimulus(; file, name, namespace, dt, t_stimulus, t_pause)
+        S = readdlm(file, ',')
+        
+        sources = [
+            SampledData(S[i,:], dt, name=Symbol("$(name)_$(i)")) 
+            for i in Base.OneTo(size(S)[1])
+        ]
+        system = system_from_parts(sources; name)
+
+        new{typeof(system)}(namespace, system, 1)
+    end
+end

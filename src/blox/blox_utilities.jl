@@ -73,6 +73,8 @@ get_inh_neurons(n) = []
 
 get_sys(blox) = blox.odesystem
 
+get_sys(sys::AbstractODESystem) = sys
+
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
     ODESystem(
@@ -83,6 +85,8 @@ function get_namespaced_sys(blox)
         name = namespaced_name(inner_namespaceof(blox), nameof(blox))
     ) 
 end
+
+get_namespaced_sys(sys::AbstractODESystem) = sys
 
 nameof(blox) = (nameof ∘ get_sys)(blox)
 
@@ -153,6 +157,8 @@ function input_equations(blox)
 end
 
 input_equations(blox::AbstractComponent) = blox.connector.eqs
+
+input_equations(::ImageStimulus) = []
 
 weight_parameters(blox) = Num[]
 weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?

@@ -22,8 +22,14 @@ using DelayDiffEq
 
 using StatsBase: sample
 
-using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation, namespace_expr
-import ModelingToolkit: inputs, outputs, nameof
+using ModelingToolkit: get_namespace, get_systems, renamespace, 
+                    namespace_equation, namespace_variables, namespace_expr,
+                    AbstractODESystem
+import ModelingToolkit: inputs, nameof
+
+using ModelingToolkitStandardLibrary.Blocks: SampledData
+
+using DelimitedFiles: readdlm
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -141,7 +147,7 @@ export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInh
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, JansenRitBlox, LarterBreakspearBlox, LarterBreakspearBloxv2,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox

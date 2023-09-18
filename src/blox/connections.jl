@@ -141,11 +141,44 @@ function (bc::BloxConnector)(
     end
 end
 
+function (bc::BloxConnector)(
+    stim::ImageStimulus,
+    neuron::Union{HHNeuronExciBlox, HHNeuronInhibBlox};
+    weight = 1,
+    delay = 0
+)   
+    sys_out = get_namespaced_sys(stim)
+    sys_in = get_namespaced_sys(neuron)
+
+    dots = namespace_variables(sys_out)
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.weights, w)
+
+    eq = sys_in.I_in ~ w * dots[stim.currect_dot]
+
+    stim.currect_dot += 1
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    stim::ImageStimulus,
+    cb::CorticalBlox;
+    weight = 1,
+    delay = 0
+)
+    neurons = get_exci_neurons(cb)
+
+    for neuron in neurons
+        bc(stim, neuron; weight)
+    end
+end
+
 function accumulate_equation!(bc::BloxConnector, eq)
     lhs = eq.lhs
     idx = find_eq(bc.eqs, lhs)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
-
 end
 
 # Helper to merge delays and weights into a single vector
