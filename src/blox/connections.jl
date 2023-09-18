@@ -178,7 +178,7 @@ end
 function accumulate_equation!(bc::BloxConnector, eq)
     lhs = eq.lhs
     idx = find_eq(bc.eqs, lhs)
-    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
+    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
 # Helper to merge delays and weights into a single vector
