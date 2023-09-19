@@ -156,9 +156,9 @@ function (bc::BloxConnector)(
     w = only(@parameters $(w_name)=weight)
     push!(bc.weights, w)
 
-    eq = sys_in.I_in ~ w * dots[stim.currect_dot]
+    eq = sys_in.I_in ~ w * dots[stim.current_pixel]
 
-    stim.currect_dot += 1
+    stim.current_pixel += 1
     accumulate_equation!(bc, eq)
 end
 
