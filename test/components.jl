@@ -386,7 +386,7 @@ sol = solve(prob, Vern7(), saveat=0.5)
 
 global_ns = :g # global namespace
 @named cb = CorticalBlox(N_wta=6, N_exci=5; namespace=global_ns)
-fn = "../examples/image_data.csv"
+fn = "../examples/image_example.csv"
 @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
 g = MetaDiGraph()
 add_blox!(g, stim)
