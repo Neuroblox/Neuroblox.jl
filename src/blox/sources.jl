@@ -72,17 +72,17 @@ mutable struct PhaseBlox
     end
 end
 
-function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractVector)
+function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
     idx = floor(Int, t / t_trial) + 1
     
     return ifelse(
             (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
-            image_data[idx], 
+            pixel_data[idx], 
             0.0
         )
 end
 
-@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractVector)
+@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
 
 mutable struct ImageStimulus
     const namespace
