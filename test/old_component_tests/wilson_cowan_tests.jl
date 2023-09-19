@@ -10,6 +10,7 @@ wilson_cowan test
 
 Test for Wilson-Cowan model
 """
+sim_dur = 10.0 #unsure where the sim_dur came from originally because it wasn't part of the test, so this is arbitrary
 @named WC = WilsonCowanBlox()
 sys = [WC.odesystem]
 eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]

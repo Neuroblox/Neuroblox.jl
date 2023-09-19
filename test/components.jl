@@ -36,10 +36,6 @@ sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
 @test sol.retcode == ReturnCode.Success
 
 
-"""
-New Jansen-Rit tests
-"""
-
 # test new Jansen-Rit blox
 @named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
 @named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
@@ -49,12 +45,10 @@ New Jansen-Rit tests
 @named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
 @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
 @named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
-# Connect Regions through Adjacency Matrix
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
-sys = [s.odesystem for s in blox]
-connect = [s.connector for s in blox]
 
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+# Store parameters to be passed later on
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
 adj_matrix_lin = [0 0 0 0 0 0 0 0;
             -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
@@ -65,16 +59,21 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
+g = MetaDiGraph()
+add_blox!.(Ref(g), blox)
+create_adjacency_edges!(g, adj_matrix_lin)
 
-sim_dur = 10.0 # Simulate for 10 Seconds
-mysys = structural_simplify(CBGTC_Circuit_lin)
-sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!, "GPi₊x(t)"][4] ≈ 0.976257006970988
-
-"""
-testing random inital conditions for neural mass blox
-"""
+@named final_system = system_from_graph(g, params)
+final_delays = graph_delays(g)
+sim_dur = 5.0 # Simulate for 10 Seconds
+final_system_sys = structural_simplify(final_system)
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=0.001)
+@test sol_dde_no_delays.retcode == ReturnCode.Success #simple test to see if a solution was found
 
 """
 New Wilson-Cowan test

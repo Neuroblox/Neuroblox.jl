@@ -41,7 +41,7 @@ dsol = DataFrame(sol)
 blox2 = []
 
 for i = 1:5
-    lb = LarterBreakspearBloxv2(name=Symbol("LB$i"))
+    lb = LarterBreakspear(name=Symbol("LB$i"))
     push!(blox2,lb)
 end
 
