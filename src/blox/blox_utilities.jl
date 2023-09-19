@@ -72,7 +72,6 @@ get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
 
 get_sys(blox) = blox.odesystem
-
 get_sys(sys::AbstractODESystem) = sys
 
 function get_namespaced_sys(blox)
@@ -82,7 +81,7 @@ function get_namespaced_sys(blox)
         independent_variable(sys), 
         states(sys), 
         parameters(sys); 
-        name = namespaced_name(inner_namespaceof(blox), nameof(blox))
+        name = namespaced_nameof(blox)
     ) 
 end
 
@@ -91,6 +90,8 @@ get_namespaced_sys(sys::AbstractODESystem) = sys
 nameof(blox) = (nameof ∘ get_sys)(blox)
 
 namespaceof(blox) = blox.namespace
+
+namespaced_nameof(blox) = namespaced_name(inner_namespaceof(blox), nameof(blox))
 
 """
     Returns the complete namespace EXCLUDING the outermost (highest) level.
