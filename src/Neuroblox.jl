@@ -35,7 +35,7 @@ using IfElse
 
 using DelimitedFiles: readdlm
 using CSV: read
-using DataFrames: DataFrame, Not
+using DataFrames
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
