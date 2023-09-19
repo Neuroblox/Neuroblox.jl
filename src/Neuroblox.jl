@@ -152,7 +152,7 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
-export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
+export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox, PhaseAngleBlox
