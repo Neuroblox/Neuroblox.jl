@@ -141,7 +141,7 @@ end
 
 # Hodgkin-Huxley neurons 
 
-struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
+struct HHNeuronExciBlox{N, S} <: AbstractComponent
 	namespace::N
     odesystem::S
 	function HHNeuronExciBlox(;name, namespace = nothing, E_syn=0.0, G_syn=3, I_in=0,freq=0,phase=0,τ=5)
@@ -198,7 +198,7 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 	end
 end	
 
-mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
+mutable struct HHNeuronInhibBlox{N, S} <: AbstractComponent
 	namespace::N
     odesystem::S
 	function HHNeuronInhibBlox(;name, namespace = nothing, E_syn=-70.0,G_syn=11.5,I_in=0,freq=0,phase=0,τ=70)

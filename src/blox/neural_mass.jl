@@ -264,7 +264,7 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     end
 end
 
-mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
+mutable struct LarterBreakspearBloxv2 <: AbstractComponent
     params
     connector
     jcn
