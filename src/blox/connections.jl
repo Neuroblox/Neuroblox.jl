@@ -71,11 +71,11 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
-    if typeof(bloxout.connector) == Num
+    if typeof(bloxout.output) == Num
         w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
-        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x*w
     else
         # Define & accumulate delay parameter
@@ -88,7 +88,7 @@ function (bc::BloxConnector)(
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
 
-        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x(t-τ)*w
     end
     

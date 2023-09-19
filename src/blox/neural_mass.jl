@@ -237,7 +237,7 @@ New versions of blox begin here!
 """
 
 struct LinearNeuralMass <: NeuralMassBlox
-    connector
+    output
     jcn
     odesystem
     namespace
@@ -251,7 +251,7 @@ end
 
 struct HarmonicOscillator <: NeuralMassBlox
     params
-    connector
+    output
     jcn
     odesystem
     namespace
@@ -269,7 +269,7 @@ end
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
-    connector
+    output
     jcn
     odesystem
     namespace
@@ -299,7 +299,7 @@ end
 
 struct WilsonCowan <: NeuralMassBlox
     params
-    connector
+    output
     jcn
     odesystem
     namespace
@@ -328,7 +328,7 @@ end
 
 struct LarterBreakspear <: NeuralMassBlox
     params
-    connector
+    output
     jcn
     odesystem
     namespace
