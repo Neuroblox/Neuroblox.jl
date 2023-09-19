@@ -32,32 +32,32 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
-function (bc::BloxConnector)(
-    jc::JansenRitBlox, 
-    bloxin; 
-    weight = 1,
-    delay = 0
-)
-    # Need t for the delay term
-    @variables t
+# function (bc::BloxConnector)(
+#     jc::JansenRit, 
+#     bloxin; 
+#     weight = 1,
+#     delay = 0
+# )
+#     # Need t for the delay term
+#     @variables t
 
-    sys_out = get_namespaced_sys(jc)
-    sys_in = get_namespaced_sys(bloxin)
+#     sys_out = get_namespaced_sys(jc)
+#     sys_in = get_namespaced_sys(bloxin)
 
-    # Define & accumulate delay parameter
-    τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
-    τ = only(@parameters $(τ_name)=delay)
-    push!(bc.delays, τ)
+#     # Define & accumulate delay parameter
+#     τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
+#     τ = only(@parameters $(τ_name)=delay)
+#     push!(bc.delays, τ)
 
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
-    push!(bc.weights, w)
+#     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+#     w = only(@parameters $(w_name)=weight)
+#     push!(bc.weights, w)
 
-    x = namespace_expr(jc.connector, sys_out, nameof(sys_out))
-    eq = sys_in.jcn ~ x(t-τ)*w
+#     x = namespace_expr(jc.connector, sys_out, nameof(sys_out))
+#     eq = sys_in.jcn ~ x(t-τ)*w
     
-    accumulate_equation!(bc, eq)
-end
+#     accumulate_equation!(bc, eq)
+# end
 
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
@@ -71,11 +71,11 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
-    if typeof(bloxout.connector) == Num
+    if typeof(bloxout.output) == Num
         w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
-        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x*w
     else
         # Define & accumulate delay parameter
@@ -88,7 +88,7 @@ function (bc::BloxConnector)(
         w = only(@parameters $(w_name)=weight)
         push!(bc.weights, w)
 
-        x = namespace_expr(bloxout.connector, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x(t-τ)*w
     end
     
@@ -178,7 +178,7 @@ end
 function accumulate_equation!(bc::BloxConnector, eq)
     lhs = eq.lhs
     idx = find_eq(bc.eqs, lhs)
-    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs +  eq.rhs
+    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
 # Helper to merge delays and weights into a single vector

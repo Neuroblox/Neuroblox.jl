@@ -36,7 +36,7 @@ sol = simulate(mysys, [], (0.0, sim_dur), [], Vern7(); saveat=0.001)
 """
 Testing new Jansen-Rit blox
 
-This sets up the exact same system as above, but using the JansenRitBlox with different flags cortical/subcortical flags.
+This sets up the exact same system as above, but using the JansenRit with different flags cortical/subcortical flags.
 
 The purpose of this test is to make sure that setting up everything using System rather than ODESystem works as expected.
 It also shows test code for the new system_from_graph calls and handling delays when everything is 0 (MethodOfSteps returns the 
@@ -44,14 +44,14 @@ same thing as the old simulate call with AutoVern7(Rodas4() since there are no d
 """
 
 # test new Jansen-Rit blox
-@named Str = JansenRitBlox(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = JansenRitBlox(τ=0.04, cortical=false) # all default subcortical except τ
-@named STN = JansenRitBlox(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = JansenRitBlox(cortical=false) # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRitBlox(τ=0.002, H=10, λ=20, r=5)
-@named EI  = JansenRitBlox(τ=0.01, H=20, λ=5, r=5)
-@named PY  = JansenRitBlox(cortical=true) # default parameters cortical Jansen Rit blox
-@named II  = JansenRitBlox(τ=2.0, H=60, λ=5, r=5)
+@named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
+@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 
 # test graphs
@@ -91,7 +91,8 @@ add_edge!(g, 8, 8, Dict(:weight => 3.3*C_Cor))
 # add_edge!(g, 8, 7, Dict(:weight => 1.5*60, :delay => 0.01))
 # add_edge!(g, 8, 8, Dict(:weight => 3.3*60, :delay => 0.01))
 
-(final_system, final_delays) = system_from_graph(g, params, true; name=:final_system)
+@named final_system = system_from_graph(g, params)
+final_delays = graph_delays(g)
 sim_dur = 10.0 # Simulate for 10 Seconds
 final_system_sys = structural_simplify(final_system)
 prob = DDEProblem(final_system_sys,
@@ -109,7 +110,8 @@ g2 = MetaDiGraph()
 add_blox_list!(g2, blox)
 create_adjacency_edges!(g2, adj_matrix_lin)
 
-(final_system, final_delays) = system_from_graph(g2, params, true; name=:final_system)
+@named final_system = system_from_graph(g2, params)
+final_delays = graph_delays(g2)
 sim_dur = 10.0 # Simulate for 10 Seconds
 final_system_sys = structural_simplify(final_system)
 prob = DDEProblem(final_system_sys,

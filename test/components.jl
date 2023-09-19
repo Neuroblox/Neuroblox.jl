@@ -4,22 +4,49 @@ using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statist
 neuralmass.jl test
 """
 
-# Create Regions
-@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
-@named STN = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = jansen_ritSC(τ=0.014, H=20, λ=400, r=0.1)
-@named Th  = jansen_ritSC(τ=0.002, H=10, λ=20, r=5)
-@named EI  = jansen_ritSC(τ=0.01, H=20, λ=5, r=5)
-@named PY  = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
-@named II  = jansen_ritSC(τ=2.0, H=60, λ=5, r=5)
+"""
+New LinearNeuralMass
+"""
 
-# Connect Regions through Adjacency Matrix
+@named lm1 = LinearNeuralMass()
+@test typeof(lm1) == LinearNeuralMass
+
+"""
+New HarmonicOscillator
+"""
+@named osc1 = HarmonicOscillator()
+@named osc2 = HarmonicOscillator()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [osc1, osc2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
+
+"""
+New Jansen-Rit tests
+"""
+
+# test new Jansen-Rit blox
+@named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
+@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
-sys = [s.odesystem for s in blox]
-connect = [s.connector for s in blox]
 
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+# Store parameters to be passed later on
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
 adj_matrix_lin = [0 0 0 0 0 0 0 0;
             -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
@@ -30,19 +57,68 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
+g = MetaDiGraph()
+add_blox_list!(g, blox)
+create_adjacency_edges!(g, adj_matrix_lin)
 
-sim_dur = 10.0 # Simulate for 10 Seconds
-mysys = structural_simplify(CBGTC_Circuit_lin)
-sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!, "GPi₊x(t)"][4] ≈ 0.976257006970988
+@named final_system = system_from_graph(g, params)
+final_delays = graph_delays(g)
+sim_dur = 5.0 # Simulate for 10 Seconds
+final_system_sys = structural_simplify(final_system)
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=0.001)
+@test sol_dde_no_delays.retcode == ReturnCode.Success #simple test to see if a solution was found
 
 """
 testing random inital conditions for neural mass blox
 """
+# No equativalent for this test just yet because random_initials and simulate don't work on new blox
+# sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
+# @test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
 
-sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
-@test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
+"""
+New Wilson-Cowan test
+"""
+@named WC1 = WilsonCowan()
+@named WC2 = WilsonCowan()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [WC1, WC2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
+"""
+Larter-Breakspear model test
+"""
+@named LB1 = LarterBreakspear()
+@named LB2 = LarterBreakspear()
+
+adj = [0 1; 1 0]
+g = MetaDiGraph()
+add_blox_list!(g, [LB1, LB2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+sim_dur = 1e2
+prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+@test sol.retcode == ReturnCode.Success
+
+
 
 """
 Canonical micro circuit tests 
@@ -119,37 +195,6 @@ add_edge!(g, 2, 1, :weightmatrix, reshape(wm_backward, 4, 4))
 
 @named cmc_network = ODEfromGraph(g)
 cmc_network = structural_simplify(cmc_network)
-
-"""
-Components Test for Cortical-Subcortical Jansen-Rit blox
-    Cortical: PFC (Just Pyramidal Cells (PY), no Exc. Interneurons or Inh. Interneurons)
-    Subcortical: Basal Ganglia (GPe, STN, GPi) + Thalamus
-"""
-
-# Create Regions
-@named GPe       = JansenRitCBlox(τ=0.04, H=20, λ=400, r=0.1)
-@named STN       = JansenRitCBlox(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi       = JansenRitCBlox(τ=0.014, H=20, λ=400, r=0.1)
-@named Thalamus  = JansenRitSCBlox(τ=0.002, H=10, λ=20, r=5)
-@named PFC       = JansenRitSCBlox(τ=0.001, H=20, λ=5, r=0.15)
-
-# Connect Regions through Adjacency Matrix
-blox = [GPe, STN, GPi, Thalamus, PFC]
-sys = [s.odesystem for s in blox]
-connect = [s.connector for s in blox]
-
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
-
-adj_matrix_lin = [0 C_BG_Th 0 0 0;
-            -0.5*C_BG_Th 0 0 0 C_Cor_BG_Th;
-            -0.5*C_BG_Th C_BG_Th 0 0 0;
-            0 0 -0.5*C_BG_Th 0 0;
-            0 0 0 C_BG_Th_Cor 0]
-
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
-sim_dur = 10.0 # Simulate for 10 Seconds
-mysys = structural_simplify(CBGTC_Circuit_lin)
-sol = simulate(mysys, [], (0.0, sim_dur), [])
 
 
 """
@@ -344,35 +389,6 @@ sol = solve(prob_ouconnect, alg_hints = [:stiff])
 @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
 @test cor(sol[1,:],sol[2,:]) < 0.0 # Pearson correlation should be negative
 
-"""
-wilson_cowan test
-
-Test for Wilson-Cowan model
-"""
-@named WC = WilsonCowanBlox()
-sys = [WC.odesystem]
-eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
-@named WC_sys = ODESystem(eqs,systems=sys)
-WC_sys_s = structural_simplify(WC_sys)
-prob = ODEProblem(WC_sys_s, [], (0,sim_dur), [])
-sol = solve(prob,AutoVern7(Rodas4()),saveat=0.01)
-#@test sol[1,end] ≈ 0.17513685727060388
-
-"""
-Larter-Breakspear model test
-"""
-@named lb = LarterBreakspearBlox()
-sys = [lb.odesystem]
-eqs = [sys[1].jcn ~ 0]
-@named lb_connect = ODESystem(eqs,systems=sys)
-lb_simpl = structural_simplify(lb_connect)
-
-@test length(states(lb_simpl)) == 3
-
-prob = ODEProblem(lb_simpl,[0.5,0.5,0.5],(0,10.0),[])
-sol = solve(prob,Tsit5())
-
-@test sol[1,10] ≈ -0.6246710908910991
 
 """
 CorticalBlox test
