@@ -72,16 +72,17 @@ mutable struct PhaseBlox
     end
 end
 
-function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractMatrix, idx_pixel::Int)
+function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractVector)
     idx = floor(Int, t / t_trial) + 1
+    
     return ifelse(
             (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
-            image_data[idx_pixel, idx], 
+            image_data[idx], 
             0.0
         )
 end
 
-@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractMatrix, idx_pixel::Int)
+@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, image_data::AbstractVector)
 
 mutable struct ImageStimulus
     const namespace
@@ -90,13 +91,13 @@ mutable struct ImageStimulus
     const category
     current_pixel::Int
 
-    function ImageStimulus(IMG::DataFrame; name, namespace, dt, t_stimulus, t_pause)
+    function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
         S = (transpose ∘ Matrix)(IMG[!, Not(:category)])
         (N_pixels, N_stimuli) = size(S)
 
         t_trial = t_stimulus + t_pause
         t_stims = [
-            ((i-1)*t_trial + 1, (i-1)*t_trial + t_stimulus)
+            ((i-1)*t_trial, (i-1)*t_trial + t_stimulus)
             for i in Base.OneTo(N_stimuli)
         ]
         
@@ -107,7 +108,7 @@ mutable struct ImageStimulus
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
             sts[i] = only(@variables $(s)(t) = 0.0) 
-            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S, i)
+            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
         end
 
         system = ODESystem(eqs, t, sts, []; name)
@@ -115,9 +116,9 @@ mutable struct ImageStimulus
         new(namespace, system, S, IMG[!, :category], 1)
     end
 
-    function ImageStimulus(file::String; name, namespace, dt, t_stimulus, t_pause)
+    function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
         @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
         IMG = read(file, DataFrame)
-        ImageStimulus(IMG; name, namespace, dt, t_stimulus, t_pause)
+        ImageStimulus(IMG; name, namespace, t_stimulus, t_pause)
     end
 end
