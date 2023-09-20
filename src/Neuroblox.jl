@@ -167,6 +167,6 @@ export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
-export create_adjacency_edges!, add_blox_list!
+export create_adjacency_edges!
 export get_namespaced_sys, namespace_expr, nameof
 end
