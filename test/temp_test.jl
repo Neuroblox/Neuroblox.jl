@@ -5,7 +5,7 @@ using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statist
 
 adj = [0 1; 1 0]
 g = MetaDiGraph()
-add_blox_list!(g, [LB1, LB2])
+add_blox!.(Ref(g), [LB1, LB2])
 create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)
