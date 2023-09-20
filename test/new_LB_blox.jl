@@ -48,7 +48,7 @@ end
 adj_temp = adj
 
 g = MetaDiGraph()
-add_blox_list!(g, blox2)
+add_blox!.(Ref(g), blox2)
 create_adjacency_edges!(g, adj_temp)
 @named mysys2 = system_from_graph(g)
 mysys2 = structural_simplify(mysys2)

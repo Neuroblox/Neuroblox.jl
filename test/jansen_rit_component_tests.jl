@@ -56,7 +56,7 @@ blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 
 # test graphs
 g = MetaDiGraph()
-add_blox_list!(g, blox)
+add_blox!(Ref(g), blox)
 
 # Store parameters to be passed later on
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
@@ -107,7 +107,7 @@ sol2 = DataFrame(sol_dde_no_delays)
 
 # Alternative version using adjacency matrix
 g2 = MetaDiGraph()
-add_blox_list!(g2, blox)
+add_blox!.(Ref(g2), blox)
 create_adjacency_edges!(g2, adj_matrix_lin)
 
 @named final_system = system_from_graph(g2, params)

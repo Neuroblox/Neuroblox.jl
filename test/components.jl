@@ -19,7 +19,7 @@ New HarmonicOscillator
 
 adj = [0 1; 1 0]
 g = MetaDiGraph()
-add_blox_list!(g, [osc1, osc2])
+add_blox!.(Ref(g), [osc1, osc2])
 create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)
@@ -58,7 +58,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
 g = MetaDiGraph()
-add_blox_list!(g, blox)
+add_blox!.(Ref(g), blox)
 create_adjacency_edges!(g, adj_matrix_lin)
 
 @named final_system = system_from_graph(g, params)
@@ -88,7 +88,7 @@ New Wilson-Cowan test
 
 adj = [0 1; 1 0]
 g = MetaDiGraph()
-add_blox_list!(g, [WC1, WC2])
+add_blox!.(Ref(g), [WC1, WC2])
 create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)
@@ -107,7 +107,7 @@ Larter-Breakspear model test
 
 adj = [0 1; 1 0]
 g = MetaDiGraph()
-add_blox_list!(g, [LB1, LB2])
+add_blox!.(Ref(g), [LB1, LB2])
 create_adjacency_edges!(g, adj)
 
 @named sys = system_from_graph(g)

@@ -293,12 +293,6 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     return ODESystem(eqs, systems=sys, name=name)
 end
 
-function add_blox_list!(g::MetaDiGraph, bloxlist)
-    for b in bloxlist
-        add_blox!(g, b)
-    end
-end
-
 function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}) where {T}
     for i = 1:size(adj_matrix, 1)
         for j = 1:size(adj_matrix, 2)
