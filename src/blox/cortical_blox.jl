@@ -1,15 +1,13 @@
-struct CorticalBlox{N, P, S, C} <: AbstractComponent
-    namespace::N
+struct CorticalBlox{P} <: AbstractComponent
+    namespace
     parts::Vector{P}
-    odesystem::S
-    connector::C
+    odesystem
+    connector
     mean::Vector{Num}
-    out_degree::Int
 
     function CorticalBlox(;
         name, 
         N_wta,
-        out_degree=1,
         namespace=nothing,
         N_exci=5,
         E_syn_exci=0.0,
@@ -21,15 +19,11 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
         τ_exci=5,
         τ_inhib=70
     )
-        
-        P_connect = 1 / (N_exci * N_wta)
-
         wtas = map(Base.OneTo(N_wta)) do i
             WinnerTakeAllBlox(;
                 name=Symbol("wta$i"), 
                 namespace=namespaced_name(namespace, name),
                 N_exci,
-                P_connect,
                 E_syn_exci,
                 E_syn_inhib,
                 G_syn_exci,
@@ -73,20 +67,20 @@ struct CorticalBlox{N, P, S, C} <: AbstractComponent
             [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
         end
 
-        new{typeof(namespace), eltype(wtas), typeof(sys), typeof(bc)}(namespace, wtas, sys, bc, m, out_degree)
+        new{eltype(wtas)}(namespace, wtas, sys, bc, m)
     end
 end
 
-struct SuperCortical{N, P, S, C} <: AbstractComponent
-    namespace::N
+struct SuperCortical{P} <: AbstractComponent
+    namespace
     parts::Vector{P}
-    odesystem::S
-    connector::C
+    odesystem
+    connector
     mean::Vector{Num}
 
-    function SuperCortical(; name, N_cb, N_wta, out_degree=1, namespace=nothing)
+    function SuperCortical(; name, N_cb, N_wta, namespace=nothing)
         cbs = map(Base.OneTo(N_cb)) do i
-            CorticalBlox(; name=Symbol("cb$i"), namespace=namespaced_name(namespace, name), N_wta, out_degree)
+            CorticalBlox(; name=Symbol("cb$i"), namespace=namespaced_name(namespace, name), N_wta)
         end
 
         g = MetaDiGraph()
@@ -94,7 +88,7 @@ struct SuperCortical{N, P, S, C} <: AbstractComponent
 
         idxs = Base.OneTo(N_cb)
         for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), :weight, 1.0)
+            add_edge!.(Ref(g), i, setdiff(idxs, i), Dict(:weight => 1.0, :density => 0.1))
         end
 
         bc = connector_from_graph(g)
@@ -111,6 +105,6 @@ struct SuperCortical{N, P, S, C} <: AbstractComponent
             [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
         end
 
-        new{typeof(namespace), eltype(cbs), typeof(sys), typeof(bc)}(namespace, cbs, sys, bc, m)
+        new{eltype(cbs)}(namespace, cbs, sys, bc, m)
     end
 end
