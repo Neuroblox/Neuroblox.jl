@@ -529,8 +529,8 @@ sol = simulate(structural_simplify(neuron_net), [], (0, 10), [], Vern7())
 """
 test for WinnerTakeAllBlox
 """
-inp = 5*rand(5)
-@named wta= WinnerTakeAllBlox(I_in=inp)
+N_exci = 5
+@named wta= WinnerTakeAllBlox(;I_in=5*rand(N_exci), N_exci)
 sys = wta.odesystem
 wta_simp=structural_simplify(sys)
 prob = ODEProblem(wta_simp,[],(0,10))
@@ -538,3 +538,72 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 @test typeof(wta_simp)==ODESystem
 @test sol.t[end]==10
+@test sol isa Any
+
+"""
+WinnerTakeAllBlox connections
+"""
+global_ns = :g # global namespace
+N_exci = 5
+@named wta1 = WinnerTakeAllBlox(;I_in=5*rand(N_exci), N_exci, namespace=global_ns)
+@named wta2 = WinnerTakeAllBlox(;I_in=5*rand(N_exci), N_exci, namespace=global_ns)
+g = MetaDiGraph()
+add_blox!.(Ref(g), [wta1, wta2])
+add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.5))
+sys = system_from_graph(g; name=global_ns)
+sys_simpl =structural_simplify(sys)
+prob = ODEProblem(sys_simpl, [], (0,2))
+sol = solve(prob, Vern7(), saveat=0.1)
+@test sol isa Any
+
+"""
+CorticalBlox test
+"""
+@named cb = CorticalBlox(N_wta=6, N_exci=5)
+cb_simpl = structural_simplify(cb.odesystem)
+@test length(states(cb_simpl)) == 216
+prob = ODEProblem(cb_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (216, 41)
+
+"""
+CorticalBlox-ImageStimulus connection
+"""
+global_ns = :g # global namespace
+@named cb = CorticalBlox(N_wta=6, N_exci=5; namespace=global_ns)
+fn = "../examples/image_example.csv"
+@named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
+g = MetaDiGraph()
+add_blox!(g, stim)
+add_blox!(g, cb)
+add_edge!(g, 1, 2, :weight, 1)
+sys = system_from_graph(g; name=global_ns)
+sys_simpl = structural_simplify(sys)
+prob = ODEProblem(sys_simpl, [], (0, 10); tofloat=false)
+sol = solve(prob, Vern7())
+@test sol isa Any
+
+"""
+CorticalBlox-CorticalBlox connection
+"""
+global_ns = :g # global namespace
+@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
+@named cb2 = CorticalBlox(N_wta=3, N_exci=5, namespace=global_ns)
+g = MetaDiGraph()
+add_blox!.(Ref(g), [cb1, cb2])
+add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
+sys = system_from_graph(g; name=namespace=global_ns)
+sys_simpl =structural_simplify(sys)
+prob = ODEProblem(sys_simpl, [], (0,2))
+sol = solve(prob, Vern7(), saveat=0.1)
+@test sol isa Any
+
+"""
+SuperCortical
+"""
+@named sc  = SuperCortical(; N_cb=2, N_wta=6)
+sc_simpl = structural_simplify(sc.odesystem)
+@test length(states(sc_simpl)) == 432
+prob = ODEProblem(sc_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (432, 41)
