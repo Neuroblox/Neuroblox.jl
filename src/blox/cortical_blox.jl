@@ -88,7 +88,7 @@ struct SuperCortical{P} <: AbstractComponent
 
         idxs = Base.OneTo(N_cb)
         for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), Dict(:weight => 1.0, :density => 0.1))
+            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(:weight => 1.0, :density => 0.1)))
         end
 
         bc = connector_from_graph(g)
