@@ -58,6 +58,14 @@ const STRING = "string"
 const INTEGER = "integer"
 const MENU = "menu"
 
+function arguments(::Type{Neuroblox.ImageStimulus})
+  OrderedDict(
+    :height => NCAD(25, INTEGER, 1, 100,[]),
+    :width => NCAD(25, INTEGER, 1, 100,[]),
+    :dt => NCAD(0.6, NUMBER, 0.1, 10,[])
+  )
+end
+
 function arguments(::Type{Neuroblox.Merger})
   OrderedDict(
   )

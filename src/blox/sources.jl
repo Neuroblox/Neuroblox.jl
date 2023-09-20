@@ -72,7 +72,7 @@ mutable struct PhaseBlox
     end
 end
 
-mutable struct ImageStimulus{S}
+mutable struct ImageStimulus{S} <: StimulusBlox
     const namespace
     const odesystem::S
     currect_dot::Int
