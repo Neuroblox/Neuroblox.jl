@@ -5,18 +5,16 @@ Creates a winner-take-all local circuit found in neocortex,
 typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
 and receive feedback inhibition from that interneuron.
 """
-struct WinnerTakeAllBlox{N, P, S, C} <: AbstractComponent
-    namespace::N
+struct WinnerTakeAllBlox{P} <: AbstractComponent
+    namespace
     parts::Vector{P}
-    odesystem::S
-    connector::C
-    P_connect::Float64
+    odesystem
+    connector
 
     function WinnerTakeAllBlox(; 
         name, 
         namespace = nothing,
         N_exci = 5,
-        P_connect = 0.5,
         E_syn_exci=0.0,
         E_syn_inhib=-70,
         G_syn_exci=3.0,
@@ -67,11 +65,7 @@ struct WinnerTakeAllBlox{N, P, S, C} <: AbstractComponent
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
 
-        new{
-            typeof(namespace), 
-            Union{eltype(n_excis), typeof(n_inh)}, 
-            typeof(sys), 
-            typeof(bc)}(namespace, parts, sys, bc, P_connect)
+        new{Union{eltype(n_excis), typeof(n_inh)}}(namespace, parts, sys, bc)
     end 
 
 end

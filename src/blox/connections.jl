@@ -17,8 +17,9 @@ end
 function (bc::BloxConnector)(
     HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
     HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )
     sys_out = get_namespaced_sys(HH_out)
     sys_in = get_namespaced_sys(HH_in)
@@ -62,8 +63,9 @@ end
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
     bloxin::NeuralMassBlox; 
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )
     # Need t for the delay term
     @variables t
@@ -98,21 +100,22 @@ end
 function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
     wta_in::WinnerTakeAllBlox; 
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )
     neurons_in = get_exci_neurons(wta_in)
     neurons_out = get_exci_neurons(wta_out)
 
-    dist = Bernoulli(wta_out.P_connect)
+    dist = Bernoulli(density)
 
     for neuron_postsyn in neurons_in
-        name_postsyn = namespaced_name(namespaceof(neuron_postsyn), nameof(neuron_postsyn))
+        name_postsyn = namespaced_nameof(neuron_postsyn)
         for neuron_presyn in neurons_out
-            name_presyn = namespaced_name(namespaceof(neuron_presyn), nameof(neuron_presyn))
+            name_presyn = namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
             if (name_postsyn != name_presyn) && rand(dist)
-                bc(neuron_presyn, neuron_postsyn; weight)
+                bc(neuron_presyn, neuron_postsyn; weight, delay)
             end
         end
     end
@@ -121,18 +124,21 @@ end
 function (bc::BloxConnector)(
     cb_out::CorticalBlox,
     cb_in::CorticalBlox;
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
 
-    out_degree = cb_out.out_degree
-    in_degree = Int(ceil(out_degree * length(neurons_in) / length(neurons_out)))
+    N_connects =  density * length(neurons_in) * length(neurons_out)
+    out_degree = Int(ceil(N_connects / length(neurons_out)))
+    in_degree =  Int(ceil(N_connects / length(neurons_in)))
+
     outgoing_connections = zeros(Int, length(neurons_in))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
-        idx = sample(rem, min(in_degree, length(rem)))
+        idx = sample(rem, min(in_degree, length(rem)); replace=false)
 
         for neuron_presyn in neurons_out[idx]
             bc(neuron_presyn, neuron_postsyn; weight)
@@ -144,8 +150,9 @@ end
 function (bc::BloxConnector)(
     stim::ImageStimulus,
     neuron::Union{HHNeuronExciBlox, HHNeuronInhibBlox};
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )   
     sys_out = get_namespaced_sys(stim)
     sys_in = get_namespaced_sys(neuron)
@@ -157,7 +164,9 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
+    eq = sys_in.I_in ~ w * dots[stim.current_pixel]
 
+    stim.current_pixel += 1
     stim.current_pixel += 1
     accumulate_equation!(bc, eq)
 end
@@ -165,13 +174,14 @@ end
 function (bc::BloxConnector)(
     stim::ImageStimulus,
     cb::CorticalBlox;
-    weight = 1,
-    delay = 0
+    weight=1,
+    delay=0,
+    density=0.1
 )
     neurons = get_exci_neurons(cb)
 
     for neuron in neurons
-        bc(stim, neuron; weight)
+        bc(stim, neuron; weight, delay)
     end
 end
 
