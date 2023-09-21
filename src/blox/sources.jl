@@ -71,3 +71,54 @@ mutable struct PhaseBlox
         new(odesys.u, odesys)
     end
 end
+
+function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
+    idx = floor(Int, t / t_trial) + 1
+    
+    return ifelse(
+            (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
+            pixel_data[idx], 
+            0.0
+        )
+end
+
+@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
+
+mutable struct ImageStimulus
+    const namespace
+    const odesystem
+    const image
+    const category
+    current_pixel::Int
+
+    function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
+        S = (transpose ∘ Matrix)(IMG[!, Not(:category)])
+        (N_pixels, N_stimuli) = size(S)
+
+        t_trial = t_stimulus + t_pause
+        t_stims = [
+            ((i-1)*t_trial, (i-1)*t_trial + t_stimulus)
+            for i in Base.OneTo(N_stimuli)
+        ]
+        
+        state_name = :u
+        @parameters t
+        sts = Vector{Num}(undef, N_pixels)
+        eqs = Vector{Equation}(undef, N_pixels)
+        for i in Base.OneTo(N_pixels)
+            s = Symbol(state_name, "_", i)
+            sts[i] = only(@variables $(s)(t) = 0.0) 
+            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
+        end
+
+        system = ODESystem(eqs, t, sts, []; name)
+
+        new(namespace, system, S, IMG[!, :category], 1)
+    end
+
+    function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
+        @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
+        IMG = read(file, DataFrame)
+        ImageStimulus(IMG; name, namespace, t_stimulus, t_pause)
+    end
+end

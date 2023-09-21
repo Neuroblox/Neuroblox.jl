@@ -5,3 +5,4 @@ Manifest.toml
 .vscode
 neuroblox.code-workspace
 *.mat
+.DS_Store

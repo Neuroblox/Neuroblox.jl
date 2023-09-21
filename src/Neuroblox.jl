@@ -13,16 +13,29 @@ using FFTW
 import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
-using OrdinaryDiffEq, DataFrames
-using Interpolations, DataInterpolations
+using OrdinaryDiffEq
+using Interpolations
+using DataInterpolations
 using Distributions
 using Random
 using OrderedCollections
+using DelayDiffEq
 
 using StatsBase: sample
 
-using ModelingToolkit: get_namespace, get_systems, renamespace, namespace_equation
-import ModelingToolkit: inputs, outputs, nameof
+using ModelingToolkit: get_namespace, get_systems, renamespace, 
+                    namespace_equation, namespace_variables, namespace_expr,
+                    AbstractODESystem
+import ModelingToolkit: inputs, nameof
+
+using ModelingToolkitStandardLibrary.Blocks: SampledData
+
+using Symbolics: @register_symbolic
+using IfElse
+
+using DelimitedFiles: readdlm
+using CSV: read
+using DataFrames
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -137,10 +150,11 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
-    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, 
+    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
+export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
@@ -152,6 +166,7 @@ export learningrate, ControlError
 export Hemodynamics, LinHemo, boldsignal
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
-export system_from_graph
-
+export system_from_graph, graph_delays
+export create_adjacency_edges!
+export get_namespaced_sys, namespace_expr, nameof
 end

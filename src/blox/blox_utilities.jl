@@ -72,6 +72,7 @@ get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
 
 get_sys(blox) = blox.odesystem
+get_sys(sys::AbstractODESystem) = sys
 
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
@@ -80,13 +81,17 @@ function get_namespaced_sys(blox)
         independent_variable(sys), 
         states(sys), 
         parameters(sys); 
-        name = namespaced_name(inner_namespaceof(blox), nameof(blox))
+        name = namespaced_nameof(blox)
     ) 
 end
+
+get_namespaced_sys(sys::AbstractODESystem) = sys
 
 nameof(blox) = (nameof ∘ get_sys)(blox)
 
 namespaceof(blox) = blox.namespace
+
+namespaced_nameof(blox) = namespaced_name(inner_namespaceof(blox), nameof(blox))
 
 """
     Returns the complete namespace EXCLUDING the outermost (highest) level.
@@ -129,18 +134,21 @@ function input_equations(blox)
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
+
+    @variables t # needed for IV in namespace_equation
+
     eqs = map(inps) do inp
         idx = find_eq(sys_eqs, inp)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
-                nothing, 
+                sys, 
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         else
             namespace_equation(
                 sys_eqs[idx], 
-                nothing, 
+                sys, 
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         end
@@ -151,8 +159,10 @@ end
 
 input_equations(blox::AbstractComponent) = blox.connector.eqs
 
+input_equations(::ImageStimulus) = []
+
 weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.params
+weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
 
 function get_inputs(blox)
     sys = get_sys(blox)
