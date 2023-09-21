@@ -90,6 +90,7 @@ include("blox/ts_outputs.jl")
 include("blox/sources.jl")
 include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
+include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
 include("gui/GUI.jl")
 include("blox/blox_utilities.jl")
@@ -150,9 +151,14 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
+<<<<<<< Updated upstream
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
+=======
+    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox, 
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, Striatum, GPi, GPe, Thalamus, STN
+>>>>>>> Stashed changes
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
