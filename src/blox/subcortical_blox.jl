@@ -9,7 +9,6 @@ struct Striatum{N, P, S, C} <: AbstractComponent
     odesystem::S
     connector::C
     mean::Vector{Num}
-    out_degree::Int
 
     function Striatum(;
         name, 
@@ -66,7 +65,7 @@ struct Striatum{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m, out_degree)
+    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
 
     end
 
@@ -80,7 +79,6 @@ struct GPi{N, P, S, C} <: AbstractComponent
     odesystem::S
     connector::C
     mean::Vector{Num}
-    out_degree::Int
 
     function GPi(;
         name, 
@@ -137,7 +135,7 @@ struct GPi{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m, out_degree)
+    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
 
     end
 
@@ -150,7 +148,6 @@ struct GPe{N, P, S, C} <: AbstractComponent
     odesystem::S
     connector::C
     mean::Vector{Num}
-    out_degree::Int
 
     function GPe(;
         name, 
@@ -207,7 +204,7 @@ struct GPe{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m, out_degree)
+    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
 
     end
 
@@ -220,7 +217,6 @@ struct Thalamus{N, P, S, C} <: AbstractComponent
     odesystem::S
     connector::C
     mean::Vector{Num}
-    out_degree::Int
 
     function Thalamus(;
         name, 
@@ -277,7 +273,7 @@ struct Thalamus{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m, out_degree)
+    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
 
     end
 
@@ -290,7 +286,6 @@ struct STN{N, P, S, C} <: AbstractComponent
     odesystem::S
     connector::C
     mean::Vector{Num}
-    out_degree::Int
 
     function STN(;
         name, 
@@ -347,7 +342,7 @@ struct STN{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m, out_degree)
+    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
 
     end
 
