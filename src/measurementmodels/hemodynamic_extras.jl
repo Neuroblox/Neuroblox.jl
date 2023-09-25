@@ -1,4 +1,4 @@
-using Random, Plots
+using Random, SpecialFunctions, Plots
 
 
 """
@@ -33,7 +33,22 @@ function HRFFourHalfCosine(; h₁=nothing, h₂=nothing, h₃=nothing, h₄=noth
 
 end
 
- 
+function HRFDoubleGamma(; A=nothing, α₁=nothing, α₂=nothing, β₁=nothing, β₂=nothing, c=nothing, tlen=nothing)
 
-hmm = HRFFourHalfCosine(f₁=0)
-plot(hmm)
+    if (!isnothing(A) || !isnothing(α₁) || !isnothing(α₂) || !isnothing(β₁) || !isnothing(β₂) || !isnothing(c)) && isnothing(tlen)
+        throw(DomainError(nothing, "If you specify a different parameter, you need to specify tlen as well to ensure the kernel is wide enough."))
+    end
+
+    A = isnothing(A) ? 1 : A
+    α₁ = isnothing(α₁) ? 6 : α₁
+    α₂ = isnothing(α₂) ? 16 : α₂
+    β₁ = isnothing(β₁) ? 1 : β₁
+    β₂ = isnothing(β₂) ? 1 : β₂
+    c = isnothing(c) ? 1.0/6.0 : c
+    tlen = isnothing(tlen) ? 30 : tlen
+
+    t = 0:0.001:tlen
+    
+    hrf = A.*((((t.^(α₁-1)).*(β₁^α₁).*exp.(-β₁.*t))./gamma(α₁)) .- (c.*((t.^(α₂-1)).*(β₂^α₂).*exp.(-β₂.*t)./ gamma(α₂))))
+
+end
