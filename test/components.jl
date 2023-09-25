@@ -35,15 +35,15 @@ New Jansen-Rit tests
 """
 
 # test new Jansen-Rit blox
-@named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
-@named STN = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
+@named gpe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
+@named stn = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+@named gpi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
 @named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
 @named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
 @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
 @named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
-blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
+blox = [str, gpe, stn, gpi, Th, EI, PY, II]
 
 # Store parameters to be passed later on
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
