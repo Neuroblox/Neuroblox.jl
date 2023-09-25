@@ -581,7 +581,7 @@ add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 2, 3, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 3, 4, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 4, 5, Dict(:weight => 1, :density => 0.1))
-add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.1))
+add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.05))
 
 sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
