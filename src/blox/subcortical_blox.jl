@@ -3,12 +3,12 @@
     all subcprtical blox used in cortico-striatal model are defined here
 
 """
-struct Striatum{N, P, S, C} <: AbstractComponent
-    namespace::N
-    parts::Vector{P}
-    odesystem::S
-    connector::C
-    mean::Vector{Num}
+struct Striatum <: AbstractComponent
+    namespace
+    parts
+    odesystem
+    connector
+    mean
 
     function Striatum(;
         name, 
@@ -65,7 +65,7 @@ struct Striatum{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
+    new(namespace, parts, sys, bc, m)
 
     end
 
@@ -73,12 +73,12 @@ end
 
 
 
-struct GPi{N, P, S, C} <: AbstractComponent
-    namespace::N
-    parts::Vector{P}
-    odesystem::S
-    connector::C
-    mean::Vector{Num}
+struct GPi <: AbstractComponent
+    namespace
+    parts
+    odesystem
+    connector
+    mean
 
     function GPi(;
         name, 
@@ -135,19 +135,19 @@ struct GPi{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
+    new(namespace, parts, sys, bc, m)
 
     end
 
 end    
 
 
-struct GPe{N, P, S, C} <: AbstractComponent
-    namespace::N
-    parts::Vector{P}
-    odesystem::S
-    connector::C
-    mean::Vector{Num}
+struct GPe <: AbstractComponent
+    namespace
+    parts
+    odesystem
+    connector
+    mean
 
     function GPe(;
         name, 
@@ -204,19 +204,19 @@ struct GPe{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_inh), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
+    new(namespace, parts, sys, bc, m)
 
     end
 
 end    
 
 
-struct Thalamus{N, P, S, C} <: AbstractComponent
-    namespace::N
-    parts::Vector{P}
-    odesystem::S
-    connector::C
-    mean::Vector{Num}
+struct Thalamus <: AbstractComponent
+    namespace
+    parts
+    odesystem
+    connector
+    mean
 
     function Thalamus(;
         name, 
@@ -273,19 +273,19 @@ struct Thalamus{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
+    new(namespace, parts, sys, bc, m)
 
     end
 
-end    
+end   
 
 
-struct STN{N, P, S, C} <: AbstractComponent
-    namespace::N
-    parts::Vector{P}
-    odesystem::S
-    connector::C
-    mean::Vector{Num}
+struct STN <: AbstractComponent
+    namespace
+    parts
+    odesystem
+    connector
+    mean
 
     function STN(;
         name, 
@@ -342,7 +342,7 @@ struct STN{N, P, S, C} <: AbstractComponent
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
 
-    new{typeof(namespace), eltype(n_exci), typeof(sys), typeof(bc)}(namespace, parts, sys, bc, m)
+    new(namespace, parts, sys, bc, m)
 
     end
 

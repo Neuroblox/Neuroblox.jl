@@ -120,16 +120,97 @@ function (bc::BloxConnector)(
         end
     end
 end
-
+#connection between exciatory neural blocks
 function (bc::BloxConnector)(
-    cb_out::CorticalBlox,
-    cb_in::CorticalBlox;
+    cb_out::Union{CorticalBlox,STN,Thalamus},
+    cb_in::Union{CorticalBlox,STN,Thalamus};
     weight=1,
     delay=0,
     density=0.1
 )
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
+
+    N_connects =  density * length(neurons_in) * length(neurons_out)
+    out_degree = Int(ceil(N_connects / length(neurons_out)))
+    in_degree =  Int(ceil(N_connects / length(neurons_in)))
+
+    outgoing_connections = zeros(Int, length(neurons_in))
+    for neuron_postsyn in neurons_in
+        rem = findall(x -> x < out_degree, outgoing_connections)
+        idx = sample(rem, min(in_degree, length(rem)); replace=false)
+
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; weight)
+        end
+        outgoing_connections[idx] .+= 1
+    end
+end
+
+#connection from excitatory to inhibitory neural blocks
+function (bc::BloxConnector)(
+    cb_out::Union{CorticalBlox,STN,Thalamus},
+    cb_in::Union{Striatum, GPi, GPe};
+    weight=1,
+    delay=0,
+    density=0.1
+)
+    neurons_in = get_inhib_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    N_connects =  density * length(neurons_in) * length(neurons_out)
+    out_degree = Int(ceil(N_connects / length(neurons_out)))
+    in_degree =  Int(ceil(N_connects / length(neurons_in)))
+
+    outgoing_connections = zeros(Int, length(neurons_in))
+    for neuron_postsyn in neurons_in
+        rem = findall(x -> x < out_degree, outgoing_connections)
+        idx = sample(rem, min(in_degree, length(rem)); replace=false)
+
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; weight)
+        end
+        outgoing_connections[idx] .+= 1
+    end
+end
+
+#connection from inhibitory to excitatory neural blocks
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum, GPi, GPe},
+    cb_in::Union{CorticalBlox,STN,Thalamus};
+    weight=1,
+    delay=0,
+    density=0.1
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_inhib_neurons(cb_out)
+
+    N_connects =  density * length(neurons_in) * length(neurons_out)
+    out_degree = Int(ceil(N_connects / length(neurons_out)))
+    in_degree =  Int(ceil(N_connects / length(neurons_in)))
+
+    outgoing_connections = zeros(Int, length(neurons_in))
+    for neuron_postsyn in neurons_in
+        rem = findall(x -> x < out_degree, outgoing_connections)
+        idx = sample(rem, min(in_degree, length(rem)); replace=false)
+
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; weight)
+        end
+        outgoing_connections[idx] .+= 1
+    end
+end
+
+#connection from inhibitory to inhibitory neural blocks
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum, GPi, GPe},
+    cb_in::Union{Striatum, GPi, GPe};
+    weight=1,
+    delay=0,
+    density=0.1
+)
+    neurons_in = get_inhib_neurons(cb_in)
+    neurons_out = get_inhib_neurons(cb_out)
 
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))

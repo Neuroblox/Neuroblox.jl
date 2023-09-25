@@ -491,6 +491,49 @@ sol = solve(prob, Vern7(), saveat=0.5)
 @test size(sol) == (216, 41)
 
 """
+SubcorticalBlox tests"
+"""
+#striatum
+@named str_scb = Striatum(N_inhib=10)
+str_simpl = structural_simplify(str_scb.odesystem)
+@test length(states(str_simpl)) == 60
+prob = ODEProblem(str_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (60, 41)
+
+#GPi
+@named gpi_scb = GPi(N_inhib=10)
+gpi_simpl = structural_simplify(gpi_scb.odesystem)
+@test length(states(gpi_simpl)) == 60
+prob = ODEProblem(gpi_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (60, 41)
+
+#GPe
+@named gpe_scb = GPe(N_inhib=10)
+gpe_simpl = structural_simplify(gpe_scb.odesystem)
+@test length(states(gpe_simpl)) == 60
+prob = ODEProblem(gpe_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (60, 41)
+
+#STN
+@named stn_scb = STN(N_exci=10)
+stn_simpl = structural_simplify(stn_scb.odesystem)
+@test length(states(stn_simpl)) == 60
+prob = ODEProblem(stn_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (60, 41)
+
+#Thalamus
+@named thal_scb = Thalamus(N_exci=10)
+thal_simpl = structural_simplify(thal_scb.odesystem)
+@test length(states(thal_simpl)) == 60
+prob = ODEProblem(thal_simpl, [], (0, 20))
+sol = solve(prob, Vern7(), saveat=0.5)
+@test size(sol) == (60, 41)
+
+"""
 CorticalBlox-ImageStimulus connection
 """
 global_ns = :g # global namespace
