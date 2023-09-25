@@ -33,6 +33,16 @@ function HRFFourHalfCosine(; h₁=nothing, h₂=nothing, h₃=nothing, h₄=noth
 
 end
 
+"""
+Lindquist et al. 2012.
+
+All parameters are in seconds.
+Output is in ms.
+If you specify a change in any of the parameters, also change the tlen to ensure the kernel is wide enough.
+It will throw an error if you don't.
+
+"""
+
 function HRFDoubleGamma(; A=nothing, α₁=nothing, α₂=nothing, β₁=nothing, β₂=nothing, c=nothing, tlen=nothing)
 
     if (!isnothing(A) || !isnothing(α₁) || !isnothing(α₂) || !isnothing(β₁) || !isnothing(β₂) || !isnothing(c)) && isnothing(tlen)
