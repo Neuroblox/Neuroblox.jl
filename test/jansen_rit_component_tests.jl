@@ -56,7 +56,7 @@ blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 
 # test graphs
 g = MetaDiGraph()
-add_blox!(Ref(g), blox)
+add_blox!.(Ref(g), blox)
 
 # Store parameters to be passed later on
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
@@ -112,7 +112,7 @@ create_adjacency_edges!(g2, adj_matrix_lin)
 
 @named final_system = system_from_graph(g2, params)
 final_delays = graph_delays(g2)
-sim_dur = 10.0 # Simulate for 10 Seconds
+sim_dur = 600.0 # Simulate for 10 Seconds
 final_system_sys = structural_simplify(final_system)
 prob = DDEProblem(final_system_sys,
     [],
