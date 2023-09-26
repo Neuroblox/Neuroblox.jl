@@ -101,6 +101,7 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
+include("measurementmodels/hemodynamic_extras.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -180,4 +181,5 @@ export create_adjacency_edges!
 export get_namespaced_sys, nameof
 export run_experiment!
 
+export HRFFourHalfCosine, HRFDoubleGamma
 end
