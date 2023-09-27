@@ -569,11 +569,11 @@ sol = solve(prob, Vern7(), saveat=0.1)
 CorticalBlox-SubcorticalBlox connections
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
-@named cb2 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
-@named str1 = Striatum(N_inhib=10, namespace=global_ns)
-@named gpi1 = GPi(N_inhib=10, namespace=global_ns)
-@named thal1 = Thalamus(N_exci=10, namespace=global_ns)
+@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
+@named cb2 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
+@named str1 = Striatum(N_inhib=5, namespace=global_ns)
+@named gpi1 = GPi(N_inhib=5, namespace=global_ns)
+@named thal1 = Thalamus(N_exci=5, namespace=global_ns)
 
 g = MetaDiGraph()
 add_blox!.(Ref(g), [cb1, cb2, str1, gpi1, thal1])
