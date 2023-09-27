@@ -33,33 +33,6 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
-# function (bc::BloxConnector)(
-#     jc::JansenRit, 
-#     bloxin; 
-#     weight = 1,
-#     delay = 0
-# )
-#     # Need t for the delay term
-#     @variables t
-
-#     sys_out = get_namespaced_sys(jc)
-#     sys_in = get_namespaced_sys(bloxin)
-
-#     # Define & accumulate delay parameter
-#     τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
-#     τ = only(@parameters $(τ_name)=delay)
-#     push!(bc.delays, τ)
-
-#     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-#     w = only(@parameters $(w_name)=weight)
-#     push!(bc.weights, w)
-
-#     x = namespace_expr(jc.connector, sys_out, nameof(sys_out))
-#     eq = sys_in.jcn ~ x(t-τ)*w
-    
-#     accumulate_equation!(bc, eq)
-# end
-
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
     bloxin::NeuralMassBlox; 
@@ -93,6 +66,68 @@ function (bc::BloxConnector)(
         x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x(t-τ)*w
     end
+    
+    accumulate_equation!(bc, eq)
+end
+
+# additional dispatch to connect to hemodynamic observer blox
+function (bc::BloxConnector)(
+    bloxout::NeuralMassBlox, 
+    bloxin::ObserverBlox; 
+    weight=1,
+    delay=0,
+    density=0.1
+)
+    # Need t for the delay term
+    @variables t
+
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    if typeof(bloxout.output) == Num
+        w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+        w = only(@parameters $(w_name)=weight)
+        push!(bc.weights, w)
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+        eq = sys_in.jcn ~ x*w
+    else
+        # Define & accumulate delay parameter
+        # Don't accumulate if zero
+        τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
+        τ = only(@parameters $(τ_name)=delay)
+        push!(bc.delays, τ)
+
+        w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+        w = only(@parameters $(w_name)=weight)
+        push!(bc.weights, w)
+
+        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+        eq = sys_in.jcn ~ x(t-τ)*w
+    end
+    
+    accumulate_equation!(bc, eq)
+end
+
+# Ok yes this is a bad dispatch but the whole compound blocks implementation is hacky and needs fixing @@
+# Opening an issue to loop back to this during clean up week
+function (bc::BloxConnector)(
+    bloxout::CompoundNOBlox, 
+    bloxin::CompoundNOBlox; 
+    weight=1,
+    delay=0,
+    density=0.1
+)
+    # Need t for the delay term
+    @variables t
+
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.weights, w)
+    x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+    eq = sys_in.nmm₊jcn ~ x*w
     
     accumulate_equation!(bc, eq)
 end
