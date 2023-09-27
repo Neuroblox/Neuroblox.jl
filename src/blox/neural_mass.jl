@@ -236,7 +236,7 @@ end
 New versions of blox begin here!
 """
 
-struct LinearNeuralMass <: NeuralMassBlox
+struct LinearNeuralMass <: AbstractComponent
     output
     jcn
     odesystem

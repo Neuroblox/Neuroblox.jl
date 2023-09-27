@@ -104,11 +104,11 @@ function outputs(::Type{Neuroblox.WinnerTakeAllBlox})
   ["out1","out2","out3","out4","out5"]
 end
 
-function arguments(::Type{Neuroblox.LinearNeuralMassBlox})
-  OrderedDict(
-    :τ => NCAD(0.01, NUMBER, 1.0, 10.0,[]),
-  )
-end
+# function arguments(::Type{Neuroblox.LinearNeuralMassBlox})
+#   OrderedDict(
+#     :τ => NCAD(0.01, NUMBER, 1.0, 10.0,[]),
+#   )
+# end
 
 function arguments(::Type{Neuroblox.OUBlox})
   OrderedDict(
@@ -126,7 +126,16 @@ function arguments(::Type{Neuroblox.OUCouplingBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
+# function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
+#   OrderedDict(
+#     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
+#     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[]),
+#     :k => NCAD(625*(2*pi), NUMBER, (2*pi), 22500*(2*pi),[]),
+#     :h => NCAD(35.0, NUMBER, 0.01, 90.0,[])
+#   )
+# end
+
+function arguments(::Type{Neuroblox.HarmonicOscillator})
   OrderedDict(
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[]),
@@ -135,7 +144,16 @@ function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.JansenRitCBlox})
+# function arguments(::Type{Neuroblox.JansenRitCBlox})
+#   OrderedDict(
+#     :τ => NCAD(0.001, NUMBER, 0.001, 2.0,[]),
+#     :H => NCAD(20.0, NUMBER, 0.0, 500.0,[]),
+#     :λ => NCAD(5.0, NUMBER, 1.0, 25.0,[]),
+#     :r => NCAD(0.15, NUMBER, 0.1, 5.0,[])
+#   )
+# end
+
+function arguments(::Type{Neuroblox.JansenRit})
   OrderedDict(
     :τ => NCAD(0.001, NUMBER, 0.001, 2.0,[]),
     :H => NCAD(20.0, NUMBER, 0.0, 500.0,[]),
@@ -144,16 +162,32 @@ function arguments(::Type{Neuroblox.JansenRitCBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.JansenRitSCBlox})
-  OrderedDict(
-    :τ => NCAD(0.014, NUMBER, 0.001, 0.1,[]),
-    :H => NCAD(20.0, NUMBER, 0.0, 500.0,[]),
-    :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[]),
-    :r => NCAD(0.1, NUMBER, 0.1, 5.0,[])
-  )
-end
+# function arguments(::Type{Neuroblox.JansenRitSCBlox})
+#   OrderedDict(
+#     :τ => NCAD(0.014, NUMBER, 0.001, 0.1,[]),
+#     :H => NCAD(20.0, NUMBER, 0.0, 500.0,[]),
+#     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[]),
+#     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[])
+#   )
+# end
 
-function arguments(::Type{Neuroblox.WilsonCowanBlox})
+# function arguments(::Type{Neuroblox.WilsonCowanBlox})
+#   OrderedDict(
+#     :τ_E => NCAD(1.0, NUMBER, 1.0, 100.0,[]),
+#     :τ_I => NCAD(1.0, NUMBER, 1.0, 100.0,[]),
+#     :a_E => NCAD(1.2, NUMBER, 1.0, 100.0,[]),
+#     :a_I => NCAD(2.0, NUMBER, 1.0, 100.0,[]),
+#     :c_EE => NCAD(5.0, NUMBER, 1.0, 100.0,[]),
+#     :c_EI => NCAD(10.0, NUMBER, 1.0, 100.0,[]),
+#     :c_IE => NCAD(6.0, NUMBER, 1.0, 100.0,[]),
+#     :c_II => NCAD(1.0, NUMBER, 1.0, 100.0,[]),
+#     :θ_E => NCAD(2.0, NUMBER, 1.0, 100.0,[]),
+#     :θ_I => NCAD(3.5, NUMBER, 1.0, 100.0,[]),
+#     :η => NCAD(1.0, NUMBER, 1.0, 100.0,[])
+#   )
+# end
+
+function arguments(::Type{Neuroblox.WilsonCowan})
   OrderedDict(
     :τ_E => NCAD(1.0, NUMBER, 1.0, 100.0,[]),
     :τ_I => NCAD(1.0, NUMBER, 1.0, 100.0,[]),
@@ -169,7 +203,40 @@ function arguments(::Type{Neuroblox.WilsonCowanBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.LarterBreakspearBlox})
+# function arguments(::Type{Neuroblox.LarterBreakspearBlox})
+#   OrderedDict(
+#     :C => NCAD(0.35, NUMBER, 0.0, 1.0,[]),
+#     :δ_VZ => NCAD(0.61, NUMBER, 0.1, 2.0,[]),
+#     :T_Ca => NCAD(-0.01, NUMBER, 0.02, -0.04,[]),
+#     :δ_Ca => NCAD(0.15, NUMBER, 0.1, 0.2,[]),
+#     :g_Ca => NCAD(1.0, NUMBER, 0.96, 1.01,[]), #tested in Jolien's work/similar to V_Ca in Anthony's paper
+#     :V_Ca => NCAD(1.0, NUMBER, 0.96, 1.01,[]), #limits established by bifurcation
+#     :T_K => NCAD(0.0, NUMBER, -0.05, 0.05,[]),
+#     :δ_K => NCAD(0.3, NUMBER,0.25, 0.35,[]),
+#     :g_K => NCAD(2.0, NUMBER, 1.95, 2.05,[]),  #tested in Jolien's work
+#     :V_K => NCAD(-0.7, NUMBER, -0.8, -0.6,[]),  #limits established by bifurcation
+#     :T_Na => NCAD(0.3, NUMBER, 0.25, 0.35,[]),
+#     :δ_Na => NCAD(0.15, NUMBER, 0.1, 0.2,[]),
+#     :g_Na => NCAD(6.7, NUMBER, 6.6, 6.8,[]),   #tested in Botond and Jolien's work
+#     :V_Na => NCAD(0.53, NUMBER, 0.41, 0.59,[]), #limits established by bifurcation
+#     :V_L => NCAD(-0.5, NUMBER, -0.6, -0.4,[]),
+#     :g_L => NCAD(0.5, NUMBER, 0.4, 0.6,[]),
+#     :V_T => NCAD(0.0, NUMBER, -0.05, 0.05,[]),
+#     :Z_T => NCAD(0.0, NUMBER, -0.05, 0.05,[]),
+#     :IS => NCAD(0.3, NUMBER, 0.0, 1.0,[]),
+#     :a_ee => NCAD(0.36, NUMBER, 0.33, 0.39,[]), #tested in Botond and Jolien's work
+#     :a_ei => NCAD(2.0, NUMBER, 1.95, 2.05,[]), #tested in Botond and Jolien's work
+#     :a_ie => NCAD(2.0, NUMBER, 1.95, 2.05,[]), #testing in Jolien's work
+#     :a_ne => NCAD(1.0, NUMBER, 0.95, 1.05,[]),
+#     :a_ni => NCAD(0.4, NUMBER, 0.3, 0.5,[]),
+#     :b => NCAD(0.1, NUMBER, 0.05, 0.15,[]),
+#     :τ_K => NCAD(1.0, NUMBER, 0.8, 1.2,[]), #shouldn't be varied, but useful in bifurcations to "harshen" the potassium landscape
+#     :ϕ => NCAD(0.7, NUMBER, 0.6, 0.8,[]),
+#     :r_NMDA => NCAD( 0.25, NUMBER, 0.2, 0.3,[]) #tested in Botond's work
+#   )
+# end
+
+function arguments(::Type{Neuroblox.LarterBreakspear})
   OrderedDict(
     :C => NCAD(0.35, NUMBER, 0.0, 1.0,[]),
     :δ_VZ => NCAD(0.61, NUMBER, 0.1, 2.0,[]),
