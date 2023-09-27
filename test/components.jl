@@ -571,9 +571,9 @@ CorticalBlox-SubcorticalBlox connections
 global_ns = :g # global namespace
 @named cb1 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
 @named cb2 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
-@named str1 = Striatum(N_inhib=10)
-@named gpi1 = GPi(N_inhib=10)
-@named thal1 = Thalamus(N_exci=10)
+@named str1 = Striatum(N_inhib=10, namespace=global_ns)
+@named gpi1 = GPi(N_inhib=10, namespace=global_ns)
+@named thal1 = Thalamus(N_exci=10, namespace=global_ns)
 
 g = MetaDiGraph()
 add_blox!.(Ref(g), [cb1, cb2, str1, gpi1, thal1])
@@ -581,7 +581,7 @@ add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 2, 3, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 3, 4, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 4, 5, Dict(:weight => 1, :density => 0.1))
-add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.5))
+add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.1))
 
 sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)

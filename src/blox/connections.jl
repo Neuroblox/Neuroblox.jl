@@ -135,7 +135,7 @@ function (bc::BloxConnector)(
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
 
-    outgoing_connections = zeros(Int, length(neurons_in))
+    outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
@@ -155,14 +155,14 @@ function (bc::BloxConnector)(
     delay=0,
     density=0.1
 )
-    neurons_in = get_inhib_neurons(cb_in)
+    neurons_in = get_inh_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
 
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
 
-    outgoing_connections = zeros(Int, length(neurons_in))
+    outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
@@ -183,13 +183,13 @@ function (bc::BloxConnector)(
     density=0.1
 )
     neurons_in = get_exci_neurons(cb_in)
-    neurons_out = get_inhib_neurons(cb_out)
+    neurons_out = get_inh_neurons(cb_out)
 
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
 
-    outgoing_connections = zeros(Int, length(neurons_in))
+    outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
@@ -209,14 +209,14 @@ function (bc::BloxConnector)(
     delay=0,
     density=0.1
 )
-    neurons_in = get_inhib_neurons(cb_in)
-    neurons_out = get_inhib_neurons(cb_out)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
 
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
 
-    outgoing_connections = zeros(Int, length(neurons_in))
+    outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
