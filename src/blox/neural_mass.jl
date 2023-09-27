@@ -80,38 +80,6 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const jansen_ritSC = JansenRitSCBlox
 
-# Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
-mutable struct JansenRitBlox
-    p_dict
-    connector
-    jcn
-    odesystem
-    namespace
-    function JansenRitBlox(;name, τ=nothing, H=nothing, λ=nothing, r=nothing, cortical=true)
-        # default parameters are for cortical Jansen Rit
-        # Checking for nothing parameters has no runtime cost per Chris in this post
-        # ; kwargs...
-        # https://stackoverflow.com/questions/45445455/what-is-the-best-practices-way-to-check-if-optional-arguments-are-used-in-a-fu
-        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
-        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
-        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
-        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
-
-        para_dict = Dict{Symbol,Union{Real,Num}}(:τ => τ, :H => H, :λ => λ, :r => r)
-        τ=para_dict[:τ]
-        H=para_dict[:H]
-        λ=para_dict[:λ]
-        r=para_dict[:r]
-        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
-        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesystem = System(eqs, name=name)
-        #can't use outputs because x(t) is Num by then
-        #wrote inputs similarly to keep consistent
-        new(para_dict, sts[1], sts[3], odesystem, nothing)
-    end
-end
-
 mutable struct WilsonCowanBlox <: NeuralMassBlox
     τ_E::Num
     τ_I::Num
@@ -264,7 +232,40 @@ mutable struct LarterBreakspearBlox <: NeuralMassBlox
     end
 end
 
+<<<<<<< HEAD
 mutable struct LarterBreakspearBloxv2 <: AbstractComponent
+=======
+"""
+New versions of blox begin here!
+"""
+
+# Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
+struct JansenRit <: AbstractBlox
+    params
+    connector
+    jcn
+    odesystem
+    namespace
+    function JansenRit(;name, τ=nothing, H=nothing, λ=nothing, r=nothing, cortical=true)
+        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
+        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
+        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
+
+        p = progress_scope(@parameters τ=τ H=H λ=λ r=r)
+        τ, H, λ, r = p
+        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        odesystem = System(eqs, name=name)
+        #can't use outputs because x(t) is Num by then
+        #wrote inputs similarly to keep consistent
+        new(p, sts[1], sts[3], odesystem, nothing)
+    end
+end
+
+mutable struct LarterBreakspearBloxv2 <: NeuralMassBlox
+>>>>>>> a9b44f1 (Tidying up)
     params
     connector
     jcn

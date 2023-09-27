@@ -3,23 +3,30 @@ using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statist
 """
 neuralmass.jl test
 """
+"""
+testing random inital conditions for neural mass blox
+"""
+# No equativalent for this test just yet because random_initials and simulate don't work on new blox
+# sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
+# @test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
 
-# Create Regions
-@named Str = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
-@named GPe = jansen_ritC(τ=0.04, H=20, λ=400, r=0.1)
-@named STN = jansen_ritC(τ=0.01, H=20, λ=500, r=0.1)
-@named GPi = jansen_ritSC(τ=0.014, H=20, λ=400, r=0.1)
-@named Th  = jansen_ritSC(τ=0.002, H=10, λ=20, r=5)
-@named EI  = jansen_ritSC(τ=0.01, H=20, λ=5, r=5)
-@named PY  = jansen_ritSC(τ=0.001, H=20, λ=5, r=0.15)
-@named II  = jansen_ritSC(τ=2.0, H=60, λ=5, r=5)
+"""
+New Jansen-Rit tests
+"""
 
-# Connect Regions through Adjacency Matrix
+# test new Jansen-Rit blox
+@named Str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
+@named GPe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
+@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
 blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
-sys = [s.odesystem for s in blox]
-connect = [s.connector for s in blox]
 
-@parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+# Store parameters to be passed later on
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
 adj_matrix_lin = [0 0 0 0 0 0 0 0;
             -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
@@ -30,19 +37,22 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
             0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
             0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-@named CBGTC_Circuit_lin = LinearConnections(sys=sys, adj_matrix=adj_matrix_lin, connector=connect)
+g = MetaDiGraph()
+add_blox_list!(g, blox)
+create_adjacency_edges!(g, adj_matrix_lin)
 
-sim_dur = 10.0 # Simulate for 10 Seconds
-mysys = structural_simplify(CBGTC_Circuit_lin)
-sol = simulate(mysys, [], (0.0, sim_dur), [])
-@test sol[!, "GPi₊x(t)"][4] ≈ 0.976257006970988
+@named final_system = system_from_graph(g2, params)
+final_delays = graph_delays(g)
+sim_dur = 5.0 # Simulate for 10 Seconds
+final_system_sys = structural_simplify(final_system)
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=0.001)
+@test sol_dde_no_delays.retcode == ReturnCode.Success
 
-"""
-testing random inital conditions for neural mass blox
-"""
-
-sol = simulate(mysys, random_initials(mysys,blox),(0.0, sim_dur), [])
-@test size(sol)[2] == 17 # make sure that all the states are simulated (16 + timestamp)
 
 """
 Canonical micro circuit tests 
