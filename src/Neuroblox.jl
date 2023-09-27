@@ -48,7 +48,7 @@ abstract type Merger end
 abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
 abstract type SuperBlox <: AbstractBlox end
-# abstract type SourceBlox <: Blox end will be added later
+abstract type StimulusBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
