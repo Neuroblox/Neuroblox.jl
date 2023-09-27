@@ -84,7 +84,7 @@ end
 
 @register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
 
-mutable struct ImageStimulus
+mutable struct ImageStimulus <: StimulusBlox
     const namespace
     const odesystem
     const image
