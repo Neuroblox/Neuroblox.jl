@@ -3,6 +3,7 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 @reexport using ModelingToolkitStandardLibrary.Blocks
+@reexport using Graphs: add_edge!
 
 using Graphs
 using MetaGraphs
@@ -27,8 +28,6 @@ using ModelingToolkit: get_namespace, get_systems, renamespace,
                     namespace_equation, namespace_variables, namespace_expr,
                     AbstractODESystem
 import ModelingToolkit: inputs, nameof
-
-using ModelingToolkitStandardLibrary.Blocks: SampledData
 
 using Symbolics: @register_symbolic
 using IfElse

@@ -569,8 +569,8 @@ sol = solve(prob, Vern7(), saveat=0.1)
 CorticalBlox-SubcorticalBlox connections
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
-@named cb2 = CorticalBlox(N_wta=3, N_exci=5, namespace=global_ns)
+@named cb1 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
+@named cb2 = CorticalBlox(N_wta=20, N_exci=5, namespace=global_ns)
 @named str1 = Striatum(N_inhib=10)
 @named gpi1 = GPi(N_inhib=10)
 @named thal1 = Thalamus(N_exci=10)
@@ -581,7 +581,7 @@ add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 2, 3, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 3, 4, Dict(:weight => 1, :density => 0.1))
 add_edge!(g, 4, 5, Dict(:weight => 1, :density => 0.1))
-add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.05))
+add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.5))
 
 sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
