@@ -51,6 +51,8 @@ abstract type Merger end
 abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
 abstract type SuperBlox <: AbstractBlox end
+abstract type ObserverBlox <: AbstractBlox end
+abstract type CompoundNOBlox <: AbstractBlox end #I know this is bad - adding for speed of implementing -AGC
 abstract type StimulusBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl
@@ -178,8 +180,6 @@ export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
-export get_namespaced_sys, nameof
-export run_experiment!
-
+export get_namespaced_sys, namespace_expr, nameof
 export HRFFourHalfCosine, HRFDoubleGamma
 end
