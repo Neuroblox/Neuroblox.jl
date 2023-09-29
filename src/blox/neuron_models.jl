@@ -157,6 +157,7 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
             [input=true]
 			G(t)=0.0 
 			z(t)=0.0
+			Gₛₜₚ(t)=0.0 
 		end
 		ps = @parameters begin 
 			E_syn=E_syn 
@@ -172,6 +173,7 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
+			kₛₜₚ = 0.5
 			freq = freq 
 			phase = phase
 		end
@@ -189,7 +191,8 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
+			   D(Gₛₜₚ)~(-1/τ₃)*Gₛₜₚ + (z/5)*(kₛₜₚ-Gₛₜₚ)
 		]
 
 		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
