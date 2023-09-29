@@ -3,6 +3,7 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 @reexport using ModelingToolkitStandardLibrary.Blocks
+@reexport using Graphs: add_edge!
 
 using Graphs
 using MetaGraphs
@@ -27,8 +28,6 @@ using ModelingToolkit: get_namespace, get_systems, renamespace,
                     namespace_equation, namespace_variables, namespace_expr,
                     AbstractODESystem
 import ModelingToolkit: inputs, nameof
-
-using ModelingToolkitStandardLibrary.Blocks: SampledData
 
 using Symbolics: @register_symbolic
 using IfElse
@@ -90,6 +89,7 @@ include("blox/ts_outputs.jl")
 include("blox/sources.jl")
 include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
+include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
 include("gui/GUI.jl")
 include("blox/blox_utilities.jl")
@@ -151,7 +151,7 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, Striatum, GPi, GPe, Thalamus, STN
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
