@@ -171,3 +171,22 @@ struct AlternativeBalloonModel <: ObserverBlox
         new(p, Num(0), sts[5], sys, nothing)
     end
 end
+
+mutable struct JRHemo <: AbstractComponent
+    connector::Num
+    bloxinput::Num
+    odesystem::ODESystem
+    function JRHemo(;name, lnκ=0.0, lnτ=0.0)
+        params = progress_scope(lnκ, lnτ)
+        @named hemo = Hemodynamics(;lnκ=params[1], lnτ=params[2])
+        @named nmm = JansenRitCBlox()
+        @variables jcn(t)
+
+        g = MetaDiGraph()
+        add_vertex!(g, Dict(:blox => nmm, :jcn => jcn))
+        add_vertex!(g, :blox, hemo)
+        add_edge!(g, 1, 2, :weight, 1.0)
+        linhemo = ODEfromGraph(g; name=name)
+        new(linhemo.nmm₊x, linhemo.jcn, linhemo)
+    end
+end

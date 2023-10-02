@@ -202,14 +202,16 @@ function (bc::BloxConnector)(
     delay=0,
     density=0.1
 )
-    # Need t for the delay term
-    @variables t
 
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    if typeof(weight) == Symbol
+        w = weight
+    else
+        w = only(@parameters $(w_name)=weight)
+    end
     push!(bc.weights, w)
     x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
     eq = sys_in.nmm₊jcn ~ x*w
