@@ -36,6 +36,8 @@ using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
 
+using LogExpFunctions: logistic
+
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
 abstract type AbstractComponent end
