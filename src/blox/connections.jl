@@ -340,4 +340,14 @@ function (bc::BloxConnector)(
     push!(bc.events, cb)
 end
 
+function (bc::BloxConnector)(
+    policy::AbstractActionSelection,
+    blox1,
+    blox2;
+    kwargs...
+)
+    sys1 = get_namespaced_sys(blox1)
+    sys2 = get_namespaced_sys(blox2)
+
+    policy.competitor_states = [sys1.jcn, sys2.jcn]
 end
