@@ -179,30 +179,28 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
+function system_from_graph(g::MetaDiGraph; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
+end
+
 # Additional dispatch if extra parameters are passed for edge definitions
 function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc, p; name)
 end
 
-function system_from_graph(g::MetaDiGraph; name)
-    bc = connector_from_graph(g)
-    return system_from_graph(g, bc; name)
-end
-
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], params(bc); name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], params(bc); name, discrete_events = bc.events), blox_syss)
 end
 
-# Additional dispatch if extra parameters are passed for edge definitions
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], [params(bc)..., p...]; name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], vcat(params(bc), p); name, discrete_events = bc.events), blox_syss)
 end
-
 
 function system_from_parts(parts::AbstractVector; name)
     @variables t
