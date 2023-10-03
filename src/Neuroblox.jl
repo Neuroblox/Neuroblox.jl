@@ -36,6 +36,8 @@ using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
 
+using Peaks: argmaxima, peakproms!, peakheights!
+
 using LogExpFunctions: logistic
 
 # define abstract types for Neuroblox

@@ -164,9 +164,16 @@ input_equations(::ImageStimulus) = []
 weight_parameters(blox) = Num[]
 weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
 
-function get_inputs(blox)
-    sys = get_sys(blox)
-    inp = inputs(sys) 
-    n = nameof(sys)
-    return renamespace.(Ref(n), inp)
+function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
+    spikes, _ = argmaxima(x)
+    peakproms!(spikes, x; minprom, maxheight)
+    peakheights!(spikes, xx[spikes]; minheight, maxheight)
+
+    return spikes
+end
+
+function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
+    spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
+    
+    return length(spikes)
 end
