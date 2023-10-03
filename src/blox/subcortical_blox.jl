@@ -14,7 +14,6 @@ struct Striatum <: AbstractComponent
         name, 
         namespace = nothing,
         N_inhib = 25,
-        out_degree=1,
         E_syn_inhib=-70,
         G_syn_inhib=1.2,
         I_in=zeros(N_inhib),
@@ -36,31 +35,23 @@ struct Striatum <: AbstractComponent
         for i in Base.OneTo(N_inhib)
     ]
 
-    g = MetaDiGraph()
-    for i in Base.OneTo(N_inhib)
-        add_blox!(g, n_inh[i])
-    end
+    matrisome = DiscreteSpikes(; name=:matrisome, namespaced_name(namespace, name))
+    striosome = DiscreteSpikes(; name=:striosome, namespaced_name(namespace, name))
 
-    parts = n_inh
-    # Construct a BloxConnector object from the graph
-    # containing all connection equations from lower levels and this level.
-    bc = connector_from_graph(g)
-    # If a namespace is not provided, assume that this is the highest level
-    # and construct the ODEsystem from the graph.
-    # If there is a higher namespace, construct only a subsystem containing the parts of this level
-    # and propagate the BloxConnector object `bc` to the higher level 
-    # to potentially add more terms to the same connections.
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), n_inh)
+    add_blox!(g, matrisome)
+    add_blox!(g, striosome)
+
+    parts = [n_inh, matrisome, striosome]
+    bc = BloxConnector()
+  
     sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
     
-    # TO DO : m is a subset of states to be plotted in the GUI. 
-    # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
-    # since it is not an essential part of the blox.
     m = if isnothing(namespace) 
         [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
     else
         @variables t
-        # HACK : Need to define an empty system to add the correct namespace to states.
-        # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
         sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
         [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
     end
@@ -68,7 +59,6 @@ struct Striatum <: AbstractComponent
     new(namespace, parts, sys, bc, m)
 
     end
-
 end    
 
 
