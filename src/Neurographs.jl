@@ -224,6 +224,24 @@ function connector_from_graph(g::MetaDiGraph)
     return link
 end
 
+function action_selection_from_graph(g::MetaDiGraph)
+    idxs = findall(vertices(g)) do v
+        b = get_prop(g, v, :blox)
+        b isa AbstractActionSelection
+    end
+
+    try
+        idx = only(idxs)
+    catch
+        "Multiple action selection blocks are detected. Only one must be used in an experiment."
+    else
+        b = get_prop(g, idx, :blox)
+        @assert length(inneighbors(g, idx)) == 2 "Two blocks need to connect to the action selection $(nameof(b)) block"
+
+        return b
+    end
+end
+
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
     psps = psp_amplitude .* exp.(-(t .- spiketimes) ./ τ)
     eqs = []
