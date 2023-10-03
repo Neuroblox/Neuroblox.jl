@@ -255,24 +255,89 @@ end
 function (bc::BloxConnector)(
     stim::ImageStimulus,
     cb::CorticalBlox;
-    weight=1,
-    delay=0,
-    density=0.1
+
+function (bc::BloxConnector)(
+    neuron::HHNeuronExciBlox,
+    discr::AbstractDiscrete;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(neuron)
+    sys_in = get_namespaced_sys(discr)
+
+    weight = get_weight(kwargs, nameof(neuron), nameof(discr))
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w*sys_out.spikes_window
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    cb::CorticalBlox,
+    discr::AbstractDiscrete;
+    kwargs...
 )
     neurons = get_exci_neurons(cb)
 
     for neuron in neurons
-        bc(stim, neuron; weight, delay)
+        bc(neuron, discr; kwargs...)
     end
 end
 
-function accumulate_equation!(bc::BloxConnector, eq)
-    lhs = eq.lhs
-    idx = find_eq(bc.eqs, lhs)
-    bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
+function (bc::BloxConnector)(
+    discr_out::DiscreteSpikes,
+    discr_in::DiscreteInvSpikes;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    weight = get_weight(kwargs, nameof(discr_out), nameof(discr_in))
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w*sys_out.ρ
+
+    accumulate_equation!(bc, eq)
 end
 
-# Helper to merge delays and weights into a single vector
-function params(bc::BloxConnector)
-    return vcat(bc.weights, bc.delays)
+sample_poisson(λ) = rand(Poisson(λ))
+@register_symbolic sample_poisson(λ)
+
+function (bc::BloxConnector)(
+    discr_out::DiscreteInvSpikes,
+    discr_in::DiscreteSpikes;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    weight = get_weight(kwargs, nameof(discr_out), nameof(discr_in))
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    w = only(@parameters $(w_name)=weight)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    discr_out::DiscreteSpikes,
+    discr_in::DiscreteSpikes;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
+    cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
+    push!(bc.events, cb)
+end
+
 end
