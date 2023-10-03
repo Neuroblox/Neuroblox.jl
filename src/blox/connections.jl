@@ -20,8 +20,25 @@ function accumulate_equation!(bc::BloxConnector, eq)
     idx = find_eq(bc.eqs, lhs)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
+
+function hypergeometric_connections!(bc, neurons_in, neurons_out, name_in, name_out; kwargs...)
+    density = get_density(kwargs, nameof(name_out), nameof(name_in))
+    N_connects =  density * length(neurons_in) * length(neurons_out)
+    out_degree = Int(ceil(N_connects / length(neurons_out)))
+    in_degree =  Int(ceil(N_connects / length(neurons_in)))
+
+    outgoing_connections = zeros(Int, length(neurons_out))
+    for neuron_postsyn in neurons_in
+        rem = findall(x -> x < out_degree, outgoing_connections)
+        idx = sample(rem, min(in_degree, length(rem)); replace=false)
+
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; kwargs...)
+        end
+        outgoing_connections[idx] .+= 1
     end
 end
+
 """
     Helper to merge delays and weights into a single vector
 """
@@ -42,7 +59,13 @@ function (bc::BloxConnector)(
     w = only(@parameters $(w_name)=weight)
     push!(bc.weights, w)
 
-    eq = sys_in.I_syn ~ w * sys_out.G * (sys_in.V - sys_out.E_syn)
+    STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
+    
+    eq = if STA
+       sys_in.I_syn ~ w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
+    else
+        sys_in.I_syn ~ w * sys_out.G * (sys_in.V - sys_out.E_syn)
+    end
     
     accumulate_equation!(bc, eq)
 end
@@ -94,7 +117,7 @@ function (bc::BloxConnector)(
             name_presyn = namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
             if (name_postsyn != name_presyn) && rand(dist)
-                bc(neuron_presyn, neuron_postsyn; weight, delay)
+                bc(neuron_presyn, neuron_postsyn; kwargs...)
             end
         end
     end
@@ -108,23 +131,9 @@ function (bc::BloxConnector)(
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
 
-    N_connects =  density * length(neurons_in) * length(neurons_out)
-    out_degree = Int(ceil(N_connects / length(neurons_out)))
-    in_degree =  Int(ceil(N_connects / length(neurons_in)))
-
-    outgoing_connections = zeros(Int, length(neurons_out))
-    for neuron_postsyn in neurons_in
-        rem = findall(x -> x < out_degree, outgoing_connections)
-        idx = sample(rem, min(in_degree, length(rem)); replace=false)
-
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; weight)
-        end
-        outgoing_connections[idx] .+= 1
-    end
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end
 
-#connection from excitatory to inhibitory neural blocks
 function (bc::BloxConnector)(
     cb_out::Union{CorticalBlox,STN,Thalamus},
     cb_in::Union{GPi, GPe};
@@ -133,14 +142,25 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(cb_in)
     neurons_out = get_exci_neurons(cb_out)
 
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
 
 function (bc::BloxConnector)(
     cb::CorticalBlox,
     str::Striatum;
     kwargs...
 )
+    neurons_in = get_inh_neurons(str)
+    neurons_out = get_exci_neurons(cb)
+
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb), nameof(str); kwargs...)
+
+    discr_parts = get_discrete_parts(str)
+
+    for neuron_presyn in neurons_out
+        for discr in discr_parts
+            bc(neuron_presyn, discr; kwargs...)
         end
-        outgoing_connections[idx] .+= 1
     end
 end
 
@@ -152,23 +172,9 @@ function (bc::BloxConnector)(
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_inh_neurons(cb_out)
 
-    N_connects =  density * length(neurons_in) * length(neurons_out)
-    out_degree = Int(ceil(N_connects / length(neurons_out)))
-    in_degree =  Int(ceil(N_connects / length(neurons_in)))
-
-    outgoing_connections = zeros(Int, length(neurons_out))
-    for neuron_postsyn in neurons_in
-        rem = findall(x -> x < out_degree, outgoing_connections)
-        idx = sample(rem, min(in_degree, length(rem)); replace=false)
-
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; weight)
-        end
-        outgoing_connections[idx] .+= 1
-    end
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end
 
-#connection from inhibitory to inhibitory neural blocks
 function (bc::BloxConnector)(
     cb_out::Union{Striatum, GPi, GPe},
     cb_in::Union{Striatum, GPi, GPe};
@@ -177,20 +183,7 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(cb_in)
     neurons_out = get_inh_neurons(cb_out)
 
-    N_connects =  density * length(neurons_in) * length(neurons_out)
-    out_degree = Int(ceil(N_connects / length(neurons_out)))
-    in_degree =  Int(ceil(N_connects / length(neurons_in)))
-
-    outgoing_connections = zeros(Int, length(neurons_out))
-    for neuron_postsyn in neurons_in
-        rem = findall(x -> x < out_degree, outgoing_connections)
-        idx = sample(rem, min(in_degree, length(rem)); replace=false)
-
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; weight)
-        end
-        outgoing_connections[idx] .+= 1
-    end
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end
 
 function (bc::BloxConnector)(
