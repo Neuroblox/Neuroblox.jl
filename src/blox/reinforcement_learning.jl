@@ -22,3 +22,21 @@ end
 
 increment_trial!(env::AbstractEnvironment) = env.current_trial += 1
 
+abstract type AbstractActionSelection end
+
+mutable struct GreedyPolicy <: AbstractActionSelection
+    competitor_states 
+    const t_decision
+
+    function GreedyPolicy(; competitor_states=nothing, t_decision)
+        sts = isnothing(competitor_states) ? Num[] : competitor_states
+        new(sts, t_decision)
+    end
+end
+
+function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
+    comp_vals = sol(p.t_decision; idxs=[p.competitors])
+    return argmax(comp_vals)
+end
+ 
+struct Agent 
