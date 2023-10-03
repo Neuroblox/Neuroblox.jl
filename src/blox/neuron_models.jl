@@ -234,11 +234,19 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	end
 end	
 
-mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
-	namespace::N
-    odesystem::S
-	function HHNeuronInhibBlox(;name, namespace = nothing, E_syn=-70.0,G_syn=11.5,I_in=0,freq=0,phase=0,τ=70)
-	    
+struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
+    odesystem
+    namespace
+	function HHNeuronInhibBlox(;
+        name, 
+        namespace = nothing, 
+        E_syn=-70.0,
+        G_syn=11.5,
+        I_in=0,
+        freq=0,
+        phase=0,
+        τ=70
+    )
 		sts = @variables begin 
 			V(t)=-65.00 
 			n(t)=0.32 
@@ -250,6 +258,7 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 			[output = true] 
 			z(t)=0.0
 		end
+
 		ps = @parameters begin 
 			E_syn=E_syn 
 			G_Na = 52 
@@ -268,6 +277,7 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 			freq = freq 
 			phase = phase
 		end
+
 	   	αₙ(v) = 0.01*(v+38)/(1-exp(-(v+38)/10))
 		βₙ(v) = 0.125*exp(-(v+48)/80)
         αₘ(v) = 0.1*(v+33)/(1-exp(-(v+33)/10))
@@ -282,12 +292,12 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
 		]
 
 		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
 
-		new{typeof(namespace), typeof(sys)}(namespace, sys)
+		new(sys, namespace)
 	end
 end	
 
