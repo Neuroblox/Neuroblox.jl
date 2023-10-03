@@ -1,3 +1,48 @@
+abstract type AbstractEnvironment end
+abstract type AbstractLearningRule end
+
+mutable struct HebbianPlasticity <:AbstractLearningRule
+    const K
+    const W_lim
+    state_pre
+    state_post
+
+    function HebbianPlasticity(; K, W_lim, state_pre=nothing, state_post=nothing)
+        new(K, W_lim, state_pre, state_post)
+    end
+end
+
+function (hp::HebbianPlasticity)(sol::SciMLBase.AbstractSciMLSolution, t, w, feedback)
+    val_pre, val_post = sol(t; idxs=[hp.state_pre, hp.state_post])
+    Δw = hp.K * val_pre * val_post * (hp.W̄ - w) * feedback
+
+    return Δw
+end
+
+mutable struct HebbianModulationPlasticity <: AbstractLearningRule
+    const K
+    const decay
+    state_pre
+    state_post
+    modulator
+
+    function HebbianModulationPlasticity(; 
+        K, decay, 
+        state_pre=nothing, state_post=nothing, modulator=nothing
+    )
+        new(K, decay, state_pre, state_post, modulator)
+    end
+end
+
+function (hp::HebbianModulationPlasticity)(val_pre, val_modulator, w, feedback)
+    DA = hp.modulator(val_modulator, feedback)
+    DA_baseline = hp.modulator.κ_DA * hp.modulator.N_time_blocks
+
+    Δw = feedback * hp.K * val_pre * DA * (DA - DA_baseline) * logistic(DA) - hp.decay * w
+
+    return Δw
+end
+
 mutable struct ClassificationEnvironment <: AbstractEnvironment
     const stimulus
     const category
