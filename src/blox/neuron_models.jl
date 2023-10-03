@@ -142,7 +142,8 @@ end
 function spike_affect!(integ, u, p, ctx)
     du = SciMLBase.get_du(integ)
     if du[u.x] > 0
-        integ.u[u.y] += 1
+        integ.u[u.spikes_cumulative] += 1
+        integ.u[u.spikes_window] += 1
     end
 end
 
