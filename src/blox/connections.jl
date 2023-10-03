@@ -2,12 +2,18 @@ mutable struct BloxConnector
     eqs::Vector{Equation}
     weights::Vector{Num}
     delays::Vector{Num}
+    events::Vector{Pair{Any, Vector{Equation}}}
 
-    BloxConnector() = new(Equation[], Num[])
+    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[])
 
     function BloxConnector(bloxs)
         eqs = reduce(vcat, input_equations.(bloxs)) 
         weights = reduce(vcat, weight_parameters.(bloxs))
+        delays = reduce(vcat, delay_parameters.(bloxs))
+        events = reduce(vcat, events.(bloxs))
+        new(eqs, weights, delays, events)
+    end
+end
 
 function accumulate_equation!(bc::BloxConnector, eq)
     lhs = eq.lhs
