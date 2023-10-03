@@ -40,3 +40,13 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
 end
  
 struct Agent 
+    odesystem
+    action_selection
+
+    function Agent(g::MetaDiGraph; name)
+        sys = system_from_graph(g; name)
+        policy = action_selection_from_graph(g)
+
+        new(sys, policy)
+    end
+end
