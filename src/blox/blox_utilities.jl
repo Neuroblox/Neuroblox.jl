@@ -165,11 +165,52 @@ function input_equations(blox)
 end
 
 input_equations(blox::AbstractComponent) = blox.connector.eqs
-
 input_equations(::ImageStimulus) = []
 
-weight_parameters(blox) = Num[]
+weight_parameters(::AbstractBlox) = Num[]
 weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
+
+delay_parameters(::AbstractBlox) = Num[]
+delay_parameters(blox::AbstractComponent) = blox.connector.delays
+
+events(::AbstractBlox) = Pair{Any, Vector{Equation}}[]
+events(blox::AbstractComponent) = blox.connector.events
+
+function get_weight(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :weight)
+        return kwargs[:weight]
+    else
+        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_delay(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :delay)
+        kwargs[:delay]
+    else
+        error("Delay constant from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_density(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :density)
+        return kwargs[:density]
+    else 
+        error("Connection density from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_sta(kwargs, name_blox1, name_blox2)
+    haskey(kwargs, :sta) ? kwargs[:sta] : false    
+end
+
+function get_event_time(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :t_event)
+        return kwargs[:t_event]
+    else 
+        error("Time for the event that affects the connection from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
 
 function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
     spikes, _ = argmaxima(x)
