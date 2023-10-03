@@ -65,11 +65,18 @@ function get_inh_neurons(b::AbstractComponent)
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
+function get_discrete_parts(b::AbstractComponent)
+    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
+end
+
 get_exci_neurons(n::AbstractExciNeuronBlox) = n
 get_exci_neurons(n) = []
 
 get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
+
+get_discrete_parts(n::AbstractDiscrete) = n
+get_discrete_parts(n) = []
 
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
