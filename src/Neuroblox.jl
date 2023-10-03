@@ -16,7 +16,6 @@ using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq
 using Interpolations
-using DataInterpolations
 using Distributions
 using Random
 using OrderedCollections
