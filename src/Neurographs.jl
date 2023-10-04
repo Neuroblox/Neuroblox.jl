@@ -214,10 +214,8 @@ function connector_from_graph(g::MetaDiGraph)
         b = get_prop(g, v, :blox)
         for vn in inneighbors(g, v)
             bn = get_prop(g, vn, :blox)
-            weight = get_prop(g, vn, v, :weight)
-            delay = has_prop(g, vn, v, :delay) ? get_prop(g, vn, v, :delay) : 0
-            density = has_prop(g, vn, v, :density) ? get_prop(g, vn, v, :density) : 0
-            link(bn, b; weight, delay, density)
+            kwargs = props(g, vn, v)
+            link(bn, b; kwargs...)
         end
     end
 
@@ -240,6 +238,24 @@ function action_selection_from_graph(g::MetaDiGraph)
 
         return b
     end
+end
+
+function learning_rules_from_graph(g::MetaDiGraph)
+    d = Dict(Num, AbstractLearningRule)()
+
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        for vn in inneighbors(g, v)
+            if has_prop(g, vn, v, :learning_rule)
+                bn = get_prop(g, v, :blox)
+                weight = get_prop(g, vn, v, :weight)
+                w = generate_weight_param(bn, b; weight)
+                d[w] = get_prop(g, vn, v, :learning_rule)
+            end
+        end
+    end
+
+    return d
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)
