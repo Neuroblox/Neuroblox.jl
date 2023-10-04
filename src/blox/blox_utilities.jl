@@ -190,9 +190,10 @@ end
 
 function get_delay(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :delay)
-        kwargs[:delay]
+        return kwargs[:delay]
     else
-        error("Delay constant from $name_blox1 to $name_blox2 is not specified.")
+        @warn "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
+        return 0
     end
 end
 
