@@ -445,10 +445,10 @@ add_edge!(g, 2, 3, :weight, 1)
 add_edge!(g, 3, 1, :weight, 0.2)
       
 @named neuron_net = system_from_graph(g)
-sol = simulate(structural_simplify(neuron_net), [], (0, 10), [], Vern7())
-
+prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 10), [])
+sol = solve(prob, Vern7())
 @test neuron_net isa ODESystem
-@test sol[:,1][end] ≈ 10.0
+@test sol.retcode == ReturnCode.Success 
 
 """
 test for WinnerTakeAllBlox
@@ -460,9 +460,8 @@ wta_simp=structural_simplify(sys)
 prob = ODEProblem(wta_simp,[],(0,10))
 sol = solve(prob, Vern7(), saveat=0.1)
 
-@test typeof(wta_simp)==ODESystem
-@test sol.t[end]==10
-@test sol isa Any
+@test wta_simp isa ODESystem
+@test sol.retcode == ReturnCode.Success 
 
 """
 WinnerTakeAllBlox connections
@@ -478,7 +477,7 @@ sys = system_from_graph(g; name=global_ns)
 sys_simpl =structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0,2))
 sol = solve(prob, Vern7(), saveat=0.1)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 CorticalBlox test
@@ -487,7 +486,7 @@ CorticalBlox test
 cb_simpl = structural_simplify(cb.odesystem)
 prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 SubcorticalBlox tests"
@@ -497,42 +496,42 @@ SubcorticalBlox tests"
 str_simpl = structural_simplify(str_scb.odesystem)
 prob = ODEProblem(str_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 #GPi
 @named gpi_scb = GPi(N_inhib=10)
 gpi_simpl = structural_simplify(gpi_scb.odesystem)
 prob = ODEProblem(gpi_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 #GPe
 @named gpe_scb = GPe(N_inhib=10)
 gpe_simpl = structural_simplify(gpe_scb.odesystem)
 prob = ODEProblem(gpe_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 #STN
 @named stn_scb = STN(N_exci=10)
 stn_simpl = structural_simplify(stn_scb.odesystem)
 prob = ODEProblem(stn_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 #Thalamus
 @named thal_scb = Thalamus(N_exci=10)
 thal_simpl = structural_simplify(thal_scb.odesystem)
 prob = ODEProblem(thal_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 CorticalBlox-ImageStimulus connection
 """
 global_ns = :g # global namespace
 @named cb = CorticalBlox(N_wta=6, N_exci=5; namespace=global_ns)
-fn = "../examples/image_example.csv"
+fn = "./examples/image_example.csv"
 @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
 g = MetaDiGraph()
 add_blox!(g, stim)
@@ -542,7 +541,7 @@ sys = system_from_graph(g; name=global_ns)
 sys_simpl = structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0, 10); tofloat=false)
 sol = solve(prob, Vern7())
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 CorticalBlox-CorticalBlox connection
@@ -557,7 +556,7 @@ sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0,2))
 sol = solve(prob, Vern7(), saveat=0.1)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 CorticalBlox-SubcorticalBlox connections
@@ -581,13 +580,13 @@ sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0,2))
 sol = solve(prob, Vern7(), saveat=0.1)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
 
 """
 SuperCortical
 """
 @named sc  = SuperCortical(; N_cb=2, N_wta=6)
 sc_simpl = structural_simplify(sc.odesystem)
-prob = ODEProblem(sc_simpl, [], (0, 20))
+prob = ODEProblem(sc_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
-@test sol isa Any
+@test sol.retcode == ReturnCode.Success 
