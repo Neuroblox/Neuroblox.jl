@@ -21,6 +21,14 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
+function generate_weight_param(name_blox_out, name_blox_in; kwargs...)
+    weight = get_weight(kwargs, name_blox_out, name_blox_in)
+    w_name = Symbol("w_$(name_blox_out)_$(name_blox_in)")
+    w = only(@parameters $(w_name)=weight)
+
+    return w
+end
+
 function hypergeometric_connections!(bc, neurons_in, neurons_out, name_in, name_out; kwargs...)
     density = get_density(kwargs, nameof(name_out), nameof(name_in))
     N_connects =  density * length(neurons_in) * length(neurons_out)
@@ -54,9 +62,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(HH_out)
     sys_in = get_namespaced_sys(HH_in)
 
-    weight = get_weight(kwargs, nameof(HH_out), nameof(HH_in))
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
@@ -78,13 +84,11 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
-    weight = get_weight(kwargs, nameof(bloxout), nameof(bloxin))
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     if typeof(bloxout.output) == Num
-        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out)
         eq = sys_in.jcn ~ x*w
     else
         @variables t
@@ -93,7 +97,7 @@ function (bc::BloxConnector)(
         τ = only(@parameters $(τ_name)=delay)
         push!(bc.delays, τ)
 
-        x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+        x = namespace_expr(bloxout.output, sys_out)
         eq = sys_in.jcn ~ x(t-τ)*w
     end
     
@@ -196,9 +200,7 @@ function (bc::BloxConnector)(
 
     dots = namespace_variables(sys_out)
 
-    weight = get_weight(kwargs, nameof(stim), nameof(neuron))
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
@@ -229,9 +231,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(neuron)
     sys_in = get_namespaced_sys(discr)
 
-    weight = get_weight(kwargs, nameof(neuron), nameof(discr))
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
@@ -259,10 +259,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(discr_out)
     sys_in = get_namespaced_sys(discr_in)
 
-    weight = get_weight(kwargs, nameof(discr_out), nameof(discr_in))
-
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sys_out.ρ
@@ -281,10 +278,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(discr_out)
     sys_in = get_namespaced_sys(discr_in)
 
-    weight = get_weight(kwargs, nameof(discr_out), nameof(discr_in))
-
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
@@ -307,12 +301,12 @@ end
 
 function (bc::BloxConnector)(
     policy::AbstractActionSelection,
-    blox1,
-    blox2;
+    blox_out1,
+    blox_out2;
     kwargs...
 )
-    sys1 = get_namespaced_sys(blox1)
-    sys2 = get_namespaced_sys(blox2)
+    sys1 = get_namespaced_sys(blox_out1)
+    sys2 = get_namespaced_sys(blox_out2)
 
     policy.competitor_states = [sys1.jcn, sys2.jcn]
 end
