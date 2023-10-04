@@ -36,7 +36,7 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
 end
 
 function hypergeometric_connections!(bc, neurons_in, neurons_out, name_in, name_out; kwargs...)
-    density = get_density(kwargs, nameof(name_out), nameof(name_in))
+    density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
@@ -69,12 +69,12 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(HH_out, HH_in; kwargs...)
-    push!(bc.weights, w)
+    push!(bc.weights, w)    
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
     
     eq = if STA
-       sys_in.I_syn ~ w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
+        sys_in.I_syn ~ w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
         sys_in.I_syn ~ w * sys_out.G * (sys_in.V - sys_out.E_syn)
     end
@@ -210,9 +210,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
-    eq = sys_in.I_in ~ w * dots[stim.current_pixel]
 
-    stim.current_pixel += 1
     stim.current_pixel += 1
     accumulate_equation!(bc, eq)
 end
