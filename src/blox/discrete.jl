@@ -32,7 +32,6 @@ struct DiscreteInvSpikes <: AbstractDiscrete
         
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
-            jcn ~ 0
         ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
@@ -40,7 +39,9 @@ struct DiscreteInvSpikes <: AbstractDiscrete
     end
 end
 
-struct SNc <: AbstractDiscrete
+abstract type AbstractModulator <: AbstractDiscrete end
+
+struct SNc <: AbstractModulator
     odesystem
     N_time_blocks
     κ_DA
