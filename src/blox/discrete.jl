@@ -7,12 +7,11 @@ struct DiscreteSpikes <: AbstractDiscrete
     function DiscreteSpikes(; name, namespace=nothing)
 
         @variables t 
-        sts = @variables jcn(t)=0.0 [input=true]
+        sts = @variables ρ(t)=0.0 jcn(t)=0.0 [input=true]
         ps = @parameters H=1
 
         eqs = [
             ρ ~ H*jcn
-            jcn ~ 0
         ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
@@ -54,7 +53,6 @@ struct SNc <: AbstractModulator
         ps = @parameters κ=κ_DA
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
-            jcn ~ 0
         ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
