@@ -21,9 +21,12 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
-function generate_weight_param(name_blox_out, name_blox_in; kwargs...)
-    weight = get_weight(kwargs, name_blox_out, name_blox_in)
-    w_name = Symbol("w_$(name_blox_out)_$(name_blox_in)")
+function generate_weight_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    weight = get_weight(kwargs, name_out, name_in)
+    w_name = Symbol("w_$(name_out)_$(name_in)")
     w = only(@parameters $(w_name)=weight)
 
     return w
@@ -62,7 +65,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(HH_out)
     sys_in = get_namespaced_sys(HH_in)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
@@ -84,7 +87,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
     if typeof(bloxout.output) == Num
@@ -200,7 +203,7 @@ function (bc::BloxConnector)(
 
     dots = namespace_variables(sys_out)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
@@ -231,7 +234,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(neuron)
     sys_in = get_namespaced_sys(discr)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(neuron, discr; kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
@@ -259,7 +262,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(discr_out)
     sys_in = get_namespaced_sys(discr_in)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(discr_out, discr_in; kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sys_out.ρ
@@ -278,7 +281,7 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(discr_out)
     sys_in = get_namespaced_sys(discr_in)
 
-    w = generate_weight_param(nameof(sys_out), nameof(sys_in); kwargs...)
+    w = generate_weight_param(discr_out, discr_in; kwargs...)
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
