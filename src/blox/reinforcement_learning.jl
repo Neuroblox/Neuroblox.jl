@@ -140,5 +140,41 @@ struct Agent
     end
 end
 
+indexof(sym, syms) = indexin([Symbol(sym)], Symbol.(syms))
+
+function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
+    N_trials = env.N_trials
+    t_trial = env.t_trial
+
+    sys = get_sys(agent)
+    u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
+    p = haskey(kwargs, :p) ? kwargs[:p] : []
+    prob = ODEProblem(sys, u0, p)
+
+    action_selection = agent.action_selection
+    learning_rules = agent.learning_rules
+    
+    defs = ModelingToolkit.get_defaults(sys)
+    weights = Dict(Num, Float64)()
+    for w in keys(learning_rules)
+        weights[w] = defs[w]
+    end
+
+    tspan = (0, t_trial)
+
+    for i in Base.OneTo(N_trials)
+        sol = solve(prob)
+        action = action_selection(sol)
+        feedback = env(action)
+
+        for (w, rule) in learning_rules
+            w_val = weights[w]
+            Δw = weight_gradient(rule, sol, w_val, feedback)
+            weights[w] += Δw
+        end
+
+        increment_trial!(env)
+        tspan = tspan .+ t_trial
+        prob = remake(prob; p = weights, tspan)
     end
 end
