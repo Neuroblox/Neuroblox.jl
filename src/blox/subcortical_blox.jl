@@ -35,8 +35,8 @@ struct Striatum <: AbstractComponent
         for i in Base.OneTo(N_inhib)
     ]
 
-    matrisome = DiscreteSpikes(; name=:matrisome, namespaced_name(namespace, name))
-    striosome = DiscreteSpikes(; name=:striosome, namespaced_name(namespace, name))
+    matrisome = DiscreteSpikes(; name=:matrisome, namespace=namespaced_name(namespace, name))
+    striosome = DiscreteSpikes(; name=:striosome, namespace=namespaced_name(namespace, name))
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), n_inh)
