@@ -69,8 +69,12 @@ function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
 end
 
 mutable struct ClassificationEnvironment <: AbstractEnvironment
+    const name
+    const namespace
     const stimulus
     const category
+    const N_trials
+    const t_trial
     current_trial
 
     function ClassificationEnvironment(data::DataFrame; name, namespace=nothing, t_stimulus, t_pause)
@@ -83,8 +87,17 @@ mutable struct ClassificationEnvironment <: AbstractEnvironment
         )
 
         category = data[!, :category]
+        N_trials = DataFrames.nrow(data)
+        t_trial = t_stimulus + t_pause
 
-        new(stim, category, 1)
+        new(name, namespace, stim, category, N_trials, t_trial, 1)
+    end
+
+    function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing, t_stimulus, t_pause)
+        t_trial = t_stimulus + t_pause
+        N_trials = size(stim.image)[2]
+
+        new(name, namespace, stim, stim.category, N_trials, t_trial, 1)
     end
 end
 
