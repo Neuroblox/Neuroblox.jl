@@ -37,16 +37,26 @@ struct Striatum <: AbstractComponent
 
     matrisome = DiscreteSpikes(; name=:matrisome, namespace=namespaced_name(namespace, name))
     striosome = DiscreteSpikes(; name=:striosome, namespace=namespaced_name(namespace, name))
+    
+    parts = vcat(n_inh, matrisome, striosome) 
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), n_inh)
-    add_blox!(g, matrisome)
-    add_blox!(g, striosome)
 
-    parts = [n_inh, matrisome, striosome]
-    bc = BloxConnector()
-  
-    sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+    # If this blox is simulated on its own, 
+    # then only the parts with dynamics are included in the system.
+    # This is done to avoid messing with structural_simplify downstream. 
+    # Also it makes sense, as the discrete parts rely exclusively on inputs/outputs, 
+    # which are not present in this case.
+    if !isnothing(namespace)
+        add_blox!(g, matrisome)
+        add_blox!(g, striosome)
+        bc = connector_from_graph(g)
+        sys = system_from_parts(parts; name)
+    else
+        bc = connector_from_graph(g)
+        sys = system_from_graph(g, bc; name)
+    end
     
     m = if isnothing(namespace) 
         [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
