@@ -219,7 +219,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                # HACK : need to define a Differential equation for spikes
                # the alternative of having it as an algebraic equation with [irreducible=true]
                # leads to incorrect or unstable solutions. Needs more attention!
-               D(spikes_cumulative(t)) ~ 0.0 
+               D(spikes_cumulative(t)) ~ 0.0,
                D(spikes_window(t)) ~ 0.0
 		]
         
