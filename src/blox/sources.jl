@@ -91,8 +91,8 @@ mutable struct ImageStimulus <: StimulusBlox
     const category
     current_pixel::Int
 
-    function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
-        S = (transpose ∘ Matrix)(IMG[!, Not(:category)])
+    function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
+        S = (transpose ∘ Matrix)(data[!, Not(:category)])
         (N_pixels, N_stimuli) = size(S)
 
         t_trial = t_stimulus + t_pause
@@ -119,7 +119,7 @@ mutable struct ImageStimulus <: StimulusBlox
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
         @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
-        IMG = read(file, DataFrame)
-        ImageStimulus(IMG; name, namespace, t_stimulus, t_pause)
+        data = read(file, DataFrame)
+        ImageStimulus(data; name, namespace, t_stimulus, t_pause)
     end
 end
