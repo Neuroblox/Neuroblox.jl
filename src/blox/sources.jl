@@ -88,6 +88,7 @@ mutable struct ImageStimulus <: StimulusBlox
     const namespace
     const odesystem
     const image
+    const category
     current_pixel::Int
 
     function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
@@ -111,8 +112,9 @@ mutable struct ImageStimulus <: StimulusBlox
         end
 
         system = ODESystem(eqs, t, sts, []; name)
+        category = data[!, :category]
 
-        new(namespace, system, S, 1)
+        new(namespace, system, S, category, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
