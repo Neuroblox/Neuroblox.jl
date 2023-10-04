@@ -293,7 +293,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
 		]
 
 		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
