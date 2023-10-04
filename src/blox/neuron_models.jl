@@ -155,7 +155,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	function HHNeuronExciBlox(;
         name, 
         namespace=nothing,
-        t_spike_window,
+        t_spike_window=0.01,
         θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
