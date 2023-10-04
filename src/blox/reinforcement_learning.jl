@@ -6,17 +6,29 @@ mutable struct HebbianPlasticity <:AbstractLearningRule
     const W_lim
     state_pre
     state_post
+    t_pre
+    t_post
 
-    function HebbianPlasticity(; K, W_lim, state_pre=nothing, state_post=nothing)
-        new(K, W_lim, state_pre, state_post)
+    function HebbianPlasticity(; 
+        K, W_lim, 
+        state_pre=nothing, state_post=nothing,
+        t_pre=nothing, t_post=nothing
+    )
+        new(K, W_lim, state_pre, state_post, t_pre, t_post)
     end
 end
 
-function (hp::HebbianPlasticity)(sol::SciMLBase.AbstractSciMLSolution, t, w, feedback)
-    val_pre, val_post = sol(t; idxs=[hp.state_pre, hp.state_post])
+function (hp::HebbianPlasticity)(val_pre, val_post, w, feedback)
     Δw = hp.K * val_pre * val_post * (hp.W̄ - w) * feedback
 
     return Δw
+end
+
+function weight_gradient(hp::HebbianPlasticity, sol, w, feedback)
+    val_pre = only(sol(hp.t_pre; idxs = [hp.state_pre]))
+    val_post = only(sol(hp.t_post; idxs = [hp.state_post]))
+
+    return hp(val_pre, val_post, w, feedback)
 end
 
 mutable struct HebbianModulationPlasticity <: AbstractLearningRule
@@ -24,23 +36,36 @@ mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     const decay
     state_pre
     state_post
+    t_pre
+    t_post
+    t_mod
     modulator
 
     function HebbianModulationPlasticity(; 
-        K, decay, 
-        state_pre=nothing, state_post=nothing, modulator=nothing
+        K, decay, modulator=nothing,
+        state_pre=nothing, state_post=nothing, 
+        t_pre=nothing, t_post=nothing, t_mod=nothing,   
     )
-        new(K, decay, state_pre, state_post, modulator)
+        new(K, decay, modulator, state_pre, state_post, t_pre, t_post, t_mod)
     end
 end
 
-function (hp::HebbianModulationPlasticity)(val_pre, val_modulator, w, feedback)
-    DA = hp.modulator(val_modulator, feedback)
-    DA_baseline = hp.modulator.κ_DA * hp.modulator.N_time_blocks
+function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w, feedback)
+    DA = hmp.modulator(val_modulator, feedback)
+    DA_baseline = hmp.modulator.κ_DA * hmp.modulator.N_time_blocks
 
-    Δw = feedback * hp.K * val_pre * DA * (DA - DA_baseline) * logistic(DA) - hp.decay * w
+    Δw = hmp.K * val_post * val_pre * DA * (DA - DA_baseline) * derivative_logistic(DA) - hmp.decay * w
 
     return Δw
+end
+
+function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
+    state_mod = get_modulator_state(hmp.modulator)
+    val_pre = only(sol(hmp.t_pre; idxs = [hmp.state_pre]))
+    val_post = only(sol(hmp.t_post; idxs = [hmp.state_post]))
+    val_mod = only(sol(hmp.t_mod; idxs = [state_mod]))
+
+    return hmp(val_pre, val_post, val_mod, w, feedback)
 end
 
 mutable struct ClassificationEnvironment <: AbstractEnvironment
