@@ -71,8 +71,11 @@ function (bc::BloxConnector)(
     w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)    
 
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
-    
     eq = if STA
         sys_in.I_syn ~ w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
@@ -92,6 +95,10 @@ function (bc::BloxConnector)(
 
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
+
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
 
     if typeof(bloxout.output) == Num
         x = namespace_expr(bloxout.output, sys_out)
@@ -209,6 +216,10 @@ function (bc::BloxConnector)(
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
 
     stim.current_pixel += 1
@@ -238,6 +249,10 @@ function (bc::BloxConnector)(
     w = generate_weight_param(neuron, discr; kwargs...)
     push!(bc.weights, w)
 
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
     eq = sys_in.jcn ~ w*sys_out.spikes_window
 
     accumulate_equation!(bc, eq)
@@ -266,6 +281,10 @@ function (bc::BloxConnector)(
     w = generate_weight_param(discr_out, discr_in; kwargs...)
     push!(bc.weights, w)
 
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
     eq = sys_in.jcn ~ w*sys_out.ρ
 
     accumulate_equation!(bc, eq)
@@ -284,6 +303,10 @@ function (bc::BloxConnector)(
 
     w = generate_weight_param(discr_out, discr_in; kwargs...)
     push!(bc.weights, w)
+
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
 
     eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
 
