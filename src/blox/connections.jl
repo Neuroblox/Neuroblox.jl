@@ -3,8 +3,9 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     events::Vector{Pair{Any, Vector{Equation}}}
+    learning_rules
 
-    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[])
+    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
         eqs = reduce(vcat, input_equations.(bloxs)) 
@@ -12,6 +13,8 @@ mutable struct BloxConnector
         delays = reduce(vcat, delay_parameters.(bloxs))
         events = reduce(vcat, event_callbacks.(bloxs))
         learning_rules = reduce(merge, weight_learning_rules.(bloxs))
+
+        new(eqs, weights, delays, events, learning_rules)
     end
 end
 

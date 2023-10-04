@@ -176,6 +176,9 @@ delay_parameters(blox::AbstractComponent) = blox.connector.delays
 event_callbacks(::AbstractBlox) = Pair{Any, Vector{Equation}}[]
 event_callbacks(blox::AbstractComponent) = blox.connector.events
 
+weight_learning_rules(bc::BloxConnector) = bc.learning_rules
+weight_learning_rules(::AbstractBlox) = Dict{Num, AbstractLearningRule}()
+weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
 
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
