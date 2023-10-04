@@ -125,11 +125,20 @@ end
 struct Agent 
     odesystem
     action_selection
+    learning_rules
 
     function Agent(g::MetaDiGraph; name)
-        sys = system_from_graph(g; name)
-        policy = action_selection_from_graph(g)
+        bc = connector_from_graph(g)
 
-        new(sys, policy)
+        sys = system_from_graph(g, bc; name)
+        ssys = structural_simplify(sys)
+
+        policy = action_selection_from_graph(g)
+        learning_rules = bc.learning_rules
+
+        new(ssys, policy, learning_rules)
+    end
+end
+
     end
 end
