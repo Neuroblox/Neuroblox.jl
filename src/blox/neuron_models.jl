@@ -219,11 +219,11 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                # HACK : need to define a Differential equation for spikes
                # the alternative of having it as an algebraic equation with [irreducible=true]
                # leads to incorrect or unstable solutions. Needs more attention!
-               D(spikes_cumulative(t)) ~ 0.0,
-               D(spikes_window(t)) ~ 0.0
+               D(spikes_cumulative) ~ 0.0,
+               D(spikes_window) ~ 0.0
 		]
         
-        spike_cb = [V ~ θ_spike] => (spike_affect!, sts, [], nothing)
+        spike_cb = [V ~ θ_spike] => (spike_affect!, [spikes_cumulative, spikes_window], [], nothing)
         spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
 		sys = ODESystem(
