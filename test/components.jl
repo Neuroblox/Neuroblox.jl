@@ -429,8 +429,8 @@ sol = solve(phase_ode,Tsit5(),callback=cb)
 """
 test for HHNeuronExciBlox, HHNeuronInhibBlox and SynapticConnections
 """
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4)
-nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6)
+nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_in=3, freq=4; t_spike_window=0.1)
+nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_in=2, freq=6; t_spike_window=0.1)
 nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_in=2, freq=3)
 assembly = [nn1, nn2, nn3]
 
