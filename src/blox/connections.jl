@@ -10,8 +10,8 @@ mutable struct BloxConnector
         eqs = reduce(vcat, input_equations.(bloxs)) 
         weights = reduce(vcat, weight_parameters.(bloxs))
         delays = reduce(vcat, delay_parameters.(bloxs))
-        events = reduce(vcat, events.(bloxs))
-        new(eqs, weights, delays, events)
+        events = reduce(vcat, event_callbacks.(bloxs))
+        learning_rules = reduce(merge, weight_learning_rules.(bloxs))
     end
 end
 

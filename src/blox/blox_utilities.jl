@@ -173,8 +173,9 @@ weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think thi
 delay_parameters(::AbstractBlox) = Num[]
 delay_parameters(blox::AbstractComponent) = blox.connector.delays
 
-events(::AbstractBlox) = Pair{Any, Vector{Equation}}[]
-events(blox::AbstractComponent) = blox.connector.events
+event_callbacks(::AbstractBlox) = Pair{Any, Vector{Equation}}[]
+event_callbacks(blox::AbstractComponent) = blox.connector.events
+
 
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
