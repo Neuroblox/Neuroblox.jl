@@ -75,9 +75,6 @@ get_exci_neurons(n) = []
 get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
 
-get_discrete_parts(n::AbstractDiscrete) = n
-get_discrete_parts(n) = []
-
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
 
