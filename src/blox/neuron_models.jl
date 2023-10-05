@@ -141,7 +141,7 @@ end
 
 function spike_affect!(integ, u, p, ctx)
     du = SciMLBase.get_du(integ)
-    if du[u.x] > 0
+    if du[u.V] > 0
         integ.u[u.spikes_cumulative] += 1
         integ.u[u.spikes_window] += 1
     end
@@ -155,7 +155,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	function HHNeuronExciBlox(;
         name, 
         namespace=nothing,
-        t_spike_window=10.0,
+        t_spike_window=0.02,
         θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
@@ -223,7 +223,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                D(spikes_window) ~ 0.0
 		]
         
-        spike_cb = [V ~ θ_spike] => (spike_affect!, [spikes_cumulative, spikes_window], [], nothing)
+        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative, spikes_window], [], nothing)
         spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
 		sys = ODESystem(
@@ -241,6 +241,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	function HHNeuronInhibBlox(;
         name, 
         namespace = nothing, 
+        t_spike_window=0.02,
         θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
@@ -260,6 +261,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			[output = true] 
 			z(t)=0.0
             spikes_cumulative(t)=0.0
+            spikes_window(t)=0.0
 		end
 
 		ps = @parameters begin 
@@ -296,13 +298,18 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
-               D(spikes_cumulative) ~ 0.0
+               D(spikes_cumulative) ~ 0.0,
+               D(spikes_window) ~ 0.0
 		]
 
-        spike_cb = [V ~ θ_spike] => (spike_affect!, [spikes_cumulative], [], nothing)
+        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative], [], nothing)
+        spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
-		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name), continuous_events = spike_cb)
-
+        sys = ODESystem(
+            eqs, t, sts, ps; 
+            name = Symbol(name), continuous_events = spike_cb, discrete_events = spike_reset_cb
+        )
+        
 		new(sys, namespace)
 	end
 end	
