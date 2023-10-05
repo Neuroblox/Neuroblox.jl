@@ -9,7 +9,6 @@ struct CorticalBlox{P} <: AbstractComponent
         name, 
         N_wta,
         namespace=nothing,
-        density_wta=0.1,
         N_exci=5,
         E_syn_exci=0.0,
         E_syn_inhib=-70,
@@ -18,7 +17,8 @@ struct CorticalBlox{P} <: AbstractComponent
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5,
-        τ_inhib=70
+        τ_inhib=70,
+        kwargs...
     )
         wtas = map(Base.OneTo(N_wta)) do i
             WinnerTakeAllBlox(;
@@ -42,7 +42,7 @@ struct CorticalBlox{P} <: AbstractComponent
 
         idxs = Base.OneTo(N_wta)
         for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(:weight => 1.0, :density => density_wta)))
+            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(kwargs)))
         end
 
         # Construct a BloxConnector object from the graph
