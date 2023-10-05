@@ -178,6 +178,6 @@ export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, nameof
-export run_experiment
+export run_experiment!
 
 end
