@@ -68,6 +68,18 @@ function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
     return hmp(val_pre, val_post, val_mod, w, feedback)
 end
 
+function maybe_set_state_pre!(lr::AbstractLearningRule, state)
+    if isnothing(lr.state_pre)
+        lr.state_pre = state
+    end
+end
+
+function maybe_set_state_post!(lr::AbstractLearningRule, state)
+    if isnothing(lr.state_post)
+        lr.state_post = state
+    end
+end
+
 mutable struct ClassificationEnvironment <: AbstractEnvironment
     const name
     const namespace
