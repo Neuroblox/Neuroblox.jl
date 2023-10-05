@@ -105,8 +105,8 @@ mutable struct ClassificationEnvironment <: AbstractEnvironment
         new(name, namespace, stim, category, N_trials, t_trial, 1)
     end
 
-    function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing, t_stimulus, t_pause)
-        t_trial = t_stimulus + t_pause
+    function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
+        t_trial = stim.t_stimulus + stim.t_pause
         N_trials = size(stim.image)[2]
 
         new(name, namespace, stim, stim.category, N_trials, t_trial, 1)
@@ -120,12 +120,14 @@ increment_trial!(env::AbstractEnvironment) = env.current_trial += 1
 abstract type AbstractActionSelection end
 
 mutable struct GreedyPolicy <: AbstractActionSelection
+    const name
+    const namespace
     competitor_states 
     const t_decision
 
-    function GreedyPolicy(; competitor_states=nothing, t_decision)
+    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing)
         sts = isnothing(competitor_states) ? Num[] : competitor_states
-        new(sts, t_decision)
+        new(name, namespace, sts, t_decision)
     end
 end
 
@@ -157,25 +159,28 @@ indexof(sym, syms) = indexin([Symbol(sym)], Symbol.(syms))
 function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
+    tspan = (0, t_trial)
 
     sys = get_sys(agent)
     u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
     p = haskey(kwargs, :p) ? kwargs[:p] : []
-    prob = ODEProblem(sys, u0, p)
+    prob = ODEProblem(sys, u0, tspan, p)
 
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
     
     defs = ModelingToolkit.get_defaults(sys)
-    weights = Dict(Num, Float64)()
+    weights = Dict{Num, Float64}()
     for w in keys(learning_rules)
         weights[w] = defs[w]
     end
 
-    tspan = (0, t_trial)
-
     for i in Base.OneTo(N_trials)
-        sol = solve(prob)
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg])
+        else
+            sol = solve(prob)
+        end
         action = action_selection(sol)
         feedback = env(action)
 
@@ -189,4 +194,6 @@ function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
         tspan = tspan .+ t_trial
         prob = remake(prob; p = weights, tspan)
     end
+
+    
 end
