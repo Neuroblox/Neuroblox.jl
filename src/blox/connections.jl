@@ -305,6 +305,14 @@ end
 sample_poisson(λ) = rand(Poisson(λ))
 @register_symbolic sample_poisson(λ)
 
+"""
+    Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
+"""
+function sample_affect!(integ, u, p, ctx)
+    v = rand(Poisson(u[1]))
+    integ.p[1] = v
+end
+
 function (bc::BloxConnector)(
     discr_out::TAN,
     discr_in::Matrisome;
@@ -320,7 +328,11 @@ function (bc::BloxConnector)(
         bc.learning_rules[w] = kwargs[:learning_rule]
     end
 
-    eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
+    t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
+    cb = t_event => (sample_affect!, [sys_out.R], [sys_out.spikes_window], nothing)
+    push!(bc.events, cb)
+
+    eq = sys_in.jcn ~ w*sys_out.spikes_window
 
     accumulate_equation!(bc, eq)
 end
