@@ -8,7 +8,7 @@ struct Matrisome <: AbstractAlgebraic
 
     function Matrisome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 jcn(t)=0.0 [input=true]
+        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
         ps = @parameters H=1
         eqs = [
             ρ ~ H*jcn
@@ -25,7 +25,7 @@ struct Striosome <: AbstractAlgebraic
 
     function Striosome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 jcn(t)=0.0 [input=true]
+        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
         ps = @parameters H=1
         eqs = [
             ρ ~ H*jcn + 0.1
@@ -42,7 +42,7 @@ struct TAN <: AbstractAlgebraic
 
     function TAN(; name, namespace=nothing, κ=0.2)
         @variables t 
-        sts = @variables R(t) jcn(t) [input=true]
+        sts = @variables R(t)=κ [irreducible=true] jcn(t)=0.0 [input=true]
         ps = @parameters κ=κ
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
