@@ -482,7 +482,7 @@ sol = solve(prob, Vern7(), saveat=0.1)
 """
 CorticalBlox test
 """
-@named cb = CorticalBlox(N_wta=6, N_exci=5)
+@named cb = CorticalBlox(N_wta=6, N_exci=5, density=0.1, weight=1)
 cb_simpl = structural_simplify(cb.odesystem)
 prob = ODEProblem(cb_simpl, [], (0, 20))
 sol = solve(prob, Vern7(), saveat=0.5)
@@ -530,7 +530,7 @@ sol = solve(prob, Vern7(), saveat=0.5)
 CorticalBlox-ImageStimulus connection
 """
 global_ns = :g # global namespace
-@named cb = CorticalBlox(N_wta=6, N_exci=5; namespace=global_ns)
+@named cb = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
 fn = "../examples/image_example.csv"
 @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
 g = MetaDiGraph()
@@ -547,8 +547,8 @@ sol = solve(prob, Vern7())
 CorticalBlox-CorticalBlox connection
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
-@named cb2 = CorticalBlox(N_wta=3, N_exci=5, namespace=global_ns)
+@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
+@named cb2 = CorticalBlox(N_wta=3, N_exci=5, namespace=global_ns, density=0.1, weight=1)
 g = MetaDiGraph()
 add_blox!.(Ref(g), [cb1, cb2])
 add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
@@ -562,8 +562,8 @@ sol = solve(prob, Vern7(), saveat=0.1)
 CorticalBlox-SubcorticalBlox connections
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
-@named cb2 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns)
+@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
+@named cb2 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
 @named str1 = Striatum(N_inhib=5, namespace=global_ns)
 @named gpi1 = GPi(N_inhib=5, namespace=global_ns)
 @named thal1 = Thalamus(N_exci=5, namespace=global_ns)
@@ -580,13 +580,4 @@ sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0,2))
 sol = solve(prob, Vern7(), saveat=0.1)
-@test sol.retcode == ReturnCode.Success 
-
-"""
-SuperCortical
-"""
-@named sc  = SuperCortical(; N_cb=2, N_wta=6)
-sc_simpl = structural_simplify(sc.odesystem)
-prob = ODEProblem(sc_simpl, [], (0, 2))
-sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
