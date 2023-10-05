@@ -164,15 +164,14 @@ end
 
 indexof(sym, syms) = indexin([Symbol(sym)], Symbol.(syms))
 
-function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
+function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
     sys = get_sys(agent)
-    u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
-    p = haskey(kwargs, :p) ? kwargs[:p] : []
-    prob = ODEProblem(sys, u0, tspan, p)
+    prob = agent.problem
+    prob = remake(prob; tspan)
 
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
@@ -183,11 +182,11 @@ function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
         weights[w] = defs[w]
     end
 
-    for i in Base.OneTo(N_trials)
+    for _ in Base.OneTo(N_trials)
         if haskey(kwargs, :alg)
-            sol = solve(prob, kwargs[:alg])
+            sol = solve(prob, kwargs[:alg]; kwargs...)
         else
-            sol = solve(prob)
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
         end
         action = action_selection(sol)
         feedback = env(action)
@@ -203,5 +202,5 @@ function run_experiment(agent::Agent, env::ClassificationEnvironment; kwargs...)
         prob = remake(prob; p = weights, tspan)
     end
 
-    
+    agent.problem = prob
 end
