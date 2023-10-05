@@ -138,21 +138,27 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     return argmax(comp_vals)
 end
  
-struct Agent 
+mutable struct Agent 
     odesystem
+    problem
     action_selection
     learning_rules
 
-    function Agent(g::MetaDiGraph; name)
+    function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
 
         sys = system_from_graph(g, bc; name)
-        ssys = structural_simplify(sys)
+        ss = structural_simplify(sys; allow_parameter=false)
+
+        u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
+        p = haskey(kwargs, :p) ? kwargs[:p] : []
+        
+        prob = ODEProblem(ss, u0, (0,1), p)
 
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        new(ssys, policy, learning_rules)
+        new(ss, prob, policy, learning_rules)
     end
 end
 
