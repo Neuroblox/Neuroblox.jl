@@ -35,8 +35,8 @@ struct Striatum <: AbstractComponent
         for i in Base.OneTo(N_inhib)
     ]
 
-    matrisome = DiscreteSpikes(; name=:matrisome, namespace=namespaced_name(namespace, name))
-    striosome = DiscreteSpikes(; name=:striosome, namespace=namespaced_name(namespace, name))
+    matrisome = Matrisome(; name=:matrisome, namespace=namespaced_name(namespace, name))
+    striosome = Striosome(; name=:striosome, namespace=namespaced_name(namespace, name))
     
     parts = vcat(n_inh, matrisome, striosome) 
 
@@ -71,7 +71,15 @@ struct Striatum <: AbstractComponent
     end
 end    
 
+function get_striosome(str::Striatum)
+    idx = findfirst(x -> x isa Striosome, str.parts)
+    return str.parts[idx]
+end
 
+function get_matrisome(str::Striatum)
+    idx = findfirst(x -> x isa Matrisome, str.parts)
+    return str.parts[idx]
+end
 
 struct GPi <: AbstractComponent
     namespace
@@ -142,7 +150,6 @@ struct GPe <: AbstractComponent
         name, 
         namespace = nothing,
         N_inhib = 15,
-        out_degree=1,
         E_syn_inhib=-70,
         G_syn_inhib=3,
         I_in=2*ones(N_inhib),
@@ -201,7 +208,6 @@ struct Thalamus <: AbstractComponent
         name, 
         namespace = nothing,
         N_exci = 25,
-        out_degree=1,
         E_syn_exci=0,
         G_syn_exci=3,
         I_in=3*ones(N_exci),
@@ -259,7 +265,6 @@ struct STN <: AbstractComponent
         name, 
         namespace = nothing,
         N_exci = 25,
-        out_degree=1,
         E_syn_exci=0,
         G_syn_exci=3,
         I_in=3*ones(N_exci),
