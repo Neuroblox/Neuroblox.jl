@@ -43,7 +43,7 @@ struct TAN <: AbstractAlgebraic
     function TAN(; name, namespace=nothing, κ=0.2)
         @variables t 
         sts = @variables R(t)=κ [irreducible=true] jcn(t)=0.0 [input=true]
-        ps = @parameters κ=κ
+        ps = @parameters κ=κ spikes_window=0.0
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
         ]
