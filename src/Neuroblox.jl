@@ -15,6 +15,7 @@ import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq
+using DifferentialEquations
 using Interpolations
 using Distributions
 using Random
@@ -156,8 +157,11 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, Striatum, GPi, GPe, Thalamus, STN
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
+export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
+export HebbianPlasticity, HebbianModulationPlasticity
+export Agent, ClassificationEnvironment, GreedyPolicy
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
@@ -174,5 +178,6 @@ export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, nameof
+export run_experiment
 
 end
