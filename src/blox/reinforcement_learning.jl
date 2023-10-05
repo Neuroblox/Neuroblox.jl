@@ -134,7 +134,7 @@ mutable struct GreedyPolicy <: AbstractActionSelection
 end
 
 function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
-    comp_vals = sol(p.t_decision; idxs=[p.competitors])
+    comp_vals = sol(p.t_decision; idxs=p.competitor_states)
     return argmax(comp_vals)
 end
  
