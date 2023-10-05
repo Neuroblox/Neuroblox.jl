@@ -19,7 +19,7 @@ mutable struct HebbianPlasticity <:AbstractLearningRule
 end
 
 function (hp::HebbianPlasticity)(val_pre, val_post, w, feedback)
-    Δw = hp.K * val_pre * val_post * (hp.W̄ - w) * feedback
+    Δw = hp.K * val_pre * val_post * (hp.W_lim - w) * feedback
 
     return Δw
 end
@@ -46,7 +46,7 @@ mutable struct HebbianModulationPlasticity <: AbstractLearningRule
         state_pre=nothing, state_post=nothing, 
         t_pre=nothing, t_post=nothing, t_mod=nothing,   
     )
-        new(K, decay, modulator, state_pre, state_post, t_pre, t_post, t_mod)
+        new(K, decay, state_pre, state_post, t_pre, t_post, t_mod, modulator)
     end
 end
 
