@@ -155,7 +155,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	function HHNeuronExciBlox(;
         name, 
         namespace=nothing,
-        t_spike_window=0.01,
+        t_spike_window=10.0,
         θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
@@ -241,6 +241,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	function HHNeuronInhibBlox(;
         name, 
         namespace = nothing, 
+        θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
         I_in=0,
@@ -258,6 +259,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
+            spikes_cumulative(t)=0.0
 		end
 
 		ps = @parameters begin 
@@ -293,10 +295,13 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
+               D(spikes_cumulative) ~ 0.0
 		]
 
-		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
+        spike_cb = [V ~ θ_spike] => (spike_affect!, [spikes_cumulative], [], nothing)
+
+		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name), continuous_events = spike_cb)
 
 		new(sys, namespace)
 	end
