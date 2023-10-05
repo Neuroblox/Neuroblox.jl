@@ -1,15 +1,15 @@
-abstract type AbstractDiscrete end
+abstract type AbstractAlgebraic end
 
-struct DiscreteSpikes <: AbstractDiscrete
+abstract type AbstractModulator <: AbstractAlgebraic end
+
+struct Matrisome <: AbstractAlgebraic
     odesystem
     namespace
 
-    function DiscreteSpikes(; name, namespace=nothing)
-
+    function Matrisome(; name, namespace=nothing)
         @variables t 
         sts = @variables ρ(t)=0.0 jcn(t)=0.0 [input=true]
         ps = @parameters H=1
-
         eqs = [
             ρ ~ H*jcn
         ]
@@ -19,16 +19,31 @@ struct DiscreteSpikes <: AbstractDiscrete
     end
 end
 
-struct DiscreteInvSpikes <: AbstractDiscrete
+struct Striosome <: AbstractAlgebraic
     odesystem
     namespace
 
-    function DiscreteInvSpikes(; name, namespace=nothing, κ=0.2)
+    function Striosome(; name, namespace=nothing)
+        @variables t 
+        sts = @variables ρ(t)=0.0 jcn(t)=0.0 [input=true]
+        ps = @parameters H=1
+        eqs = [
+            ρ ~ H*jcn + 0.1
+        ]
+        sys = ODESystem(eqs, t, sts, ps; name)
 
+        new(sys, namespace)
+    end
+end
+
+struct TAN <: AbstractAlgebraic
+    odesystem
+    namespace
+
+    function TAN(; name, namespace=nothing, κ=0.2)
         @variables t 
         sts = @variables R(t) jcn(t) [input=true]
         ps = @parameters κ=κ
-        
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
         ]
@@ -37,8 +52,6 @@ struct DiscreteInvSpikes <: AbstractDiscrete
         new(sys, namespace)
     end
 end
-
-abstract type AbstractModulator <: AbstractDiscrete end
 
 struct SNc <: AbstractModulator
     odesystem
