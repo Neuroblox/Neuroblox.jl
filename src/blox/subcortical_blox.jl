@@ -92,7 +92,6 @@ struct GPi <: AbstractComponent
         name, 
         namespace = nothing,
         N_inhib = 25,
-        out_degree=1,
         E_syn_inhib=-70,
         G_syn_inhib=8,
         I_in=4*ones(N_inhib),
