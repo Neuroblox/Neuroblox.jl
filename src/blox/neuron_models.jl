@@ -302,7 +302,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
                D(spikes_window) ~ 0.0
 		]
 
-        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative], [], nothing)
+        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative, spikes_window], [], nothing)
         spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
         sys = ODESystem(
