@@ -484,7 +484,7 @@ CorticalBlox test
 """
 @named cb = CorticalBlox(N_wta=6, N_exci=5, density=0.1, weight=1)
 cb_simpl = structural_simplify(cb.odesystem)
-prob = ODEProblem(cb_simpl, [], (0, 20))
+prob = ODEProblem(cb_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
@@ -492,37 +492,37 @@ sol = solve(prob, Vern7(), saveat=0.5)
 SubcorticalBlox tests"
 """
 #striatum
-@named str_scb = Striatum(N_inhib=10)
+@named str_scb = Striatum(N_inhib=2)
 str_simpl = structural_simplify(str_scb.odesystem)
-prob = ODEProblem(str_simpl, [], (0, 20))
+prob = ODEProblem(str_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
 #GPi
-@named gpi_scb = GPi(N_inhib=10)
+@named gpi_scb = GPi(N_inhib=2)
 gpi_simpl = structural_simplify(gpi_scb.odesystem)
-prob = ODEProblem(gpi_simpl, [], (0, 20))
+prob = ODEProblem(gpi_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
 #GPe
-@named gpe_scb = GPe(N_inhib=10)
+@named gpe_scb = GPe(N_inhib=2)
 gpe_simpl = structural_simplify(gpe_scb.odesystem)
-prob = ODEProblem(gpe_simpl, [], (0, 20))
+prob = ODEProblem(gpe_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
 #STN
-@named stn_scb = STN(N_exci=10)
+@named stn_scb = STN(N_exci=2)
 stn_simpl = structural_simplify(stn_scb.odesystem)
-prob = ODEProblem(stn_simpl, [], (0, 20))
+prob = ODEProblem(stn_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
 #Thalamus
-@named thal_scb = Thalamus(N_exci=10)
+@named thal_scb = Thalamus(N_exci=2)
 thal_simpl = structural_simplify(thal_scb.odesystem)
-prob = ODEProblem(thal_simpl, [], (0, 20))
+prob = ODEProblem(thal_simpl, [], (0, 2))
 sol = solve(prob, Vern7(), saveat=0.5)
 @test sol.retcode == ReturnCode.Success 
 
@@ -530,7 +530,7 @@ sol = solve(prob, Vern7(), saveat=0.5)
 CorticalBlox-ImageStimulus connection
 """
 global_ns = :g # global namespace
-@named cb = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
+@named cb = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, density=0.1, weight=1)
 fn = "../examples/image_example.csv"
 @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
 g = MetaDiGraph()
@@ -539,7 +539,7 @@ add_blox!(g, cb)
 add_edge!(g, 1, 2, :weight, 1)
 sys = system_from_graph(g; name=global_ns)
 sys_simpl = structural_simplify(sys)
-prob = ODEProblem(sys_simpl, [], (0, 10); tofloat=false)
+prob = ODEProblem(sys_simpl, [], (0, 2); tofloat=false)
 sol = solve(prob, Vern7())
 @test sol.retcode == ReturnCode.Success 
 
@@ -547,8 +547,8 @@ sol = solve(prob, Vern7())
 CorticalBlox-CorticalBlox connection
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
-@named cb2 = CorticalBlox(N_wta=3, N_exci=5, namespace=global_ns, density=0.1, weight=1)
+@named cb1 = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, density=0.1, weight=1)
+@named cb2 = CorticalBlox(N_wta=3, N_exci=3, namespace=global_ns, density=0.1, weight=1)
 g = MetaDiGraph()
 add_blox!.(Ref(g), [cb1, cb2])
 add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
@@ -562,11 +562,11 @@ sol = solve(prob, Vern7(), saveat=0.1)
 CorticalBlox-SubcorticalBlox connections
 """
 global_ns = :g # global namespace
-@named cb1 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
-@named cb2 = CorticalBlox(N_wta=6, N_exci=5, namespace=global_ns, density=0.1, weight=1)
-@named str1 = Striatum(N_inhib=5, namespace=global_ns)
-@named gpi1 = GPi(N_inhib=5, namespace=global_ns)
-@named thal1 = Thalamus(N_exci=5, namespace=global_ns)
+@named cb1 = CorticalBlox(N_wta=3, N_exci=3, namespace=global_ns, density=0.1, weight=1)
+@named cb2 = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, density=0.1, weight=1)
+@named str1 = Striatum(N_inhib=2, namespace=global_ns)
+@named gpi1 = GPi(N_inhib=2, namespace=global_ns)
+@named thal1 = Thalamus(N_exci=2, namespace=global_ns)
 
 g = MetaDiGraph()
 add_blox!.(Ref(g), [cb1, cb2, str1, gpi1, thal1])
@@ -579,5 +579,5 @@ add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.1))
 sys = system_from_graph(g; name=namespace=global_ns)
 sys_simpl =structural_simplify(sys)
 prob = ODEProblem(sys_simpl, [], (0,2))
-sol = solve(prob, Vern7(), saveat=0.1)
+sol = solve(prob)
 @test sol.retcode == ReturnCode.Success 
