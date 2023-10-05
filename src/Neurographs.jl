@@ -161,17 +161,18 @@ function ODEfromGraph(g::MetaDiGraph ;name)
 end
 
 function get_blox(g::MetaDiGraph)
-    map(vertices(g)) do v
-        get_prop(g, v, :blox)
+    bs = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if !(b isa AbstractActionSelection)
+            push!(bs, b)
+        end
     end
+
+    return bs
 end
 
-function get_sys(g::MetaDiGraph)
-    map(vertices(g)) do v
-        b = get_prop(g, v, :blox)
-        get_sys(b)
-    end
-end
+get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
 
 # Helper function to get delays from a graph
 function graph_delays(g::MetaDiGraph)
