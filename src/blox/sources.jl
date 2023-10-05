@@ -89,10 +89,12 @@ mutable struct ImageStimulus <: StimulusBlox
     const odesystem
     const image
     const category
+    const t_stimulus
+    const t_pause
     current_pixel::Int
 
-    function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
-        S = (transpose ∘ Matrix)(IMG[!, Not(:category)])
+    function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
+        S = (transpose ∘ Matrix)(data[!, Not(:category)])
         (N_pixels, N_stimuli) = size(S)
 
         t_trial = t_stimulus + t_pause
@@ -108,17 +110,22 @@ mutable struct ImageStimulus <: StimulusBlox
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
             sts[i] = only(@variables $(s)(t) = 0.0) 
-            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
+            # HACK : 
+            # t_trial is incremented by a small amount 0.01*t-stimulus
+            # so that indexing using floor in get_sampled_data will work as intended.
+            # TO DO : find a better way to change stimuli for each trial.  
+            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial+0.01*t_stimulus, t_stims, S[i,:])
         end
 
         system = ODESystem(eqs, t, sts, []; name)
+        category = data[!, :category]
 
-        new(namespace, system, S, IMG[!, :category], 1)
+        new(namespace, system, S, category, t_stimulus, t_pause, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
         @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
-        IMG = read(file, DataFrame)
-        ImageStimulus(IMG; name, namespace, t_stimulus, t_pause)
+        data = read(file, DataFrame)
+        ImageStimulus(data; name, namespace, t_stimulus, t_pause)
     end
 end

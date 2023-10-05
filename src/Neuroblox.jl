@@ -15,8 +15,8 @@ import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq
+using DifferentialEquations
 using Interpolations
-using DataInterpolations
 using Distributions
 using Random
 using OrderedCollections
@@ -35,6 +35,10 @@ using IfElse
 using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
+
+using Peaks: argmaxima, peakproms!, peakheights!
+
+using LogExpFunctions: logistic
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -91,9 +95,11 @@ include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
 include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
+include("blox/discrete.jl")
+include("blox/reinforcement_learning.jl")
 include("gui/GUI.jl")
-include("blox/blox_utilities.jl")
 include("blox/connections.jl")
+include("blox/blox_utilities.jl")
 include("Neurographs.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
@@ -151,8 +157,11 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, Striatum, GPi, GPe, Thalamus, STN
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
+export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
+export HebbianPlasticity, HebbianModulationPlasticity
+export Agent, ClassificationEnvironment, GreedyPolicy
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
@@ -168,5 +177,7 @@ export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
-export get_namespaced_sys, namespace_expr, nameof
+export get_namespaced_sys, nameof
+export run_experiment!
+
 end

@@ -161,22 +161,28 @@ function ODEfromGraph(g::MetaDiGraph ;name)
 end
 
 function get_blox(g::MetaDiGraph)
-    map(vertices(g)) do v
-        get_prop(g, v, :blox)
+    bs = []
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        if !(b isa AbstractActionSelection)
+            push!(bs, b)
+        end
     end
+
+    return bs
 end
 
-function get_sys(g::MetaDiGraph)
-    map(vertices(g)) do v
-        b = get_prop(g, v, :blox)
-        get_sys(b)
-    end
-end
+get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
 
 # Helper function to get delays from a graph
 function graph_delays(g::MetaDiGraph)
     bc = connector_from_graph(g)
     return bc.delays
+end
+
+function system_from_graph(g::MetaDiGraph; name)
+    bc = connector_from_graph(g)
+    return system_from_graph(g, bc; name)
 end
 
 # Additional dispatch if extra parameters are passed for edge definitions
@@ -185,24 +191,17 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name)
     return system_from_graph(g, bc, p; name)
 end
 
-function system_from_graph(g::MetaDiGraph; name)
-    bc = connector_from_graph(g)
-    return system_from_graph(g, bc; name)
-end
-
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], params(bc); name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], params(bc); name, discrete_events = bc.events), blox_syss)
 end
 
-# Additional dispatch if extra parameters are passed for edge definitions
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name)
     @variables t
     blox_syss = get_sys(g)
-    return compose(ODESystem(bc.eqs, t, [], [params(bc)..., p...]; name), blox_syss)
+    return compose(ODESystem(bc.eqs, t, [], vcat(params(bc), p); name, discrete_events = bc.events), blox_syss)
 end
-
 
 function system_from_parts(parts::AbstractVector; name)
     @variables t
@@ -216,14 +215,55 @@ function connector_from_graph(g::MetaDiGraph)
         b = get_prop(g, v, :blox)
         for vn in inneighbors(g, v)
             bn = get_prop(g, vn, :blox)
-            weight = get_prop(g, vn, v, :weight)
-            delay = has_prop(g, vn, v, :delay) ? get_prop(g, vn, v, :delay) : 0
-            density = has_prop(g, vn, v, :density) ? get_prop(g, vn, v, :density) : 0
-            link(bn, b; weight, delay, density)
+            kwargs = props(g, vn, v)
+            link(bn, b; kwargs...)
         end
     end
 
     return link
+end
+
+function action_selection_from_graph(g::MetaDiGraph)
+    idxs = findall(vertices(g)) do v
+        b = get_prop(g, v, :blox)
+        b isa AbstractActionSelection
+    end
+
+    if isempty(idxs)
+        error("No action selection block was detected in the current model.")
+    else
+        if length(idxs) > 1
+            error("Multiple action selection blocks are detected. Only one must be used in an experiment.")
+        else
+            idx = only(idxs)
+            b = get_prop(g, idx, :blox)
+            idx_neighbors = inneighbors(g, idx)
+            @assert length(idx_neighbors) == 2 "Two blocks need to connect to the action selection $(nameof(b)) block"
+
+            bns = get_prop.(Ref(g), idx_neighbors, :blox)
+            connect_action_selection!(b, bns...)
+
+            return b
+        end
+    end
+end
+
+function learning_rules_from_graph(g::MetaDiGraph)
+    d = Dict(Num, AbstractLearningRule)()
+
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        for vn in inneighbors(g, v)
+            if has_prop(g, vn, v, :learning_rule)
+                bn = get_prop(g, v, :blox)
+                weight = get_prop(g, vn, v, :weight)
+                w = generate_weight_param(bn, b; weight)
+                d[w] = get_prop(g, vn, v, :learning_rule)
+            end
+        end
+    end
+
+    return d
 end
 
 function spikeconnections(;name, sys=sys, psp_amplitude=psp_amplitude, τ=τ, spiketimes=spiketimes)

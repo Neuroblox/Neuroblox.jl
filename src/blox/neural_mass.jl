@@ -241,11 +241,11 @@ struct LinearNeuralMass <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function LinearNeuralMass(;name)
+    function LinearNeuralMass(;name, namespace=nothing)
         sts = @variables x(t) [output=true] jcn(t) [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, name=name)
-        new(sts[1], sts[2], sys, nothing)
+        new(sts[1], sts[2], sys, namespace)
     end
 end
 
@@ -255,14 +255,14 @@ struct HarmonicOscillator <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function HarmonicOscillator(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
+    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
         p = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         sys = System(eqs, name=name)
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
@@ -273,7 +273,8 @@ struct JansenRit <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function JansenRit(;name, 
+    function JansenRit(;name,
+                        namespace=nothing,
                         τ=nothing, 
                         H=nothing, 
                         λ=nothing, 
@@ -293,7 +294,7 @@ struct JansenRit <: NeuralMassBlox
         sys = System(eqs, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
@@ -304,17 +305,19 @@ struct WilsonCowan <: NeuralMassBlox
     odesystem
     namespace
     function WilsonCowan(;name,
-                          τ_E=1.0,
-                          τ_I=1.0,
-                          a_E=1.2,
-                          a_I=2.0,
-                          c_EE=5.0,
-                          c_IE=6.0,
-                          c_EI=10.0,
-                          c_II=1.0,
-                          θ_E=2.0,
-                          θ_I=3.5,
-                          η=1.0)
+                        namespace=nothing,
+                        τ_E=1.0,
+                        τ_I=1.0,
+                        a_E=1.2,
+                        a_I=2.0,
+                        c_EE=5.0,
+                        c_IE=6.0,
+                        c_EI=10.0,
+                        c_II=1.0,
+                        θ_E=2.0,
+                        θ_I=3.5,
+                        η=1.0
+    )
         p = progress_scope(@parameters τ_E=τ_E τ_I=τ_I a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η)
 
         τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
@@ -322,7 +325,7 @@ struct WilsonCowan <: NeuralMassBlox
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         sys = System(eqs, name=name)
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
@@ -332,37 +335,40 @@ struct LarterBreakspear <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function LarterBreakspear(;name,
-                          T_Ca=-0.01,
-                          δ_Ca=0.15,
-                          g_Ca=1.0,
-                          V_Ca=1.0,
-                          T_K=0.0,
-                          δ_K=0.3,
-                          g_K=2.0,
-                          V_K=-0.7,
-                          T_Na=0.3,
-                          δ_Na=0.15,
-                          g_Na=6.7,
-                          V_Na=0.53,
-                          V_L=-0.5,
-                          g_L=0.5,
-                          V_T=0.0,
-                          Z_T=0.0,
-                          δ_VZ=0.61,
-                          Q_Vmax=1.0,
-                          Q_Zmax=1.0,
-                          IS = 0.3,
-                          a_ee=0.36,
-                          a_ei=2.0,
-                          a_ie=2.0,
-                          a_ne=1.0,
-                          a_ni=0.4,
-                          b=0.1,
-                          τ_K=1.0,
-                          ϕ=0.7,
-                          r_NMDA=0.25,
-                          C=0.35)
+    function LarterBreakspear(;
+                        name,
+                        namespace=nothing,
+                        T_Ca=-0.01,
+                        δ_Ca=0.15,
+                        g_Ca=1.0,
+                        V_Ca=1.0,
+                        T_K=0.0,
+                        δ_K=0.3,
+                        g_K=2.0,
+                        V_K=-0.7,
+                        T_Na=0.3,
+                        δ_Na=0.15,
+                        g_Na=6.7,
+                        V_Na=0.53,
+                        V_L=-0.5,
+                        g_L=0.5,
+                        V_T=0.0,
+                        Z_T=0.0,
+                        δ_VZ=0.61,
+                        Q_Vmax=1.0,
+                        Q_Zmax=1.0,
+                        IS = 0.3,
+                        a_ee=0.36,
+                        a_ei=2.0,
+                        a_ie=2.0,
+                        a_ne=1.0,
+                        a_ni=0.4,
+                        b=0.1,
+                        τ_K=1.0,
+                        ϕ=0.7,
+                        r_NMDA=0.25,
+                        C=0.35
+    )
         p = progress_scope(@parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA)
         C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
         
@@ -380,6 +386,6 @@ struct LarterBreakspear <: NeuralMassBlox
                 m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                 m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         sys = System(eqs; name=name)
-        new(p, sts[5], sts[4], sys, nothing)
+        new(p, sts[5], sts[4], sys, namespace)
     end
 end
