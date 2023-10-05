@@ -35,7 +35,7 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     return w
 end
 
-function hypergeometric_connections!(bc, neurons_in, neurons_out, name_in, name_out; kwargs...)
+function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
     density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
