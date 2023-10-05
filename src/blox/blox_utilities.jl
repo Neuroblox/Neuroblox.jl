@@ -170,7 +170,7 @@ weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think thi
 delay_parameters(blox) = Num[]
 delay_parameters(blox::AbstractComponent) = blox.connector.delays
 
-event_callbacks(blox) = Pair{Any, Vector{Equation}}[]
+event_callbacks(blox) = []
 event_callbacks(blox::AbstractComponent) = blox.connector.events
 
 weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()

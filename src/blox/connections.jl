@@ -2,7 +2,7 @@ mutable struct BloxConnector
     eqs::Vector{Equation}
     weights::Vector{Num}
     delays::Vector{Num}
-    events::Vector{Pair{Any, Vector{Equation}}}
+    events
     learning_rules
 
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
