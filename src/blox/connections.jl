@@ -72,7 +72,10 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)    
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        lr = kwargs[:learning_rule]
+        maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
+        maybe_set_state_post!(lr,sys_in.spikes_cumulative)
+        bc.learning_rules[w] = lr
     end
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
@@ -97,7 +100,10 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        lr = kwargs[:learning_rule]
+        # maybe_set_state_pre!(lr, 
+        # maybe_set_state_post!(lr, 
+        bc.learning_rules[w] = lr
     end
 
     if typeof(bloxout.output) == Num
@@ -163,25 +169,6 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
-    cb::CorticalBlox,
-    str::Striatum;
-    kwargs...
-)
-    neurons_in = get_inh_neurons(str)
-    neurons_out = get_exci_neurons(cb)
-
-    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb), nameof(str); kwargs...)
-
-    discr_parts = get_discrete_parts(str)
-
-    for neuron_presyn in neurons_out
-        for discr in discr_parts
-            bc(neuron_presyn, discr; kwargs...)
-        end
-    end
-end
-
-function (bc::BloxConnector)(
     cb_out::Union{Striatum, GPi, GPe},
     cb_in::Union{CorticalBlox,STN,Thalamus};
     kwargs...
@@ -194,13 +181,161 @@ end
 
 function (bc::BloxConnector)(
     cb_out::Union{Striatum, GPi, GPe},
-    cb_in::Union{Striatum, GPi, GPe};
+    cb_in::Union{GPi, GPe};
     kwargs...
 )
     neurons_in = get_inh_neurons(cb_in)
     neurons_out = get_inh_neurons(cb_out)
 
     hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb::CorticalBlox,
+    str::Striatum;
+    kwargs...
+)
+    neurons_in = get_inh_neurons(str)
+    neurons_out = get_exci_neurons(cb)
+
+    if haskey(kwargs, :learning_rule)
+        lr = kwargs[:learning_rule]
+        sys_matr = get_namespaced_sys(get_matrisome(str))
+        maybe_set_state_post!(lr, sys_matr.H)
+        kwargs = (kwargs..., learning_rule=lr)
+    end
+
+    hypergeometric_connections!(bc, neurons_out, neurons_in, nameof(cb), nameof(str); kwargs...)
+
+    algebraic_parts = [get_matrisome(str), get_striosome(str)]
+
+    for neuron_presyn in neurons_out
+        for part in algebraic_parts
+            bc(neuron_presyn, part; kwargs...)
+        end
+    end
+end
+
+function (bc::BloxConnector)(
+    neuron::HHNeuronExciBlox,
+    discr::Union{Matrisome, Striosome};
+    kwargs...
+)
+    sys_out = get_namespaced_sys(neuron)
+    sys_in = get_namespaced_sys(discr)
+
+    w = generate_weight_param(neuron, discr; kwargs...)
+    push!(bc.weights, w)
+
+    if haskey(kwargs, :learning_rule)
+        lr = kwargs[:learning_rule]
+        maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
+        maybe_set_state_post!(lr, sys_in.H)
+        bc.learning_rules[w] = lr
+    end
+
+    eq = sys_in.jcn ~ w*sys_out.spikes_window
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    str_out::Striatum,
+    str_in::Striatum;
+    kwargs... 
+)
+    sys_matr_out = get_namespaced_sys(get_matrisome(str_out))
+    sys_matr_in = get_namespaced_sys(get_matrisome(str_in))
+    sys_strios_in = get_namespaced_sys(get_striosome(str_in))
+    neurons_in = get_inh_neurons(str_in)
+
+    t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
+    cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
+    cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
+    push!(bc.events, cb_matr)
+    push!(bc.events, cb_strios)
+
+    for neuron in neurons_in
+        sys_neuron = get_namespaced_sys(neuron)
+        # Large negative current added to shut down the Striatum spiking neurons.
+        # Value is hardcoded for now, as it's more of a hack, not user option. 
+        cb_neuron = t_event => [sys_neuron.I_in ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -1000, 0)]
+        push!(bc.events, cb_neuron)
+    end
+end
+
+function (bc::BloxConnector)(
+    str::Striatum,
+    discr::Union{TAN, SNc};
+    kwargs... 
+)
+    striosome = get_striosome(str)
+    bc(striosome, discr; kwargs...)
+end
+
+function (bc::BloxConnector)(
+    discr_out::Striosome,
+    discr_in::Union{TAN, SNc};
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    w = generate_weight_param(discr_out, discr_in; kwargs...)
+    push!(bc.weights, w)
+
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
+    eq = sys_in.jcn ~ w*sys_out.ρ
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    tan::TAN,
+    str::Striatum;
+    kwargs...
+) 
+    matrisome = get_matrisome(str)
+    bc(tan, matrisome; kwargs...)
+end
+
+sample_poisson(λ) = rand(Poisson(λ))
+@register_symbolic sample_poisson(λ)
+
+function (bc::BloxConnector)(
+    discr_out::TAN,
+    discr_in::Matrisome;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    w = generate_weight_param(discr_out, discr_in; kwargs...)
+    push!(bc.weights, w)
+
+    if haskey(kwargs, :learning_rule)
+        bc.learning_rules[w] = kwargs[:learning_rule]
+    end
+
+    eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    discr_out::Matrisome,
+    discr_in::Matrisome;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(discr_out)
+    sys_in = get_namespaced_sys(discr_in)
+
+    t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
+    cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
+    push!(bc.events, cb)
 end
 
 function (bc::BloxConnector)(
@@ -215,10 +350,8 @@ function (bc::BloxConnector)(
 
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
-
-    if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
-    end
+    # No check for kwargs[:learning_rule] here. 
+    # The connection from stimulus is conceptual, the weight can not be updated.
 
     eq = sys_in.I_in ~ w * dots[stim.current_pixel]
 
@@ -238,102 +371,15 @@ function (bc::BloxConnector)(
     end
 end
 
-function (bc::BloxConnector)(
-    neuron::HHNeuronExciBlox,
-    discr::AbstractDiscrete;
-    kwargs...
-)
-    sys_out = get_namespaced_sys(neuron)
-    sys_in = get_namespaced_sys(discr)
+(bc::BloxConnector)(blox, as::AbstractActionSelection; kwargs...) = nothing
 
-    w = generate_weight_param(neuron, discr; kwargs...)
-    push!(bc.weights, w)
-
-    if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
-    end
-
-    eq = sys_in.jcn ~ w*sys_out.spikes_window
-
-    accumulate_equation!(bc, eq)
+function connect_action_selection!(as::AbstractActionSelection, str1::Striatum, str2::Striatum)
+    connect_action_selection!(as, get_matrisome(str1), get_matrisome(str2))
 end
 
-function (bc::BloxConnector)(
-    cb::CorticalBlox,
-    discr::AbstractDiscrete;
-    kwargs...
-)
-    neurons = get_exci_neurons(cb)
+function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome, matr2::Matrisome)
+    sys1 = get_namespaced_sys(matr1)
+    sys2 = get_namespaced_sys(matr2)
 
-    for neuron in neurons
-        bc(neuron, discr; kwargs...)
-    end
-end
-
-function (bc::BloxConnector)(
-    discr_out::DiscreteSpikes,
-    discr_in::DiscreteInvSpikes;
-    kwargs...
-)
-    sys_out = get_namespaced_sys(discr_out)
-    sys_in = get_namespaced_sys(discr_in)
-
-    w = generate_weight_param(discr_out, discr_in; kwargs...)
-    push!(bc.weights, w)
-
-    if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
-    end
-
-    eq = sys_in.jcn ~ w*sys_out.ρ
-
-    accumulate_equation!(bc, eq)
-end
-
-sample_poisson(λ) = rand(Poisson(λ))
-@register_symbolic sample_poisson(λ)
-
-function (bc::BloxConnector)(
-    discr_out::DiscreteInvSpikes,
-    discr_in::DiscreteSpikes;
-    kwargs...
-)
-    sys_out = get_namespaced_sys(discr_out)
-    sys_in = get_namespaced_sys(discr_in)
-
-    w = generate_weight_param(discr_out, discr_in; kwargs...)
-    push!(bc.weights, w)
-
-    if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
-    end
-
-    eq = sys_in.jcn ~ w*sample_poisson(sys_out.R)
-
-    accumulate_equation!(bc, eq)
-end
-
-function (bc::BloxConnector)(
-    discr_out::DiscreteSpikes,
-    discr_in::DiscreteSpikes;
-    kwargs...
-)
-    sys_out = get_namespaced_sys(discr_out)
-    sys_in = get_namespaced_sys(discr_in)
-
-    t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
-    push!(bc.events, cb)
-end
-
-function (bc::BloxConnector)(
-    policy::AbstractActionSelection,
-    blox_out1,
-    blox_out2;
-    kwargs...
-)
-    sys1 = get_namespaced_sys(blox_out1)
-    sys2 = get_namespaced_sys(blox_out2)
-
-    policy.competitor_states = [sys1.jcn, sys2.jcn]
+    as.competitor_states = [sys1.ρ, sys2.ρ]
 end
