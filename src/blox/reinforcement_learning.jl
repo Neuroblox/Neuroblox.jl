@@ -50,11 +50,13 @@ mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     end
 end
 
+dlogistic(x) = logistic(x) * (1 - logistic(x)) 
+
 function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w, feedback)
     DA = hmp.modulator(val_modulator, feedback)
     DA_baseline = hmp.modulator.κ_DA * hmp.modulator.N_time_blocks
 
-    Δw = hmp.K * val_post * val_pre * DA * (DA - DA_baseline) * derivative_logistic(DA) - hmp.decay * w
+    Δw = hmp.K * val_post * val_pre * DA * (DA - DA_baseline) * dlogistic(DA) - hmp.decay * w
 
     return Δw
 end
