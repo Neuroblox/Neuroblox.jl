@@ -228,15 +228,22 @@ function action_selection_from_graph(g::MetaDiGraph)
         b isa AbstractActionSelection
     end
 
-    try
-        idx = only(idxs)
-    catch
-        "Multiple action selection blocks are detected. Only one must be used in an experiment."
+    if isempty(idxs)
+        error("No action selection block was detected in the current model.")
     else
-        b = get_prop(g, idx, :blox)
-        @assert length(inneighbors(g, idx)) == 2 "Two blocks need to connect to the action selection $(nameof(b)) block"
+        if length(idxs) > 1
+            error("Multiple action selection blocks are detected. Only one must be used in an experiment.")
+        else
+            idx = only(idxs)
+            b = get_prop(g, idx, :blox)
+            idx_neighbors = inneighbors(g, idx)
+            @assert length(idx_neighbors) == 2 "Two blocks need to connect to the action selection $(nameof(b)) block"
 
-        return b
+            bns = get_prop.(Ref(g), idx_neighbors, :blox)
+            connect_action_selection!(b, bns...)
+
+            return b
+        end
     end
 end
 
