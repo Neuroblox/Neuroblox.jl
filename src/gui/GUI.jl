@@ -150,6 +150,10 @@ function arguments(::Type{Neuroblox.HarmonicOscillator})
   )
 end
 
+function plotdetail(::Type{Neuroblox.HarmonicOscillator})
+  OrderedDict(:detail => ["x"], :nodetail => ["x","y"])
+end
+
 # function arguments(::Type{Neuroblox.JansenRitCBlox})
 #   OrderedDict(
 #     :τ => NCAD(0.001, NUMBER, 0.001, 2.0,[]),
@@ -340,12 +344,12 @@ end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
-    :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
-    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
-    :freq => NCAD(20, NUMBER, 0.01, 100,[]),
+    :E_syn => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
+    :G_syn => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
+    :I_in => NCAD(0.0, NUMBER, 0.0, 20.0,[]),
+    :freq => NCAD(0, NUMBER, 0.0, 100,[]),
     :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
-	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+	  :τ => NCAD(5, NUMBER, 0.01, 20.0,[])
   )
 end
 
