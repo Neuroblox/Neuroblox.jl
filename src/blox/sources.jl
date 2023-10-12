@@ -76,10 +76,10 @@ function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data:
     idx = floor(Int, t / t_trial) + 1
     
     return ifelse(
-            (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
-            pixel_data[idx], 
-            0.0
-        )
+        (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
+        pixel_data[idx], 
+        0.0
+    )
 end
 
 @register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
@@ -91,18 +91,30 @@ mutable struct ImageStimulus <: StimulusBlox
     const category
     const t_stimulus
     const t_pause
+    const N_pixels
+    const N_stimuli
     current_pixel::Int
 
     function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
+        N_pixels = DataFrames.ncol(data[!, Not(:category)])
+        N_stimuli = DataFrames.nrow(data[!, Not(:category)])
+
+        # Append a row of zeros at the end of data so that indexing can work
+        # on the final simulation time step when the index will be `nrow(data)+1`.
+        d0 = DataFrame(Dict(n => 0 for n in names(data)))
+        append!(data, d0)
+
         S = (transpose ∘ Matrix)(data[!, Not(:category)])
-        (N_pixels, N_stimuli) = size(S)
 
         t_trial = t_stimulus + t_pause
         t_stims = [
             ((i-1)*t_trial, (i-1)*t_trial + t_stimulus)
             for i in Base.OneTo(N_stimuli)
         ]
-        
+        # Append a dummy stimulation interval at the end
+        # so that index is not out of bounds , similar to data above.
+        push!(t_stims, (0,0))
+
         state_name = :u
         @parameters t
         sts = Vector{Num}(undef, N_pixels)
@@ -110,17 +122,13 @@ mutable struct ImageStimulus <: StimulusBlox
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
             sts[i] = only(@variables $(s)(t) = 0.0) 
-            # HACK : 
-            # t_trial is incremented by a small amount 0.01*t-stimulus
-            # so that indexing using floor in get_sampled_data will work as intended.
-            # TO DO : find a better way to change stimuli for each trial.  
-            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial+0.01*t_stimulus, t_stims, S[i,:])
+            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
         end
 
         system = ODESystem(eqs, t, sts, []; name)
         category = data[!, :category]
 
-        new(namespace, system, S, category, t_stimulus, t_pause, 1)
+        new(namespace, system, S, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
