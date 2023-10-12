@@ -101,7 +101,7 @@ mutable struct ClassificationEnvironment <: AbstractEnvironment
         )
 
         category = data[!, :category]
-        N_trials = DataFrames.nrow(data)
+        N_trials = stim.N_stimuli
         t_trial = t_stimulus + t_pause
 
         new(name, namespace, stim, category, N_trials, t_trial, 1)
@@ -109,7 +109,7 @@ mutable struct ClassificationEnvironment <: AbstractEnvironment
 
     function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
         t_trial = stim.t_stimulus + stim.t_pause
-        N_trials = size(stim.image)[2]
+        N_trials = stim.N_stimuli
 
         new(name, namespace, stim, stim.category, N_trials, t_trial, 1)
     end
