@@ -344,6 +344,8 @@ end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
+    :t_spike_window => NCAD(0.02, NUMBER, 0.01, 1.0,[]),
+    :θ_spike => NCAD(0.0, NUMBER, 0.0, 2*π,[]),
     :E_syn => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
     :G_syn => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
     :I_in => NCAD(0.0, NUMBER, 0.0, 20.0,[]),
