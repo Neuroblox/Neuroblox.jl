@@ -122,10 +122,6 @@ mutable struct ImageStimulus <: StimulusBlox
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
             sts[i] = only(@variables $(s)(t) = 0.0) 
-            # HACK : 
-            # t_trial is incremented by a small amount 0.01*t-stimulus
-            # so that indexing using floor in get_sampled_data will work as intended.
-            # TO DO : find a better way to change stimuli for each trial.  
             eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
         end
 
