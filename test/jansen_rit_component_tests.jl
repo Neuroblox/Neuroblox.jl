@@ -56,7 +56,7 @@ blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
 
 # test graphs
 g = MetaDiGraph()
-add_blox!(Ref(g), blox)
+add_blox!.(Ref(g), blox)
 
 # Store parameters to be passed later on
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5

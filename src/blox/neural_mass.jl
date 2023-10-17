@@ -236,6 +236,10 @@ end
 New versions of blox begin here!
 """
 
+
+"""
+Units note: no units because no parameters :)
+"""
 struct LinearNeuralMass <: NeuralMassBlox
     output
     jcn
@@ -249,6 +253,9 @@ struct LinearNeuralMass <: NeuralMassBlox
     end
 end
 
+"""
+Units note: Frequency should be tuned by user. Unclear what desired base frequency is from the current units
+"""
 struct HarmonicOscillator <: NeuralMassBlox
     params
     output
@@ -266,6 +273,9 @@ struct HarmonicOscillator <: NeuralMassBlox
     end
 end
 
+"""
+Units note: Currently in seconds - NEED TO FIX
+"""
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
@@ -298,6 +308,10 @@ struct JansenRit <: NeuralMassBlox
     end
 end
 
+"""
+Units note: Unclear where the defaults come from (close but not quite Wilson-Cowan referenced in TVB and elsewhere).
+They're on the same order of magnitude as the original parameters which are in ms, so good to go for now.
+"""
 struct WilsonCowan <: NeuralMassBlox
     params
     output
@@ -329,6 +343,9 @@ struct WilsonCowan <: NeuralMassBlox
     end
 end
 
+"""
+Units note: From Yamashita et al. paper, designed to be in ms. Good to go for now.
+"""
 struct LarterBreakspear <: NeuralMassBlox
     params
     output
