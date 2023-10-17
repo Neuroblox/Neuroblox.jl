@@ -209,4 +209,6 @@ export addnontunableparams, get_hemodynamic_observers
 export get_weights
 export boldsignal_endo_balloon
 
+export progress_scope # REMOVE AFTER TESTING
+
 end
