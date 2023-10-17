@@ -274,7 +274,8 @@ struct HarmonicOscillator <: NeuralMassBlox
 end
 
 """
-Units note: Currently in seconds - NEED TO FIX
+Units note: all units from the original Parkinson's paper EXCEPT τ. 
+The original delays were in seconds, so multiplied to be consistent with other blocks in ms.
 """
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
@@ -291,7 +292,7 @@ struct JansenRit <: NeuralMassBlox
                         r=nothing, 
                         cortical=true)
 
-        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
         H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
