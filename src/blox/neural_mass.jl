@@ -254,7 +254,8 @@ struct LinearNeuralMass <: NeuralMassBlox
 end
 
 """
-Units note: Frequency should be tuned by user. Unclear what desired base frequency is from the current units
+Units note: Frequency should be tuned by user.
+Updated with additional factors to make ms.
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
@@ -262,7 +263,7 @@ struct HarmonicOscillator <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
+    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         p = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
