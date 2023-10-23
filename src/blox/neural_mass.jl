@@ -236,6 +236,10 @@ end
 New versions of blox begin here!
 """
 
+
+"""
+Units note: no units because no parameters :)
+"""
 struct LinearNeuralMass <: NeuralMassBlox
     output
     jcn
@@ -249,13 +253,17 @@ struct LinearNeuralMass <: NeuralMassBlox
     end
 end
 
+"""
+Units note: Frequency should be tuned by user.
+Updated with additional factors to make ms.
+"""
 struct HarmonicOscillator <: NeuralMassBlox
     params
     output
     jcn
     odesystem
     namespace
-    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
+    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         p = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
@@ -266,6 +274,10 @@ struct HarmonicOscillator <: NeuralMassBlox
     end
 end
 
+"""
+Units note: all units from the original Parkinson's paper EXCEPT τ. 
+The original delays were in seconds, so multiplied to be consistent with other blocks in ms.
+"""
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
@@ -281,7 +293,7 @@ struct JansenRit <: NeuralMassBlox
                         r=nothing, 
                         cortical=true)
 
-        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
         H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
@@ -298,6 +310,10 @@ struct JansenRit <: NeuralMassBlox
     end
 end
 
+"""
+Units note: Unclear where the defaults come from (close but not quite Wilson-Cowan referenced in TVB and elsewhere).
+They're on the same order of magnitude as the original parameters which are in ms, so good to go for now.
+"""
 struct WilsonCowan <: NeuralMassBlox
     params
     output
@@ -329,6 +345,9 @@ struct WilsonCowan <: NeuralMassBlox
     end
 end
 
+"""
+Units note: From Yamashita et al. paper, designed to be in ms. Good to go for now.
+"""
 struct LarterBreakspear <: NeuralMassBlox
     params
     output
