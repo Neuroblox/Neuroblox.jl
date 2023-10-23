@@ -60,6 +60,32 @@ struct MPRMassEI
 end
 
 """
+Singe mass next-gen NMM from CC 2022
+"""
+
+struct CCSingleMass
+    params
+    output
+    jcn
+    odesystem
+    namespace
+
+    function CCSingleMass(; name, Δ_η=0.02, α=0.6215, g_syn=1.2308, η̄=0.12, eᵣ=1, a=0.0077, b=-0.0062, w_jump=0.0189, s_jump=1.2308, τₛ=2.6)
+        p = progress_scope(@parameters Δ_η=Δ_η α=α g_syn=g_syn η̄=η̄ eᵣ=eᵣ a=a b=b w_jump=w_jump s_jump=s_jump)
+        Δ_η, α, g_syn, η̄, eᵣ, a, b, w_jump, s_jump = p
+        sts = @variables r(t)=0.0 v(t)=0.0 w(t)=0.0 s(t)=0.0 jcn(t)=0.0
+        eqs = [D(r) ~ (Δ_η/π) + (2*r*v) - ((α+(g_syn*s))*r),
+               D(v) ~ v^2 - (α*v) - w + η̄ + (g_syn*s*(eᵣ-v)) - (π*r)^2 + jcn,
+               D(w) ~ a*(b*v-w)+(w_jump*r),
+               D(s) ~ (s_jump*r)-(s/τₛ),
+               D(jcn) ~ 0]
+        sys = System(eqs; name=name)
+        new(p, sts[2], sts[5], sys, sts)
+    end
+
+end
+
+"""
 TESTS
 """
 @named hmm = MPRSingleMass()
@@ -81,3 +107,13 @@ final_system = structural_simplify(final_system)
 sim_dur = 60.0
 prob = ODEProblem(final_system, [], (0.0, sim_dur))
 sol = solve(prob, AutoVern7(Rodas4()); saveat=0.001)
+
+@named hmm = CCSingleMass()
+
+g = MetaDiGraph()
+add_blox!(g, hmm)
+@named final_system = system_from_graph(g)
+final_system = structural_simplify(final_system)
+sim_dur = 700.0
+prob = ODEProblem(final_system, [], (0.0, sim_dur))
+sol = solve(prob, AutoVern7(Rodas4()); saveat=0.1)
