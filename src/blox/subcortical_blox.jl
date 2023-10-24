@@ -16,7 +16,7 @@ struct Striatum <: AbstractComponent
         N_inhib = 25,
         E_syn_inhib=-70,
         G_syn_inhib=1.2,
-        I_in=zeros(N_inhib),
+        I_bg=zeros(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=70
@@ -28,7 +28,7 @@ struct Striatum <: AbstractComponent
                 E_syn = E_syn_inhib, 
                 G_syn = G_syn_inhib, 
                 τ = τ_inhib,
-                I_in = I_in[i],
+                I_bg = I_bg[i],
                 freq = freq[i],
                 phase = phase[i]
         ) 
@@ -94,7 +94,7 @@ struct GPi <: AbstractComponent
         N_inhib = 25,
         E_syn_inhib=-70,
         G_syn_inhib=8,
-        I_in=4*ones(N_inhib),
+        I_bg=4*ones(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=70
@@ -106,7 +106,7 @@ struct GPi <: AbstractComponent
                     E_syn = E_syn_inhib, 
                     G_syn = G_syn_inhib, 
                     τ = τ_inhib,
-                    I_in = I_in[i],
+                    I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i]
             ) 
@@ -151,7 +151,7 @@ struct GPe <: AbstractComponent
         N_inhib = 15,
         E_syn_inhib=-70,
         G_syn_inhib=3,
-        I_in=2*ones(N_inhib),
+        I_bg=2*ones(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=70
@@ -163,7 +163,7 @@ struct GPe <: AbstractComponent
                     E_syn = E_syn_inhib, 
                     G_syn = G_syn_inhib, 
                     τ = τ_inhib,
-                    I_in = I_in[i],
+                    I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i]
             ) 
@@ -209,7 +209,7 @@ struct Thalamus <: AbstractComponent
         N_exci = 25,
         E_syn_exci=0,
         G_syn_exci=3,
-        I_in=3*ones(N_exci),
+        I_bg=3*ones(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5
@@ -221,7 +221,7 @@ struct Thalamus <: AbstractComponent
                     E_syn = E_syn_exci, 
                     G_syn = G_syn_exci, 
                     τ = τ_exci,
-                    I_in = I_in[i],
+                    I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i]
             ) 
@@ -266,7 +266,7 @@ struct STN <: AbstractComponent
         N_exci = 25,
         E_syn_exci=0,
         G_syn_exci=3,
-        I_in=3*ones(N_exci),
+        I_bg=3*ones(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5
@@ -278,7 +278,7 @@ struct STN <: AbstractComponent
                 E_syn = E_syn_exci, 
                 G_syn = G_syn_exci, 
                 τ = τ_exci,
-                I_in = I_in[i],
+                I_bg = I_bg[i],
                 freq = freq[i],
                 phase = phase[i]
         ) 

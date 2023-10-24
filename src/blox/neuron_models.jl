@@ -159,7 +159,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
         θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
-        I_in=0,
+        I_bg=0,
         freq=0,
         phase=0,
         τ=5
@@ -171,8 +171,10 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			h(t)=0.59 
 			I_syn(t)=0.0 
 			[input=true] 
-            I_in(t)=I_in
+            I_in(t)=0.0
             [input=true]
+			I_asc(t)=0.0
+			[input=true]
 			G(t)=0.0 
 			z(t)=0.0
 			Gₛₜₚ(t)=0.0 
@@ -194,6 +196,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
+			I_bg=I_bg
 			kₛₜₚ = 0.5
 			freq = freq 
 			phase = phase
@@ -209,7 +212,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -245,7 +248,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
         θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
-        I_in=0,
+        I_bg=0,
         freq=0,
         phase=0,
         τ=70
@@ -257,7 +260,9 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			h(t)=0.59 
 			I_syn(t)=0.0 
 			[input=true] 
-			G(t)=0.0 
+			I_asc(t)=0.0
+			[input=true]
+            G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
             spikes_cumulative(t)=0.0
@@ -278,7 +283,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
-			I_in=I_in 
+			I_bg=I_bg 
 			freq = freq 
 			phase = phase
 		end
@@ -292,7 +297,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
