@@ -259,7 +259,7 @@ function (bc::BloxConnector)(
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        cb_neuron = [t_event] => [sys_neuron.I_in ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -1000, 0)]
+        cb_neuron = [t_event] => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -2, 0)]
         push!(bc.events, cb_neuron)
     end
 end

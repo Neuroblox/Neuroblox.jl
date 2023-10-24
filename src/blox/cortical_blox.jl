@@ -29,7 +29,7 @@ struct CorticalBlox{P} <: AbstractComponent
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_in = rand(N_exci),
+                I_bg = rand(N_exci),
                 freq,
                 phase,
                 τ_exci,
