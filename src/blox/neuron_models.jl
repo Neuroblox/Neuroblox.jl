@@ -262,6 +262,8 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			[input=true] 
 			I_asc(t)=0.0
 			[input=true]
+			I_in(t)=0.0
+			[input=true]
             G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
@@ -297,7 +299,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
