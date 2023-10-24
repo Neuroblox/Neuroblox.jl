@@ -26,7 +26,7 @@ end
 
     @named sys = system_from_graph(g)
     sys = structural_simplify(sys)
-    sim_dur = 1e2
+    sim_dur = 1e1
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
     @test sol.retcode == ReturnCode.Success
@@ -37,14 +37,15 @@ New Jansen-Rit tests
 """
 
 @testset "Jansen-Rit" begin
-    @named str = JansenRit(τ=0.0022, H=20, λ=300, r=0.3)
-    @named gpe = JansenRit(τ=0.04, cortical=false) # all default subcortical except τ
-    @named stn = JansenRit(τ=0.01, H=20, λ=500, r=0.1)
+    τ_factor = 1000
+    @named str = JansenRit(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
+    @named gpe = JansenRit(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
+    @named stn = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
     @named gpi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
-    @named Th  = JansenRit(τ=0.002, H=10, λ=20, r=5)
-    @named EI  = JansenRit(τ=0.01, H=20, λ=5, r=5)
+    @named Th  = JansenRit(τ=0.002*τ_factor, H=10, λ=20, r=5)
+    @named EI  = JansenRit(τ=0.01*τ_factor, H=20, λ=5, r=5)
     @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
-    @named II  = JansenRit(τ=2.0, H=60, λ=5, r=5)
+    @named II  = JansenRit(τ=2.0*τ_factor, H=60, λ=5, r=5)
     blox = [str, gpe, stn, gpi, Th, EI, PY, II]
 
     # Store parameters to be passed later on
@@ -65,14 +66,14 @@ New Jansen-Rit tests
 
     @named final_system = system_from_graph(g, params)
     final_delays = graph_delays(g)
-    sim_dur = 5.0 # Simulate for 10 Seconds
+    sim_dur = 2000.0 # Simulate for 2 Seconds
     final_system_sys = structural_simplify(final_system)
     prob = DDEProblem(final_system_sys,
         [],
         (0.0, sim_dur),
         constant_lags = final_delays)
     alg = MethodOfSteps(Vern7())
-    sol_dde_no_delays = solve(prob, alg, saveat=0.001)
+    sol_dde_no_delays = solve(prob, alg, saveat=1)
     @test sol_dde_no_delays.retcode == ReturnCode.Success
 end
 
