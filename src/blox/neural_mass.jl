@@ -168,6 +168,8 @@ end
 
 
 mutable struct NextGenerationEIBlox <: NeuralMassBlox
+    Cₑ::Num
+    Cᵢ::Num
     output
     connector::Num
     odesystem::ODESystem
@@ -188,7 +190,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
                 D(gᵢᵢ) ~ alpha_invᵢᵢ*((kᵢᵢ/(Cᵢ*pi))*((1-aᵢ^2-bᵢ^2)/(1+2*aᵢ+aᵢ^2+bᵢ^2)) - gᵢᵢ)
                ]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(sts[1], odesys.aₑ, odesys, namespace)
+        new(Cₑ, Cᵢ, sts[1], odesys.aₑ, odesys, namespace)
     end
 end
 # this assignment is temporary until all the code is changed to the new name

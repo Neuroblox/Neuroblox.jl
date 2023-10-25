@@ -97,7 +97,8 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(asc_out, HH_in; kwargs...)
-    
+    push!(bc.weights, w)  
+
     #Z = sys_out.Z 
     a = sys_out.aₑ
     b = sys_out.bₑ
@@ -112,7 +113,6 @@ function (bc::BloxConnector)(
     cb_in::CorticalBlox; 
     kwargs...
 )
-    sys_out = get_namespaced_sys(asc_out)
     neurons_in = get_inh_neurons(cb_in)
 
     bc(asc_out, neurons_in[end]; kwargs...)
