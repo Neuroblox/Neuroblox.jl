@@ -168,24 +168,6 @@ end
 
 
 mutable struct NextGenerationEIBlox <: NeuralMassBlox
-    Cₑ::Num
-    Cᵢ::Num
-    Δₑ::Num
-    Δᵢ::Num
-    η_0ₑ::Num
-    η_0ᵢ::Num
-    v_synₑₑ::Num
-    v_synₑᵢ::Num
-    v_synᵢₑ::Num
-    v_synᵢᵢ::Num
-    alpha_invₑₑ::Num
-    alpha_invₑᵢ::Num
-    alpha_invᵢₑ::Num
-    alpha_invᵢᵢ::Num
-    kₑₑ::Num
-    kₑᵢ::Num
-    kᵢₑ::Num
-    kᵢᵢ::Num
     output
     connector::Num
     odesystem::ODESystem
@@ -206,7 +188,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
                 D(gᵢᵢ) ~ alpha_invᵢᵢ*((kᵢᵢ/(Cᵢ*pi))*((1-aᵢ^2-bᵢ^2)/(1+2*aᵢ+aᵢ^2+bᵢ^2)) - gᵢᵢ)
                ]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(Cₑ, Cᵢ, Δₑ, Δᵢ, η_0ₑ, η_0ᵢ, v_synₑₑ, v_synₑᵢ, v_synᵢₑ, v_synᵢᵢ, alpha_invₑₑ, alpha_invₑᵢ, alpha_invᵢₑ, alpha_invᵢᵢ, kₑₑ, kₑᵢ, kᵢₑ, kᵢᵢ, sts[1], odesys.aₑ, odesys, namespace)
+        new(sts[1], odesys.aₑ, odesys, namespace)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
