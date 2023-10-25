@@ -89,6 +89,38 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    asc_out::NextGenerationEIBlox, 
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(asc_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(asc_out, HH_in; kwargs...)
+    
+    #Z = sys_out.Z 
+    a = sys_out.aₑ
+    b = sys_out.bₑ
+    f = (1/(sys_out.Cₑ*π))*(1-a^2-b^2)/(1+2*a+a^2+b^2)   
+    eq = sys_in.I_asc ~ w*f
+        
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    asc_out::NextGenerationEIBlox, 
+    cb_in::CorticalBlox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(asc_out)
+    neurons_in = get_inh_neurons(cb_in)
+
+    bc(asc_out, neurons_in[end]; kwargs...)
+        
+end
+
+
+function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
     bloxin::NeuralMassBlox; 
     kwargs...
@@ -143,6 +175,18 @@ function (bc::BloxConnector)(
                 bc(neuron_presyn, neuron_postsyn; kwargs...)
             end
         end
+    end
+end
+
+function (bc::BloxConnector)(
+    neuron_out::HHNeuronInhibBlox, 
+    wta_in::WinnerTakeAllBlox; 
+    kwargs...
+)
+    neurons_in = get_exci_neurons(wta_in)
+        
+    for neuron_postsyn in neurons_in
+        bc(neuron_out, neuron_postsyn; kwargs...)
     end
 end
 

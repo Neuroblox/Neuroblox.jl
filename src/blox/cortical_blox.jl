@@ -13,7 +13,8 @@ struct CorticalBlox{P} <: AbstractComponent
         E_syn_exci=0.0,
         E_syn_inhib=-70,
         G_syn_exci=3.0,
-        G_syn_inhib=3.0,
+        G_syn_inhib=4.0,
+        G_syn_ff_inhib=3.5,
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5,
@@ -36,13 +37,22 @@ struct CorticalBlox{P} <: AbstractComponent
                 τ_inhib    
             )
         end
+        
+        n_ff_inh = HHNeuronInhibBlox(
+            name = "ff_inh",
+            namespace = namespaced_name(namespace, name), 
+            E_syn = E_syn_inhib, 
+            G_syn = G_syn_ff_inhib, 
+            τ = τ_inhib
+        ) 
 
         g = MetaDiGraph()
-        add_blox!.(Ref(g), wtas)
+        add_blox!.(Ref(g), [wtas, n_ff_inh])
 
         idxs = Base.OneTo(N_wta)
         for i in idxs
             add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(kwargs)))
+            add_edge!(Ref(g),(N_wta+1), i, Dict(:weight => 1))
         end
 
         # Construct a BloxConnector object from the graph
@@ -53,7 +63,7 @@ struct CorticalBlox{P} <: AbstractComponent
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
         # and propagate the BloxConnector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(wtas; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts([wtas, n_ff_inh]; name)
 
         # TO DO : m is a subset of states to be plotted in the GUI. 
         # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
@@ -68,6 +78,6 @@ struct CorticalBlox{P} <: AbstractComponent
             [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
         end
 
-        new{eltype(wtas)}(namespace, wtas, sys, bc, m)
+        new{eltype(wtas)}(namespace, [wtas, nn_ff_inh], sys, bc, m)
     end
 end
