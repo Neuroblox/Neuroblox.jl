@@ -348,7 +348,7 @@ function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settin
     :θ_spike => NCAD(0.0, NUMBER, 0.0, 2*π,[]),
     :E_syn => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
     :G_syn => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
-    :I_in => NCAD(0.0, NUMBER, 0.0, 20.0,[]),
+    :I_bg => NCAD(0.0, NUMBER, 0.0, 20.0,[]),
     :freq => NCAD(0, NUMBER, 0.0, 100,[]),
     :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
 	  :τ => NCAD(5, NUMBER, 0.01, 20.0,[])
@@ -359,7 +359,7 @@ function arguments(::Type{Neuroblox.HHNeuronInhibBlox}) #TODO: add correct setti
   OrderedDict(
     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
     :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
-    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+    :I_bg => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
     :freq => NCAD(20, NUMBER, 0.01, 100,[]),
     :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
 	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
