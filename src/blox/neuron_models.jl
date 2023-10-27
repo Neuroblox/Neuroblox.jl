@@ -155,7 +155,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	function HHNeuronExciBlox(;
         name, 
         namespace=nothing,
-        t_spike_window=0.02,
+        t_spike_window=90.0,
         θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
@@ -201,6 +201,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			freq = freq 
 			phase = phase
             spikes = 0
+			spk_const = 1.127
 		end
 
 		αₙ(v) = 0.01*(v+34)/(1-exp(-(v+34)/10))
@@ -211,7 +212,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	    βₕ(v) = 1/(1+exp(-(v+14)/10))
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
-	 	eqs = [ 
+		eqs = [ 
 			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
@@ -222,17 +223,16 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                # HACK : need to define a Differential equation for spikes
                # the alternative of having it as an algebraic equation with [irreducible=true]
                # leads to incorrect or unstable solutions. Needs more attention!
-               D(spikes_cumulative) ~ 0.0,
-               D(spikes_window) ~ 0.0
+               D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
+               D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
         
-        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative, spikes_window], [], nothing)
         spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
 		sys = ODESystem(
             eqs, t, sts, ps; 
-            name = Symbol(name), continuous_events = spike_cb, discrete_events = spike_reset_cb
-        )
+            name = Symbol(name),discrete_events = spike_reset_cb
+			)
 
 		new(sys, spikes, namespace)
 	end
@@ -244,7 +244,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	function HHNeuronInhibBlox(;
         name, 
         namespace = nothing, 
-        t_spike_window=0.02,
+        t_spike_window=90.0,
         θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
@@ -288,6 +288,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			I_bg=I_bg 
 			freq = freq 
 			phase = phase
+			spk_const = 1.127
 		end
 
 	   	αₙ(v) = 0.01*(v+38)/(1-exp(-(v+38)/10))
@@ -305,16 +306,15 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
-               D(spikes_cumulative) ~ 0.0,
-               D(spikes_window) ~ 0.0
+               D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
+               D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
 
-        spike_cb = [V ~ θ_spike] => (spike_affect!, [V, spikes_cumulative, spikes_window], [], nothing)
         spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
 
         sys = ODESystem(
             eqs, t, sts, ps; 
-            name = Symbol(name), continuous_events = spike_cb, discrete_events = spike_reset_cb
+            name = Symbol(name), discrete_events = spike_reset_cb
         )
         
 		new(sys, namespace)
