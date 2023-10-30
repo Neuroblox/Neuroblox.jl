@@ -227,7 +227,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
         
-        spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
+        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
 		sys = ODESystem(
             eqs, t, sts, ps; 
@@ -311,7 +311,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
                D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
 
-        spike_reset_cb = [(t_spike_window + eps(t_spike_window)) => [spikes_window ~ 0]]
+        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
         sys = ODESystem(
             eqs, t, sts, ps; 

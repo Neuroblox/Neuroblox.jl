@@ -143,6 +143,8 @@ end
 
 function arguments(::Type{Neuroblox.HarmonicOscillator})
   OrderedDict(
+    :measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
+    # MENU NCAD("title of menue", MENU, default, #ofoptions, list of options)
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[]),
     :k => NCAD(625*(2*pi), NUMBER, (2*pi), 22500*(2*pi),[]),
@@ -344,7 +346,7 @@ end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :t_spike_window => NCAD(0.02, NUMBER, 0.01, 1.0,[]),
+    :t_spike_window => NCAD(90.0, NUMBER, 0.1, 100.0,[]),
     :θ_spike => NCAD(0.0, NUMBER, 0.0, 2*π,[]),
     :E_syn => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
     :G_syn => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
