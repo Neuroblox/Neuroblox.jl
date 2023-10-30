@@ -232,6 +232,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 		sys = ODESystem(
             eqs, t, sts, ps; 
             name = Symbol(name),discrete_events = spike_reset_cb
+			#name = Symbol(name)
 			)
 
 		new(sys, spikes, namespace)
@@ -315,6 +316,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
         sys = ODESystem(
             eqs, t, sts, ps; 
             name = Symbol(name), discrete_events = spike_reset_cb
+			#name = Symbol(name)
         )
         
 		new(sys, namespace)

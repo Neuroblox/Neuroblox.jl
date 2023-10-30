@@ -80,9 +80,9 @@ function (bc::BloxConnector)(
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
     eq = if STA
-        sys_in.I_syn ~ w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
+        sys_in.I_syn ~ -w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
-        sys_in.I_syn ~ w * sys_out.G * (sys_in.V - sys_out.E_syn)
+        sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     end
     
     accumulate_equation!(bc, eq)
