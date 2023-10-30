@@ -262,6 +262,20 @@ end
 
 function (bc::BloxConnector)(
     neuron::HHNeuronExciBlox,
+    str::Striatum;
+    kwargs...
+)
+    neurons_in = get_inh_neurons(str)
+    neurons_out = neuron
+
+    for neuron_postsyn in neurons_in
+        bc(neuron_out, neuron_postsyn; kwargs...)
+    end
+       
+end
+
+function (bc::BloxConnector)(
+    neuron::HHNeuronExciBlox,
     discr::Union{Matrisome, Striosome};
     kwargs...
 )
