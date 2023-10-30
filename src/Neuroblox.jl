@@ -17,7 +17,6 @@ import ExponentialUtilities as eu
 using OrdinaryDiffEq
 using DifferentialEquations
 using Interpolations
-using Distributions
 using Random
 using OrderedCollections
 using DelayDiffEq

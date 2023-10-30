@@ -18,7 +18,6 @@ using ForwardDiff: Dual
 using ForwardDiff: Partials
 using LinearAlgebra: Eigen
 using LinearAlgebra
-using RuntimeGeneratedFunctions
 # using ToeplitzMatrices
 using ExponentialUtilities
 
