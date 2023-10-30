@@ -17,6 +17,7 @@ struct CorticalBlox <: AbstractComponent
         G_syn_ff_inhib=3.5,
         freq=zeros(N_exci),
         phase=zeros(N_exci),
+        I_bg_ar=0,
         τ_exci=5,
         τ_inhib=70,
         kwargs...
@@ -30,7 +31,7 @@ struct CorticalBlox <: AbstractComponent
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_bg = rand(N_exci),
+                I_bg = I_bg_ar*rand(N_exci),
                 freq,
                 phase,
                 τ_exci,
