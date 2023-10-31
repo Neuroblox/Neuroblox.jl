@@ -266,7 +266,7 @@ function (bc::BloxConnector)(
     kwargs...
 )
     neurons_in = get_inh_neurons(str)
-    neurons_out = neuron
+    neuron_out = neuron
 
     for neuron_postsyn in neurons_in
         bc(neuron_out, neuron_postsyn; kwargs...)
