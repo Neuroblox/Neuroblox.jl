@@ -22,6 +22,7 @@ using OrderedCollections
 using DelayDiffEq
 
 using StatsBase: sample
+using Distributions
 
 using ModelingToolkit: get_namespace, get_systems, renamespace, 
                     namespace_equation, namespace_variables, namespace_expr,
