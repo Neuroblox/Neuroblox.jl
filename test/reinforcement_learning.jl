@@ -51,7 +51,7 @@ idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
 idxs_other_params = setdiff(eachindex(ps), idxs_weight)
 
 env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-run_experiment!(agent, env; alg=QNDF(), reltol=1e-9,abstol=1e-9)
+run_experiment!(agent, env; reltol=1e-9,abstol=1e-9)
 
 final_params = agent.problem.p
 # At least some weights need to be different.
