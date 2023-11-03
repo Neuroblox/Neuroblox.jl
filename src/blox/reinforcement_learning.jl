@@ -62,11 +62,10 @@ function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w,
 end
 
 function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
-    state_mod = get_modulator_state(hmp.modulator)
     val_pre = only(sol(hmp.t_pre; idxs = [hmp.state_pre]))
     val_post = only(sol(hmp.t_post; idxs = [hmp.state_post]))
-    val_mod = only(sol(hmp.t_mod; idxs = [state_mod]))
-
+    val_mod = get_modulator_value(hmp.modulator, sol, hmp.t_mod)
+    
     return hmp(val_pre, val_post, val_mod, w, feedback)
 end
 
@@ -124,17 +123,20 @@ abstract type AbstractActionSelection end
 mutable struct GreedyPolicy <: AbstractActionSelection
     const name
     const namespace
-    competitor_states 
     const t_decision
-
-    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing)
+    competitor_states 
+    competitor_params
+    
+    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing, competitor_params=nothing)
         sts = isnothing(competitor_states) ? Num[] : competitor_states
-        new(name, namespace, sts, t_decision)
+        ps = isnothing(competitor_params) ? Float64[] : competitor_params
+        new(name, namespace, t_decision, sts, ps)
     end
 end
 
 function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
-    comp_vals = sol(p.t_decision; idxs=p.competitor_states)
+    comp_vals = linear_func.(sol(p.t_decision; idxs=p.competitor_states), p.competitor_params)
+
     return argmax(comp_vals)
 end
  
@@ -186,7 +188,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
         if haskey(kwargs, :alg)
             sol = solve(prob, kwargs[:alg]; kwargs...)
         else
-            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+            sol = solve(prob; kwargs...)
         end
         action = action_selection(sol)
         feedback = env(action)
