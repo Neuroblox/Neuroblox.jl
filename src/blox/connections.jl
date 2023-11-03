@@ -133,8 +133,6 @@ function (bc::BloxConnector)(
 
     if haskey(kwargs, :learning_rule)
         lr = kwargs[:learning_rule]
-        # maybe_set_state_pre!(lr, 
-        # maybe_set_state_post!(lr, 
         bc.learning_rules[w] = lr
     end
 
