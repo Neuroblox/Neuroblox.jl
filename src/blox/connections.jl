@@ -295,6 +295,36 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+function compare_affect(integ, u, p, ctx)
+    ρ_out = linear_func(integ.u[u.jcn_out], integ.p[p.H_out])
+    ρ_in = linear_func(integ.u[u.jcn_in], integ.p[p.H_in])
+
+    integ.p[p.H_in] = ifelse(ρ_out > ρ_in, 0, 1)
+end
+
+"""
+    Compare two states like compare_affect,
+    but then it affects a third parameter H_third.
+"""
+function compare_third_affect(integ, u, p, ctx)
+    ρ_out = linear_func(integ.u[u.jcn_out], integ.p[p.H_out])
+    ρ_in = linear_func(integ.u[u.jcn_in], integ.p[p.H_in])
+
+    integ.p[p.H_third] = ifelse(ρ_out > ρ_in, 0, 1)
+end
+
+"""
+    Compare two states like compare_affect,
+    but then it affects a third parameter I_bg,
+    but here it adds a large negative value.
+"""
+function compare_current_affect(integ, u, p, ctx)
+    ρ_out = linear_func(integ.u[u.jcn_out], integ.p[p.H_out])
+    ρ_in = linear_func(integ.u[u.jcn_in], integ.p[p.H_in])
+
+    integ.p[p.I_bg] = ifelse(ρ_out > ρ_in, -2, 0)
+end
+
 function (bc::BloxConnector)(
     str_out::Striatum,
     str_in::Striatum;
@@ -306,8 +336,18 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str_in)
 
     t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
-    cb_matr = [t_event] => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
-    cb_strios = [t_event] => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
+    cb_matr = [t_event] => (
+            compare_affect, 
+            [sys_matr_out.jcn => :jcn_out, sys_matr_in.jcn => :jcn_in], 
+            [sys_matr_out.H => :H_out, sys_matr_in.H => :H_in], 
+            nothing
+    )
+    cb_strios = [t_event] => (
+            compare_third_affect, 
+            [sys_matr_out.jcn => :jcn_out, sys_matr_in.jcn => :jcn_in], 
+            [sys_matr_out.H => :H_out, sys_matr_in.H => :H_in, sys_strios_in.H => :H_third], 
+            nothing
+    )
     push!(bc.events, cb_matr)
     push!(bc.events, cb_strios)
 
@@ -315,7 +355,12 @@ function (bc::BloxConnector)(
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        cb_neuron = [t_event] => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -2, 0)]
+        cb_neuron = [t_event] => (
+            compare_current_affect, 
+            [sys_matr_out.jcn => :jcn_out, sys_matr_in.jcn => :jcn_in], 
+            [sys_matr_out.H => :H_out, sys_matr_in.H => :H_in, sys_neuron.I_bg => :I_bg], 
+            nothing
+        )
         push!(bc.events, cb_neuron)
     end
 end
@@ -344,7 +389,7 @@ function (bc::BloxConnector)(
         bc.learning_rules[w] = kwargs[:learning_rule]
     end
 
-    eq = sys_in.jcn ~ w*sys_out.ρ
+    eq = sys_in.jcn ~ w*linear_func(sys_out.jcn, sys_out.H)
 
     accumulate_equation!(bc, eq)
 end
@@ -353,7 +398,7 @@ function (bc::BloxConnector)(
     tan::TAN,
     str::Striatum;
     kwargs...
-) 
+)
     matrisome = get_matrisome(str)
     bc(tan, matrisome; kwargs...)
 end
@@ -365,8 +410,8 @@ sample_poisson(λ) = rand(Poisson(λ))
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
-    v = rand(Poisson(u[1]))
-    integ.p[1] = v
+    v = rand(Poisson(cases_func(integ.u[u.jcn], integ.p[p.κ])))
+    integ.p[p.spikes_window] = v
 end
 
 function (bc::BloxConnector)(
@@ -385,7 +430,12 @@ function (bc::BloxConnector)(
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => (sample_affect!, [sys_out.R], [sys_out.spikes_window], nothing)
+    cb = t_event => (
+            sample_affect!, 
+            [sys_out.jcn => :jcn], 
+            [sys_out.κ => :κ, sys_out.spikes_window => :spikes_window], 
+            nothing
+    )
     push!(bc.events, cb)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
@@ -402,7 +452,12 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(discr_in)
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = [t_event] => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
+    cb = [t_event] => (
+            compare_affect, 
+            [sys_out.jcn => :jcn_out, sys_in.jcn => :jcn_in], 
+            [sys_out.H => :H_out, sys_in.H => :H_in], 
+            nothing
+    )
     push!(bc.events, cb)
 end
 
@@ -449,5 +504,6 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    as.competitor_states = [sys1.ρ, sys2.ρ]
+    as.competitor_states = [sys1.jcn, sys2.jcn]
+    as.competitor_params = [getdefaultval(sys1.H), getdefaultval(sys2.H)]
 end
