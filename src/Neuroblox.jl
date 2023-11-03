@@ -29,7 +29,7 @@ using ModelingToolkit: get_namespace, get_systems, renamespace,
                     AbstractODESystem
 import ModelingToolkit: inputs, nameof
 
-using Symbolics: @register_symbolic
+using Symbolics: @register_symbolic, getdefaultval
 using IfElse
 
 using DelimitedFiles: readdlm
