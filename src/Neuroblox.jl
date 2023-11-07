@@ -25,7 +25,7 @@ using StatsBase: sample
 using Distributions
 
 using ModelingToolkit: get_namespace, get_systems, renamespace, 
-                    namespace_equation, namespace_variables, namespace_expr,
+                    namespace_equation, namespace_variables, namespace_parameters, namespace_expr,
                     AbstractODESystem
 import ModelingToolkit: inputs, nameof
 
