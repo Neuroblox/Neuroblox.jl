@@ -1,6 +1,5 @@
 using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statistics, LinearAlgebra, Graphs, MetaGraphs, Random
 
-
 @variables t
 D = Differential(t)
 
