@@ -48,7 +48,8 @@ ps = parameters(agent.odesystem)
 init_params = agent.problem.p
 map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
 idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
-idxs_other_params = setdiff(eachindex(ps), idxs_weight)
+idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
+idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim))
 
 env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
 run_experiment!(agent, env; alg=QNDF(), reltol=1e-9,abstol=1e-9)

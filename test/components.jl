@@ -566,7 +566,7 @@ end
     add_edge!(g, 1, 2, :weight, 1)
     sys = system_from_graph(g; name=global_ns)
     sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 2); tofloat=false)
+    prob = ODEProblem(sys_simpl, [], (0, 2))
     sol = solve(prob, Vern7())
     @test sol.retcode == ReturnCode.Success 
 end
