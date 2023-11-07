@@ -85,7 +85,7 @@ end
 mutable struct ClassificationEnvironment <: AbstractEnvironment
     const name
     const namespace
-    const stimulus
+    const source
     const category
     const N_trials
     const t_trial
@@ -118,6 +118,13 @@ end
 (env::ClassificationEnvironment)(action) = action == env.category[env.current_trial]
 
 increment_trial!(env::AbstractEnvironment) = env.current_trial += 1
+
+function get_trial_stimulus(env::ClassificationEnvironment)
+    stim_params = env.source.stim_parameters
+    stim_values = env.source.IMG[:, env.current_trial]
+
+    return Dict(p => v for (p, v) in zip(stim_params, stim_values))
+end
 
 abstract type AbstractActionSelection end
 
@@ -198,8 +205,8 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
         end
 
         increment_trial!(env)
-        tspan = tspan .+ t_trial
-        prob = remake(prob; p = weights, tspan)
+        stim_params = get_trial_stimulus(env)
+        prob = remake(prob; p = weights, u0 = stim_params)
     end
 
     agent.problem = prob
