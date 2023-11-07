@@ -87,7 +87,8 @@ end
 mutable struct ImageStimulus <: StimulusBlox
     const namespace
     const odesystem
-    const image
+    const IMG # Matrix[pixels X stimuli]
+    const stim_parameters
     const category
     const t_stimulus
     const t_pause
@@ -104,7 +105,7 @@ mutable struct ImageStimulus <: StimulusBlox
         d0 = DataFrame(Dict(n => 0 for n in names(data)))
         append!(data, d0)
 
-        S = (transpose ∘ Matrix)(data[!, Not(:category)])
+        S = transpose(Matrix(data[!, Not(:category)]))
 
         t_trial = t_stimulus + t_pause
         t_stims = [
@@ -117,18 +118,21 @@ mutable struct ImageStimulus <: StimulusBlox
 
         state_name = :u
         @parameters t
-        sts = Vector{Num}(undef, N_pixels)
-        eqs = Vector{Equation}(undef, N_pixels)
+        ps = Vector{Num}(undef, N_pixels)
+        reset_eqs = Vector{Equation}(undef, N_pixels)
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
-            sts[i] = only(@variables $(s)(t) = 0.0) 
-            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
+            ps[i] = only(@parameters $(s) = S[i,1]) 
+            reset_eqs[i] = ps[i] ~ 0.0
         end
 
-        system = ODESystem(eqs, t, sts, []; name)
+        cb_stop_stim = [t_stimulus] => reset_eqs
+        sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stop_stim)
         category = data[!, :category]
 
-        new(namespace, system, S, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
+        ps_namespaced = namespace_parameters(get_namespaced_sys(sys))
+
+        new(namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
