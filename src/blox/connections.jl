@@ -416,14 +416,14 @@ function (bc::BloxConnector)(
     sys_out = get_namespaced_sys(stim)
     sys_in = get_namespaced_sys(neuron)
 
-    dots = namespace_variables(sys_out)
+    pixels = namespace_parameters(sys_out)
 
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
     # No check for kwargs[:learning_rule] here. 
     # The connection from stimulus is conceptual, the weight can not be updated.
 
-    eq = sys_in.I_in ~ w * dots[stim.current_pixel]
+    eq = sys_in.I_in ~ w * pixels[stim.current_pixel]
 
     stim.current_pixel += 1
     accumulate_equation!(bc, eq)
