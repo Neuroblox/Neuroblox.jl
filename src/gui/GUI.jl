@@ -313,6 +313,26 @@ function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
   ["out_ss","out_sp","out_ii","out_sp"]
 end
 
+function arguments(::Type{Neuroblox.Thalamus})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.Striatum})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.GPe})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.GPi})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.STN})
+  OrderedDict()
+end
+
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
