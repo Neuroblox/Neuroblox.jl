@@ -111,6 +111,11 @@ for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
     end
 end
 
+g, bc, blox_syss = foo[]
+
+ODESystem(bc.eqs, t, [], vcat(bc.weights, bc.delays); name=:name)
+
+foo = Ref{Any}()
 # compose model
 @named neuronmodel2 = system_from_graph(g2)
 neuronmodel2 = structural_simplify(neuronmodel2)
@@ -129,10 +134,17 @@ end
 
 modelparam = OrderedDict()
 for par in parameters(neuronmodel2)
-    # while Symbolics.getdefaultval(par) isa Num
-    #     par = Symbolics.getdefaultval(par)
-    # end
-    modelparam[par] = Symbolics.getdefaultval(par)
+    if Symbolics.getdefaultval(par) isa Num
+        ex = Symbolics.getdefaultval(par)
+        @show ex
+        p = only(Symbolics.get_variables(ex))
+        @show p
+        # Symbolics.value(Symbolics.substitute(Symbolics.getdefaultval(parameters(neuronmodel2)[1]), Dict(p => Symbolics.getdefaultval(p)))) 
+        par = Symbolics.substitute(ex, Dict(p => Symbolics.getdefaultval(p)))
+        modelparam[p] = Symbolics.value(par)
+    else
+        modelparam[par] = Symbolics.getdefaultval(par)
+    end
 end
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 

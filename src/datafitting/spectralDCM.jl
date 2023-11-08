@@ -509,7 +509,7 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
               :Q => Q                          # decomposition of model parameter covariance
               )
             );
-
+    Main.foo[] = 
     idx_A = findall(occursin.("A[", string.(calculate_jacobian(neuraldynmodel))))
 
     ### Compute the variational Bayes with Laplace approximation ###

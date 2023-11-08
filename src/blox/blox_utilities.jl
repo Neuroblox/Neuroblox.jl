@@ -48,7 +48,7 @@ end
 function compileparameterlist(;kwargs...)
     paramlist = []
     for (kw, v) in kwargs
-        if v isa Float64
+        if v isa Float64  # note that Num is also subtype of Real. If we want to be more inclusive we need to create a union of types.
             paramlist = vcat(paramlist, @parameters $kw = v)
         else
             paramlist = vcat(paramlist, v)

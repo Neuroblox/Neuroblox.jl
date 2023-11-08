@@ -124,11 +124,17 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(bloxin)
 
     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    w = only(@parameters $(w_name)=weight)
+    @show "3", weight, w_name
+    # Main.foo[] = weight, w_name
+    if weight isa Num  # note that Num is also subtype of Real. If we want to be more inclusive we need to create a union of types.
+        w = weight
+    else
+        w = only(@parameters $(w_name)=weight)
+    end
     push!(bc.weights, w)
     x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
     eq = sys_in.nmm₊jcn ~ x*w
-    
+
     accumulate_equation!(bc, eq)
 end
 
@@ -188,7 +194,7 @@ function (bc::BloxConnector)(
     weight=1,
     delay=0,
     density=0.1
-)   
+)
     sys_out = get_namespaced_sys(stim)
     sys_in = get_namespaced_sys(neuron)
 

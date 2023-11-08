@@ -113,15 +113,15 @@ struct CompoundHemo <: CompoundNOBlox
     namespace
     function CompoundHemo(massChoice; name, lnκ=0.0, lnτ=0.0) #ONLY WORKS WITH DEFAULT PARAMETERS FOR NOW
         p = progress_scope(@parameters lnκ lnτ)
-        @named hemo = BalloonModel(;lnκ=p[1], lnτ=p[2])
-        @named nmm = massChoice()
+        @named hemo = BalloonModel(;lnκ=p[1], lnτ=p[2], namespace=name)
+        @named nmm = massChoice(;namespace=name)
         @variables jcn(t)
         g = MetaDiGraph()
         add_blox!(g, nmm)
         add_blox!(g, hemo)
         add_edge!(g, 1, 2, Dict(:weight => 1.0))
         linhemo = system_from_graph(g; name=name)
-        new(p, states(linhemo)[1], states(linhemo)[2], linhemo, nothing)
+        new(p, states(linhemo)[1], states(linhemo)[2], linhemo, name)
     end
 end
 
@@ -132,7 +132,7 @@ struct LinHemoCombo <: CompoundNOBlox
     odesystem
     namespace
     function LinHemoCombo(;name, lnκ=0.0, lnτ=0.0)
-        p = progress_scope(@parameters lnκ=lnκ lnτ=lnτ) 
+        p = progress_scope(lnκ, lnτ) 
         lnκ, lnτ = p  # assign the modified parameters
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
 
