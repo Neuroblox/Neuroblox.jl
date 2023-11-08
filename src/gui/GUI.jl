@@ -292,6 +292,17 @@ function arguments(::Type{Neuroblox.NextGenerationBlox})
   )
 end
 
+function arguments(::Type{Neuroblox.NextGenerationEIBlox})
+  OrderedDict(
+    :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
+    :Δ => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+    :η_0 => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+    :v_syn => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
+    :alpha_inv => NCAD(35.0, NUMBER, 0.01, 10.0,[]),
+    :k => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+  )
+end
+
 function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
   OrderedDict(
     :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
