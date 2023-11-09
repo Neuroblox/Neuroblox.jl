@@ -50,7 +50,7 @@ abstract type Merger end
 # subtypes of Blox define categories of Blox that are displayed in separate sections of the GUI
 abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
-abstract type SuperBlox <: AbstractBlox end
+abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl

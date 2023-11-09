@@ -30,7 +30,7 @@ mutable struct jansen_rit_spm12 <: AbstractComponent
     end
 end
 
-mutable struct CanonicalMicroCircuitBlox <: SuperBlox
+mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
     τ_ss::Num
     τ_sp::Num
     τ_ii::Num

@@ -5,7 +5,7 @@ Creates a winner-take-all local circuit found in neocortex,
 typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
 and receive feedback inhibition from that interneuron.
 """
-struct WinnerTakeAllBlox{P} <: AbstractComponent
+struct WinnerTakeAllBlox{P} <: CompositeBlox
     namespace
     parts::Vector{P}
     odesystem
