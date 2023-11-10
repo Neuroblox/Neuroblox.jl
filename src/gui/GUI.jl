@@ -344,6 +344,10 @@ function arguments(::Type{Neuroblox.STN})
   OrderedDict()
 end
 
+function arguments(::Type{Neuroblox.SNc})
+  OrderedDict()
+end
+
 function arguments(::Type{Neuroblox.GreedyPolicy})
   OrderedDict()
 end
