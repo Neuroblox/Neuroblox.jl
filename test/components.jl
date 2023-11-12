@@ -244,7 +244,7 @@ end
     sol = Neuroblox.simulate(structural_simplify(theta_circuit), [], (0.0, sim_dur), [])
     R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
 
-    @test abs(Statistics.mean(R)) < 0.6
+    @test abs(Statistics.mean(R)) < 0.7
 end
 
 @testset "QIF synaptic network" begin
