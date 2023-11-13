@@ -76,49 +76,68 @@ function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data:
     idx = floor(Int, t / t_trial) + 1
     
     return ifelse(
-            (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
-            pixel_data[idx], 
-            0.0
-        )
+        (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
+        pixel_data[idx], 
+        0.0
+    )
 end
 
 @register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
 
-mutable struct ImageStimulus
+mutable struct ImageStimulus <: StimulusBlox
     const namespace
     const odesystem
-    const image
+    const IMG # Matrix[pixels X stimuli]
+    const stim_parameters
     const category
+    const t_stimulus
+    const t_pause
+    const N_pixels
+    const N_stimuli
     current_pixel::Int
 
-    function ImageStimulus(IMG::DataFrame; name, namespace, t_stimulus, t_pause)
-        S = (transpose ∘ Matrix)(IMG[!, Not(:category)])
-        (N_pixels, N_stimuli) = size(S)
+    function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
+        N_pixels = DataFrames.ncol(data[!, Not(:category)])
+        N_stimuli = DataFrames.nrow(data[!, Not(:category)])
+
+        # Append a row of zeros at the end of data so that indexing can work
+        # on the final simulation time step when the index will be `nrow(data)+1`.
+        d0 = DataFrame(Dict(n => 0 for n in names(data)))
+        append!(data, d0)
+
+        S = transpose(Matrix(data[!, Not(:category)]))
 
         t_trial = t_stimulus + t_pause
         t_stims = [
             ((i-1)*t_trial, (i-1)*t_trial + t_stimulus)
             for i in Base.OneTo(N_stimuli)
         ]
-        
+        # Append a dummy stimulation interval at the end
+        # so that index is not out of bounds , similar to data above.
+        push!(t_stims, (0,0))
+
         state_name = :u
         @parameters t
-        sts = Vector{Num}(undef, N_pixels)
-        eqs = Vector{Equation}(undef, N_pixels)
+        ps = Vector{Num}(undef, N_pixels)
+        reset_eqs = Vector{Equation}(undef, N_pixels)
         for i in Base.OneTo(N_pixels)
             s = Symbol(state_name, "_", i)
-            sts[i] = only(@variables $(s)(t) = 0.0) 
-            eqs[i] = sts[i] ~ get_sampled_data(t, t_trial, t_stims, S[i,:])
+            ps[i] = only(@parameters $(s) = S[i,1]) 
+            reset_eqs[i] = ps[i] ~ 0.0
         end
 
-        system = ODESystem(eqs, t, sts, []; name)
+        cb_stop_stim = [t_stimulus] => reset_eqs
+        sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stop_stim)
+        category = data[!, :category]
 
-        new(namespace, system, S, IMG[!, :category], 1)
+        ps_namespaced = namespace_parameters(get_namespaced_sys(sys))
+
+        new(namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
         @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
-        IMG = read(file, DataFrame)
-        ImageStimulus(IMG; name, namespace, t_stimulus, t_pause)
+        data = read(file, DataFrame)
+        ImageStimulus(data; name, namespace, t_stimulus, t_pause)
     end
 end

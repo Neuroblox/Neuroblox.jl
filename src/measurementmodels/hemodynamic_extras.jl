@@ -112,16 +112,16 @@ struct CompoundHemo <: CompoundNOBlox
     odesystem
     namespace
     function CompoundHemo(massChoice; name, lnκ=0.0, lnτ=0.0) #ONLY WORKS WITH DEFAULT PARAMETERS FOR NOW
-        p = progress_scope(@parameters lnκ lnτ)
-        @named hemo = BalloonModel(;lnκ=p[1], lnτ=p[2], namespace=name)
-        @named nmm = massChoice(;namespace=name)
+        p = progress_scope(lnκ, lnτ)
+        @named hemo = BalloonModel(;lnκ=p[1], lnτ=p[2])
+        @named nmm = massChoice()
         @variables jcn(t)
         g = MetaDiGraph()
         add_blox!(g, nmm)
         add_blox!(g, hemo)
         add_edge!(g, 1, 2, Dict(:weight => 1.0))
         linhemo = system_from_graph(g; name=name)
-        new(p, states(linhemo)[1], states(linhemo)[2], linhemo, name)
+        new(p, states(linhemo)[1], states(linhemo)[2], linhemo, nothing)
     end
 end
 
@@ -169,5 +169,24 @@ struct AlternativeBalloonModel <: ObserverBlox
         ]
         sys = System(eqs, name=name)
         new(p, Num(0), sts[5], sys, nothing)
+    end
+end
+
+mutable struct JRHemo <: AbstractComponent
+    connector::Num
+    bloxinput::Num
+    odesystem::ODESystem
+    function JRHemo(;name, lnκ=0.0, lnτ=0.0)
+        params = progress_scope(lnκ, lnτ)
+        @named hemo = Hemodynamics(;lnκ=params[1], lnτ=params[2])
+        @named nmm = JansenRitCBlox()
+        @variables jcn(t)
+
+        g = MetaDiGraph()
+        add_vertex!(g, Dict(:blox => nmm, :jcn => jcn))
+        add_vertex!(g, :blox, hemo)
+        add_edge!(g, 1, 2, :weight, 1.0)
+        linhemo = ODEfromGraph(g; name=name)
+        new(linhemo.nmm₊x, linhemo.jcn, linhemo)
     end
 end

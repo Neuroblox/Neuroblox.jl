@@ -1,6 +1,6 @@
-struct CorticalBlox{P} <: AbstractComponent
+struct CorticalBlox <: AbstractComponent
     namespace
-    parts::Vector{P}
+    parts
     odesystem
     connector
     mean::Vector{Num}
@@ -13,11 +13,14 @@ struct CorticalBlox{P} <: AbstractComponent
         E_syn_exci=0.0,
         E_syn_inhib=-70,
         G_syn_exci=3.0,
-        G_syn_inhib=3.0,
+        G_syn_inhib=4.0,
+        G_syn_ff_inhib=3.5,
         freq=zeros(N_exci),
         phase=zeros(N_exci),
+        I_bg_ar=0,
         τ_exci=5,
-        τ_inhib=70
+        τ_inhib=70,
+        kwargs...
     )
         wtas = map(Base.OneTo(N_wta)) do i
             WinnerTakeAllBlox(;
@@ -28,20 +31,31 @@ struct CorticalBlox{P} <: AbstractComponent
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_in = rand(N_exci),
+                I_bg = I_bg_ar*rand(N_exci),
                 freq,
                 phase,
                 τ_exci,
                 τ_inhib    
             )
         end
+        
+        n_ff_inh = HHNeuronInhibBlox(
+            name = "ff_inh",
+            namespace = namespaced_name(namespace, name), 
+            E_syn = E_syn_inhib, 
+            G_syn = G_syn_ff_inhib, 
+            τ = τ_inhib
+        ) 
+       
+        
 
         g = MetaDiGraph()
-        add_blox!.(Ref(g), wtas)
+        add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
 
         idxs = Base.OneTo(N_wta)
         for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), :weight, 1.0)
+            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(kwargs)))
+            add_edge!(g, N_wta+1, i, Dict(:weight => 1))
         end
 
         # Construct a BloxConnector object from the graph
@@ -52,7 +66,7 @@ struct CorticalBlox{P} <: AbstractComponent
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
         # and propagate the BloxConnector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(wtas; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
         # TO DO : m is a subset of states to be plotted in the GUI. 
         # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
@@ -67,44 +81,6 @@ struct CorticalBlox{P} <: AbstractComponent
             [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
         end
 
-        new{eltype(wtas)}(namespace, wtas, sys, bc, m)
-    end
-end
-
-struct SuperCortical{P} <: AbstractComponent
-    namespace
-    parts::Vector{P}
-    odesystem
-    connector
-    mean::Vector{Num}
-
-    function SuperCortical(; name, N_cb, N_wta, namespace=nothing)
-        cbs = map(Base.OneTo(N_cb)) do i
-            CorticalBlox(; name=Symbol("cb$i"), namespace=namespaced_name(namespace, name), N_wta)
-        end
-
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), cbs)
-
-        idxs = Base.OneTo(N_cb)
-        for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(:weight => 1.0, :density => 0.1)))
-        end
-
-        bc = connector_from_graph(g)
-
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(cbs; name)
-
-        m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            # HACK : Need to define an empty system to add the correct namespace to states.
-            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new{eltype(cbs)}(namespace, cbs, sys, bc, m)
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc, m)
     end
 end

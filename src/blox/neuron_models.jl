@@ -139,13 +139,31 @@ mutable struct LIFNeuronBlox <: AbstractComponent
 	end
 end
 
-# Hodgkin-Huxley neurons 
+function spike_affect!(integ, u, p, ctx)
+    du = SciMLBase.get_du(integ)
+    if du[u.V] > 0
+        integ.u[u.spikes_cumulative] += 1
+        integ.u[u.spikes_window] += 1
+    end
+end
 
-struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
-	namespace::N
-    odesystem::S
-	function HHNeuronExciBlox(;name, namespace = nothing, E_syn=0.0, G_syn=3, I_in=0,freq=0,phase=0,τ=5)
-	        
+struct HHNeuronExciBlox <: AbstractExciNeuronBlox
+    odesystem
+    output
+    namespace
+
+	function HHNeuronExciBlox(;
+        name, 
+        namespace=nothing,
+        t_spike_window=90.0,
+        θ_spike=0.0,
+        E_syn=0.0, 
+        G_syn=3, 
+        I_bg=0,
+        freq=0,
+        phase=0,
+        τ=5
+    )
 		sts = @variables begin 
 			V(t)=-65.00 
 			n(t)=0.32 
@@ -153,11 +171,17 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			h(t)=0.59 
 			I_syn(t)=0.0 
 			[input=true] 
-            I_in(t)=I_in
+            I_in(t)=0.0
             [input=true]
+			I_asc(t)=0.0
+			[input=true]
 			G(t)=0.0 
 			z(t)=0.0
+			Gₛₜₚ(t)=0.0 
+            spikes_cumulative(t)=0.0
+            spikes_window(t)=0.0
 		end
+
 		ps = @parameters begin 
 			E_syn=E_syn 
 			G_Na = 52 
@@ -172,9 +196,14 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
+			I_bg=I_bg
+			kₛₜₚ = 0.5
 			freq = freq 
 			phase = phase
+            spikes = 0
+			spk_const = 1.127
 		end
+
 		αₙ(v) = 0.01*(v+34)/(1-exp(-(v+34)/10))
 	    βₙ(v) = 0.125*exp(-(v+44)/80)
 	    αₘ(v) = 0.1*(v+30)/(1-exp(-(v+30)/10))
@@ -183,26 +212,48 @@ struct HHNeuronExciBlox{N, S} <: AbstractExciNeuronBlox
 	    βₕ(v) = 1/(1+exp(-(v+14)/10))
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
-	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
+		eqs = [ 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
+			   D(Gₛₜₚ)~(-1/τ₃)*Gₛₜₚ + (z/5)*(kₛₜₚ-Gₛₜₚ),
+               # HACK : need to define a Differential equation for spikes
+               # the alternative of having it as an algebraic equation with [irreducible=true]
+               # leads to incorrect or unstable solutions. Needs more attention!
+               D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
+               D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
+        
+        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
-		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
+		sys = ODESystem(
+            eqs, t, sts, ps; 
+            name = Symbol(name),discrete_events = spike_reset_cb
+			#name = Symbol(name)
+			)
 
-		new{typeof(namespace), typeof(sys)}(namespace, sys)
+		new(sys, spikes, namespace)
 	end
 end	
 
-mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
-	namespace::N
-    odesystem::S
-	function HHNeuronInhibBlox(;name, namespace = nothing, E_syn=-70.0,G_syn=11.5,I_in=0,freq=0,phase=0,τ=70)
-	    
+struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
+    odesystem
+    namespace
+	function HHNeuronInhibBlox(;
+        name, 
+        namespace = nothing, 
+        t_spike_window=90.0,
+        θ_spike=0.0,
+        E_syn=-70.0,
+        G_syn=11.5,
+        I_bg=0,
+        freq=0,
+        phase=0,
+        τ=70
+    )
 		sts = @variables begin 
 			V(t)=-65.00 
 			n(t)=0.32 
@@ -210,10 +261,17 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 			h(t)=0.59 
 			I_syn(t)=0.0 
 			[input=true] 
-			G(t)=0.0 
+			I_asc(t)=0.0
+			[input=true]
+			I_in(t)=0.0
+			[input=true]
+            G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
+            spikes_cumulative(t)=0.0
+            spikes_window(t)=0.0
 		end
+
 		ps = @parameters begin 
 			E_syn=E_syn 
 			G_Na = 52 
@@ -228,10 +286,12 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 			τ₁ = 0.1 
 			τ₂ = τ 
 			τ₃ = 2000 
-			I_in=I_in 
+			I_bg=I_bg 
 			freq = freq 
 			phase = phase
+			spk_const = 1.127
 		end
+
 	   	αₙ(v) = 0.01*(v+38)/(1-exp(-(v+38)/10))
 		βₙ(v) = 0.125*exp(-(v+48)/80)
         αₘ(v) = 0.1*(v+33)/(1-exp(-(v+33)/10))
@@ -241,17 +301,25 @@ mutable struct HHNeuronInhibBlox{N, S} <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_in*(sin(t*freq*2*pi/1000)+1)+I_syn, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
+               D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
+               D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
 
-		sys = ODESystem(eqs, t, sts, ps; name = Symbol(name))
+        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
-		new{typeof(namespace), typeof(sys)}(namespace, sys)
+        sys = ODESystem(
+            eqs, t, sts, ps; 
+            name = Symbol(name), discrete_events = spike_reset_cb
+			#name = Symbol(name)
+        )
+        
+		new(sys, namespace)
 	end
 end	
 

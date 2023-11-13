@@ -3,6 +3,7 @@ module Neuroblox
 using Reexport
 @reexport using ModelingToolkit
 @reexport using ModelingToolkitStandardLibrary.Blocks
+@reexport using Graphs: add_edge!
 
 using Graphs
 using MetaGraphs
@@ -14,21 +15,19 @@ import ToeplitzMatrices as tm
 using DSP, Statistics
 import ExponentialUtilities as eu
 using OrdinaryDiffEq
+using DifferentialEquations
 using Interpolations
-using DataInterpolations
-using Distributions
 using Random
 using OrderedCollections
 using DelayDiffEq
 
 using StatsBase: sample
+using Distributions
 
 using ModelingToolkit: get_namespace, get_systems, renamespace, 
-                    namespace_equation, namespace_variables, namespace_expr,
+                    namespace_equation, namespace_variables, namespace_parameters, namespace_expr,
                     AbstractODESystem
 import ModelingToolkit: inputs, nameof
-
-using ModelingToolkitStandardLibrary.Blocks: SampledData
 
 using Symbolics: @register_symbolic
 using IfElse
@@ -36,6 +35,10 @@ using IfElse
 using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
+
+using Peaks: argmaxima, peakproms!, peakheights!
+
+using LogExpFunctions: logistic
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -50,7 +53,7 @@ abstract type NeuralMassBlox <: AbstractBlox end
 abstract type SuperBlox <: AbstractBlox end
 abstract type ObserverBlox <: AbstractBlox end
 abstract type CompoundNOBlox <: AbstractBlox end #I know this is bad - adding for speed of implementing -AGC
-# abstract type SourceBlox <: Blox end will be added later
+abstract type StimulusBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -92,10 +95,13 @@ include("blox/ts_outputs.jl")
 include("blox/sources.jl")
 include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
+include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
+include("blox/discrete.jl")
+include("blox/reinforcement_learning.jl")
 include("gui/GUI.jl")
-include("blox/blox_utilities.jl")
 include("blox/connections.jl")
+include("blox/blox_utilities.jl")
 include("Neurographs.jl")
 include("measurementmodels/hemodynamic_extras.jl")
 
@@ -155,7 +161,10 @@ export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12,
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
     WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
-export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear
+export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
+export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
+export HebbianPlasticity, HebbianModulationPlasticity
+export Agent, ClassificationEnvironment, GreedyPolicy
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
@@ -172,6 +181,6 @@ export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, namespace_expr, nameof
-export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo
+export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, spectralVI2
 export input_equations, BloxConnector, accumulate_equation!, get_sys #remove this line
 end

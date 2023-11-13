@@ -124,18 +124,73 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
     v_syn::Num
     alpha_inv::Num
     k::Num
+    output
     connector::Num
     odesystem::ODESystem
-    function NextGenerationBlox(;name, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
+    namespace
+    function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables Z(t)=0.5 g(t)=1.6
+        sts    = @variables Z(t)=0.5 [output=true] g(t)=1.6
         Z = ModelingToolkit.unwrap(Z)
         g = ModelingToolkit.unwrap(g)
         C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
         eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys)
+        new(C, Δ, η_0, v_syn, alpha_inv, k, sts[1], odesys.Z, odesys, namespace)
+    end
+end
+
+mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
+    C::Num
+    Δ::Num
+    η_0::Num
+    v_syn::Num
+    alpha_inv::Num
+    k::Num
+    output
+    connector::Num
+    odesystem::ODESystem
+    namespace
+    function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
+        params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
+        sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 [output=true] g(t)=1.6
+        #Z = a + ib
+        
+        eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
+                D(b) ~ (1/C)*((b^2-(a-1)^2)/2 - Δ*b*(a+1) + (η_0/2)*((a+1)^2-b^2) + v_syn*(g/2)*((a+1)^2-b^2) - a*b*g),
+                D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
+               ]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(C, Δ, η_0, v_syn, alpha_inv, k, sts[1], odesys.a, odesys, namespace)
+    end
+end
+
+
+mutable struct NextGenerationEIBlox <: NeuralMassBlox
+    Cₑ::Num
+    Cᵢ::Num
+    output
+    connector::Num
+    odesystem::ODESystem
+    namespace
+    function NextGenerationEIBlox(;name,namespace=nothing, Cₑ=30.0,Cᵢ=30.0, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0, alpha_invₑᵢ=0.8, alpha_invᵢₑ=10.0, alpha_invᵢᵢ=0.8, kₑₑ=0, kₑᵢ=0.5, kᵢₑ=0.65, kᵢᵢ=0)
+        params = @parameters Cₑ=Cₑ Cᵢ=Cᵢ Δₑ=Δₑ Δᵢ=Δᵢ η_0ₑ=η_0ₑ η_0ᵢ=η_0ᵢ v_synₑₑ=v_synₑₑ v_synₑᵢ=v_synₑᵢ v_synᵢₑ=v_synᵢₑ v_synᵢᵢ=v_synᵢᵢ alpha_invₑₑ=alpha_invₑₑ alpha_invₑᵢ=alpha_invₑᵢ alpha_invᵢₑ=alpha_invᵢₑ alpha_invᵢᵢ=alpha_invᵢᵢ kₑₑ=kₑₑ kₑᵢ=kₑᵢ kᵢₑ=kᵢₑ kᵢᵢ=kᵢᵢ
+        sts    = @variables aₑ(t)=-0.6 [output=true] bₑ(t)=0.18 [output=true] aᵢ(t)=0.02 [output=true] bᵢ(t)=0.21 [output=true] gₑₑ(t)=0 gₑᵢ(t)=0.23 gᵢₑ(t)=0.26 gᵢᵢ(t)=0
+        
+        #Z = a + ib
+        
+        eqs = [ D(aₑ) ~ (1/Cₑ)*(bₑ*(aₑ-1) - (Δₑ/2)*((aₑ+1)^2-bₑ^2) - η_0ₑ*bₑ*(aₑ+1) - (v_synₑₑ*gₑₑ+v_synₑᵢ*gₑᵢ)*(bₑ*(aₑ+1)) - (gₑₑ/2+gₑᵢ/2)*(aₑ^2-bₑ^2-1)),
+                D(bₑ) ~ (1/Cₑ)*((bₑ^2-(aₑ-1)^2)/2 - Δₑ*bₑ*(aₑ+1) + (η_0ₑ/2)*((aₑ+1)^2-bₑ^2) + (v_synₑₑ*(gₑₑ/2)+v_synₑᵢ*(gₑᵢ/2))*((aₑ+1)^2-bₑ^2) - aₑ*bₑ*(gₑₑ+gₑᵢ)),
+                D(aᵢ) ~ (1/Cᵢ)*(bᵢ*(aᵢ-1) - (Δᵢ/2)*((aᵢ+1)^2-bᵢ^2) - η_0ᵢ*bᵢ*(aᵢ+1) - (v_synᵢₑ*gᵢₑ+v_synᵢᵢ*gᵢᵢ)*(bᵢ*(aᵢ+1)) - (gᵢₑ/2+gᵢᵢ/2)*(aᵢ^2-bᵢ^2-1)),
+                D(bᵢ) ~ (1/Cᵢ)*((bᵢ^2-(aᵢ-1)^2)/2 - Δᵢ*bᵢ*(aᵢ+1) + (η_0ᵢ/2)*((aᵢ+1)^2-bᵢ^2) + (v_synᵢₑ*(gᵢₑ/2)+v_synᵢᵢ*(gᵢᵢ/2))*((aᵢ+1)^2-bᵢ^2) - aᵢ*bᵢ*(gᵢₑ+gᵢᵢ)),
+                D(gₑₑ) ~ alpha_invₑₑ*((kₑₑ/(Cₑ*pi))*((1-aₑ^2-bₑ^2)/(1+2*aₑ+aₑ^2+bₑ^2)) - gₑₑ),
+                D(gₑᵢ) ~ alpha_invₑᵢ*((kₑᵢ/(Cᵢ*pi))*((1-aᵢ^2-bᵢ^2)/(1+2*aᵢ+aᵢ^2+bᵢ^2)) - gₑᵢ),
+                D(gᵢₑ) ~ alpha_invᵢₑ*((kᵢₑ/(Cₑ*pi))*((1-aₑ^2-bₑ^2)/(1+2*aₑ+aₑ^2+bₑ^2)) - gᵢₑ),
+                D(gᵢᵢ) ~ alpha_invᵢᵢ*((kᵢᵢ/(Cᵢ*pi))*((1-aᵢ^2-bᵢ^2)/(1+2*aᵢ+aᵢ^2+bᵢ^2)) - gᵢᵢ)
+               ]
+        odesys = ODESystem(eqs, t, sts, params; name=name)
+        new(Cₑ, Cᵢ, sts[1], odesys.aₑ, odesys, namespace)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
@@ -236,6 +291,10 @@ end
 New versions of blox begin here!
 """
 
+
+"""
+Units note: no units because no parameters :)
+"""
 struct LinearNeuralMass <: NeuralMassBlox
     output
     jcn
@@ -245,27 +304,35 @@ struct LinearNeuralMass <: NeuralMassBlox
         sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, name=name)
-        new(sts[1], sts[2], sys, nothing)
+        new(sts[1], sts[2], sys, namespace)
     end
 end
 
+"""
+Units note: Frequency should be tuned by user.
+Updated with additional factors to make ms.
+"""
 struct HarmonicOscillator <: NeuralMassBlox
     params
     output
     jcn
     odesystem
     namespace
-    function HarmonicOscillator(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
+    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         p = progress_scope(@parameters ω=ω ζ=ζ k=k h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         sys = System(eqs, name=name)
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
+"""
+Units note: all units from the original Parkinson's paper EXCEPT τ. 
+The original delays were in seconds, so multiplied to be consistent with other blocks in ms.
+"""
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
@@ -273,14 +340,15 @@ struct JansenRit <: NeuralMassBlox
     jcn
     odesystem
     namespace
-    function JansenRit(;name, 
+    function JansenRit(;name,
+                        namespace=nothing,
                         τ=nothing, 
                         H=nothing, 
                         λ=nothing, 
                         r=nothing, 
                         cortical=true)
 
-        τ = isnothing(τ) ? (cortical ? 0.001 : 0.014) : τ
+        τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
         H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
@@ -293,10 +361,14 @@ struct JansenRit <: NeuralMassBlox
         sys = System(eqs, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
+"""
+Units note: Unclear where the defaults come from (close but not quite Wilson-Cowan referenced in TVB and elsewhere).
+They're on the same order of magnitude as the original parameters which are in ms, so good to go for now.
+"""
 struct WilsonCowan <: NeuralMassBlox
     params
     output
@@ -304,17 +376,19 @@ struct WilsonCowan <: NeuralMassBlox
     odesystem
     namespace
     function WilsonCowan(;name,
-                          τ_E=1.0,
-                          τ_I=1.0,
-                          a_E=1.2,
-                          a_I=2.0,
-                          c_EE=5.0,
-                          c_IE=6.0,
-                          c_EI=10.0,
-                          c_II=1.0,
-                          θ_E=2.0,
-                          θ_I=3.5,
-                          η=1.0)
+                        namespace=nothing,
+                        τ_E=1.0,
+                        τ_I=1.0,
+                        a_E=1.2,
+                        a_I=2.0,
+                        c_EE=5.0,
+                        c_IE=6.0,
+                        c_EI=10.0,
+                        c_II=1.0,
+                        θ_E=2.0,
+                        θ_I=3.5,
+                        η=1.0
+    )
         p = progress_scope(@parameters τ_E=τ_E τ_I=τ_I a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η)
 
         τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
@@ -322,47 +396,53 @@ struct WilsonCowan <: NeuralMassBlox
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         sys = System(eqs, name=name)
-        new(p, sts[1], sts[3], sys, nothing)
+        new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
+"""
+Units note: From Yamashita et al. paper, designed to be in ms. Good to go for now.
+"""
 struct LarterBreakspear <: NeuralMassBlox
     params
     output
     jcn
     odesystem
     namespace
-    function LarterBreakspear(;name,
-                          T_Ca=-0.01,
-                          δ_Ca=0.15,
-                          g_Ca=1.0,
-                          V_Ca=1.0,
-                          T_K=0.0,
-                          δ_K=0.3,
-                          g_K=2.0,
-                          V_K=-0.7,
-                          T_Na=0.3,
-                          δ_Na=0.15,
-                          g_Na=6.7,
-                          V_Na=0.53,
-                          V_L=-0.5,
-                          g_L=0.5,
-                          V_T=0.0,
-                          Z_T=0.0,
-                          δ_VZ=0.61,
-                          Q_Vmax=1.0,
-                          Q_Zmax=1.0,
-                          IS = 0.3,
-                          a_ee=0.36,
-                          a_ei=2.0,
-                          a_ie=2.0,
-                          a_ne=1.0,
-                          a_ni=0.4,
-                          b=0.1,
-                          τ_K=1.0,
-                          ϕ=0.7,
-                          r_NMDA=0.25,
-                          C=0.35)
+    function LarterBreakspear(;
+                        name,
+                        namespace=nothing,
+                        T_Ca=-0.01,
+                        δ_Ca=0.15,
+                        g_Ca=1.0,
+                        V_Ca=1.0,
+                        T_K=0.0,
+                        δ_K=0.3,
+                        g_K=2.0,
+                        V_K=-0.7,
+                        T_Na=0.3,
+                        δ_Na=0.15,
+                        g_Na=6.7,
+                        V_Na=0.53,
+                        V_L=-0.5,
+                        g_L=0.5,
+                        V_T=0.0,
+                        Z_T=0.0,
+                        δ_VZ=0.61,
+                        Q_Vmax=1.0,
+                        Q_Zmax=1.0,
+                        IS = 0.3,
+                        a_ee=0.36,
+                        a_ei=2.0,
+                        a_ie=2.0,
+                        a_ne=1.0,
+                        a_ni=0.4,
+                        b=0.1,
+                        τ_K=1.0,
+                        ϕ=0.7,
+                        r_NMDA=0.25,
+                        C=0.35
+    )
         p = progress_scope(@parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA)
         C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
         
@@ -380,6 +460,6 @@ struct LarterBreakspear <: NeuralMassBlox
                 m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                 m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         sys = System(eqs; name=name)
-        new(p, sts[5], sts[4], sys, nothing)
+        new(p, sts[5], sts[4], sys, namespace)
     end
 end

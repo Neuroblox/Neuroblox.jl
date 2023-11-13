@@ -19,7 +19,7 @@ struct WinnerTakeAllBlox{P} <: AbstractComponent
         E_syn_inhib=-70,
         G_syn_exci=3.0,
         G_syn_inhib=3.0,
-        I_in=zeros(N_exci),
+        I_bg=zeros(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=5,
@@ -39,7 +39,7 @@ struct WinnerTakeAllBlox{P} <: AbstractComponent
                     E_syn = E_syn_exci, 
                     G_syn = G_syn_exci, 
                     τ = τ_exci,
-                    I_in = I_in[i],
+                    I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i]
             ) 
