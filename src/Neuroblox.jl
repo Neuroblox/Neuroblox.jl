@@ -27,7 +27,7 @@ using Distributions
 using ModelingToolkit: get_namespace, get_systems, renamespace, 
                     namespace_equation, namespace_variables, namespace_parameters, namespace_expr,
                     AbstractODESystem
-import ModelingToolkit: inputs, nameof
+import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic
 using IfElse
@@ -181,6 +181,6 @@ export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, namespace_expr, nameof
-export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, spectralVI2
+export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, spectralVI2, get_hemodynamic_observers
 export input_equations, BloxConnector, accumulate_equation!, get_sys #remove this line
 end

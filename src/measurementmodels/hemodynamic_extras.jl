@@ -1,4 +1,4 @@
-using Random, SpecialFunctions, Plots
+using Random, SpecialFunctions
 
 @parameters t
 D = Differential(t)
@@ -90,7 +90,7 @@ struct BalloonModel <: ObserverBlox
         #p = compileparameterlist(lnκ=p[1], lnτ=p[2])  # finally compile all parameters
         lnκ, lnτ = p  # assign the modified parameters
         
-        sts = @variables s(t)=1.0 lnf(t)=1.0 lnν(t)=1.0 lnq(t)=1.0 jcn(t)=0.0 [input=true]
+        sts = @variables s(t)=1.0 lnf(t)=1.0 lnν(t)=1.0 [output=true, description="hemodynamic_observer"] lnq(t)=1.0 [output=true, description="hemodynamic_observer"] jcn(t)=0.0 [input=true]
 
         eqs = [
             D(s)   ~ jcn/1e2 - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),

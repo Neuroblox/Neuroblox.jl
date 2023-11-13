@@ -304,7 +304,7 @@ struct LinearNeuralMass <: NeuralMassBlox
         sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, name=name)
-        new(sts[1], sts[2], sys, namespace)
+        new(sts[1], sts[2], sys, nothing)
     end
 end
 
