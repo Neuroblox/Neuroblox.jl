@@ -482,7 +482,7 @@ end
 
 @testset "WinnerTakeAll" begin
     N_exci = 5
-    @named wta= WinnerTakeAllBlox(;I_bg=5*rand(N_exci), N_exci)
+    @named wta= WinnerTakeAllBlox(;I_bg=5.0*rand(N_exci), N_exci)
     sys = wta.odesystem
     wta_simp=structural_simplify(sys)
     prob = ODEProblem(wta_simp,[],(0,10))
@@ -495,8 +495,8 @@ end
 @testset "WinnerTakeAll network" begin
     global_ns = :g # global namespace
     N_exci = 5
-    @named wta1 = WinnerTakeAllBlox(;I_bg=5*rand(N_exci), N_exci, namespace=global_ns)
-    @named wta2 = WinnerTakeAllBlox(;I_bg=5*rand(N_exci), N_exci, namespace=global_ns)
+    @named wta1 = WinnerTakeAllBlox(;I_bg=5.0, N_exci, namespace=global_ns)
+    @named wta2 = WinnerTakeAllBlox(;I_bg=5.0, N_exci, namespace=global_ns)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [wta1, wta2])
     add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.5))
