@@ -3,7 +3,6 @@ struct CorticalBlox <: CompositeBlox
     parts
     odesystem
     connector
-    mean::Vector{Num}
 
     function CorticalBlox(;
         name, 
@@ -47,8 +46,6 @@ struct CorticalBlox <: CompositeBlox
             τ = τ_inhib
         ) 
        
-        
-
         g = MetaDiGraph()
         add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
 
@@ -71,16 +68,16 @@ struct CorticalBlox <: CompositeBlox
         # TO DO : m is a subset of states to be plotted in the GUI. 
         # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
         # since it is not an essential part of the blox.
-        m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            # HACK : Need to define an empty system to add the correct namespace to states.
-            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
-        end
+        # m = if isnothing(namespace) 
+        #     [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        # else
+        #     @variables t
+        #     # HACK : Need to define an empty system to add the correct namespace to states.
+        #     # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
+        #     sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
+        #     [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        # end
 
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc, m)
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc)
     end
 end
