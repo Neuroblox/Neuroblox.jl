@@ -409,9 +409,18 @@ end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :nblocks => NCAD(10, INTEGER, 1, 40, []),
-    :blocksize => NCAD(6, INTEGER, 1, 40, []),
-    :lfp => NCAD("Average", MENU,1 ,3 ,["Average", "Gaussian", "Peaked"])
+    :N_wta => NCAD(10, INTEGER, 1, 100, []),
+    :N_exci => NCAD(5, INTEGER, 1, 100, []),
+    :E_syn_exci => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
+    :E_syn_inhib => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+    :G_syn_exci => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
+    :G_syn_inhib => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+    :G_syn_ff_inhib => NCAD(3.5, NUMBER, 0.01, 20.0,[]),
+    :freq => NCAD(0, NUMBER, 0.0, 100,[]),
+    :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
+    :I_bg_ar => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+	  :τ_exci => NCAD(5, NUMBER, 0.01, 20.0,[]),
+	  :τ_inhib => NCAD(70, NUMBER, 0.01, 100.0,[])
   )
 end
 
