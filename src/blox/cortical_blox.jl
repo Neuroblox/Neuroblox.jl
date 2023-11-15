@@ -31,7 +31,7 @@ struct CorticalBlox <: CompositeBlox
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_bg = I_bg_ar*rand(N_exci),
+                I_bg = I_bg_ar,
                 freq,
                 phase,
                 τ_exci,
