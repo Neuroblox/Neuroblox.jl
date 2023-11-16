@@ -126,7 +126,7 @@ function get_trial_stimulus(env::ClassificationEnvironment)
     return Dict(p => v for (p, v) in zip(stim_params, stim_values))
 end
 
-abstract type AbstractActionSelection end
+abstract type AbstractActionSelection <: AbstractBlox end
 
 mutable struct GreedyPolicy <: AbstractActionSelection
     const name
