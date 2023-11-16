@@ -143,7 +143,7 @@ end
 
 function arguments(::Type{Neuroblox.HarmonicOscillator})
   OrderedDict(
-    :measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
+    #:measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
     # MENU NCAD("title of menue", MENU, default, #ofoptions, list of options)
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[]),
