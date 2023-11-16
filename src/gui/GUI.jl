@@ -438,6 +438,10 @@ function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings f
   )
 end
 
+function nodemean(::Type{Neuroblox.CorticalBlox})
+  OrderedDict(:mean => "V")
+end
+
 function arguments(::Type{Neuroblox.BandPassFilterBlox})
   OrderedDict(
     :lb => NCAD(10, NUMBER, 0, 500,[]),
