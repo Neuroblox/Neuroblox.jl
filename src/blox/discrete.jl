@@ -8,7 +8,7 @@ struct Matrisome <: AbstractAlgebraic
 
     function Matrisome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
+        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true] H(t)=0.0
         ps = @parameters H=1
         eqs = [
             ρ ~ H*jcn
@@ -25,8 +25,8 @@ struct Striosome <: AbstractAlgebraic
 
     function Striosome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
-        ps = @parameters H=1
+        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true] H(t)=1.0
+        #ps = @parameters H=1
         eqs = [
             ρ ~ H*jcn + 0.1
         ]
