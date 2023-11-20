@@ -143,7 +143,7 @@ end
 
 function arguments(::Type{Neuroblox.HarmonicOscillator})
   OrderedDict(
-    :measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
+    #:measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
     # MENU NCAD("title of menue", MENU, default, #ofoptions, list of options)
     :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[]),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[]),
@@ -281,14 +281,37 @@ function arguments(::Type{Neuroblox.LarterBreakspear})
   )
 end
 
-function arguments(::Type{Neuroblox.NextGenerationBlox})
+# function arguments(::Type{Neuroblox.NextGenerationBlox})
+#   OrderedDict(
+#     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
+#     :Δ => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+#     :η_0 => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+#     :v_syn => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
+#     :alpha_inv => NCAD(35.0, NUMBER, 0.01, 10.0,[]),
+#     :k => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+#   )
+# end
+
+function arguments(::Type{Neuroblox.NextGenerationEIBlox})
   OrderedDict(
-    :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
-    :Δ => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
-    :η_0 => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
-    :v_syn => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
-    :alpha_inv => NCAD(35.0, NUMBER, 0.01, 10.0,[]),
-    :k => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+    :Cₑ => NCAD(52.0, NUMBER, 1.0, 50.0,[]),
+    :Cᵢ => NCAD(26.0, NUMBER, 1.0, 50.0,[]),
+    :Δₑ => NCAD(0.5, NUMBER, 0.01, 100.0,[]),
+    :Δᵢ => NCAD(0.5, NUMBER, 0.01, 100.0,[]),
+    :η_0ₑ => NCAD(10.0, NUMBER, 0.01, 20.0,[]),
+    :η_0ᵢ => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+    :v_synₑₑ => NCAD(10.0, NUMBER, -20.0, 20.0,[]),
+    :v_synₑᵢ => NCAD(-10.0, NUMBER, -20.0, 20.0,[]),
+    :v_synᵢₑ => NCAD(10.0, NUMBER, -20.0, 20.0,[]),
+    :v_synᵢᵢ => NCAD(-10.0, NUMBER, -20.0, 20.0,[]),
+    :alpha_invₑₑ => NCAD(10.0/26, NUMBER, 0.01, 20.0,[]),
+    :alpha_invₑᵢ => NCAD(0.8/26, NUMBER, 0.01, 20.0,[]),
+    :alpha_invᵢₑ => NCAD(10.0/26, NUMBER, 0.01, 20.0,[]),
+    :alpha_invᵢᵢ => NCAD(0.8/26, NUMBER, 0.01, 20.0,[]),
+    :kₑₑ => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+    :kₑᵢ => NCAD(0.6*26, NUMBER, 0.01, 20.0,[]),
+    :kᵢₑ => NCAD(0.6*26, NUMBER, 0.01, 20.0,[]),
+    :kᵢᵢ => NCAD(0.0, NUMBER, 0.01, 20.0,[])
   )
 end
 
@@ -311,6 +334,34 @@ end
 
 function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
   ["out_ss","out_sp","out_ii","out_sp"]
+end
+
+function arguments(::Type{Neuroblox.Thalamus})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.Striatum})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.GPe})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.GPi})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.STN})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.SNc})
+  OrderedDict()
+end
+
+function arguments(::Type{Neuroblox.GreedyPolicy})
+  OrderedDict()
 end
 
 function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
@@ -370,10 +421,25 @@ end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :nblocks => NCAD(10, INTEGER, 1, 40, []),
-    :blocksize => NCAD(6, INTEGER, 1, 40, []),
-    :lfp => NCAD("Average", MENU,1 ,3 ,["Average", "Gaussian", "Peaked"])
+    :N_wta => NCAD(10, INTEGER, 1, 100, []),
+    :N_exci => NCAD(5, INTEGER, 1, 100, []),
+    :E_syn_exci => NCAD(0.0, NUMBER, 0.01, 100.0,[]),
+    :E_syn_inhib => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+    :G_syn_exci => NCAD(3.0, NUMBER, 0.01, 20.0,[]),
+    :G_syn_inhib => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+    :G_syn_ff_inhib => NCAD(3.5, NUMBER, 0.01, 20.0,[]),
+    :freq => NCAD(0, NUMBER, 0.0, 100,[]),
+    :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
+    :I_bg_ar => NCAD(0.0, NUMBER, 0.01, 20.0,[]),
+	  :τ_exci => NCAD(5, NUMBER, 0.01, 20.0,[]),
+	  :τ_inhib => NCAD(70, NUMBER, 0.01, 100.0,[]),
+    :density => NCAD(0.1, NUMBER, 0.01, 1.0,[]),
+    :weight => NCAD(1.0, NUMBER, 0.01, 100.0,[])
   )
+end
+
+function nodemean(::Type{Neuroblox.CorticalBlox})
+  OrderedDict(:mean => "V")
 end
 
 function arguments(::Type{Neuroblox.BandPassFilterBlox})

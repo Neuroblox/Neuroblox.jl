@@ -1,9 +1,8 @@
-struct CorticalBlox <: AbstractComponent
+struct CorticalBlox <: CompositeBlox
     namespace
     parts
     odesystem
     connector
-    mean::Vector{Num}
 
     function CorticalBlox(;
         name, 
@@ -15,8 +14,8 @@ struct CorticalBlox <: AbstractComponent
         G_syn_exci=3.0,
         G_syn_inhib=4.0,
         G_syn_ff_inhib=3.5,
-        freq=zeros(N_exci),
-        phase=zeros(N_exci),
+        freq=0.0,
+        phase=0.0,
         I_bg_ar=0,
         τ_exci=5,
         τ_inhib=70,
@@ -31,7 +30,7 @@ struct CorticalBlox <: AbstractComponent
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_bg = I_bg_ar*rand(N_exci),
+                I_bg = I_bg_ar,
                 freq,
                 phase,
                 τ_exci,
@@ -47,8 +46,6 @@ struct CorticalBlox <: AbstractComponent
             τ = τ_inhib
         ) 
        
-        
-
         g = MetaDiGraph()
         add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
 
@@ -68,19 +65,6 @@ struct CorticalBlox <: AbstractComponent
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
-        # TO DO : m is a subset of states to be plotted in the GUI. 
-        # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
-        # since it is not an essential part of the blox.
-        m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            # HACK : Need to define an empty system to add the correct namespace to states.
-            # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc, m)
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc)
     end
 end

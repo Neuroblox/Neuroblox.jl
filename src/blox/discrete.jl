@@ -1,4 +1,4 @@
-abstract type AbstractAlgebraic end
+abstract type AbstractAlgebraic <: AbstractBlox end
 
 abstract type AbstractModulator <: AbstractAlgebraic end
 
