@@ -30,7 +30,11 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
 
     weight = get_weight(kwargs, name_out, name_in)
     w_name = Symbol("w_$(name_out)_$(name_in)")
-    w = only(@parameters $(w_name)=weight)
+    if typeof(weight) == Num   # Symbol
+        w = weight
+    else
+        w = only(@parameters $(w_name)=weight)
+    end    
 
     return w
 end
@@ -59,12 +63,13 @@ end
 function params(bc::BloxConnector)
     weights = []
     for w in bc.weights
-        if Symbolics.getdefaultval(w) isa Num
-            p = Symbolics.get_variables(Symbolics.getdefaultval(w))
-            append!(weights, p)
-        else
-            append!(weights, w)
-        end
+        append!(weights, Symbolics.get_variables(w))
+        # if Symbolics.getdefaultval(w) isa Num
+        #     p = Symbolics.get_variables(Symbolics.getdefaultval(w))
+        #     append!(weights, p)
+        # else
+        #     append!(weights, w)
+        # end
     end
     return vcat(reduce(vcat, weights), bc.delays)
     # return vcat(bc.weights, bc.delays)
@@ -126,7 +131,6 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(cb_in)
 
     bc(asc_out, neurons_in[end]; kwargs...)
-        
 end
 
 
@@ -181,7 +185,11 @@ function (bc::BloxConnector)(
 
     if typeof(bloxout.output) == Num
         w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-        w = only(@parameters $(w_name)=weight)
+        if typeof(weight) == Num # Symbol
+            w = weight
+        else
+            w = only(@parameters $(w_name)=weight)
+        end    
         push!(bc.weights, w)
         x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x*w
@@ -217,7 +225,7 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(bloxin)
 
     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    if typeof(weight) == Symbol
+    if typeof(weight) == Num # Symbol
         w = weight
     else
         w = only(@parameters $(w_name)=weight)
