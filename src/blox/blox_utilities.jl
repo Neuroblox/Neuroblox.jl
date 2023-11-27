@@ -1,31 +1,30 @@
-function progress_scope(params; lvl=0)
-    para_list = []
-    for p in params
-        pp = ModelingToolkit.unwrap(p)
-        if ModelingToolkit.hasdefault(pp)
-            d = ModelingToolkit.getdefault(pp)
-            if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
-                if lvl==0
-                    pp = ParentScope(pp)
-                else
-                    pp = DelayParentScope(pp,lvl)
-                end
-            end
-        end
-        push!(para_list,ModelingToolkit.wrap(pp))
-    end
-    return para_list
-end
+# function progress_scope(params; lvl=0)
+#     para_list = []
+#     for p in params
+#         pp = ModelingToolkit.unwrap(p)
+#         if ModelingToolkit.hasdefault(pp)
+#             d = ModelingToolkit.getdefault(pp)
+#             if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
+#                 if lvl==0
+#                     pp = ParentScope(pp)
+#                 else
+#                     pp = DelayParentScope(pp,lvl)
+#                 end
+#             end
+#         end
+#         push!(para_list,ModelingToolkit.wrap(pp))
+#     end
+#     return para_list
+# end
 
 """
 This function progresses the scope of parameters and leaves floating point values untouched
 """
 function progress_scope(args...)
     paramlist = []
+    @show args
     for p in args
-        if p isa Float64
-            push!(paramlist, p)
-        else
+        if p isa Num
             p = ParentScope(p)
             # pp = ModelingToolkit.unwrap(p)
             # if ModelingToolkit.hasdefault(pp)
@@ -36,8 +35,11 @@ function progress_scope(args...)
             # end
             # push!(para_list,ModelingToolkit.wrap(pp))
             push!(paramlist, p)
+        else
+            push!(paramlist, p)
         end
     end
+    @show paramlist
     return paramlist
 end
 
@@ -49,7 +51,7 @@ function compileparameterlist(;kwargs...)
     paramlist = []
     for (kw, v) in kwargs
         if v isa Float64  # note that Num is also subtype of Real. If we want to be more inclusive we need to create a union of types.
-            paramlist = vcat(paramlist, @parameters $kw = v)
+            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
         else
             paramlist = vcat(paramlist, v)
         end
