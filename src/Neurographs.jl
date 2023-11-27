@@ -180,14 +180,32 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
-function system_from_graph(g::MetaDiGraph; name)
+function system_from_graph(g::MetaDiGraph; name, kwargs)
     bc = connector_from_graph(g)
+    neurons_exci = get_exci_neurons(cb)
+    t_disc = get_event_time(kwargs) 
+
+    for neurons in neurons_exci
+       nn = get_namespaced_sys(neurons)  
+       cb = (t_disc + eps(float(t_disc))) => [nn.spikes_window ~ 0]
+       push!(bc.events, cb)
+    end
+
     return system_from_graph(g, bc; name)
 end
 
 # Additional dispatch if extra parameters are passed for edge definitions
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name)
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, kwargs)
     bc = connector_from_graph(g)
+    neurons_exci = get_exci_neurons(cb)
+    t_disc = get_event_time(kwargs) 
+
+    for neurons in neurons_exci
+       nn = get_namespaced_sys(neurons)  
+       cb = (t_disc + eps(float(t_disc))) => [nn.spikes_window ~ 0]
+       push!(bc.events, cb)
+    end
+
     return system_from_graph(g, bc, p; name)
 end
 

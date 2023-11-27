@@ -227,12 +227,12 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
                D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
         
-        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
+       # spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
 		sys = ODESystem(
             eqs, t, sts, ps; 
-            name = Symbol(name),discrete_events = spike_reset_cb
-			#name = Symbol(name)
+            #name = Symbol(name),discrete_events = spike_reset_cb
+			name = Symbol(name)
 			)
 
 		new(sys, spikes, namespace)
@@ -245,7 +245,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	function HHNeuronInhibBlox(;
         name, 
         namespace = nothing, 
-        t_spike_window=90.0,
+        #t_spike_window=90.0,
         θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
@@ -268,8 +268,8 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
             G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
-            spikes_cumulative(t)=0.0
-            spikes_window(t)=0.0
+            #spikes_cumulative(t)=0.0
+            #spikes_window(t)=0.0
 		end
 
 		ps = @parameters begin 
@@ -306,17 +306,17 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
-			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
-               D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
-               D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
+			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
+               #D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
+               #D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
 
-        spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
+        #spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
         sys = ODESystem(
             eqs, t, sts, ps; 
-            name = Symbol(name), discrete_events = spike_reset_cb
-			#name = Symbol(name)
+            #name = Symbol(name), discrete_events = spike_reset_cb
+			name = Symbol(name)
         )
         
 		new(sys, namespace)
