@@ -230,13 +230,14 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     return length(spikes)
 end
 
-function get_hemodynamic_observers(sys_from_graph)
-    obs_idx = []
-    obs_states = []
+function get_hemodynamic_observers(sys_from_graph, nr)
+    obs_idx = Dict([k => [] for k in 1:nr])
+    obs_states = Dict([k => [] for k in 1:nr])
     for (i, s) in enumerate(outputs(sys_from_graph))
         if isequal(getdescription(s), "hemodynamic_observer")
-            push!(obs_idx, i)
-            push!(obs_states, s)
+            regionidx = parse(Int64, split(string(s), "₊")[1][end])
+            push!(obs_idx[regionidx], i)
+            push!(obs_states[regionidx], s)
         end
     end
     return (obs_idx, obs_states)
