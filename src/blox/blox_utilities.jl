@@ -242,3 +242,17 @@ function get_hemodynamic_observers(sys_from_graph, nr)
     end
     return (obs_idx, obs_states)
 end
+
+function addnontunableparams(param, model)
+    newparam = []
+    k = 0
+    for p in parameters(model)
+        if istunable(p)
+            k += 1
+            push!(newparam, param[k])
+        else
+            push!(newparam, Symbolics.getdefaultval(p))
+        end
+    end
+    return newparam
+end
