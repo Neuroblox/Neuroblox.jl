@@ -76,7 +76,7 @@ struct BalloonModel <: ObserverBlox
     jcn
     odesystem
     namespace
-    function BalloonModel(;name, lnκ=0.0, lnτ=0.0)
+    function BalloonModel(;name, namespace=nothing, lnκ=0.0, lnτ=0.0)
         #= hemodynamic parameters
             H(1) - signal decay                                   d(ds/dt)/ds)
             H(2) - autoregulation                                 d(ds/dt)/df)
@@ -86,8 +86,8 @@ struct BalloonModel <: ObserverBlox
         =#
 
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        p = progress_scope(@parameters lnκ=lnκ lnτ=lnτ)  # progress scope if needed
-        #p = compileparameterlist(lnκ=p[1], lnτ=p[2])  # finally compile all parameters
+        p = progress_scope(lnκ, lnτ)  # progress scope if needed
+        p = compileparameterlist(lnκ=p[1], lnτ=p[2])  # finally compile all parameters
         lnκ, lnτ = p  # assign the modified parameters
         
         sts = @variables s(t)=1.0 lnf(t)=1.0 lnν(t)=1.0 [output=true, description="hemodynamic_observer"] lnq(t)=1.0 [output=true, description="hemodynamic_observer"] jcn(t)=0.0 [input=true]
@@ -99,7 +99,7 @@ struct BalloonModel <: ObserverBlox
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
         sys = System(eqs, name=name)
-        new(p, Num(0), sts[5], sys, nothing)
+        new(p, Num(0), sts[5], sys, namespace)
     end
 end
 
@@ -133,6 +133,7 @@ struct LinHemoCombo <: CompoundNOBlox
     namespace
     function LinHemoCombo(;name, lnκ=0.0, lnτ=0.0)
         p = progress_scope(lnκ, lnτ) 
+        p = compileparameterlist(lnκ=p[1], lnτ=p[2])  # finally compile all parameters
         lnκ, lnτ = p  # assign the modified parameters
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
 
