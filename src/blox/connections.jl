@@ -24,6 +24,27 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
+get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
+
+get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
+
+function get_callbacks(bc, t_affect=missing)
+    if !ismissing(t_affect)
+        cbs_params = t_affect => get_equations_with_parameter_lhs(bc)
+
+        return vcat(cbs_params, bc.events)
+    else
+        return bc.events
+    end
+end
+
+function generate_callbacks_for_parameter_lhs(bc)
+    eqs = get_equations_with_parameter_lhs(bc)
+    cbs = [bc.param_update_times[eq.lhs] => eq for eq in eqs]
+
+    return cbs
+end
+
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
     name_in = namespaced_nameof(blox_in)
