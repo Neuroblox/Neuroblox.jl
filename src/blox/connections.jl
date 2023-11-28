@@ -119,7 +119,6 @@ function (bc::BloxConnector)(
         
 end
 
-
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
     bloxin::NeuralMassBlox; 
@@ -133,8 +132,6 @@ function (bc::BloxConnector)(
 
     if haskey(kwargs, :learning_rule)
         lr = kwargs[:learning_rule]
-        # maybe_set_state_pre!(lr, 
-        # maybe_set_state_post!(lr, 
         bc.learning_rules[w] = lr
     end
 
@@ -293,8 +290,7 @@ function (bc::BloxConnector)(
     end
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
-
-    accumulate_equation!(bc, eq)
+    accumulate_equation!(bc, eq)    
 end
 
 function (bc::BloxConnector)(
@@ -308,8 +304,8 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str_in)
 
     t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
-    cb_matr = [t_event] => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
-    cb_strios = [t_event] => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
+    cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
+    cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
     push!(bc.events, cb_matr)
     push!(bc.events, cb_strios)
 
@@ -317,7 +313,7 @@ function (bc::BloxConnector)(
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        cb_neuron = [t_event] => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -2, 0)]
+        cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -2, 0)]
         push!(bc.events, cb_neuron)
     end
 end
@@ -404,7 +400,7 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(discr_in)
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = [t_event] => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
+    cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
     push!(bc.events, cb)
 end
 
