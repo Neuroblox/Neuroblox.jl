@@ -254,5 +254,6 @@ function addnontunableparams(param, model)
             push!(newparam, Symbolics.getdefaultval(p))
         end
     end
+    append!(newparam, param[k+1:end])
     return newparam
 end

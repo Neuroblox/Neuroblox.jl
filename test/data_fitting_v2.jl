@@ -94,24 +94,36 @@ nd = ncol(data)                         # number of dimensions
 
 ########## assemble the model ##########
 
-@parameters κ=0.0     # define brain-wide decay parameter for hemodynamics
-g2 = MetaDiGraph()
+g = MetaDiGraph()
+# shouldn't the following be somehow dealt with a system_from_parts() call? But that does not allow for connections between subsystems it seems 
+# I would like to do so to create a region that is composed of different blox that are interconnected.
+# can't just build systems from graphs first and then connect them with another graph...?
+regions = Dict()
+@parameters κ=0.0 [tunable = true]     # define brain-wide decay parameter for hemodynamics
 for ii = 1:nd
-    region = LinHemoCombo(;name=Symbol("r$ii"), lnκ=κ)
-    add_blox!(g2, region)
+    region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
+    add_blox!(g, region)
+    regions[ii] = 2ii - 1    # store index of neural mass model
+    # add hemodynamic observer
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ)
+    add_blox!(g, observer)
+    # connect observer with neuronal signal
+    add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
+    # region = LinHemoCombo(;name=Symbol("r$ii"), lnκ=κ)
 end
 
 # add symbolic weights
-@parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"])
+@parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"]) [tunable = true]
 for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
     if idx[1] == idx[2]
-        add_edge!(g, idx[1], idx[2], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12
+        add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12
     else
-        add_edge!(g, idx[1], idx[2], :weight, A[i])
+        add_edge!(g, regions[idx[2]], regions[idx[1]], :weight, A[i])
     end
 end
+
 # compose model
-@named neuronmodel = ODEfromGraph(g)
+@named neuronmodel = system_from_graph(g)
 neuronmodel = structural_simplify(neuronmodel)
 
 # measurement model
@@ -121,7 +133,13 @@ neuronmodel = structural_simplify(neuronmodel)
 all_s = states(neuronmodel)
 initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
 rnames = []
-x = rand(3, 6) #WHY  IS x 3x5?
+# ns = Int(length(all_s)/nd)
+# for ii = 1:nd
+#     for jj = 1:ns
+#         initcond[all_s[(ii-1)*ns+jj]] = 0.0
+#     end
+# end
+# x = rand(3, 6) #WHY  IS x 3x5?
 map(x->push!(rnames, split(string(x), "₊")[1]), all_s); 
 rnames = unique(rnames);
 for (i, r) in enumerate(rnames)
@@ -132,15 +150,16 @@ end
 
 modelparam = OrderedDict()
 for par in parameters(neuronmodel)
-    if Symbolics.getdefaultval(par) isa Num
-        ex = Symbolics.getdefaultval(par)
-        @show ex
-        p = only(Symbolics.get_variables(ex))
-        @show p
-        # Symbolics.value(Symbolics.substitute(Symbolics.getdefaultval(parameters(neuronmodel2)[1]), Dict(p => Symbolics.getdefaultval(p)))) 
-        par = Symbolics.substitute(ex, Dict(p => Symbolics.getdefaultval(p)))
-        modelparam[p] = Symbolics.value(par)
-    else
+    # if Symbolics.getdefaultval(par) isa Num
+    #     ex = Symbolics.getdefaultval(par)
+    #     @show ex
+    #     p = only(Symbolics.get_variables(ex))
+    #     @show p
+    #     # Symbolics.value(Symbolics.substitute(Symbolics.getdefaultval(parameters(neuronmodel2)[1]), Dict(p => Symbolics.getdefaultval(p)))) 
+    #     par = Symbolics.substitute(ex, Dict(p => Symbolics.getdefaultval(p)))
+    #     modelparam[p] = Symbolics.value(par)
+    # else
+    if istunable(par)
         modelparam[par] = Symbolics.getdefaultval(par)
     end
 end
@@ -156,6 +175,7 @@ end
 
 # define prior variances
 paramvariance = copy(modelparam)
+# [paramvariance[k] = 0.0 for k in keys(paramvariance) if occursin("w_lm", string(k)) && occursin("bm", string(k))]
 paramvariance[:C] = zeros(Float64, nd);
 paramvariance[:lnγ] = ones(Float64, nd)./64.0;
 paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0; 
@@ -176,9 +196,19 @@ params = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(m
 hyperparams = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter precision, needs to be a matrix
                    :μλ_pr => [vars["hE"]]             # prior metaparameter mean, needs to be a vector
                   )
-
+foo = Ref{Any}()
+bar = Ref{Any}()
+bar2 = Ref{Any}()
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"])
-results = spectralVI2(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
+results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
+
+J, iΣ, Πθ_pr = foo[]
+S, ∂g, ps = bar2[]
+∂f = bar[]
+
+obs = get_hemodynamic_observers(neuronmodel, nd)
+obsstates = map(obs -> [initcond[s] for s in obs], values(obs[2]))
+
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @show results.F, vars["F"]

@@ -181,6 +181,6 @@ export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, namespace_expr, nameof
-export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, spectralVI2, get_hemodynamic_observers
+export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, addnontunableparams, get_hemodynamic_observers
 export input_equations, BloxConnector, accumulate_equation!, get_sys #remove this line
 end
