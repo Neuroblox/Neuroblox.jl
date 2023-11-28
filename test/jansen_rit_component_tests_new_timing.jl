@@ -4,16 +4,16 @@ using Neuroblox, DifferentialEquations, DataFrames, Test, Distributions, Statist
 
 # Create Regions
 @named Str = jansen_ritC(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
-@named GPe = jansen_ritC(τ=0.04*τ_factor, H=20, λ=400, r=0.1)
-@named STN = jansen_ritC(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
-@named GPi = jansen_ritSC(τ=0.014*τ_factor, H=20, λ=400, r=0.1)
+@named gpe = jansen_ritC(τ=0.04*τ_factor, H=20, λ=400, r=0.1)
+@named stn = jansen_ritC(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
+@named gpi = jansen_ritSC(τ=0.014*τ_factor, H=20, λ=400, r=0.1)
 @named Th  = jansen_ritSC(τ=0.002*τ_factor, H=10, λ=20, r=5)
 @named EI  = jansen_ritSC(τ=0.01*τ_factor, H=20, λ=5, r=5)
 @named PY  = jansen_ritSC(τ=0.001*τ_factor, H=20, λ=5, r=0.15)
 @named II  = jansen_ritSC(τ=2.0*τ_factor, H=60, λ=5, r=5)
 
 # Connect Regions through Adjacency Matrix
-blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
+blox = [Str, gpe, stn, gpi, Th, EI, PY, II]
 sys = [s.odesystem for s in blox]
 connect = [s.connector for s in blox]
 
@@ -33,7 +33,7 @@ adj_matrix_lin = [0 0 0 0 0 0 0 0;
 sim_dur = 2000.0 # Simulate for 2 seconds
 mysys = structural_simplify(CBGTC_Circuit_lin)
 sol = simulate(mysys, [], (0.0, sim_dur), [], Vern7(); saveat=1)
-@test sol[!, "GPi₊x(t)"][4] ≈ -2219.2560209502685 #updated to new value in ms
+@test sol[!, "gpi₊x(t)"][4] ≈ -2219.2560209502685 #updated to new value in ms
 
 """
 Testing new Jansen-Rit blox
@@ -47,14 +47,14 @@ same thing as the old simulate call with AutoVern7(Rodas4() since there are no d
 
 # test new Jansen-Rit blox
 @named Str = JansenRit(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
-@named GPe = JansenRit(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
-@named STN = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
-@named GPi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named gpe = JansenRit(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
+@named stn = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
+@named gpi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
 @named Th  = JansenRit(τ=0.002*τ_factor, H=10, λ=20, r=5)
 @named EI  = JansenRit(τ=0.01*τ_factor, H=20, λ=5, r=5)
 @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
 @named II  = JansenRit(τ=2.0*τ_factor, H=60, λ=5, r=5)
-blox = [Str, GPe, STN, GPi, Th, EI, PY, II]
+blox = [Str, gpe, stn, gpi, Th, EI, PY, II]
 
 # test graphs
 g = MetaDiGraph()
@@ -104,7 +104,7 @@ prob = DDEProblem(final_system_sys,
 alg = MethodOfSteps(Vern7())
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 sol2 = DataFrame(sol_dde_no_delays)
-@test isapprox(sol2[!, "GPi₊x(t)"][500:1000], sol[!, "GPi₊x(t)"][500:1000], rtol=1e-8)
+@test isapprox(sol2[!, "gpi₊x(t)"][500:1000], sol[!, "gpi₊x(t)"][500:1000], rtol=1e-8)
 
 
 # Alternative version using adjacency matrix
@@ -123,4 +123,4 @@ prob = DDEProblem(final_system_sys,
 alg = MethodOfSteps(Vern7())
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 sol3 = DataFrame(sol_dde_no_delays)
-@test isapprox(sol3[!, "GPi₊x(t)"][500:1000], sol[!, "GPi₊x(t)"][500:1000], rtol=1e-8)
+@test isapprox(sol3[!, "gpi₊x(t)"][500:1000], sol[!, "gpi₊x(t)"][500:1000], rtol=1e-8)
