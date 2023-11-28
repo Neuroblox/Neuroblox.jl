@@ -39,7 +39,7 @@ mutable struct Hemodynamics <: AbstractComponent
         params = progress_scope(lnκ, lnτ)  # progress scope if needed
         params = compileparameterlist(lnκ=params[1], lnτ=params[2])  # finally compile all parameters
         lnκ, lnτ = params  # assign the modified parameters
-        
+
         states = @variables s(t) lnf(t) lnν(t) lnq(t) jcn(t)
 
         eqs = [
@@ -106,7 +106,7 @@ function boldsignal(;name, lnϵ=0.0)
     k1  = 4.3*nu0*E0*TE
 
     params = @parameters lnϵ=lnϵ
-    vars = @variables bold(t) lnq(t) lnν(t)
+    vars = @variables bold(t) lnν(t) lnq(t)   # TODO: got to be really careful with the current implementation! A simple permutation of this breaks the algorithm!
 
     eqs = [
         bold ~ V0*(k1 - k1*exp(lnq) + exp(lnϵ)*r0*E0*TE - exp(lnϵ)*r0*E0*TE*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
