@@ -93,7 +93,7 @@ struct BalloonModel <: ObserverBlox
         sts = @variables s(t)=1.0 lnf(t)=1.0 lnν(t)=1.0 [output=true, description="hemodynamic_observer"] lnq(t)=1.0 [output=true, description="hemodynamic_observer"] jcn(t)=0.0 [input=true]
 
         eqs = [
-            D(s)   ~ jcn/1e2 - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
+            D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
             D(lnf) ~ s / exp(lnf),
             D(lnν) ~ (exp(lnf) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
             D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
