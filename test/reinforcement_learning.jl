@@ -43,13 +43,14 @@ add_edge!(g, d[STR_R], d[SNcb], Dict(:weight => 1))
 add_edge!(g, d[STR_L], d[AS])
 add_edge!(g, d[STR_R], d[AS])
 
-agent = Agent(g; name=:ag)
+agent = Agent(g; name=:ag, t_block = t_trial/5);
 ps = parameters(agent.odesystem)
 init_params = agent.problem.p
 map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
 idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
 idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
-idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim))
+idx_jcn = findall(x -> occursin("jcn", String(Symbol(x))), ps)
+idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn))
 
 env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
 run_experiment!(agent, env; alg=QNDF(), reltol=1e-9,abstol=1e-9)
