@@ -116,21 +116,22 @@ end
 #   )
 # end
 
-function arguments(::Type{Neuroblox.OUBlox})
-  OrderedDict(
-    :μ => NCAD(0.0, NUMBER, -100.0, 100.0,[]),
-    :τ => NCAD(1.0, NUMBER, 0.00001,10,[]),
-    :σ => NCAD(1.0, NUMBER, 0.00001,10,[])
-  )
-end
+#TODO: create connector compatible stochastic blox
+# function arguments(::Type{Neuroblox.OUBlox})
+#   OrderedDict(
+#     :μ => NCAD(0.0, NUMBER, -100.0, 100.0,[]),
+#     :τ => NCAD(1.0, NUMBER, 0.00001,10,[]),
+#     :σ => NCAD(1.0, NUMBER, 0.00001,10,[])
+#   )
+# end
 
-function arguments(::Type{Neuroblox.OUCouplingBlox})
-  OrderedDict(
-    :μ => NCAD(0.0, NUMBER, -100.0, 100.0,[]),
-    :τ => NCAD(1.0, NUMBER, 0.00001,10,[]),
-    :σ => NCAD(1.0, NUMBER, 0.00001,10,[])
-  )
-end
+# function arguments(::Type{Neuroblox.OUCouplingBlox})
+#   OrderedDict(
+#     :μ => NCAD(0.0, NUMBER, -100.0, 100.0,[]),
+#     :τ => NCAD(1.0, NUMBER, 0.00001,10,[]),
+#     :σ => NCAD(1.0, NUMBER, 0.00001,10,[])
+#   )
+# end
 
 # function arguments(::Type{Neuroblox.HarmonicOscillatorBlox})
 #   OrderedDict(
@@ -153,7 +154,7 @@ function arguments(::Type{Neuroblox.HarmonicOscillator})
 end
 
 function plotdetail(::Type{Neuroblox.HarmonicOscillator})
-  OrderedDict(:detail => ["x"], :nodetail => ["x","y"])
+  OrderedDict(:detail => ["x","y"], :nodetail => ["x"])
 end
 
 # function arguments(::Type{Neuroblox.JansenRitCBlox})
@@ -181,6 +182,10 @@ function arguments(::Type{Neuroblox.JansenRit})
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[]),
     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[])
   )
+end
+
+function plotdetail(::Type{Neuroblox.JansenRit})
+  OrderedDict(:detail => ["x","y"], :nodetail => ["x"])
 end
 
 # function arguments(::Type{Neuroblox.WilsonCowanBlox})
@@ -213,6 +218,10 @@ function arguments(::Type{Neuroblox.WilsonCowan})
     :θ_I => NCAD(3.5, NUMBER, 1.0, 100.0,[]),
     :η => NCAD(1.0, NUMBER, 1.0, 100.0,[])
   )
+end
+
+function plotdetail(::Type{Neuroblox.WilsonCowan})
+  OrderedDict(:detail => ["E","I"], :nodetail => ["E"])
 end
 
 # function arguments(::Type{Neuroblox.LarterBreakspearBlox})
@@ -281,6 +290,10 @@ function arguments(::Type{Neuroblox.LarterBreakspear})
   )
 end
 
+function plotdetail(::Type{Neuroblox.LarterBreakspear})
+  OrderedDict(:detail => ["V","Z","W"], :nodetail => ["V"])
+end
+
 # function arguments(::Type{Neuroblox.NextGenerationBlox})
 #   OrderedDict(
 #     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
@@ -315,26 +328,31 @@ function arguments(::Type{Neuroblox.NextGenerationEIBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
-  OrderedDict(
-    :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
-    :τ_sp => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
-    :τ_ii => NCAD(0.016, NUMBER, 0.0001, 0.1,[]),
-    :τ_dp => NCAD(0.028, NUMBER, 0.0001, 0.1,[]),
-    :r_ss => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
-    :r_sp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
-    :r_ii => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
-    :r_dp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[])
-  )
+function plotdetail(::Type{Neuroblox.NextGenerationEIBlox})
+  OrderedDict(:detail => ["aₑ","bₑ","aᵢ","bᵢ"], :nodetail => ["aₑ","bₑ"])
 end
 
-function inputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
-  ["in_ss","in_sp","in_ii","in_sp"]
-end
+#TODO: create connector compatible CMC
+# function arguments(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+#   OrderedDict(
+#     :τ_ss => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
+#     :τ_sp => NCAD(0.002, NUMBER, 0.0001, 0.1,[]),
+#     :τ_ii => NCAD(0.016, NUMBER, 0.0001, 0.1,[]),
+#     :τ_dp => NCAD(0.028, NUMBER, 0.0001, 0.1,[]),
+#     :r_ss => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+#     :r_sp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+#     :r_ii => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[]),
+#     :r_dp => NCAD(2.0/3.0, NUMBER, 0.1, 5.0,[])
+#   )
+# end
 
-function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
-  ["out_ss","out_sp","out_ii","out_sp"]
-end
+# function inputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+#   ["in_ss","in_sp","in_ii","in_sp"]
+# end
+
+# function outputs(::Type{Neuroblox.CanonicalMicroCircuitBlox})
+#   ["out_ss","out_sp","out_ii","out_sp"]
+# end
 
 function arguments(::Type{Neuroblox.Thalamus})
   OrderedDict()
@@ -364,36 +382,37 @@ function arguments(::Type{Neuroblox.GreedyPolicy})
   OrderedDict()
 end
 
-function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
-  OrderedDict(
-    :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
-    :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
-    :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
-	  :I_in => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
-	  :freq => NCAD(35.0, NUMBER, 0.01, 10.0,[]),
-	  :phase => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
-	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
-  )
-end
+#TODO: create connector compatible CMC
+# function arguments(::Type{Neuroblox.IFNeuronBlox}) #TODO: add correct settings for the arguments
+#   OrderedDict(
+#     :C => NCAD(30.0, NUMBER, 1.0, 50.0,[]),
+#     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+#     :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+# 	  :I_in => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
+# 	  :freq => NCAD(35.0, NUMBER, 0.01, 10.0,[]),
+# 	  :phase => NCAD(0.105, NUMBER, 0.01, 2.0,[]),
+# 	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+#   )
+# end
 
-function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings for the arguments
-  OrderedDict(
-    :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
-    :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
-	  :w => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
-	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
-  )
-end
+# function arguments(::Type{Neuroblox.QIFNeuronBlox}) #TODO: add correct settings for the arguments
+#   OrderedDict(
+#     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
+#     :G_syn => NCAD(5.0, NUMBER, 0.01, 20.0,[]),
+# 	  :w => NCAD(-10.0, NUMBER, -20.0, 0.0,[]),
+# 	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
+#   )
+# end
 
-function arguments(::Type{Neuroblox.LIFNeuronBlox}) #TODO: add correct settings for the arguments
-  OrderedDict(
-    :I_in => NCAD(0.0, NUMBER, -5.0, 5.0,[]),
-    :V_L => NCAD(-70.0, NUMBER, -90, -10,[]),
-    :τ => NCAD(10.0, NUMBER, 0.01, 100.0,[]),
-    :R => NCAD(100.0, NUMBER, 0.01, 200.0,[]),
-    :θ => NCAD(-10.0, NUMBER, -20, 20.0,[]),
-  )
-end
+# function arguments(::Type{Neuroblox.LIFNeuronBlox}) #TODO: add correct settings for the arguments
+#   OrderedDict(
+#     :I_in => NCAD(0.0, NUMBER, -5.0, 5.0,[]),
+#     :V_L => NCAD(-70.0, NUMBER, -90, -10,[]),
+#     :τ => NCAD(10.0, NUMBER, 0.01, 100.0,[]),
+#     :R => NCAD(100.0, NUMBER, 0.01, 200.0,[]),
+#     :θ => NCAD(-10.0, NUMBER, -20, 20.0,[]),
+#   )
+# end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
@@ -408,6 +427,10 @@ function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settin
   )
 end
 
+function plotdetail(::Type{Neuroblox.HHNeuronExciBlox})
+  OrderedDict(:detail => ["V","n","m","h"], :nodetail => ["V"])
+end
+
 function arguments(::Type{Neuroblox.HHNeuronInhibBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
     :E_syn => NCAD(1.0, NUMBER, 0.01, 100.0,[]),
@@ -417,6 +440,10 @@ function arguments(::Type{Neuroblox.HHNeuronInhibBlox}) #TODO: add correct setti
     :phase => NCAD(0, NUMBER, 0.0, 2*π,[]),
 	  :τ => NCAD(0.105, NUMBER, 0.01, 2.0,[])
   )
+end
+
+function plotdetail(::Type{Neuroblox.HHNeuronInhibBlox})
+  OrderedDict(:detail => ["V","n","m","h"], :nodetail => ["V"])
 end
 
 function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings for the arguments
@@ -438,8 +465,8 @@ function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings f
   )
 end
 
-function nodemean(::Type{Neuroblox.CorticalBlox})
-  OrderedDict(:mean => "V")
+function plotdetail(::Type{Neuroblox.CorticalBlox})
+  OrderedDict(:mean => "V", :detail => ["V"])
 end
 
 function arguments(::Type{Neuroblox.BandPassFilterBlox})
@@ -459,7 +486,7 @@ function arguments(::Type{Neuroblox.PowerSpectrumBlox})
 end
 
 function arguments(::Type{Neuroblox.PhaseAngleBlox})
-  Dict(
+  OrderedDict(
   )
 end
 
