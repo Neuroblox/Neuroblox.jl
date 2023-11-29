@@ -154,7 +154,8 @@ mutable struct Agent
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
 
-        sys = system_from_graph(g, bc; name)
+        t_affect = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
+        sys = system_from_graph(g, bc; name, t_affect)
         ss = structural_simplify(sys; allow_parameter=false)
 
         u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
