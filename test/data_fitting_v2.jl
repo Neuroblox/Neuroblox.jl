@@ -196,18 +196,9 @@ params = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(m
 hyperparams = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter precision, needs to be a matrix
                    :μλ_pr => [vars["hE"]]             # prior metaparameter mean, needs to be a vector
                   )
-foo = Ref{Any}()
-bar = Ref{Any}()
-bar2 = Ref{Any}()
+
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"])
 results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
-
-J, iΣ, Πθ_pr = foo[]
-S, ∂g, ps = bar2[]
-∂f = bar[]
-
-obs = get_hemodynamic_observers(neuronmodel, nd)
-obsstates = map(obs -> [initcond[s] for s in obs], values(obs[2]))
 
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###

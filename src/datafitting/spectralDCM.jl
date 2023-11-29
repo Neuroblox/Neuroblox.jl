@@ -78,9 +78,8 @@ function transferfunction_fmri(w, idx_A, derivatives, params)
     C = params[(6+2nd+nd^2):(5+3nd+nd^2)]
     C /= 16.0   # TODO: unclear why C is devided by 16 but see spm_fx_fmri.m:49
     ∂f = derivatives[:∂f](params[1:(nd^2+nd+1)])   #convert(Array{Real}, substitute(derivatives[:∂f], params))
-Main.bar[] = ∂f
     if ∂f isa Vector
-        ∂f = reshape(∂f, nd*5, nd*5)     # TODO: generalize this to arbitrary number of states! This is specific for LinHemo!
+        ∂f = reshape(∂f, sqrt(length(∂f)), sqrt(length(∂f)))
     end
 
     dfdu = zeros(eltype(C), size(∂f, 1), length(C))
@@ -109,7 +108,6 @@ Main.bar[] = ∂f
             end
         end
     end
-    Main.bar2[] = S, ∂g, params
 
     return S
 end
@@ -293,7 +291,6 @@ end
     for k = 1:niter
         state.iter = k
         dfdp = ForwardDiff.jacobian(f_prep, μθ_po) * V
-Main.foo[] = dfdp, μθ_po, V
         norm_dfdp = matlab_norm(dfdp, Inf);
         revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
@@ -479,7 +476,7 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     grad_full = function(grad, obsstates, obsidx, params, nr, ns)
         tmp = zeros(typeof(params), nr, ns)
         for i in 1:nr
-            tmp[i, obsidx[i]] = grad(vcat([1], obsstates[i]), params, t)[2:end] # [(length(obsstates[i])+1):-1:2]
+            tmp[i, obsidx[i]] = grad(vcat([1], obsstates[i]), params, t)[2:end] # [(length(obsstates[i])+1):-1:2] TODO: using the reverse will improve results but is wrong.
         end
         return tmp
     end
@@ -519,60 +516,6 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     # the following is needed to properly deal with C. 
     # Fixing this likely means departing from the SPM12 version, which should happen at some point since it is an odd part, 
     # see transferfunction
-    idx_A = findall(occursin.("A[", string.(calculate_jacobian(neuraldynmodel))))
-
-    ### Compute the variational Bayes with Laplace approximation ###
-    return variationalbayes(idx_A, y_csd, derivatives, freqs, V, p, priors, 128)
-end
-
-function spectralVI2(data, neuraldynmodel, observationmodel, initcond, csdsetup, params, hyperparams)
-    # compute cross-spectral density
-    y = Matrix(data);
-    nd = ncol(data);                     # dimension of the data, number of regions
-    dt = csdsetup[:dt];                 # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
-    freqs = csdsetup[:freq];            # frequencies at which the CSD is evaluated
-    p = csdsetup[:p];                   # order of MAR
-    mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
-    y_csd = mar2csd(mar, freqs, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-
-    grad_full = function(p, grad, sts, nd)
-        tmp = zeros(typeof(p), nd, length(sts))
-        for i in 1:nd
-            tmp[i, (i-1)*6 .+ (5:6)] = grad(vcat([1], sts[(i-1)*6 .+ (6:-1:5)]), p, t)[4:-1:3]
-        end
-        return tmp
-    end
-    jac_f = generate_jacobian(neuraldynmodel, expression = Val{false})[1]
-    grad_g = generate_jacobian(observationmodel, expression = Val{false})[1]
-    
-    statevals = [v for v in values(initcond)]
-    derivatives = Dict(:∂f => par -> jac_f(statevals, par, t),
-                       :∂g => par -> grad_full(par, grad_g, statevals, nd))
-
-    θΣ = diagm(vecparam(OrderedDict(params.name .=> params.variance)))
-    # depending on the definition of the priors (note that we take it from the SPM12 code), some dimensions are set to 0 and thus are not changed.
-    # Extract these dimensions and remove them from the remaining computation. I find this a bit odd and further thoughts would be necessary to understand
-    # to what extend this is a the most reasonable approach. 
-    idx = findall(x -> x != 0, θΣ);
-    V = zeros(size(θΣ, 1), length(idx));
-    order = sortperm(θΣ[idx], rev=true);
-    idx = idx[order];
-    for i = 1:length(idx)
-        V[idx[i][1], i] = 1.0
-    end
-    θΣ = V'*θΣ*V;       # reduce dimension by removing columns and rows that are all 0
-
-    ### Collect prior means and covariances ###
-    Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
-    priors = Dict(:μ => OrderedDict(params.name .=> params.mean),
-    :Σ => Dict(
-              :Πθ_pr => inv(θΣ),               # prior model parameter precision
-              :Πλ_pr => hyperparams[:Πλ_pr],   # prior metaparameter precision
-              :μλ_pr => hyperparams[:μλ_pr],   # prior metaparameter mean
-              :Q => Q                          # decomposition of model parameter covariance
-              )
-            );
-
     idx_A = findall(occursin.("A[", string.(calculate_jacobian(neuraldynmodel))))
 
     ### Compute the variational Bayes with Laplace approximation ###

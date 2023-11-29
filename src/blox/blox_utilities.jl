@@ -233,7 +233,7 @@ end
 function get_hemodynamic_observers(sys_from_graph, nr)
     obs_idx = Dict([k => [] for k in 1:nr])
     obs_states = Dict([k => [] for k in 1:nr])
-    for (i, s) in enumerate(outputs(sys_from_graph))
+    for (i, s) in enumerate(states(sys_from_graph))
         if isequal(getdescription(s), "hemodynamic_observer")
             regionidx = parse(Int64, split(string(s), "₊")[1][end])
             push!(obs_idx[regionidx], i)
