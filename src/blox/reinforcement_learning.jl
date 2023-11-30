@@ -237,7 +237,6 @@ function run_experiment_open_loop!(agent::Agent, env::ClassificationEnvironment;
         else
             sol = solve(prob; alg_hints = [:stiff], kwargs...)
         end
-        action = action_selection(sol)
         feedback = 1
 
         for (w, rule) in learning_rules
