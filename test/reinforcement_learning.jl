@@ -98,7 +98,7 @@ end
     idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn))
 
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-    run_experiment_open_loop!(agent, env; alg=Tsit5(), reltol=1e-6,abstol=1e-9)
+    run_experiment!(agent, env; alg=Tsit5(), reltol=1e-6,abstol=1e-9)
 
     final_params = agent.problem.p
     # At least some weights need to be different.

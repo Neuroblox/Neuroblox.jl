@@ -196,8 +196,13 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
         else
             sol = solve(prob; alg_hints = [:stiff], kwargs...)
         end
-        action = action_selection(sol)
-        feedback = env(action)
+        
+        if isnothing(action_selection)
+            feedback = 1
+        else
+            action = action_selection(sol)
+            feedback = env(action)
+        end
 
         for (w, rule) in learning_rules
             w_val = weights[w]
