@@ -28,11 +28,11 @@ get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 
 get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
-function get_callbacks(bc, t_affect=missing)
+function get_callbacks(g, bc, t_affect=missing)
     if !ismissing(t_affect)
         cbs_params = t_affect => get_equations_with_parameter_lhs(bc)
 
-        neurons_exci = get_exci_neurons(cb)
+        neurons_exci = get_exci_neurons(g)
         eqs = Equation[]
       
         for neurons in neurons_exci
