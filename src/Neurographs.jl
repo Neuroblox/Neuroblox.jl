@@ -182,28 +182,12 @@ end
 
 function system_from_graph(g::MetaDiGraph; name, t_affect=missing)
     bc = connector_from_graph(g)
-    neurons_exci = get_exci_neurons(cb)
-    if !ismissing(t_affect)
-        for neurons in neurons_exci
-           nn = get_namespaced_sys(neurons)  
-           cb = (t_affect + eps(float(t_affect))) => [nn.spikes_window ~ 0]
-           push!(bc.events, cb)
-        end
-    end
     return system_from_graph(g, bc; name, t_affect)
 end
 
 # Additional dispatch if extra parameters are passed for edge definitions
 function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, t_affect=missing)
     bc = connector_from_graph(g)
-    neurons_exci = get_exci_neurons(cb)
-    if !ismissing(t_affect)
-        for neurons in neurons_exci
-           nn = get_namespaced_sys(neurons)  
-           cb = (t_affect + eps(float(t_affect))) => [nn.spikes_window ~ 0]
-           push!(bc.events, cb)
-        end
-    end
     return system_from_graph(g, bc, p; name, t_affect)
 end
 
