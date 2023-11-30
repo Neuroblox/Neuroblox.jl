@@ -212,3 +212,42 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
 
     agent.problem = prob
 end
+
+function run_experiment_open_loop!(agent::Agent, env::ClassificationEnvironment; kwargs...)
+    N_trials = env.N_trials
+    t_trial = env.t_trial
+    tspan = (0, t_trial)
+
+    sys = get_sys(agent)
+    prob = agent.problem
+    prob = remake(prob; tspan)
+
+    learning_rules = agent.learning_rules
+    
+    defs = ModelingToolkit.get_defaults(sys)
+    weights = Dict{Num, Float64}()
+    for w in keys(learning_rules)
+        weights[w] = defs[w]
+    end
+
+    for _ in Base.OneTo(N_trials)
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg]; kwargs...)
+        else
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+        end
+        feedback = 1
+
+        for (w, rule) in learning_rules
+            w_val = weights[w]
+            Δw = weight_gradient(rule, sol, w_val, feedback)
+            weights[w] += Δw
+        end
+
+        increment_trial!(env)
+        stim_params = get_trial_stimulus(env)
+        prob = remake(prob; p = weights, u0 = stim_params)
+    end
+
+    agent.problem = prob
+end

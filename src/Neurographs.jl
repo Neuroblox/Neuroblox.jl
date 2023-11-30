@@ -239,7 +239,8 @@ function action_selection_from_graph(g::MetaDiGraph)
     end
 
     if isempty(idxs)
-        error("No action selection block was detected in the current model.")
+        #error("No action selection block was detected in the current model.")
+        return nothing
     else
         if length(idxs) > 1
             error("Multiple action selection blocks are detected. Only one must be used in an experiment.")
