@@ -52,6 +52,7 @@ abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
 abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
+abstract type ObserverBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -101,7 +102,6 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
-include("measurementmodels/hemodynamic_extras.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -173,12 +173,12 @@ export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron,
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export Hemodynamics, LinHemo, boldsignal
+export boldsignal, BalloonModel
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, namespace_expr, nameof
-export HRFFourHalfCosine, HRFDoubleGamma, BalloonModel, CompoundHemo, AlternativeBalloonModel, LinHemoCombo, JRHemo, addnontunableparams, get_hemodynamic_observers
+export addnontunableparams, get_hemodynamic_observers
 export input_equations, BloxConnector, accumulate_equation!, get_sys #remove this line
 end
