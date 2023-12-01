@@ -85,15 +85,12 @@ function params(bc::BloxConnector)
     weights = []
     for w in bc.weights
         append!(weights, Symbolics.get_variables(w))
-        # if Symbolics.getdefaultval(w) isa Num
-        #     p = Symbolics.get_variables(Symbolics.getdefaultval(w))
-        #     append!(weights, p)
-        # else
-        #     append!(weights, w)
-        # end
     end
-    return vcat(reduce(vcat, weights), bc.delays)
-    # return vcat(bc.weights, bc.delays)
+    if isempty(weights)
+        return vcat(weights, bc.delays)
+    else
+        return vcat(reduce(vcat, weights), bc.delays)
+    end
 end
 
 function (bc::BloxConnector)(
@@ -229,31 +226,31 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
-# Ok yes this is a bad dispatch but the whole compound blocks implementation is hacky and needs fixing @@
-# Opening an issue to loop back to this during clean up week
-function (bc::BloxConnector)(
-    bloxout::CompoundNOBlox, 
-    bloxin::CompoundNOBlox; 
-    weight=1,
-    delay=0,
-    density=0.1
-)
+# # Ok yes this is a bad dispatch but the whole compound blocks implementation is hacky and needs fixing @@
+# # Opening an issue to loop back to this during clean up week
+# function (bc::BloxConnector)(
+#     bloxout::CompoundNOBlox, 
+#     bloxin::CompoundNOBlox; 
+#     weight=1,
+#     delay=0,
+#     density=0.1
+# )
 
-    sys_out = get_namespaced_sys(bloxout)
-    sys_in = get_namespaced_sys(bloxin)
+#     sys_out = get_namespaced_sys(bloxout)
+#     sys_in = get_namespaced_sys(bloxin)
 
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    if typeof(weight) == Num # Symbol
-        w = weight
-    else
-        w = only(@parameters $(w_name)=weight)
-    end
-    push!(bc.weights, w)
-    x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
-    eq = sys_in.nmm₊jcn ~ x*w
+#     w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+#     if typeof(weight) == Num # Symbol
+#         w = weight
+#     else
+#         w = only(@parameters $(w_name)=weight)
+#     end
+#     push!(bc.weights, w)
+#     x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+#     eq = sys_in.nmm₊jcn ~ x*w
     
-    accumulate_equation!(bc, eq)
-end
+#     accumulate_equation!(bc, eq)
+# end
 
 function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
