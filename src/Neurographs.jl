@@ -196,7 +196,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_affect=mis
     blox_syss = get_sys(g)
 
     connection_eqs = get_equations_with_state_lhs(bc)
-    cbs = get_callbacks(bc, t_affect)
+    cbs = get_callbacks(g, bc, t_affect)
 
     return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
 end
@@ -207,7 +207,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
 
     connection_eqs = get_equations_with_state_lhs(bc)
     
-    cbs = get_callbacks(bc, t_affect)
+    cbs = get_callbacks(g, bc, t_affect)
     
     return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
 end

@@ -57,6 +57,10 @@ function compileparameterlist(;kwargs...)
     return paramlist
 end
 
+function get_exci_neurons(g::MetaDiGraph)
+    mapreduce(x -> get_exci_neurons(x), vcat, get_blox(g))
+end
+
 function get_exci_neurons(b::AbstractComponent)
     mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
 end
