@@ -1,15 +1,15 @@
-abstract type AbstractAlgebraic end
+abstract type AbstractDiscrete <: AbstractBlox end
 
-abstract type AbstractModulator <: AbstractAlgebraic end
+abstract type AbstractModulator <: AbstractDiscrete end
 
-struct Matrisome <: AbstractAlgebraic
+struct Matrisome <: AbstractDiscrete
     odesystem
     namespace
 
     function Matrisome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
-        ps = @parameters H=1
+        sts = @variables ρ(t)=0.0 [irreducible=true] 
+        ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
             ρ ~ H*jcn
         ]
@@ -19,16 +19,16 @@ struct Matrisome <: AbstractAlgebraic
     end
 end
 
-struct Striosome <: AbstractAlgebraic
+struct Striosome <: AbstractDiscrete
     odesystem
     namespace
 
     function Striosome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] jcn(t)=0.0 [input=true]
-        ps = @parameters H=1
+        sts = @variables ρ(t)=0.0 [irreducible=true] 
+        ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
-            ρ ~ H*jcn + 0.1
+            ρ ~ H*jcn
         ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
@@ -36,14 +36,14 @@ struct Striosome <: AbstractAlgebraic
     end
 end
 
-struct TAN <: AbstractAlgebraic
+struct TAN <: AbstractDiscrete
     odesystem
     namespace
 
     function TAN(; name, namespace=nothing, κ=0.2)
         @variables t 
-        sts = @variables R(t)=κ [irreducible=true] jcn(t)=0.0 [input=true]
-        ps = @parameters κ=κ spikes_window=0.0
+        sts = @variables R(t)=κ [irreducible=true] 
+        ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
         ]
@@ -62,8 +62,8 @@ struct SNc <: AbstractModulator
 
     function SNc(; name, namespace=nothing, κ_DA=0.2, N_time_blocks=5, DA_reward=10)
         @variables t 
-        sts = @variables R(t)=κ_DA jcn(t)=0.0 [input=true]
-        ps = @parameters κ=κ_DA
+        sts = @variables R(t)=κ_DA 
+        ps = @parameters κ=κ_DA jcn=0.0 [input=true]
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
         ]

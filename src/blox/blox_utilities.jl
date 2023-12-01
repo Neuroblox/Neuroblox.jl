@@ -71,6 +71,18 @@ function get_discrete_parts(b::AbstractComponent)
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
 end
 
+function get_exci_neurons(b::CompositeBlox)
+    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
+end
+
+function get_inh_neurons(b::CompositeBlox)
+    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
+end
+
+function get_discrete_parts(b::CompositeBlox)
+    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
+end
+
 get_exci_neurons(n::AbstractExciNeuronBlox) = n
 get_exci_neurons(n) = []
 
@@ -164,20 +176,25 @@ function input_equations(blox)
 end
 
 input_equations(blox::AbstractComponent) = blox.connector.eqs
+input_equations(blox::CompositeBlox) = blox.connector.eqs
 input_equations(::ImageStimulus) = []
 
 weight_parameters(blox) = Num[]
 weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
+weight_parameters(blox::CompositeBlox) = blox.connector.weights #I think this is the fix?
 
 delay_parameters(blox) = Num[]
 delay_parameters(blox::AbstractComponent) = blox.connector.delays
+delay_parameters(blox::CompositeBlox) = blox.connector.delays
 
 event_callbacks(blox) = []
 event_callbacks(blox::AbstractComponent) = blox.connector.events
+event_callbacks(blox::CompositeBlox) = blox.connector.events
 
 weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
 weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
+weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
 
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
