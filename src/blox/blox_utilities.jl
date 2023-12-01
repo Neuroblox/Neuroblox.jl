@@ -22,7 +22,6 @@ This function progresses the scope of parameters and leaves floating point value
 """
 function progress_scope(args...)
     paramlist = []
-    @show args
     for p in args
         if p isa Num
             p = ParentScope(p)
@@ -39,7 +38,6 @@ function progress_scope(args...)
             push!(paramlist, p)
         end
     end
-    @show paramlist
     return paramlist
 end
 
@@ -50,7 +48,7 @@ end
 function compileparameterlist(;kwargs...)
     paramlist = []
     for (kw, v) in kwargs
-        if v isa Float64  # note that Num is also subtype of Real. If we want to be more inclusive we need to create a union of types.
+        if v isa Union{Float64, Int}  # note that Num is also subtype of Real. Thus union of types seems to be the solution.
             paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
         else
             paramlist = vcat(paramlist, v)
