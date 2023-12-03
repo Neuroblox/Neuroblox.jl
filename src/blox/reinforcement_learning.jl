@@ -217,4 +217,3 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
 
     agent.problem = prob
 end
-
