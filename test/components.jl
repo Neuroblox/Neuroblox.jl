@@ -14,6 +14,9 @@ using Random
     @test typeof(lm1) == LinearNeuralMass
 end
 
+"""
+HarmonicOscillator tests
+"""
 
 @testset "HarmonicOscillator" begin
     @named osc1 = HarmonicOscillator()
@@ -24,7 +27,26 @@ end
     add_blox!.(Ref(g), [osc1, osc2])
     create_adjacency_edges!(g, adj)
 
-    @named sys = system_from_graph(g)
+    @named sys = system_from_graph(g, Num[])
+    sys = structural_simplify(sys)
+    sim_dur = 1e1
+    prob = ODEProblem(sys, [], (0.0, sim_dur),[])
+    sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "HarmonicOscillator with parameter weights" begin
+    @named osc1 = HarmonicOscillator()
+    @named osc2 = HarmonicOscillator()
+
+    params = @parameters k=1.0
+    @show typeof(params)
+    adj = [0 k; k 0]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [osc1, osc2])
+    create_adjacency_edges!(g, adj)
+
+    @named sys = system_from_graph(g, params)
     sys = structural_simplify(sys)
     sim_dur = 1e1
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
@@ -448,7 +470,7 @@ add_edge!(g, 3, 1, :weight, 0.2)
 prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
 sol = solve(prob, Vern7())
 @test neuron_net isa ODESystem
-@test sol.retcode == ReturnCode.Success 
+@test sol.retcode == ReturnCode.Success
 end
 
 @testset "NextGenerationEIBlox connected to neuron" begin
