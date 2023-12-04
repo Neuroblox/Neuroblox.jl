@@ -14,6 +14,7 @@ using SafeTestsets
 @time @safetestset "Control Tests" begin include("controllers.jl") end
 @time @safetestset "Source Tests" begin include("source_components.jl") end
 @time @safetestset "Reinforcement Learning Tests" begin include("reinforcement_learning.jl") end
+@time @safetestset "Cort-Cort plasticity Tests" begin include("plasticity.jl") end
 # fitting tests should be at the end since they take the longest
 # removing them for now until we have real fitting tests
 # @time @safetestset "Fitting Tests" begin include("fitting.jl") end

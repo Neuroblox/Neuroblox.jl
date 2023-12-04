@@ -178,7 +178,9 @@ export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
-export get_namespaced_sys, namespace_expr, nameof
+export get_namespaced_sys, nameof
+export run_experiment!, run_experiment_open_loop!
 export addnontunableparams, get_hemodynamic_observers
-export input_equations, BloxConnector, accumulate_equation!, get_sys #remove this line
+
+
 end
