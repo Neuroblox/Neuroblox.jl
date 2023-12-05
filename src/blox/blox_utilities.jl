@@ -1,21 +1,21 @@
-function progress_scope(params; lvl=0)
-    para_list = []
-    for p in params
-        pp = ModelingToolkit.unwrap(p)
-        if ModelingToolkit.hasdefault(pp)
-            d = ModelingToolkit.getdefault(pp)
-            if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
-                if lvl==0
-                    pp = ParentScope(pp)
-                else
-                    pp = DelayParentScope(pp,lvl)
-                end
-            end
-        end
-        push!(para_list,ModelingToolkit.wrap(pp))
-    end
-    return para_list
-end
+# function progress_scope(params; lvl=0)
+#     para_list = []
+#     for p in params
+#         pp = ModelingToolkit.unwrap(p)
+#         if ModelingToolkit.hasdefault(pp)
+#             d = ModelingToolkit.getdefault(pp)
+#             if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
+#                 if lvl==0
+#                     pp = ParentScope(pp)
+#                 else
+#                     pp = DelayParentScope(pp,lvl)
+#                 end
+#             end
+#         end
+#         push!(para_list,ModelingToolkit.wrap(pp))
+#     end
+#     return para_list
+# end
 
 """
 This function progresses the scope of parameters and leaves floating point values untouched
@@ -23,9 +23,7 @@ This function progresses the scope of parameters and leaves floating point value
 function progress_scope(args...)
     paramlist = []
     for p in args
-        if p isa Float64
-            push!(paramlist, p)
-        else
+        if p isa Num
             p = ParentScope(p)
             # pp = ModelingToolkit.unwrap(p)
             # if ModelingToolkit.hasdefault(pp)
@@ -35,6 +33,8 @@ function progress_scope(args...)
             #     end
             # end
             # push!(para_list,ModelingToolkit.wrap(pp))
+            push!(paramlist, p)
+        else
             push!(paramlist, p)
         end
     end
@@ -48,8 +48,8 @@ end
 function compileparameterlist(;kwargs...)
     paramlist = []
     for (kw, v) in kwargs
-        if v isa Float64
-            paramlist = vcat(paramlist, @parameters $kw = v)
+        if v isa Union{Float64, Int}  # note that Num is also subtype of Real. Thus union of types seems to be the solution.
+            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
         else
             paramlist = vcat(paramlist, v)
         end
@@ -247,4 +247,32 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
     
     return length(spikes)
+end
+
+function get_hemodynamic_observers(sys_from_graph, nr)
+    obs_idx = Dict([k => [] for k in 1:nr])
+    obs_states = Dict([k => [] for k in 1:nr])
+    for (i, s) in enumerate(states(sys_from_graph))
+        if isequal(getdescription(s), "hemodynamic_observer")
+            regionidx = parse(Int64, split(string(s), "₊")[1][end])
+            push!(obs_idx[regionidx], i)
+            push!(obs_states[regionidx], s)
+        end
+    end
+    return (obs_idx, obs_states)
+end
+
+function addnontunableparams(param, model)
+    newparam = []
+    k = 0
+    for p in parameters(model)
+        if istunable(p)
+            k += 1
+            push!(newparam, param[k])
+        else
+            push!(newparam, Symbolics.getdefaultval(p))
+        end
+    end
+    append!(newparam, param[k+1:end])
+    return newparam
 end
