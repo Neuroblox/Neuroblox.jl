@@ -118,7 +118,7 @@ create_adjacency_edges!(g2, adj_matrix_lin)
 
 @named final_system = system_from_graph(g2, params)
 final_delays = graph_delays(g2)
-sim_dur = 10.0 # Simulate for 10 Seconds
+sim_dur = 600.0 # Simulate for 10 Seconds
 final_system_sys = structural_simplify(final_system)
 prob = DDEProblem(final_system_sys,
     [],

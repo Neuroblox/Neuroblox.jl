@@ -9,24 +9,32 @@ nd = ncol(data)                         # number of dimensions
 
 ########## assemble the model ##########
 
-@parameters κ=0.0     # define brain-wide decay parameter for hemodynamics
 g = MetaDiGraph()
+regions = Dict()
+@parameters κ=0.0 [tunable = true]     # define brain-wide decay parameter for hemodynamics
 for ii = 1:nd
-    region = LinHemo(;name=Symbol("r$ii"), lnκ=κ)
+    region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
+    regions[ii] = 2ii - 1    # store index of neural mass model
+    # add hemodynamic observer
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ)
+    add_blox!(g, observer)
+    # connect observer with neuronal signal
+    add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
 end
 
 # add symbolic weights
-@parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"])
+@parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"]) [tunable = true]
 for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
     if idx[1] == idx[2]
-        add_edge!(g, idx[1], idx[2], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12
+        add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12
     else
-        add_edge!(g, idx[1], idx[2], :weight, A[i])
+        add_edge!(g, regions[idx[2]], regions[idx[1]], :weight, A[i])
     end
 end
+
 # compose model
-@named neuronmodel = ODEfromGraph(g)
+@named neuronmodel = system_from_graph(g)
 neuronmodel = structural_simplify(neuronmodel)
 
 # measurement model
@@ -46,11 +54,11 @@ end
 
 modelparam = OrderedDict()
 for par in parameters(neuronmodel)
-    # while Symbolics.getdefaultval(par) isa Num
-    #     par = Symbolics.getdefaultval(par)
-    # end
-    modelparam[par] = Symbolics.getdefaultval(par)
+    if istunable(par)
+        modelparam[par] = Symbolics.getdefaultval(par)
+    end
 end
+
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
 modelparam[:lnβ] = [0.0, 0.0];           # global observation noise, ln(β) as above

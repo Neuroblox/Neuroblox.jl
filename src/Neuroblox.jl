@@ -27,7 +27,7 @@ using Distributions
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
                     AbstractODESystem
-import ModelingToolkit: inputs, nameof
+import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
 using IfElse
@@ -52,6 +52,7 @@ abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
 abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
+abstract type ObserverBlox <: AbstractBlox end
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -172,12 +173,14 @@ export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron,
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export Hemodynamics, LinHemo, boldsignal
+export boldsignal, BalloonModel
 export vecparam, unvecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
 export get_namespaced_sys, nameof
 export run_experiment!, run_experiment_open_loop!
+export addnontunableparams, get_hemodynamic_observers
+
 
 end

@@ -37,15 +37,15 @@ struct CorticalBlox <: CompositeBlox
                 τ_inhib    
             )
         end
-        
+
         n_ff_inh = HHNeuronInhibBlox(
             name = "ff_inh",
-            namespace = namespaced_name(namespace, name), 
-            E_syn = E_syn_inhib, 
-            G_syn = G_syn_ff_inhib, 
+            namespace = namespaced_name(namespace, name),
+            E_syn = E_syn_inhib,
+            G_syn = G_syn_ff_inhib,
             τ = τ_inhib
-        ) 
-       
+        )
+
         g = MetaDiGraph()
         add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
 
