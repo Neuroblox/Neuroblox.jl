@@ -438,8 +438,6 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str_in)
 
     t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
-   # cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
-   # cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, 0, 1)]
     cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     push!(bc.events, cb_matr)
@@ -449,7 +447,6 @@ function (bc::BloxConnector)(
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        #cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.ρ > sys_matr_in.ρ, -2, 0)]
         cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
         push!(bc.events, cb_neuron)
     end
@@ -479,7 +476,6 @@ function (bc::BloxConnector)(
         bc.learning_rules[w] = kwargs[:learning_rule]
     end
 
-    #eq = sys_in.jcn ~ w*sys_out.ρ
     eq = sys_in.jcn ~ w*sys_out.H*sys_out.jcn
 
     accumulate_equation!(bc, eq)
@@ -538,7 +534,6 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(discr_in)
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    #cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.ρ > sys_in.ρ, 0, 1)]
     cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.H*sys_out.jcn > sys_in.H*sys_in.jcn, 0, 1)]
     push!(bc.events, cb)
 end
@@ -586,6 +581,5 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    #as.competitor_states = [sys1.ρ, sys2.ρ]
     as.competitor_states = [sys1.H*sys1.jcn, sys2.H*sys2.jcn]
 end
