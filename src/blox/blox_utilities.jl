@@ -189,7 +189,7 @@ delay_parameters(blox) = Num[]
 delay_parameters(blox::AbstractComponent) = blox.connector.delays
 delay_parameters(blox::CompositeBlox) = blox.connector.delays
 
-event_callbacks(blox) = []
+event_callbacks(blox) = Vector{Pair{Union{Float64, Vector{Float64}}, Vector{Equation}}}[]
 event_callbacks(blox::AbstractComponent) = blox.connector.events
 event_callbacks(blox::CompositeBlox) = blox.connector.events
 

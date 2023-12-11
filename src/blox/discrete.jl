@@ -8,7 +8,7 @@ struct Matrisome <: AbstractDiscrete
 
     function Matrisome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] 
+        sts = @variables ρ(t)=0.0 
         ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
             ρ ~ H*jcn
@@ -25,7 +25,7 @@ struct Striosome <: AbstractDiscrete
 
     function Striosome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 [irreducible=true] 
+        sts = @variables ρ(t)=0.0 
         ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
             ρ ~ H*jcn
@@ -42,7 +42,7 @@ struct TAN <: AbstractDiscrete
 
     function TAN(; name, namespace=nothing, κ=0.2)
         @variables t 
-        sts = @variables R(t)=κ [irreducible=true] 
+        sts = @variables R(t)=κ 
         ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
         eqs = [
             R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
