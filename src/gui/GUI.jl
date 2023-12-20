@@ -387,31 +387,62 @@ end
 # end
 
 function arguments(::Type{Neuroblox.Thalamus})
-  OrderedDict()
+  OrderedDict(
+    :N_exci => NCAD(25, INTEGER, 1, 100,[],true),
+    :E_syn_exci => NCAD(0, NUMBER, -70, 70,[],true),
+    :G_syn_exci => NCAD(3, NUMBER, 0, 10,[],true),
+    :τ_inhib => NCAD(5, NUMBER, 1, 200,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.Striatum})
-  OrderedDict()
+  OrderedDict(
+    :N_inhib => NCAD(25, INTEGER, 1, 100,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -20, -100,[],true),
+    :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
+    :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.GPe})
-  OrderedDict()
+  OrderedDict(
+    :N_inhib => NCAD(15, INTEGER, 1, 100,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -20, -100,[],true),
+    :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
+    :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.GPi})
-  OrderedDict()
+  OrderedDict(
+    :N_inhib => NCAD(25, INTEGER, 1, 100,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -20, -100,[],true),
+    :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
+    :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.STN})
-  OrderedDict()
+  OrderedDict(
+    :N_exci => NCAD(25, INTEGER, 1, 100,[],true),
+    :E_syn_exci => NCAD(0, NUMBER, -70, 70,[],true),
+    :G_syn_exci => NCAD(3, NUMBER, 0, 10,[],true),
+    :τ_inhib => NCAD(5, NUMBER, 1, 200,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.SNc})
-  OrderedDict()
+  OrderedDict(
+    :κ_DA => NCAD(0.2, NUMBER, 0.1, 2,[],true),
+    :N_time_blocks => NCAD(5, INTEGER, 1, 100,[],true),
+    :DA_reward => NCAD(10, NUMBER, 0, 100,[],true)
+  )
 end
 
 function arguments(::Type{Neuroblox.GreedyPolicy})
-  OrderedDict()
+  OrderedDict(
+    :t_decision => NCAD(300.0, NUMBER, 0.1, 1000.0,[],true)
+  )
 end
 
 #TODO: create connector compatible CMC
