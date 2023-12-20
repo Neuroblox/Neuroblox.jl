@@ -59,6 +59,7 @@ const STRING = "string"
 const INTEGER = "integer"
 const MENU = "menu"
 const NODE = "node"
+const LINK = "link"
 
 # function arguments(::Type{Neuroblox.Merger})
 #   OrderedDict(
@@ -342,7 +343,8 @@ function arguments(::Type{Neuroblox.HebbianModulationPlasticity})
     :modulator => NCAD("", NODE, 1.0, 100.0,[],true),
     :t_pre => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
     :t_post => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
-    :t_mod => NCAD(0.7, NUMBER, 0.001, 10.0,[],true)
+    :t_mod => NCAD(0.7, NUMBER, 0.001, 10.0,[],true),
+    :link => NCAD("https://www.neuroblox.org", LINK, 0.0, 0.0,[],false)
   )
 end
 
@@ -351,7 +353,8 @@ function arguments(::Type{Neuroblox.HebbianPlasticity})
     :K => NCAD(0.2, NUMBER, 0.01, 1.0,[],true),
     :W_lim => NCAD(2.0, NUMBER, 0.0, 10.0,[],true),
     :t_pre => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
-    :t_post => NCAD(2.0, NUMBER, 0.1, 10.0,[],true)
+    :t_post => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
+    :link => NCAD("https://www.neuroblox.org", LINK, 0.0, 0.0,[],false)
   )
 end
 
