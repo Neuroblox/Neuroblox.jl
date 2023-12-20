@@ -58,6 +58,7 @@ const NUMBER = "number"
 const STRING = "string"
 const INTEGER = "integer"
 const MENU = "menu"
+const NODE = "node"
 
 # function arguments(::Type{Neuroblox.Merger})
 #   OrderedDict(
@@ -332,6 +333,26 @@ end
 
 function plotdetail(::Type{Neuroblox.NextGenerationEIBlox})
   OrderedDict(:detail => ["aₑ","bₑ","aᵢ","bᵢ"], :nodetail => ["aₑ","bₑ"])
+end
+
+function arguments(::Type{Neuroblox.HebbianModulationPlasticity})
+  OrderedDict(
+    :K => NCAD(0.2, NUMBER, 0.01, 1.0,[],true),
+    :decay => NCAD(0.01, NUMBER, 0.001, 1.0,[],true),
+    :modulator => NCAD("", NODE, 1.0, 100.0,[],true),
+    :t_pre => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
+    :t_post => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
+    :t_mod => NCAD(0.7, NUMBER, 0.001, 10.0,[],true)
+  )
+end
+
+function arguments(::Type{Neuroblox.HebbianPlasticity})
+  OrderedDict(
+    :K => NCAD(0.2, NUMBER, 0.01, 1.0,[],true),
+    :W_lim => NCAD(2.0, NUMBER, 0.0, 10.0,[],true),
+    :t_pre => NCAD(2.0, NUMBER, 0.1, 10.0,[],true),
+    :t_post => NCAD(2.0, NUMBER, 0.1, 10.0,[],true)
+  )
 end
 
 #TODO: create connector compatible CMC
