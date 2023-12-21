@@ -170,8 +170,6 @@ mutable struct Agent
     end
 end
 
-indexof(sym, syms) = indexin([Symbol(sym)], Symbol.(syms))
-
 function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
@@ -191,6 +189,9 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
     end
 
     for _ in Base.OneTo(N_trials)
+        stim_params = get_trial_stimulus(env)
+        prob = remake(prob; p = merge(weights, stim_params))
+
         if haskey(kwargs, :alg)
             sol = solve(prob, kwargs[:alg]; kwargs...)
         else
@@ -211,8 +212,6 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
         end
 
         increment_trial!(env)
-        stim_params = get_trial_stimulus(env)
-        prob = remake(prob; p = weights, u0 = stim_params)
     end
 
     agent.problem = prob

@@ -116,13 +116,13 @@ mutable struct ImageStimulus <: StimulusBlox
         # so that index is not out of bounds , similar to data above.
         push!(t_stims, (0,0))
 
-        state_name = :u
+        param_name = :u
         @parameters t
         ps = Vector{Num}(undef, N_pixels)
         reset_eqs = Vector{Equation}(undef, N_pixels)
         for i in Base.OneTo(N_pixels)
-            s = Symbol(state_name, "_", i)
-            ps[i] = only(@parameters $(s) = S[i,1]) 
+            s = Symbol(param_name, "_", i)
+            ps[i] = only(@parameters $(s) = 0.0) 
             reset_eqs[i] = ps[i] ~ 0.0
         end
 
