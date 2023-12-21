@@ -581,5 +581,5 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    as.competitor_states = [sys1.H*sys1.jcn, sys2.H*sys2.jcn]
+    as.competitor_states = [sys1.ρ, sys2.ρ]
 end
