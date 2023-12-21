@@ -395,6 +395,10 @@ function arguments(::Type{Neuroblox.Thalamus})
   )
 end
 
+function plotdetail(::Type{Neuroblox.Thalamus})
+  OrderedDict(:mean => "V", :detail => ["V"])
+end
+
 function arguments(::Type{Neuroblox.Striatum})
   OrderedDict(
     :N_inhib => NCAD(25, INTEGER, 1, 100,[],true),
@@ -402,6 +406,10 @@ function arguments(::Type{Neuroblox.Striatum})
     :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
     :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
   )
+end
+
+function plotdetail(::Type{Neuroblox.Striatum})
+  OrderedDict(:mean => "V", :detail => ["V"])
 end
 
 function arguments(::Type{Neuroblox.GPe})
@@ -413,6 +421,10 @@ function arguments(::Type{Neuroblox.GPe})
   )
 end
 
+function plotdetail(::Type{Neuroblox.GPe})
+  OrderedDict(:mean => "V", :detail => ["V"])
+end
+
 function arguments(::Type{Neuroblox.GPi})
   OrderedDict(
     :N_inhib => NCAD(25, INTEGER, 1, 100,[],true),
@@ -422,6 +434,10 @@ function arguments(::Type{Neuroblox.GPi})
   )
 end
 
+function plotdetail(::Type{Neuroblox.GPi})
+  OrderedDict(:mean => "V", :detail => ["V"])
+end
+
 function arguments(::Type{Neuroblox.STN})
   OrderedDict(
     :N_exci => NCAD(25, INTEGER, 1, 100,[],true),
@@ -429,6 +445,10 @@ function arguments(::Type{Neuroblox.STN})
     :G_syn_exci => NCAD(3, NUMBER, 0, 10,[],true),
     :τ_inhib => NCAD(5, NUMBER, 1, 200,[],true)
   )
+end
+
+function plotdetail(::Type{Neuroblox.STN})
+  OrderedDict(:mean => "V", :detail => ["V"])
 end
 
 function arguments(::Type{Neuroblox.SNc})
