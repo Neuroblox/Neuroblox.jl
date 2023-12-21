@@ -6,7 +6,7 @@ using MetaGraphs
 using DataFrames
 using CSV
 
-@testset "RFLearning test" begin
+@testset "RL test" begin
     t_trial = 2 # ms
     time_block_dur = 0.01 # ms
     N_trials = 3
