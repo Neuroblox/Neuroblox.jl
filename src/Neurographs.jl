@@ -196,7 +196,8 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_affect=mis
     blox_syss = get_sys(g)
 
     connection_eqs = get_equations_with_state_lhs(bc)
-    cbs = get_callbacks(g, bc, t_affect)
+    
+    cbs = identity.(get_callbacks(g, bc; t_block))
 
     return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
 end
