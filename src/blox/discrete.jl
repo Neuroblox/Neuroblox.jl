@@ -44,9 +44,7 @@ struct TAN <: AbstractDiscrete
         @variables t 
         sts = @variables R(t)=κ 
         ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
-        eqs = [
-            R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
-        ]
+        eqs = Equation[]
         sys = ODESystem(eqs, t, sts, ps; name)
 
         new(sys, namespace)
