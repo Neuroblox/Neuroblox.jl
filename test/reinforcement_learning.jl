@@ -56,10 +56,11 @@ using CSV
     idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
     idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
     idx_jcn = findall(x -> occursin("jcn", String(Symbol(x))), ps)
-    idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn))
+    idx_spikes = findall(x -> occursin("spikes", String(Symbol(x))), ps)
+    idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn, idx_spikes))
 
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-    run_experiment!(agent, env; alg=QNDF(), reltol=1e-9,abstol=1e-9)
+    run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
 
     final_params = agent.problem.p
     # At least some weights need to be different.
