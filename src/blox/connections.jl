@@ -2,7 +2,7 @@ mutable struct BloxConnector
     eqs::Vector{Equation}
     weights::Vector{Num}
     delays::Vector{Num}
-    events::Vector{Pair{Union{Float64, Vector{Float64}}, Vector{Equation}}}
+    events
     learning_rules
 
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
@@ -497,8 +497,14 @@ sample_poisson(λ) = rand(Poisson(λ))
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
-    v = rand(Poisson(u[1]))
-    integ.p[1] = v
+    R = if iszero(integ.p[p[2]])
+        integ.p[p[1]]
+    else
+        integ.p[p[1]] / integ.p[p[2]]
+    end
+
+    v = rand(Poisson(R))
+    integ.p[p[3]] = v
 end
 
 function (bc::BloxConnector)(
@@ -517,7 +523,7 @@ function (bc::BloxConnector)(
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => (sample_affect!, [sys_out.R], [sys_out.spikes_window], nothing)
+    cb = t_event => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
     push!(bc.events, cb)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
