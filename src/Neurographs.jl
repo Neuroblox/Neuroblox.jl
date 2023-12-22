@@ -180,34 +180,35 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
-function system_from_graph(g::MetaDiGraph; name, t_affect=missing)
+function system_from_graph(g::MetaDiGraph; name, t_block=missing)
     bc = connector_from_graph(g)
-    return system_from_graph(g, bc; name, t_affect)
+    return system_from_graph(g, bc; name, t_block)
 end
 
 # Additional dispatch if extra parameters are passed for edge definitions
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, t_affect=missing)
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, t_block=missing)
     bc = connector_from_graph(g)
-    return system_from_graph(g, bc, p; name, t_affect)
+    return system_from_graph(g, bc, p; name, t_block)
 end
 
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_affect=missing)
-    @variables t
-    blox_syss = get_sys(g)
-
-    connection_eqs = get_equations_with_state_lhs(bc)
-    cbs = get_callbacks(g, bc, t_affect)
-
-    return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
-end
-
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_affect=missing)
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=missing)
     @variables t
     blox_syss = get_sys(g)
 
     connection_eqs = get_equations_with_state_lhs(bc)
     
-    cbs = get_callbacks(g, bc, t_affect)
+    cbs = identity.(get_callbacks(g, bc; t_block))
+
+    return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
+end
+
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
+    @variables t
+    blox_syss = get_sys(g)
+
+    connection_eqs = get_equations_with_state_lhs(bc)
+    
+    cbs = identity.(get_callbacks(g, bc; t_block))
     
     return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
 end

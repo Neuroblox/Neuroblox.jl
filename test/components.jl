@@ -600,7 +600,7 @@ end
     g = MetaDiGraph()
     add_blox!.(Ref(g), [cb1, cb2])
     add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
-    sys = system_from_graph(g; name=global_ns, t_affect=90.0)
+    sys = system_from_graph(g; name=global_ns, t_block=90.0)
     sys_simpl =structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0,2))
     sol = solve(prob, Vern7(), saveat=0.1)
