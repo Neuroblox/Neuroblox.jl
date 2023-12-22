@@ -52,7 +52,7 @@ using CSV
     agent = Agent(g; name=:ag, t_block = t_trial/5);
     ps = parameters(agent.odesystem)
     init_params = agent.problem.p
-    map_idxs_init = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
+    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
     idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
     idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
     idx_jcn = findall(x -> occursin("jcn", String(Symbol(x))), ps)
