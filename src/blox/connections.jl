@@ -366,7 +366,7 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
-    w = generate_weight_param(cb, str; kwargs...)
+    w = get_weight(cb, str; kwargs...)
 
     dist = Uniform(0,1)
     wt_ar = 2*w*rand(dist,length(neurons_out)) #generate a uniform distribution of weights with average value w 
