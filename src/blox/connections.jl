@@ -366,10 +366,10 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
-    w = get_weight(kwargs, cb, str)
+    w = get_weight(kwargs, namespaced_nameof(cb), namespaced_nameof(str))
 
     dist = Uniform(0,1)
-    wt_ar = 2*w*rand(dist,length(neurons_out)) #generate a uniform distribution of weights with average value w 
+    wt_ar = 2*w*rand(dist, length(neurons_out)) # generate a uniform distribution of weights with average value w 
     kwargs = (kwargs..., weight=wt_ar)
 
     if haskey(kwargs, :learning_rule)
@@ -598,5 +598,5 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    as.competitor_states = [sys1.H*sys1.jcn, sys2.H*sys2.jcn]
+    as.competitor_states = [sys1.ρ, sys2.ρ]
 end

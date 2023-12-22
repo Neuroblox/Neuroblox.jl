@@ -52,12 +52,14 @@ using CSV
     agent = Agent(g; name=:ag, t_block = t_trial/5);
     ps = parameters(agent.odesystem)
     init_params = agent.problem.p
-    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
+    map_idxs_init = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
     idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
     idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
     idx_jcn = findall(x -> occursin("jcn", String(Symbol(x))), ps)
     idx_spikes = findall(x -> occursin("spikes", String(Symbol(x))), ps)
-    idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn, idx_spikes))
+    idx_H = findall(x -> occursin("H", String(Symbol(x))), ps)
+    idx_I_bg = findall(x -> occursin("I_bg", String(Symbol(x))), ps)
+    idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn, idx_spikes, idx_H, idx_I_bg))
 
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
     run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
