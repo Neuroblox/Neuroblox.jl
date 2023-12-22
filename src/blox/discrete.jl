@@ -43,10 +43,8 @@ struct TAN <: AbstractDiscrete
     function TAN(; name, namespace=nothing, κ=100, λ=1)
         @variables t 
         sts = @variables R(t)=κ 
-        ps = @parameters κ=κ spikes_window=0.0 λ=λ jcn=0.0 [input=true]
-        eqs = [
-                R ~ minimum([κ, κ/(λ*jcn + eps())])
-              ]
+        ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
+        eqs = Equation[]
         sys = ODESystem(eqs, t, sts, ps; name)
 
         new(sys, namespace)
