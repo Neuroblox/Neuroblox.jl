@@ -511,12 +511,7 @@ sample_poisson(λ) = rand(Poisson(λ))
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
-    R = if iszero(integ.p[p[2]])
-        integ.p[p[1]]
-    else
-        integ.p[p[1]] / integ.p[p[2]]
-    end
-
+    R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
     v = rand(Poisson(R))
     integ.p[p[3]] = v
 end
