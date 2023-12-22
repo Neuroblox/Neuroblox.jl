@@ -85,14 +85,21 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
+    wt = get_weight(kwargs,name_out, name_in)
 
     outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
-
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; kwargs...)
+        if length(wt) == 1
+            for neuron_presyn in neurons_out[idx]
+                bc(neuron_presyn, neuron_postsyn; kwargs...)
+            end
+        else
+            for i in idx 
+                kwargs = (kwargs...,weight=wt[i])
+                bc(neurons_out[i], neuron_postsyn; kwargs...)
+            end
         end
         outgoing_connections[idx] .+= 1
     end
@@ -359,6 +366,12 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
+    w = generate_weight_param(cb, str; kwargs...)
+
+    dist = Uniform(0,1)
+    wt_ar = 2*w*rand(dist,length(neurons_out)) #generate a uniform distribution of weights with average value w 
+    kwargs = (kwargs..., weight=wt_ar)
+
     if haskey(kwargs, :learning_rule)
         lr = kwargs[:learning_rule]
         sys_matr = get_namespaced_sys(get_matrisome(str))
@@ -370,7 +383,8 @@ function (bc::BloxConnector)(
 
     algebraic_parts = [get_matrisome(str), get_striosome(str)]
 
-    for neuron_presyn in neurons_out
+    for (i,neuron_presyn) in enumerate(neurons_out)
+        kwargs = (kwargs...,weight=wt_ar[i])
         for part in algebraic_parts
             bc(neuron_presyn, part; kwargs...)
         end
@@ -522,6 +536,8 @@ function (bc::BloxConnector)(
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
 
+    #eq = sys_in.jcn ~ w*rand(Poisson(sys_out.R))
+
     accumulate_equation!(bc, eq)
 end
 
@@ -581,5 +597,5 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    as.competitor_states = [sys1.ρ, sys2.ρ]
+    as.competitor_states = [sys1.H*sys1.jcn, sys2.H*sys2.jcn]
 end
