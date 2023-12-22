@@ -28,8 +28,8 @@ get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 
 get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
-function get_callbacks(g, bc, t_affect=missing)
-    if !ismissing(t_affect)
+function get_callbacks(g, bc; t_block=missing)
+    if !ismissing(t_block)
         eqs_params = get_equations_with_parameter_lhs(bc)
        
         neurons_exci = get_exci_neurons(g)
@@ -41,14 +41,14 @@ function get_callbacks(g, bc, t_affect=missing)
            
         end
         if !isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_affect + eps(float(t_affect))) => eqs
-            cbs_params = t_affect => eqs_params
+            cbs_spikes = (t_block + eps(float(t_block))) => eqs
+            cbs_params = t_block => eqs_params
             return vcat(cbs_params, cbs_spikes, bc.events)
         elseif isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_affect + eps(float(t_affect))) => eqs
+            cbs_spikes = (t_block + eps(float(t_block))) => eqs
             return vcat(cbs_spikes, bc.events)
         elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = t_affect => eqs_params
+            cbs_params = t_block => eqs_params
             return vcat(cbs_params, bc.events)
         else
             return bc.events
