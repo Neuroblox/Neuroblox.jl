@@ -40,7 +40,7 @@ struct TAN <: AbstractDiscrete
     odesystem
     namespace
 
-    function TAN(; name, namespace=nothing, κ=0.2)
+    function TAN(; name, namespace=nothing, κ=100, λ=1)
         @variables t 
         sts = @variables R(t)=κ 
         ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
@@ -58,13 +58,13 @@ struct SNc <: AbstractModulator
     DA_reward
     namespace
 
-    function SNc(; name, namespace=nothing, κ_DA=0.2, N_time_blocks=5, DA_reward=10)
+    function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33)
         @variables t 
         sts = @variables R(t)=κ_DA 
-        ps = @parameters κ=κ_DA jcn=0.0 [input=true]
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true]
         eqs = [
-            R ~ IfElse.ifelse(iszero(jcn), κ, κ/jcn)
-        ]
+                R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())])
+              ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
         new(sys, N_time_blocks, κ_DA, DA_reward, namespace)

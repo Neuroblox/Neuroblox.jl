@@ -85,14 +85,21 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     N_connects =  density * length(neurons_in) * length(neurons_out)
     out_degree = Int(ceil(N_connects / length(neurons_out)))
     in_degree =  Int(ceil(N_connects / length(neurons_in)))
+    wt = get_weight(kwargs,name_out, name_in)
 
     outgoing_connections = zeros(Int, length(neurons_out))
     for neuron_postsyn in neurons_in
         rem = findall(x -> x < out_degree, outgoing_connections)
         idx = sample(rem, min(in_degree, length(rem)); replace=false)
-
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; kwargs...)
+        if length(wt) == 1
+            for neuron_presyn in neurons_out[idx]
+                bc(neuron_presyn, neuron_postsyn; kwargs...)
+            end
+        else
+            for i in idx 
+                kwargs = (kwargs...,weight=wt[i])
+                bc(neurons_out[i], neuron_postsyn; kwargs...)
+            end
         end
         outgoing_connections[idx] .+= 1
     end
@@ -359,6 +366,12 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
+    w = get_weight(kwargs, namespaced_nameof(cb), namespaced_nameof(str))
+
+    dist = Uniform(0,1)
+    wt_ar = 2*w*rand(dist, length(neurons_out)) # generate a uniform distribution of weights with average value w 
+    kwargs = (kwargs..., weight=wt_ar)
+
     if haskey(kwargs, :learning_rule)
         lr = kwargs[:learning_rule]
         sys_matr = get_namespaced_sys(get_matrisome(str))
@@ -370,7 +383,8 @@ function (bc::BloxConnector)(
 
     algebraic_parts = [get_matrisome(str), get_striosome(str)]
 
-    for neuron_presyn in neurons_out
+    for (i,neuron_presyn) in enumerate(neurons_out)
+        kwargs = (kwargs...,weight=wt_ar[i])
         for part in algebraic_parts
             bc(neuron_presyn, part; kwargs...)
         end
@@ -497,12 +511,7 @@ sample_poisson(λ) = rand(Poisson(λ))
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
-    R = if iszero(integ.p[p[2]])
-        integ.p[p[1]]
-    else
-        integ.p[p[1]] / integ.p[p[2]]
-    end
-
+    R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
     v = rand(Poisson(R))
     integ.p[p[3]] = v
 end
@@ -527,6 +536,8 @@ function (bc::BloxConnector)(
     push!(bc.events, cb)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
+
+    #eq = sys_in.jcn ~ w*rand(Poisson(sys_out.R))
 
     accumulate_equation!(bc, eq)
 end
