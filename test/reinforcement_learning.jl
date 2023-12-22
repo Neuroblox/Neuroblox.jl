@@ -17,6 +17,7 @@ using CSV
     @named STR_L = Striatum(N_inhib=2, namespace=global_ns)
     @named STR_R = Striatum(N_inhib=2, namespace=global_ns)
     @named SNcb = SNc(namespace=global_ns, N_time_blocks=t_trial/time_block_dur)
+    @named TAN_pop = TAN(;namespace=global_ns)
 
     @named AS = GreedyPolicy(namespace=global_ns, t_decision=0.31*t_trial)
 
@@ -24,7 +25,7 @@ using CSV
     data = CSV.read(fn, DataFrame)
     @named stim = ImageStimulus(data[1:N_trials,:]; namespace=global_ns, t_stimulus=0.4*t_trial, t_pause=0.6*t_trial)
 
-    bloxs = [VAC, PFC, STR_L, STR_R, SNcb, AS, stim]
+    bloxs = [VAC, PFC, STR_L, STR_R, SNcb, TAN_pop, AS, stim]
     d = Dict(b => i for (i,b) in enumerate(bloxs))
 
     hebbian_mod = HebbianModulationPlasticity(K=0.2, decay=0.01, modulator=SNcb, t_pre=t_trial, t_post=t_trial, t_mod=0.31*t_trial)
@@ -43,6 +44,10 @@ using CSV
     add_edge!(g, d[STR_R], d[SNcb], Dict(:weight => 1))
     add_edge!(g, d[STR_L], d[AS])
     add_edge!(g, d[STR_R], d[AS])
+    add_edge!(g, d[STR_L], d[TAN_pop], Dict(:weight => 1))
+    add_edge!(g, d[STR_R], d[TAN_pop], Dict(:weight => 1))
+    add_edge!(g, d[TAN_pop], d[STR_L], Dict(:weight => 1, :t_event => 0.1*t_trial))
+    add_edge!(g, d[TAN_pop], d[STR_R], Dict(:weight => 1, :t_event => 0.1*t_trial))
 
     agent = Agent(g; name=:ag, t_block = t_trial/5);
     ps = parameters(agent.odesystem)
