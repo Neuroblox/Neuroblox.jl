@@ -96,7 +96,7 @@ mutable struct ImageStimulus <: StimulusBlox
     const N_stimuli
     current_pixel::Int
 
-    function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
+    function ImageStimulus(; name, data::DataFrame, namespace, t_stimulus, t_pause)
         N_pixels = DataFrames.ncol(data[!, Not(:category)])
         N_stimuli = DataFrames.nrow(data[!, Not(:category)])
 
@@ -135,7 +135,7 @@ mutable struct ImageStimulus <: StimulusBlox
         new(namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
-    function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
+    function ImageStimulus(; name, file::String, namespace, t_stimulus, t_pause)
         @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
         data = read(file, DataFrame)
         ImageStimulus(data; name, namespace, t_stimulus, t_pause)

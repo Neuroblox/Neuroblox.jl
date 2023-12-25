@@ -581,7 +581,7 @@ end
     global_ns = :g # global namespace
     @named cb = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, density=0.1, weight=1)
     fn = joinpath(@__DIR__, "../examples/image_example.csv")
-    @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=1, t_pause=0.5)
+    @named stim = ImageStimulus(;file=fn, namespace=global_ns, t_stimulus=1, t_pause=0.5)
     g = MetaDiGraph()
     add_blox!(g, stim)
     add_blox!(g, cb)
