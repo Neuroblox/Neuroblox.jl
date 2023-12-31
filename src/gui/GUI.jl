@@ -80,7 +80,8 @@ function arguments(::Type{Neuroblox.ImageStimulus})
   OrderedDict(
     :height => NCAD(15, INTEGER, 1, 100,[], false),
     :width => NCAD(15, INTEGER, 1, 100,[], false),
-    :file => NCAD("image_example.csv", STRING, 0, 0,[], true),
+    :N_stims => NCAD(20, INTEGER, 1, 1000, [], false),
+    :file => NCAD("image_example.csv", STRING, 0, 0,[], false),
     :t_stimulus => NCAD(700, NUMBER, 10, 10000,[],true),
     :t_pause => NCAD(300, NUMBER, 10, 10000,[],true)
   )

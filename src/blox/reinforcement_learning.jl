@@ -155,6 +155,7 @@ mutable struct Agent
         bc = connector_from_graph(g)
 
         t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
+        # TODO: add another version that uses system_from_graph(g,bc,params;)
         sys = system_from_graph(g, bc; name, t_block)
         ss = structural_simplify(sys; allow_parameter=false)
 
@@ -170,14 +171,27 @@ mutable struct Agent
     end
 end
 
-function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...)
+function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
     sys = get_sys(agent)
     prob = agent.problem
-    prob = remake(prob; tspan)
+
+    if t_warmup > 0
+        prob = remake(prob; tspan=(0,t_warmup))
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg]; kwargs...)
+        else
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+        end
+        u0 = sol[1:end,end] # last value of state vector
+        prob = remake(prob; tspan=tspan, u0=u0)
+    else
+        prob = remake(prob; tspan)
+        u0 = []
+    end
 
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
@@ -189,8 +203,53 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
     end
 
     for _ in Base.OneTo(N_trials)
+        @show env.current_trial
         stim_params = get_trial_stimulus(env)
-        prob = remake(prob; p = merge(weights, stim_params))
+        prob = remake(prob; p = merge(weights, stim_params), u0=u0)
+
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg]; kwargs...)
+        else
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+        end
+
+        u0 = sol[1:end,end] # next run should continue where the last one ended
+
+        if isnothing(action_selection)
+            feedback = 1
+        else
+            action = action_selection(sol)
+            feedback = env(action)
+        end
+
+        for (w, rule) in learning_rules
+            w_val = weights[w]
+            Δw = weight_gradient(rule, sol, w_val, feedback)
+            weights[w] += Δw
+        end
+        increment_trial!(env)
+    end
+
+    agent.problem = prob
+end
+
+function run_trial!(agent::Agent, env::ClassificationEnvironment, weights::Dict{Num, Float64}, u0::Vector{Float64}; kwargs...)
+    N_trials = env.N_trials
+
+    if env.current_trial <= N_trials
+        t_trial = env.t_trial
+        tspan = (0, t_trial)
+
+        prob = agent.problem
+
+        action_selection = agent.action_selection
+        learning_rules = agent.learning_rules
+        
+        @show env.current_trial
+        stim_params = get_trial_stimulus(env)
+        @show stim_params
+        @show weights
+        prob = remake(prob; tspan=tspan, p = merge(weights, stim_params), u0=u0)
 
         if haskey(kwargs, :alg)
             sol = solve(prob, kwargs[:alg]; kwargs...)
@@ -208,11 +267,12 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; kwargs...
         for (w, rule) in learning_rules
             w_val = weights[w]
             Δw = weight_gradient(rule, sol, w_val, feedback)
+            @show Δw
             weights[w] += Δw
         end
-
+        prob = remake(prob; p = merge(weights)) #updates the weights in prob
         increment_trial!(env)
+        agent.problem = prob
+        u0 = sol[1:end,end]
     end
-
-    agent.problem = prob
 end
