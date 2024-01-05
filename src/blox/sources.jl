@@ -122,7 +122,7 @@ mutable struct ImageStimulus <: StimulusBlox
         reset_eqs = Vector{Equation}(undef, N_pixels)
         for i in Base.OneTo(N_pixels)
             s = Symbol(param_name, "_", i)
-            ps[i] = only(@parameters $(s) = 0.0) 
+            ps[i] = only(@parameters $(s) = S[i,1])
             reset_eqs[i] = ps[i] ~ 0.0
         end
 
