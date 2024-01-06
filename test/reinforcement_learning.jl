@@ -28,7 +28,7 @@ using CSV
     bloxs = [VAC, PFC, STR_L, STR_R, SNcb, TAN_pop, AS, stim]
     d = Dict(b => i for (i,b) in enumerate(bloxs))
 
-    hebbian_mod = HebbianModulationPlasticity(K=0.2, decay=0.01, modulator=SNcb, t_pre=t_trial, t_post=t_trial, t_mod=0.31*t_trial)
+    hebbian_mod = HebbianModulationPlasticity(K=0.2, decay=0.01, α=3, θₘ=1, modulator=SNcb, t_pre=t_trial, t_post=t_trial, t_mod=0.31*t_trial)
     hebbian = HebbianPlasticity(K=0.2, W_lim=2, t_pre=t_trial, t_post=t_trial)
 
     g = MetaDiGraph()
