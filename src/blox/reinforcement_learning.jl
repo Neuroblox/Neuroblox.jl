@@ -55,7 +55,7 @@ end
 dlogistic(x) = logistic(x) * (1 - logistic(x)) 
 
 function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w, feedback)
-    DA = hmp.modulator(val_modulator, feedback)
+    DA = hmp.modulator(val_modulator)
     DA_baseline = hmp.modulator.κ_DA * hmp.modulator.N_time_blocks
     ϵ = feedback - (hmp.modulator.κ_DA - DA)
     

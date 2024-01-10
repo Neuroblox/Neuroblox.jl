@@ -71,7 +71,7 @@ struct SNc <: AbstractModulator
     end
 end
 
-(b::SNc)(R_DA, feedback) = b.N_time_blocks * b.κ_DA + R_DA - b.κ_DA + feedback * b.DA_reward
+(b::SNc)(R_DA) = R_DA #b.N_time_blocks * b.κ_DA + R_DA - b.κ_DA + feedback * b.DA_reward
 
 function get_modulator_state(s::SNc)
     sys = get_namespaced_sys(s)

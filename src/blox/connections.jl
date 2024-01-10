@@ -452,8 +452,10 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str_in)
 
     t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
-    cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
-    cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
+    #it should actually be H*jcn (= ρ) but since H should always be reset to 1 at the beginning of each trial (which we are not currently) untill t_event, it makes sense to not keep H here
+    # for a more general version where H can change values anytime, we need to reset H to 1 at the begining
+    cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.jcn > sys_matr_in.jcn, 0, 1)]
+    cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.jcn > sys_matr_in.jcn, 0, 1)]
     push!(bc.events, cb_matr)
     push!(bc.events, cb_strios)
 
@@ -461,7 +463,7 @@ function (bc::BloxConnector)(
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
+        cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.jcn > sys_matr_in.jcn, -2, 0)]
         push!(bc.events, cb_neuron)
     end
 end
@@ -507,12 +509,15 @@ end
 sample_poisson(λ) = rand(Poisson(λ))
 @register_symbolic sample_poisson(λ)
 
+
 """
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
     R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
     v = rand(Poisson(R))
+    @show R
+    @show v
     integ.p[p[3]] = v
 end
 
