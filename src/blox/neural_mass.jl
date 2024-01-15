@@ -89,9 +89,9 @@ This is a blox of the sort used for spectral DCM modeling.
 The formal definition of this blox is:
 """
 
-```math
-\\frac{d}{dx} = \\sum{jcn}
-```
+# ```math
+# \\frac{d}{dx} = \\sum{jcn}
+# ```
 """
 where ``jcn`` is any input to the blox.
 
@@ -120,10 +120,10 @@ end
     Create a harmonic oscillator blox with the specified parameters.
     The formal definition of this blox is:
     """
-    ```math
-        \\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
-        \\frac{dy}{dt} = -(\\omega^2)*x
-    ```
+    # ```math
+    #     \\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
+    #     \\frac{dy}{dt} = -(\\omega^2)*x
+    # ```
 """
     where ``jcn`` is any input to the blox.
     
@@ -160,10 +160,10 @@ end
     Create a Jansen Rit blox as described in Liu et al.
     The formal definition of this blox is:
  """
-    ```math
-        \\frac{dx}{dt} = y-\\frac{2}{\\tau}x
-        \\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
-    ```
+    # ```math
+    #     \\frac{dx}{dt} = y-\\frac{2}{\\tau}x
+    #     \\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+    # ```
 """
     where ``jcn`` is any input to the blox.
 
@@ -248,7 +248,29 @@ struct WilsonCowan <: NeuralMassBlox
 end
 
 """
-Units note: From Yamashita et al. paper, designed to be in ms. Good to go for now.
+    JansenRit(name, namespace, τ, H, λ, r, cortical)
+
+    Create a Jansen Rit blox as described in Liu et al.
+    The formal definition of this blox is:
+ """
+    # ```math
+    #     \\frac{dx}{dt} = y-\\frac{2}{\\tau}x
+    #     \\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+    # ```
+"""
+    where ``jcn`` is any input to the blox.
+
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
+- `τ`: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
+- `H`: See equation for use.
+- `λ`: See equation for use.
+- `r`: See equation for use.
+- `cortical`: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+
+Citations:
+1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091. 
 """
 struct LarterBreakspear <: NeuralMassBlox
     params
