@@ -1,32 +1,6 @@
 @parameters t
 D = Differential(t)
 
-"""
-    LinearNeuralMassBlox(name)
-
-Create standard linear neural mass blox with a single internal state.
-There are no parameters in this blox.
-This is a blox of the sort used for spectral DCM modeling.
-The formal definition of this blox is:
-
-```math
-\frac{d}{dx} = \sum{jcn}
-```
-where ``jcn`` is any input to the blox.
-"""
-
-mutable struct LinearNeuralMassBlox <: AbstractComponent
-    connector::Num
-    odesystem::ODESystem
-    function LinearNeuralMassBlox(;name)
-        states = @variables x(t) jcn(t)
-        eqs = D(x) ~ jcn
-        odesys = ODESystem(eqs, t, states, []; name=name)
-        new(odesys.x, odesys)
-    end
-end
-
-
 mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
     connector::Num
@@ -309,9 +283,52 @@ end
 New versions of blox begin here!
 """
 
+
 """
-Units note: Frequency should be tuned by user.
-Updated with additional factors to make ms.
+    LinearNeuralMassBlox(name)
+
+Create standard linear neural mass blox with a single internal state.
+There are no parameters in this blox.
+This is a blox of the sort used for spectral DCM modeling.
+The formal definition of this blox is:
+
+```math
+\frac{d}{dx} = \sum{jcn}
+```
+where ``jcn`` is any input to the blox.
+
+Arguments:
+- `name`: Options containing specification about deterministic.
+"""
+
+struct LinearNeuralMass <: NeuralMassBlox
+    output
+    jcn
+    odesystem
+    namespace
+    function LinearNeuralMass(;name, namespace=nothing)
+        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+        eqs = [D(x) ~ jcn]
+        sys = System(eqs, name=name)
+        new(sts[1], sts[2], sys, namespace)
+    end
+end
+
+"""
+    HarmonicOscillatorBlox(name, ω, ζ, k, h)
+
+    Create a harmonic oscillator blox with the specified parameters.
+    The formal definition of this blox is:
+    ```math
+        \frac{dx}{dt} = y-(2*\omega*\zeta*x)+ k*(2/\pi)*(atan((\sum{jcn})/h)
+        \frac{dy}{dt} = -(\omega^2)*x
+    ```
+    where ``jcn`` is any input to the blox.
+
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- `T`: Type of Nodes to use in the population. e.g., `Float64`.
+- `L`: Type of loss to use in the population. e.g., `Float64`.
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
