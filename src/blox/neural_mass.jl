@@ -1,29 +1,6 @@
 @parameters t
 D = Differential(t)
 
-mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
-    # all parameters are Num as to allow symbolic expressions
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
-        params = progress_scope(ω, ζ, k, h)
-        params = compileparameterlist(ω=params[1], ζ=params[2], k=params[3], h=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        ω, ζ, k, h = params
-        eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
-                  D(y) ~ -(ω^2)*x]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const harmonic_oscillator = HarmonicOscillatorBlox
-
 # This is for later to connect the icons to the different blox
 # function gui.icon(Type::HarmonicOscillatorBlox)
 #    return HarmonicOscillatorImage
@@ -299,6 +276,7 @@ where ``jcn`` is any input to the blox.
 
 Arguments:
 - `name`: Options containing specification about deterministic.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
 """
 
 struct LinearNeuralMass <: NeuralMassBlox
@@ -327,8 +305,11 @@ end
 
 Arguments:
 - `name`: Name given to `ODESystem` object within the blox.
-- `T`: Type of Nodes to use in the population. e.g., `Float64`.
-- `L`: Type of loss to use in the population. e.g., `Float64`.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
+- `ω`: Base frequency. Note the default value is scaled to give oscillations in milliseconds to match other blocks.
+- `ζ`: Damping ratio.
+- `k`: Gain.
+- `h`: Threshold.
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
