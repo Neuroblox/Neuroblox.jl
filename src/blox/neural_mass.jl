@@ -1,54 +1,6 @@
 @parameters t
 D = Differential(t)
 
-# This is for later to connect the icons to the different blox
-# function gui.icon(Type::HarmonicOscillatorBlox)
-#    return HarmonicOscillatorImage
-
-mutable struct JansenRitCBlox <: NeuralMassBlox
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        params = progress_scope(τ, H, λ, r)
-        params = compileparameterlist(τ=params[1], H=params[2], λ=params[3], r=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        τ, H, λ, r = params
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const jansen_ritC = JansenRitCBlox
-
-mutable struct  JansenRitSCBlox <: NeuralMassBlox
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
-        params = progress_scope(τ, H, λ, r)
-        params = compileparameterlist(τ=params[1], H=params[2], λ=params[3], r=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        τ, H, λ, r = params
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                  D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const jansen_ritSC = JansenRitSCBlox
-
 mutable struct WilsonCowanBlox <: NeuralMassBlox
     τ_E::Num
     τ_I::Num
@@ -262,17 +214,20 @@ New versions of blox begin here!
 
 
 """
-    LinearNeuralMassBlox(name)
+    LinearNeuralMass(name, namespace)
 
 Create standard linear neural mass blox with a single internal state.
 There are no parameters in this blox.
 This is a blox of the sort used for spectral DCM modeling.
 The formal definition of this blox is:
+"""
 
 ```math
 \frac{d}{dx} = \sum{jcn}
 ```
+"""
 where ``jcn`` is any input to the blox.
+
 
 Arguments:
 - `name`: Options containing specification about deterministic.
@@ -293,15 +248,18 @@ struct LinearNeuralMass <: NeuralMassBlox
 end
 
 """
-    HarmonicOscillatorBlox(name, ω, ζ, k, h)
+    HarmonicOscillator(name, namespace, ω, ζ, k, h)
 
     Create a harmonic oscillator blox with the specified parameters.
     The formal definition of this blox is:
+    """
     ```math
         \frac{dx}{dt} = y-(2*\omega*\zeta*x)+ k*(2/\pi)*(atan((\sum{jcn})/h)
         \frac{dy}{dt} = -(\omega^2)*x
     ```
+"""
     where ``jcn`` is any input to the blox.
+    
 
 Arguments:
 - `name`: Name given to `ODESystem` object within the blox.
@@ -330,9 +288,32 @@ struct HarmonicOscillator <: NeuralMassBlox
 end
 
 """
-Units note: all units from the original Parkinson's paper EXCEPT τ. 
-The original delays were in seconds, so multiplied to be consistent with other blocks in ms.
+    JansenRit(name, namespace, τ, H, λ, r, cortical)
+
+    Create a Jansen Rit blox as described in Liu et al.
+    The formal definition of this blox is:
+ """
+    ```math
+        \frac{dx}{dt} = y-\frac{2}{\tau}x
+        \frac{dy}{dt} = -\frac{x}{\tau^2} + \frac{H}{\tau} [\frac{2\lambda}{1+\text{exp}(-r*\sum{jcn})} - \lambda]
+    ```
 """
+    where ``jcn`` is any input to the blox.
+
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
+- `τ`: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
+- `H`: See equation for use.
+- `λ`: See equation for use.
+- `r`: See equation for use.
+- `cortical`: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+
+Citations:
+1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
+
+"""
+
 # Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
