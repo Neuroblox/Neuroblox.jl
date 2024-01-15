@@ -1,6 +1,20 @@
 @parameters t
 D = Differential(t)
 
+"""
+    LinearNeuralMassBlox(name)
+
+Create standard linear neural mass blox with a single internal state.
+There are no parameters in this blox.
+This is a blox of the sort used for spectral DCM modeling.
+The formal definition of this blox is:
+
+```math
+\frac{d}{dx} = \sum{jcn}
+```
+where ``jcn`` is any input to the blox.
+"""
+
 mutable struct LinearNeuralMassBlox <: AbstractComponent
     connector::Num
     odesystem::ODESystem
@@ -11,6 +25,7 @@ mutable struct LinearNeuralMassBlox <: AbstractComponent
         new(odesys.x, odesys)
     end
 end
+
 
 mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
@@ -293,23 +308,6 @@ end
 """
 New versions of blox begin here!
 """
-
-
-"""
-Units note: no units because no parameters :)
-"""
-struct LinearNeuralMass <: NeuralMassBlox
-    output
-    jcn
-    odesystem
-    namespace
-    function LinearNeuralMass(;name, namespace=nothing)
-        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
-        eqs = [D(x) ~ jcn]
-        sys = System(eqs, name=name)
-        new(sts[1], sts[2], sys, namespace)
-    end
-end
 
 """
 Units note: Frequency should be tuned by user.
