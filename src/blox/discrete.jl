@@ -44,7 +44,9 @@ struct TAN <: AbstractDiscrete
         @variables t 
         sts = @variables R(t)=κ 
         ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
-        eqs = Equation[]
+        eqs = [
+                R ~ minimum([κ, κ/(λ*jcn + eps())])
+              ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
         new(sys, namespace)

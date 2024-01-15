@@ -136,16 +136,34 @@ mutable struct GreedyPolicy <: AbstractActionSelection
     const name
     const namespace
     competitor_states 
+    competitor_params
     const t_decision
 
-    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing)
+    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing, competitor_params=nothing)
         sts = isnothing(competitor_states) ? Num[] : competitor_states
-        new(name, namespace, sts, t_decision)
+        ps = isnothing(competitor_states) ? Num[] : competitor_params
+        new(name, namespace, sts, ps, t_decision)
     end
 end
 
 function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     comp_vals = sol(p.t_decision; idxs=p.competitor_states)
+    @info comp_vals
+    return argmax(comp_vals)
+end
+
+function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
+    ps = parameters(sys)
+    params = prob.p
+    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
+    comp_params = p.competitor_params
+    idxs_cp = Int64[]
+    for i in eachindex(comp_params)
+        idxs = findall(x -> x==comp_params[i], ps)
+        push!(idxs_cp,idxs)
+    end
+    comp_vals = params[map_idxs[idxs_cp]]
+    @info comp_vals
     return argmax(comp_vals)
 end
  
@@ -174,6 +192,8 @@ mutable struct Agent
         new(ss, prob, policy, learning_rules)
     end
 end
+
+
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
     N_trials = env.N_trials
