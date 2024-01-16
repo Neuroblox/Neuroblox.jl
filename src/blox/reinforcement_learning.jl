@@ -151,7 +151,7 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     @info comp_vals
     return argmax(comp_vals)
 end
-
+"""
 function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
     ps = parameters(sys)
     params = prob.p
@@ -166,7 +166,7 @@ function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
     @info comp_vals
     return argmax(comp_vals)
 end
- 
+"""
 mutable struct Agent 
     odesystem
     problem

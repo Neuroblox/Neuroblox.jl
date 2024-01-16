@@ -85,7 +85,7 @@ begin
     assembly = [LC, ITN, VC, PFC, STR1, STR2, tan_nrn, gpi1, gpi2, gpe1, gpe2, STN1, STN2, Thal1, Thal2, stim, tan_pop, AS, SNcb]
 
 
-	hebbian_mod = HebbianModulationPlasticity(K=0.016, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=1600-eps(), t_post=1600-eps(), t_mod=180)
+	hebbian_mod = HebbianModulationPlasticity(K=0.016, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=1600-eps(), t_post=1600-eps(), t_mod=90)
 	
     hebbian_cort = HebbianPlasticity(K=5e-5, W_lim=5, t_pre=1600-eps(), t_post=1600-eps())
 	
@@ -101,7 +101,7 @@ begin
     add_edge!(g,1,3, Dict(:weight => 44)) #LC->VC
 	add_edge!(g,1,4, Dict(:weight => 44)) #LC->pfc
 	add_edge!(g,2,7, Dict(:weight => 100)) #ITN->tan
-	add_edge!(g,3,4, Dict(:weight => 2.5, :density => 0.08, :learning_rule => hebbian_cort)) #VC->pfc
+	add_edge!(g,3,4, Dict(:weight => 1, :density => 0.08, :learning_rule => hebbian_cort)) #VC->pfc
 	add_edge!(g,4,5, Dict(:weight => 0.075, :density => 0.04, :learning_rule => hebbian_mod)) #pfc->str1
 	add_edge!(g,4,6, Dict(:weight => 0.075, :density => 0.04, :learning_rule => hebbian_mod)) #pfc->str2
 	add_edge!(g,7,5, Dict(:weight => 0.17)) #tan->str1
@@ -121,8 +121,8 @@ begin
 	add_edge!(g,12,8, Dict(:weight => 0.1, :density => 0.04)) #stn1->gpi1
 	add_edge!(g,13,9, Dict(:weight => 0.1, :density => 0.04)) #stn2->gpi2
 	add_edge!(g,16,3, :weight, 14) #stim->VC
-	add_edge!(g,17,5, Dict(:weight => 1, :t_event => 180.0)) #TAN pop -> str1
-	add_edge!(g,17,6, Dict(:weight => 1, :t_event => 180.0)) #TAN pop -> str2
+	add_edge!(g,17,5, Dict(:weight => 1, :t_event => 90.0)) #TAN pop -> str1
+	add_edge!(g,17,6, Dict(:weight => 1, :t_event => 90.0)) #TAN pop -> str2
 	add_edge!(g,5,17, Dict(:weight => 1)) #str1 -> TAN pop 
 	add_edge!(g,6,17, Dict(:weight => 1)) #str2 -> TAN pop 
 	add_edge!(g,5,6, Dict(:weight => 1, :t_event => 181.0)) #str1 -> str2
@@ -177,8 +177,11 @@ end
 # ╔═╡ 8049c9d0-328b-4275-8f31-207de4b8f729
 size(vlist)
 
-# ╔═╡ 96ca0f9a-fab8-4f9b-b4d2-4dd80dbd8973
-sn=(hebbian_mod.modulator)
+# ╔═╡ 19951361-eae0-4483-aca0-a371d6f005cc
+AS.competitor_states[1]
+
+# ╔═╡ 677f1a53-d6a2-4d15-9dba-514918254d20
+stt=Neuroblox.get_modulator_state(hebbian_mod.modulator)
 
 # ╔═╡ eb6e33a9-3704-46dc-8d51-76c0e6eab779
 inh1=collect(0:6:268) .+1
@@ -244,6 +247,15 @@ end
 
 # ╔═╡ 0eff1351-d443-4d72-b100-6c591a7c5fe9
     sol = solve(prob2,Vern7(),saveat=0.01)
+
+# ╔═╡ fe451072-9911-41d6-b179-aad13f38dce0
+    action = agent.action_selection(sol)
+
+# ╔═╡ ae499def-0886-4105-8a87-3f955badb6ff
+plot(sol(1:1000;idxs=AS.competitor_states[1]))
+
+# ╔═╡ a252da3e-8554-4120-9419-c90c07be5ad2
+sol(1:10;idxs=AS.competitor_states[2])
 
 # ╔═╡ 10cfc03b-525e-4666-be1c-cc5074c40933
     sol.retcode
@@ -316,9 +328,6 @@ plot(sol.t,ss[vlist[exc2[4]]+8,:])
 # ╔═╡ 7f6120ca-61bc-4161-b827-26560bc5f28c
 plot(sol.t,mean(V[exc1,:],dims=1)')
 
-# ╔═╡ fe451072-9911-41d6-b179-aad13f38dce0
-    action = agent.action_selection(agent.odesystem,prob2)
-
 # ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
 begin 
 
@@ -367,7 +376,7 @@ weights
 
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
-learning=1
+learning=0
 	
 	if learning==1
 		
@@ -388,8 +397,8 @@ learning=1
         if isnothing(action_selection)
             feedback = 1
         else
-           # action = action_selection(sol2)
-			action = action_selection(agent)
+            action = action_selection(sol2)
+			#action = action_selection(agent)
             feedback = env(action)
 			@info action
 	        @info feedback
@@ -441,7 +450,10 @@ env.current_trial
 # ╠═b2b22100-94f5-4d25-93e3-13f387c840f4
 # ╠═0eff1351-d443-4d72-b100-6c591a7c5fe9
 # ╠═fe451072-9911-41d6-b179-aad13f38dce0
-# ╠═96ca0f9a-fab8-4f9b-b4d2-4dd80dbd8973
+# ╠═19951361-eae0-4483-aca0-a371d6f005cc
+# ╠═677f1a53-d6a2-4d15-9dba-514918254d20
+# ╠═ae499def-0886-4105-8a87-3f955badb6ff
+# ╠═a252da3e-8554-4120-9419-c90c07be5ad2
 # ╠═10cfc03b-525e-4666-be1c-cc5074c40933
 # ╠═d039f7a0-e15f-4ada-bd0b-3ffac1dd9b96
 # ╠═7ca9413b-f672-4177-8289-20b9ceaebc01

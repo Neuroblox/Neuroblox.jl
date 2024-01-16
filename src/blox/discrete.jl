@@ -58,18 +58,23 @@ struct SNc <: AbstractModulator
     N_time_blocks
     κ_DA
     DA_reward
+    t_event
     namespace
 
-    function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33)
+    function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0)
         @variables t 
-        sts = @variables R(t)=κ_DA 
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true]
+        sts = @variables R(t)=κ_DA R_(t)=κ_DA
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 t_event=t_event
         eqs = [
                 R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())])
+                R_ ~ minimum([κ_DA, κ_DA/(λ_DA*jcn_ + eps())])
               ]
-        sys = ODESystem(eqs, t, sts, ps; name)
 
-        new(sys, N_time_blocks, κ_DA, DA_reward, namespace)
+        R_cb = [[t_event+1] => [jcn_ ~ jcn]]     
+
+        sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = R_cb)
+
+        new(sys, N_time_blocks, κ_DA, DA_reward, t_event, namespace)
     end
 end
 
@@ -77,5 +82,5 @@ end
 
 function get_modulator_state(s::SNc)
     sys = get_namespaced_sys(s)
-    return sys.R
+    return sys.R_
 end
