@@ -213,8 +213,22 @@ struct JansenRit <: NeuralMassBlox
 end
 
 """
-Units note: Unclear where the defaults come from (close but not quite Wilson-Cowan referenced in TVB and elsewhere).
-They're on the same order of magnitude as the original parameters which are in ms, so good to go for now.
+    WilsonCown(name, namespace, τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
+
+    Create a standard Wilson Cowan blox.
+    The formal definition of this blox is:
+ """
+    # ```math
+    #     \\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))}
+    #     \\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \\theta_I)}
+    # ```
+"""
+    where ``jcn`` is any input to the blox.
+
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
+- Others: See equation for use.
 """
 struct WilsonCowan <: NeuralMassBlox
     params
@@ -251,26 +265,18 @@ end
     LarterBreakspear(name, namespace, ...)
 
     Create a Larter Breakspear blox described in Endo et al. For a full list of the parameters used see the reference.
-    The formal definition of this blox is:
- """
-    # ```math
-    #     \\frac{dx}{dt} = y-\\frac{2}{\\tau}x
-    #     \\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
-    # ```
-"""
-    where ``jcn`` is any input to the blox.
+    If you need to modify the parameters, see Chesebro et al. and van Nieuwenhuizen et al. for physiological ranges.
 
 Arguments:
 - `name`: Name given to `ODESystem` object within the blox.
 - `namespace`: Additional namespace above `name` if needed for inheritance.
-- `τ`: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
-- `H`: See equation for use.
-- `λ`: See equation for use.
-- `r`: See equation for use.
-- `cortical`: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citations:
-1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091. 
+1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091.
+2. Chesebro AG, Mujica-Parodi LR, Weistuch C. Ion gradient-driven bifurcations of a multi-scale neuronal model. Chaos Solitons Fractals. 2023 Feb;167:113120. doi: 10.1016/j.chaos.2023.113120. 
+3. van Nieuwenhuizen, H, Chesebro, AG, Polis, C, Clarke, K, Strey, HH, Weistuch, C, Mujica-Parodi, LR. Ketosis regulates K+ ion channels, strengthening brain-wide signaling disrupted by age. Preprint. bioRxiv 2023.05.10.540257; doi: https://doi.org/10.1101/2023.05.10.540257. 
+
 """
 struct LarterBreakspear <: NeuralMassBlox
     params
