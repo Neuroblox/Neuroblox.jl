@@ -248,9 +248,9 @@ struct WilsonCowan <: NeuralMassBlox
 end
 
 """
-    JansenRit(name, namespace, τ, H, λ, r, cortical)
+    LarterBreakspear(name, namespace, ...)
 
-    Create a Jansen Rit blox as described in Liu et al.
+    Create a Larter Breakspear blox described in Endo et al. For a full list of the parameters used see the reference.
     The formal definition of this blox is:
  """
     # ```math
