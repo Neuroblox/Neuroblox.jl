@@ -153,11 +153,10 @@ function random_initials(odesys::ODESystem, blox)
     return u0
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, 
+export jansen_rit_spm12, 
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
-    hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
-    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
+    hh_neuron_inhibitory, synaptic_network, van_der_pol
+export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
