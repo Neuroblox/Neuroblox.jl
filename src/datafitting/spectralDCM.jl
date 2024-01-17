@@ -18,7 +18,6 @@ using ForwardDiff: Dual
 using ForwardDiff: Partials
 using LinearAlgebra: Eigen
 using LinearAlgebra
-# using ToeplitzMatrices
 using ExponentialUtilities
 
 ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
@@ -26,6 +25,20 @@ using ChainRules: _eigen_norm_phase_fwd!
 tagtype(::Dual{T,V,N}) where {T,V,N} = T
 
 
+"""
+    function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
+    
+    Dispatch of LinearAlgebra.eigen for dual matrices with complex numbers. Make the eigenvalue decomposition 
+    amenable to automatic differentiation. To do so compute the analytical derivative of eigenvalues
+    and eigenvectors. 
+
+    Arguments:
+    - `M`: matrix of type Dual of which to compute the eigenvalue decomposition. 
+
+    Returns:
+    - `Eigen(evals, evecs)`: eigenvalue decomposition returned as type LinearAlgebra.Eigen
+
+"""
 function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     nd = size(M, 1)
     A = (p->p.value).(M)
@@ -182,12 +195,21 @@ end
     return y
 end
 
+"""
+    function matlab_norm(A, p)
 
-function matlab_norm(A, p)
+    Simple helper function to implement the norm of a matrix that is equivalent to the one given in MATLAB for order=1, 2, Inf. 
+    This is needed for the reproduction of the exact same results of SPM12.
+
+    Arguments:
+    - `A`: matrix
+    - `p`: order of norm
+"""
+function matlab_norm(M, p)
     if p == 1
-        return maximum(vec(sum(abs.(A),dims=1)))
+        return maximum(vec(sum(abs.(M),dims=1)))
     elseif p == Inf
-        return maximum(vec(sum(abs.(A),dims=2)))
+        return maximum(vec(sum(abs.(M),dims=2)))
     elseif p == 2
         print("Not implemented yet!\n")
         return NaN
@@ -210,6 +232,14 @@ function csd_Q(csd)
     return Q
 end
 
+"""
+    function spm_logdet(M)
+
+    SPM12 style implementation of the logarithm of the determinant of a matrix.
+
+    Arguments:
+    - `M`: matrix
+"""
 function spm_logdet(M)
     TOL = 1e-16
     s = la.diag(M)
@@ -228,6 +258,14 @@ mutable struct vb_state
     Σθ::Matrix{Float64}
 end
 
+"""
+    vecparam(param::OrderedDict{Any, Any})
+
+    Function to flatten an ordered dictionary of model parameters and return a simple list of parameter values.
+
+    Arguments:
+    - `param`: dictionary of model parameters (may contain numbers and lists of numbers)
+"""
 function vecparam(param::OrderedDict{Any, Any})
     flatparam = Float64[]
     for v in values(param)
@@ -242,22 +280,22 @@ function vecparam(param::OrderedDict{Any, Any})
     return flatparam
 end
 
-function unvecparam(vals, param::OrderedDict{Any,Any})
-    iter = 1
-    paramnewvals = copy(param)
-    for (k, v) in param
-        if (typeof(v) <: Array)
-            paramnewvals[k] = vals[iter:iter+length(v)-1]
-            iter += length(v)
-        else
-            paramnewvals[k] = vals[iter]
-            iter += 1
-        end
-    end
-    return paramnewvals
-end
+"""
+    variationalbayes(idx_A, y, derivatives, w, V, p, priors, niter)
 
+    Computes parameter estimation using variational Laplace that is to a large extend equivalent to the SPM12 implementation
+    and provides the exact same values.
 
+    Arguments:
+    - `idx_A`: indices of connection weight parameter matrix A in model Jacobian
+    - `y`: empirical cross-spectral density (input data)
+    - `derivatives`: jacobian of model as well as gradient of observer function
+    - `w`: fequencies at which to estimate cross-spectral densities
+    - `V`: projection matrix from full parameter space to reduced space that removes parameters with zero variance prior
+    - `p`: order of multivariate autoregressive model for estimation of cross-spectral densities from data
+    - `priors`: Bayesian priors, mean and variance thereof. Laplace approximation assumes Gaussian distributions
+    - `niter`: number of iterations of the optimization procedure
+"""
 @views function variationalbayes(idx_A, y, derivatives, w, V, p, priors, niter)
     # extract priors
     Πθ_pr = priors[:Σ][:Πθ_pr]
@@ -441,26 +479,28 @@ end
 end
 
 """
-Performs a variational inference to fit a cross spectral density. Current implementation provides a Variational Laplace fit. 
-(ToDo: generalize to different VI algorithms)
+    spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, params, hyperparams)
 
-Input:
-- data             : Dataframe with column names corresponding to the regions of measurement.
-- neuraldynmodel   : MTK model, it is an ODESystem or a System (haven't tested with System yet).
-- observationmodel : MTK model that defines measurement function (ex. bold signal). 
-                     Current implementation limits to one measurement functional form for all regions.
-- initcond         : Dictionary of initial conditions, numerical values for all states
-- csdsetup         : Dictionary of parameters required for the computation of the cross spectral density
--- dt              : sampling interval
--- freq            : frequencies at which to evaluate the CSD
--- p               : order parameter of the multivariate autoregression model
-- params           : Dataframe of parameters with the following columns:
--- name            : corresponds to MTK model name
--- mean            : corresponds to prior mean value
--- variance        : corresponds to the prior variances
-- hyperparams      : Dataframe of parameters with the following columns:
--- Πλ_pr           : prior precision matrix for λ hyperparameter(s)
--- μλ_pr           : prior mean(s) for λ hyperparameter(s)
+    Interface function to performs variational inference to fit model parameters to empirical cross spectral density.
+    The current implementation provides a Variational Laplace fit (see function above `variationalbayes`).
+
+    Arguments:
+    - `data`             : Dataframe with column names corresponding to the regions of measurement.
+    - `neuraldynmodel`   : MTK model, it is an ODESystem or a System (haven't tested with System yet).
+    - `observationmodel` : MTK model that defines measurement function (ex. bold signal). 
+                           Current implementation limits to one measurement functional form for all regions.
+    - `initcond`         : Dictionary of initial conditions, numerical values for all states
+    - `csdsetup`         : Dictionary of parameters required for the computation of the cross spectral density
+    -- `dt`              : sampling interval
+    -- `freq`            : frequencies at which to evaluate the CSD
+    -- `p`               : order parameter of the multivariate autoregression model
+    - `params`           : Dataframe of parameters with the following columns:
+    -- `name`            : corresponds to MTK model name
+    -- `mean`            : corresponds to prior mean value
+    -- `variance`        : corresponds to the prior variances
+    - `hyperparams`      : Dataframe of parameters with the following columns:
+    -- `Πλ_pr`           : prior precision matrix for λ hyperparameter(s)
+    -- `μλ_pr`           : prior mean(s) for λ hyperparameter(s)
 """
 function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, params, hyperparams)
     # compute cross-spectral density

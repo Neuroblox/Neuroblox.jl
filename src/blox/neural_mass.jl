@@ -143,8 +143,8 @@ struct HarmonicOscillator <: NeuralMassBlox
     odesystem
     namespace
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
-        p = progress_scope(ω, ζ, k, h)
-        p = compileparameterlist(ω=p[1], ζ=p[2], k=p[3], h=p[4])
+        # p = progress_scope(ω, ζ, k, h)
+        p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
@@ -199,8 +199,8 @@ struct JansenRit <: NeuralMassBlox
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
 
-        p = progress_scope(τ, H, λ, r)
-        p = compileparameterlist(τ=p[1], H=p[2], λ=p[3], r=p[4])
+        # p = progress_scope(τ, H, λ, r)
+        p = paramscoping(τ=τ, H=H, λ=λ, r=r)
         τ, H, λ, r = p
         sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
         eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
@@ -250,8 +250,8 @@ struct WilsonCowan <: NeuralMassBlox
                         θ_I=3.5,
                         η=1.0
     )
-        p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
-        p = compileparameterlist(τ_E=p[1], τ_I=p[2], a_E=p[3], a_I=p[4], c_EE=p[5], c_IE=p[6], c_EI=p[7], c_II=p[8], θ_E=p[9], θ_I=p[10], η=p[11])
+        # p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
+        p = paramscoping(τ_E=τ_E, τ_I=τ_I, a_E=a_E, a_I=a_I, c_EE=c_EE, c_IE=c_IE, c_EI=c_EI, c_II=c_II, θ_E=θ_E, θ_I=θ_I, η=η)
         τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
         sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t)=0.0 [input=true] #P(t)=0.0
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
@@ -318,8 +318,8 @@ struct LarterBreakspear <: NeuralMassBlox
                         r_NMDA=0.25,
                         C=0.35
     )
-        p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
-        p = compileparameterlist(C=p[1], δ_VZ=p[2], T_Ca=p[3], δ_Ca=p[4], g_Ca=p[5], V_Ca=p[6], T_K=p[7], δ_K=p[8], g_K=p[9], V_K=p[10], T_Na=p[11], δ_Na=p[12], g_Na=p[13],V_Na=p[14], V_L=p[15], g_L=p[16], V_T=p[17], Z_T=p[18], Q_Vmax=p[19], Q_Zmax=p[20], IS=p[21], a_ee=p[22], a_ei=p[23], a_ie=p[24], a_ne=p[25], a_ni=p[26], b=p[27], τ_K=p[28], ϕ=p[29], r_NMDA=p[30])
+        # p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
+        p = paramscoping(C=C, δ_VZ=δ_VZ, T_Ca=T_Ca, δ_Ca=δ_Ca, g_Ca=g_Ca, V_Ca=V_Ca, T_K=T_K, δ_K=δ_K, g_K=g_K, V_K=V_K, T_Na=T_Na, δ_Na=δ_Na, g_Na=g_Na, V_Na=V_Na, V_L=V_L, g_L=g_L, V_T=V_T, Z_T=Z_T, Q_Vmax=Q_Vmax, Q_Zmax=Q_Zmax, IS=IS, a_ee=a_ee, a_ei=a_ei, a_ie=a_ie, a_ne=a_ne, a_ni=a_ni, b=b, τ_K=τ_K, ϕ=ϕ, r_NMDA=r_NMDA)
         C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
         
         sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)

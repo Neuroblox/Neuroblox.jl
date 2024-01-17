@@ -174,7 +174,7 @@ export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export boldsignal, BalloonModel
-export vecparam, unvecparam, csd_Q, spectralVI
+export vecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!
