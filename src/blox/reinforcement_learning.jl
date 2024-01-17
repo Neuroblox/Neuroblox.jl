@@ -60,7 +60,7 @@ function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w,
     ϵ = feedback - (hmp.modulator.κ_DA - DA)
     
    # Δw = hmp.K * val_post * val_pre * DA * (DA - DA_baseline) * dlogistic(DA) - hmp.decay * w
-    Δw = hmp.K * val_post * val_pre * ϵ * (ϵ + hmp.θₘ) * dlogistic(hmp.α * (ϵ + hmp.θₘ)) - hmp.decay * w
+    Δw = maximum([hmp.K * val_post * val_pre * ϵ * (ϵ + hmp.θₘ) * dlogistic(hmp.α * (ϵ + hmp.θₘ)) - hmp.decay * w, -w])
 
     return Δw
 end

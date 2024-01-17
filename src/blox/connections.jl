@@ -548,7 +548,7 @@ function (bc::BloxConnector)(
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
+    cb = [t_event+eps(t_event)] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
    # cb = t_event => (sample_affect!, [], [sys_out.R, sys_out.spikes_window], nothing)
     push!(bc.events, cb)
 

@@ -101,7 +101,7 @@ begin
     add_edge!(g,1,3, Dict(:weight => 44)) #LC->VC
 	add_edge!(g,1,4, Dict(:weight => 44)) #LC->pfc
 	add_edge!(g,2,7, Dict(:weight => 100)) #ITN->tan
-	add_edge!(g,3,4, Dict(:weight => 1, :density => 0.08, :learning_rule => hebbian_cort)) #VC->pfc
+	add_edge!(g,3,4, Dict(:weight => 2, :density => 0.08, :learning_rule => hebbian_cort)) #VC->pfc
 	add_edge!(g,4,5, Dict(:weight => 0.075, :density => 0.04, :learning_rule => hebbian_mod)) #pfc->str1
 	add_edge!(g,4,6, Dict(:weight => 0.075, :density => 0.04, :learning_rule => hebbian_mod)) #pfc->str2
 	add_edge!(g,7,5, Dict(:weight => 0.17)) #tan->str1
@@ -135,6 +135,18 @@ begin
 	
 end
 
+# ╔═╡ fd33687b-1277-4689-acff-ef0f6c93b036
+
+
+# ╔═╡ 07e91c2c-3a1b-49d8-855b-9568e9697bb1
+S = transpose(Matrix(data[!, Not(:category)]))
+
+# ╔═╡ 7e997ed5-20d1-424f-827c-f0bb2432149a
+SS=S[:,1:1000]
+
+# ╔═╡ 83d4d150-a21c-45eb-8fd1-fb8668062738
+Gray.(SS[:,1:100])
+
 # ╔═╡ 48d15d01-7d94-4a2f-bf32-5f0c548b24f6
 size(data[1,1:225])
 
@@ -142,7 +154,7 @@ size(data[1,1:225])
 stim
 
 # ╔═╡ 5ddd418f-23d2-4151-82c0-e8c9fae7e4f2
-  agent = Agent(g; name=:ag, t_block = 90);
+  #agent = Agent(g; name=:ag, t_block = 90);
 
 # ╔═╡ b14520ac-ac20-48e4-ac2a-91448fa398b8
 #neuron_net = system_from_graph(g; name=global_ns,t_affect=90.0);
@@ -225,11 +237,39 @@ zero([0.9,-1])
 # ╔═╡ 78c45058-d2ee-4c1c-92f9-5d43e0647ecf
 eps()
 
+# ╔═╡ 5705a3d8-d5c2-4c52-82b9-91ad05a43733
+#eqs=equations(agent.odesystem);
+
+# ╔═╡ 07bb7cce-498e-4ed6-b3e3-8fd31eb913fb
+#bc=Neuroblox.connector_from_graph(g)
+
+# ╔═╡ f1d77711-8db9-4c1d-9d5d-2ab172ef5f99
+#eqs_params=Neuroblox.get_equations_with_parameter_lhs(bc)
+
+# ╔═╡ 29b37f0c-cd6d-467b-961b-f2ded9cc3831
+#eqs_params[1] 
+
 # ╔═╡ 0b036e57-120e-4d2f-902e-1352d573bb25
 perf
 
+# ╔═╡ 9703f279-a311-4aa2-85e4-75d8898b21b6
+Gray.(act/2)
+
 # ╔═╡ a973a05c-e686-48c5-8242-688e6475624b
+Gray.(perf)
+
+# ╔═╡ 974d9926-4543-46cf-9e2f-38826be8f3ee
 sum(perf)
+
+# ╔═╡ 35891714-fafc-4465-a2e5-bcd7aaf1a59c
+begin
+	perf_smth=zeros(length(perf)-19)
+	for ii=20:length(perf)
+		perf_smth[ii-19] = mean(perf[ii-19:ii])
+		
+	end
+	plot(perf_smth,ylims=(0,1))
+end
 
 # ╔═╡ 432effe7-77c2-4163-99f5-1ba95a3052e8
 begin
@@ -245,14 +285,54 @@ end
    # prob2=remake(prob;tspan=(0,1600))
 	prob2 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
 
+# ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
+begin 
+
+	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
+	t_warmup=800
+    #N_trials = env.N_trials
+    t_trial = env.t_trial
+    tspan = (0, t_trial)
+
+    sys = Neuroblox.get_sys(agent)
+    prob3 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
+
+	if t_warmup > 0
+        prob3 = remake(prob3; tspan=(0,t_warmup))
+        #if haskey(kwargs, :alg)
+        #    sol = solve(prob, kwargs[:alg]; kwargs...)
+        #else
+		
+            sol2 = solve(prob3, Vern7())
+		
+        #end
+        u0 = sol2[1:end,end] # last value of state vector
+        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan, u0=u0)
+    else
+        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan)
+        u0 = []
+    end
+
+    action_selection = agent.action_selection
+    learning_rules = agent.learning_rules
+    
+    defs = ModelingToolkit.get_defaults(sys)
+    weights = Dict{Num, Float64}()
+    for w in keys(learning_rules)
+        weights[w] = defs[w]
+    end
+
+end
+
+
 # ╔═╡ 0eff1351-d443-4d72-b100-6c591a7c5fe9
-    sol = solve(prob2,Vern7(),saveat=0.01)
+    sol = solve(prob3,Vern7(),saveat=0.01)
 
 # ╔═╡ fe451072-9911-41d6-b179-aad13f38dce0
     action = agent.action_selection(sol)
 
 # ╔═╡ ae499def-0886-4105-8a87-3f955badb6ff
-plot(sol(1:1000;idxs=AS.competitor_states[1]))
+sol(0;idxs=stt)
 
 # ╔═╡ a252da3e-8554-4120-9419-c90c07be5ad2
 sol(1:10;idxs=AS.competitor_states[2])
@@ -328,46 +408,6 @@ plot(sol.t,ss[vlist[exc2[4]]+8,:])
 # ╔═╡ 7f6120ca-61bc-4161-b827-26560bc5f28c
 plot(sol.t,mean(V[exc1,:],dims=1)')
 
-# ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
-begin 
-
-	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
-	t_warmup=800
-    #N_trials = env.N_trials
-    t_trial = env.t_trial
-    tspan = (0, t_trial)
-
-    sys = Neuroblox.get_sys(agent)
-    prob3 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
-
-	if t_warmup > 0
-        prob3 = remake(prob3; tspan=(0,t_warmup))
-        #if haskey(kwargs, :alg)
-        #    sol = solve(prob, kwargs[:alg]; kwargs...)
-        #else
-		
-            sol2 = solve(prob3, Vern7())
-		
-        #end
-        u0 = sol2[1:end,end] # last value of state vector
-        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan, u0=u0)
-    else
-        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan)
-        u0 = []
-    end
-
-    action_selection = agent.action_selection
-    learning_rules = agent.learning_rules
-    
-    defs = ModelingToolkit.get_defaults(sys)
-    weights = Dict{Num, Float64}()
-    for w in keys(learning_rules)
-        weights[w] = defs[w]
-    end
-
-end
-
-
 # ╔═╡ dedebc43-46f3-47d1-aaeb-da74b7b5c588
 size(u0)
 
@@ -401,6 +441,7 @@ learning=0
 			#action = action_selection(agent)
             feedback = env(action)
 			@info action
+			@info env.category[env.current_trial]
 	        @info feedback
 			perf[ii]=feedback
 			act[ii] = action
@@ -424,6 +465,9 @@ end
 # ╔═╡ 650ed1b7-1643-4e74-8a61-f1fbd70ba229
 env.current_trial
 
+# ╔═╡ c75142d1-e9b9-46e4-afcf-bc6c4e0c7325
+env.category
+
 # ╔═╡ Cell order:
 # ╠═7d500a22-c5ed-48d1-b009-4d4a0f03fc2a
 # ╠═98f74502-74e6-11ee-34ff-7b16a35b2860
@@ -437,6 +481,10 @@ env.current_trial
 # ╠═ee0c04b9-57c9-44bc-b092-218019a545ec
 # ╠═d37ba3dd-78df-4e18-ac76-3864a2e9216e
 # ╠═8abc4a4b-4acf-4c25-a10c-33278329c9f4
+# ╠═fd33687b-1277-4689-acff-ef0f6c93b036
+# ╠═07e91c2c-3a1b-49d8-855b-9568e9697bb1
+# ╠═7e997ed5-20d1-424f-827c-f0bb2432149a
+# ╠═83d4d150-a21c-45eb-8fd1-fb8668062738
 # ╠═48d15d01-7d94-4a2f-bf32-5f0c548b24f6
 # ╠═3650464e-90f5-4fd4-abf4-7f0a24e29d41
 # ╠═5ddd418f-23d2-4151-82c0-e8c9fae7e4f2
@@ -487,7 +535,15 @@ env.current_trial
 # ╠═709f2677-8627-4069-9827-618b906be7fa
 # ╠═78c45058-d2ee-4c1c-92f9-5d43e0647ecf
 # ╠═b7e84b20-0b80-478c-bc88-2883f80bcbb4
+# ╠═5705a3d8-d5c2-4c52-82b9-91ad05a43733
+# ╠═07bb7cce-498e-4ed6-b3e3-8fd31eb913fb
+# ╠═f1d77711-8db9-4c1d-9d5d-2ab172ef5f99
+# ╠═29b37f0c-cd6d-467b-961b-f2ded9cc3831
 # ╠═650ed1b7-1643-4e74-8a61-f1fbd70ba229
 # ╠═0b036e57-120e-4d2f-902e-1352d573bb25
+# ╠═9703f279-a311-4aa2-85e4-75d8898b21b6
 # ╠═a973a05c-e686-48c5-8242-688e6475624b
+# ╠═c75142d1-e9b9-46e4-afcf-bc6c4e0c7325
+# ╠═974d9926-4543-46cf-9e2f-38826be8f3ee
+# ╠═35891714-fafc-4465-a2e5-bcd7aaf1a59c
 # ╠═432effe7-77c2-4163-99f5-1ba95a3052e8

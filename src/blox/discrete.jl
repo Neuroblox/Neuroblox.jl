@@ -58,23 +58,22 @@ struct SNc <: AbstractModulator
     N_time_blocks
     κ_DA
     DA_reward
-    t_event
     namespace
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0)
         @variables t 
         sts = @variables R(t)=κ_DA R_(t)=κ_DA
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 t_event=t_event
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 
         eqs = [
                 R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())])
                 R_ ~ minimum([κ_DA, κ_DA/(λ_DA*jcn_ + eps())])
               ]
 
-        R_cb = [[t_event+1] => [jcn_ ~ jcn]]     
+        R_cb = [[t_event+3*eps(t_event)] => [jcn_ ~ jcn]]     
 
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = R_cb)
 
-        new(sys, N_time_blocks, κ_DA, DA_reward, t_event, namespace)
+        new(sys, N_time_blocks, κ_DA, DA_reward, namespace)
     end
 end
 
