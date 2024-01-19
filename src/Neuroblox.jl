@@ -8,12 +8,18 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-import LinearAlgebra as la
+using ForwardDiff: Dual, Partials, jacobian
+using ForwardDiff
+ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
+using ChainRules: _eigen_norm_phase_fwd!
+
+using LinearAlgebra
+using ToeplitzMatrices: Toeplitz
+using ExponentialUtilities: exponential!
+
 using AbstractFFTs
 using FFTW
-import ToeplitzMatrices as tm
 using DSP, Statistics
-import ExponentialUtilities as eu
 using OrdinaryDiffEq
 using DifferentialEquations
 using Interpolations

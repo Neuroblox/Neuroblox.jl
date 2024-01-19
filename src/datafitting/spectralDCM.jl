@@ -13,17 +13,7 @@ spm_logdet       : mimick SPM12's way to compute the logarithm of the determinan
 variationalbayes : main routine that computes the variational Bayes estimate of model parameters
 """
 
-using ForwardDiff
-using ForwardDiff: Dual
-using ForwardDiff: Partials
-using LinearAlgebra: Eigen
-using LinearAlgebra
-using ExponentialUtilities
-
-ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
-using ChainRules: _eigen_norm_phase_fwd!
 tagtype(::Dual{T,V,N}) where {T,V,N} = T
-
 
 """
     function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
@@ -228,7 +218,7 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q .+ matlab_norm(Q, 1)/32*la.Matrix(la.I, size(Q)))   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q .+ matlab_norm(Q, 1)/32*Matrix(I, size(Q)))   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
     return Q
 end
 
@@ -242,9 +232,9 @@ end
 """
 function spm_logdet(M)
     TOL = 1e-16
-    s = la.diag(M)
+    s = diag(M)
     if sum(abs.(s)) != sum(abs.(M[:]))
-        ~, s, ~ = la.svd(M)
+        ~, s, ~ = svd(M)
     end
     return sum(log.(s[(s .> TOL) .& (s .< TOL^-1)]))
 end
@@ -328,7 +318,7 @@ end
     local ϵ_λ, iΣ, Σλ, Σθ, dFdpp, dFdp
     for k = 1:niter
         state.iter = k
-        dfdp = ForwardDiff.jacobian(f_prep, μθ_po) * V
+        dfdp = jacobian(f_prep, μθ_po) * V
         norm_dfdp = matlab_norm(dfdp, Inf);
         revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
@@ -349,7 +339,7 @@ end
 
                 # J_test = JacVec(f_prep, μθ_po)
                 # dfdp = stack(J_test*v for v in eachcol(V))
-                dfdp = ForwardDiff.jacobian(f_prep, μθ_po) * V
+                dfdp = jacobian(f_prep, μθ_po) * V
 
                 # check for stability
                 norm_dfdp = matlab_norm(dfdp, Inf);

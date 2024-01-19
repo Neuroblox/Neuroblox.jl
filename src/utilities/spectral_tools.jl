@@ -182,7 +182,7 @@ function mar2csd(mar, freqs, sf)
     nf = length(w)
 	csd = zeros(ComplexF64, nf, nd, nd)
 	for i = 1:nf
-		af_tmp = la.I
+		af_tmp = I
 		for k = 1:p
 			af_tmp = af_tmp + A[k] * exp(-im * k * w[i])
 		end
@@ -203,7 +203,7 @@ function mar2csd(mar, freqs)
     nf = length(w)
 	csd = zeros(eltype(Σ), nf, nd, nd)
 	for i = 1:nf
-		af_tmp = la.I
+		af_tmp = I
 		for k = 1:p
 			af_tmp = af_tmp + A[k] * exp(-im * k * w[i])
 		end
@@ -276,7 +276,7 @@ function csd2mar(csd, w, dt, p)
     for i = 1:m
         for j = 1:m
             A[((i-1)*p+1):i*p, j] = ccf[(1:p) .+ 1, i, j]
-            B[((i-1)*p+1):i*p, ((j-1)*p+1):j*p] = tm.Toeplitz(ccf[1:p, i, j], vcat(ccf[1,i,j], ccf[2:p, j, i]))  # SymmetricToeplitz(ccf[1:p, i, j])
+            B[((i-1)*p+1):i*p, ((j-1)*p+1):j*p] = Toeplitz(ccf[1:p, i, j], vcat(ccf[1,i,j], ccf[2:p, j, i]))  # SymmetricToeplitz(ccf[1:p, i, j])
         end
     end
     a = B\A
