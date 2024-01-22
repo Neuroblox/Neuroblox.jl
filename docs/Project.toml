@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Neuroblox = "769b91e5-4c60-41ee-bfae-153c84203cb2"
+
+[compat]
+Documenter = "1"
