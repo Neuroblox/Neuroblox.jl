@@ -418,11 +418,11 @@ weights
 
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
-learning=0
+learning=1
 	
 	if learning==1
 		
-    for ii = 326:N_trials
+    for ii = 18:N_trials
         prob4 = agent.problem
         stim_params = Neuroblox.get_trial_stimulus(env)
         prob4 = remake(prob4; p = merge(weights, stim_params), u0 = u0,tspan=(0,1600))

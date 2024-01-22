@@ -6,7 +6,7 @@ struct Matrisome <: AbstractDiscrete
     odesystem
     namespace
 
-    function Matrisome(; name, namespace=nothing, t_event) #HACK : this t_event has to be informed from the t_event in Action Selection block
+    function Matrisome(; name, namespace=nothing, t_event=180.0) #HACK : this t_event has to be informed from the t_event in Action Selection block
         @variables t 
         sts = @variables ρ(t)=0.0 ρ_(t)
         ps = @parameters H=1 jcn=0.0 [input=true] jcn_=0.0 H_=1 #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
