@@ -75,14 +75,14 @@ begin
     data = CSV.read(fn, DataFrame)
 	
     @named stim = ImageStimulus(data[1:N_trials,:]; namespace=global_ns, t_stimulus=600, t_pause=1000) #16
-    @named tan_pop = TAN(;namespace=global_ns) #17
-
+    @named tan_pop1 = TAN(;namespace=global_ns) #17
+    @named tan_pop2 = TAN(;namespace=global_ns) #18
 	
-	@named AS = GreedyPolicy(namespace=global_ns, t_decision=180.5) #18
-    @named SNcb = SNc(namespace=global_ns) #19
+	@named AS = GreedyPolicy(namespace=global_ns, t_decision=180.5) #19 
+    @named SNcb = SNc(namespace=global_ns) #20 
 	
 	
-    assembly = [LC, ITN, VC, PFC, STR1, STR2, tan_nrn, gpi1, gpi2, gpe1, gpe2, STN1, STN2, Thal1, Thal2, stim, tan_pop, AS, SNcb]
+    assembly = [LC, ITN, VC, PFC, STR1, STR2, tan_nrn, gpi1, gpi2, gpe1, gpe2, STN1, STN2, Thal1, Thal2, stim, tan_pop1, tan_pop2, AS, SNcb]
 
 
 	hebbian_mod = HebbianModulationPlasticity(K=0.016, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=1600-eps(), t_post=1600-eps(), t_mod=90)
@@ -121,16 +121,18 @@ begin
 	add_edge!(g,12,8, Dict(:weight => 0.1, :density => 0.04)) #stn1->gpi1
 	add_edge!(g,13,9, Dict(:weight => 0.1, :density => 0.04)) #stn2->gpi2
 	add_edge!(g,16,3, :weight, 14) #stim->VC
-	add_edge!(g,17,5, Dict(:weight => 1, :t_event => 90.0)) #TAN pop -> str1
-	add_edge!(g,17,6, Dict(:weight => 1, :t_event => 90.0)) #TAN pop -> str2
-	add_edge!(g,5,17, Dict(:weight => 1)) #str1 -> TAN pop 
-	add_edge!(g,6,17, Dict(:weight => 1)) #str2 -> TAN pop 
+	add_edge!(g,17,5, Dict(:weight => 1, :t_event => 90.0)) #TAN pop1 -> str1
+	add_edge!(g,18,6, Dict(:weight => 1, :t_event => 90.0)) #TAN pop2 -> str2
+	add_edge!(g,5,17, Dict(:weight => 1)) #str1 -> TAN pop1 
+	add_edge!(g,6,17, Dict(:weight => 1)) #str2 -> TAN pop1
+	add_edge!(g,5,18, Dict(:weight => 1)) #str1 -> TAN pop2 
+	add_edge!(g,6,18, Dict(:weight => 1)) #str2 -> TAN pop2
 	add_edge!(g,5,6, Dict(:weight => 1, :t_event => 181.0)) #str1 -> str2
 	add_edge!(g,6,5, Dict(:weight => 1, :t_event => 181.0)) #str2 -> str1
-	add_edge!(g,5,18)# str1->AS
-	add_edge!(g,6,18)# str2->AS
-	add_edge!(g, 5, 19, Dict(:weight => 1)) # str1->Snc
-    add_edge!(g,6, 19, Dict(:weight => 1))  # str2->Snc
+	add_edge!(g,5,19)# str1->AS
+	add_edge!(g,6,19)# str2->AS
+	add_edge!(g, 5, 20, Dict(:weight => 1)) # str1->Snc
+    add_edge!(g,6, 20, Dict(:weight => 1))  # str2->Snc
 	
 	
 end
@@ -154,7 +156,7 @@ size(data[1,1:225])
 stim
 
 # ╔═╡ 5ddd418f-23d2-4151-82c0-e8c9fae7e4f2
-  #agent = Agent(g; name=:ag, t_block = 90);
+  agent = Agent(g; name=:ag, t_block = 90);
 
 # ╔═╡ b14520ac-ac20-48e4-ac2a-91448fa398b8
 #neuron_net = system_from_graph(g; name=global_ns,t_affect=90.0);
@@ -285,48 +287,8 @@ end
    # prob2=remake(prob;tspan=(0,1600))
 	prob2 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
 
-# ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
-begin 
-
-	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
-	t_warmup=800
-    #N_trials = env.N_trials
-    t_trial = env.t_trial
-    tspan = (0, t_trial)
-
-    sys = Neuroblox.get_sys(agent)
-    prob3 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
-
-	if t_warmup > 0
-        prob3 = remake(prob3; tspan=(0,t_warmup))
-        #if haskey(kwargs, :alg)
-        #    sol = solve(prob, kwargs[:alg]; kwargs...)
-        #else
-		
-            sol2 = solve(prob3, Vern7())
-		
-        #end
-        u0 = sol2[1:end,end] # last value of state vector
-        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan, u0=u0)
-    else
-        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan)
-        u0 = []
-    end
-
-    action_selection = agent.action_selection
-    learning_rules = agent.learning_rules
-    
-    defs = ModelingToolkit.get_defaults(sys)
-    weights = Dict{Num, Float64}()
-    for w in keys(learning_rules)
-        weights[w] = defs[w]
-    end
-
-end
-
-
 # ╔═╡ 0eff1351-d443-4d72-b100-6c591a7c5fe9
-    sol = solve(prob3,Vern7(),saveat=0.01)
+    sol = solve(prob2,Vern7(),saveat=0.01)
 
 # ╔═╡ fe451072-9911-41d6-b179-aad13f38dce0
     action = agent.action_selection(sol)
@@ -408,6 +370,46 @@ plot(sol.t,ss[vlist[exc2[4]]+8,:])
 # ╔═╡ 7f6120ca-61bc-4161-b827-26560bc5f28c
 plot(sol.t,mean(V[exc1,:],dims=1)')
 
+# ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
+begin 
+
+	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
+	t_warmup=800
+    #N_trials = env.N_trials
+    t_trial = env.t_trial
+    tspan = (0, t_trial)
+
+    sys = Neuroblox.get_sys(agent)
+    prob3 = remake(prob; p = merge(stim_params2),tspan=(0,1600))
+
+	if t_warmup > 0
+        prob3 = remake(prob3; tspan=(0,t_warmup))
+        #if haskey(kwargs, :alg)
+        #    sol = solve(prob, kwargs[:alg]; kwargs...)
+        #else
+		
+            sol2 = solve(prob3, Vern7())
+		
+        #end
+        u0 = sol2[1:end,end] # last value of state vector
+        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan, u0=u0)
+    else
+        prob3 = remake(prob3; p = merge(stim_params2),tspan=tspan)
+        u0 = []
+    end
+
+    action_selection = agent.action_selection
+    learning_rules = agent.learning_rules
+    
+    defs = ModelingToolkit.get_defaults(sys)
+    weights = Dict{Num, Float64}()
+    for w in keys(learning_rules)
+        weights[w] = defs[w]
+    end
+
+end
+
+
 # ╔═╡ dedebc43-46f3-47d1-aaeb-da74b7b5c588
 size(u0)
 
@@ -420,7 +422,7 @@ learning=0
 	
 	if learning==1
 		
-    for ii = 1:N_trials
+    for ii = 326:N_trials
         prob4 = agent.problem
         stim_params = Neuroblox.get_trial_stimulus(env)
         prob4 = remake(prob4; p = merge(weights, stim_params), u0 = u0,tspan=(0,1600))

@@ -6,14 +6,19 @@ struct Matrisome <: AbstractDiscrete
     odesystem
     namespace
 
-    function Matrisome(; name, namespace=nothing)
+    function Matrisome(; name, namespace=nothing, t_event) #HACK : this t_event has to be informed from the t_event in Action Selection block
         @variables t 
-        sts = @variables ρ(t)=0.0 
-        ps = @parameters H=1 jcn=0.0 [input=true]
+        sts = @variables ρ(t)=0.0 ρ_(t)
+        ps = @parameters H=1 jcn=0.0 [input=true] jcn_=0.0 H_=1 #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
         eqs = [
-            ρ ~ H*jcn
+            ρ ~ H*jcn,
+            ρ_ ~ H_*jcn_
         ]
-        sys = ODESystem(eqs, t, sts, ps; name)
+        cb_eqs = [ jcn_ ~ jcn,
+                    H_ ~ H
+                 ]
+        Rho_cb = [[t_event+3*eps(t_event)] => cb_eqs]   
+        sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = Rho_cb)
 
         new(sys, namespace)
     end
@@ -28,8 +33,9 @@ struct Striosome <: AbstractDiscrete
         sts = @variables ρ(t)=0.0 
         ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
-            ρ ~ H*jcn
-        ]
+                ρ ~ H*jcn,
+              ]
+       
         sys = ODESystem(eqs, t, sts, ps; name)
 
         new(sys, namespace)
@@ -62,10 +68,10 @@ struct SNc <: AbstractModulator
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0)
         @variables t 
-        sts = @variables R(t)=κ_DA R_(t)=κ_DA
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 
+        sts = @variables R(t)=κ_DA R_(t)=κ_DA 
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [
-                R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())])
+                R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())]),
                 R_ ~ minimum([κ_DA, κ_DA/(λ_DA*jcn_ + eps())])
               ]
 
