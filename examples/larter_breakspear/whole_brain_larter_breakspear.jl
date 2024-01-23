@@ -25,7 +25,7 @@ using StatsBase # Needed for rescaling the DTI matrix
 # Load the data
 # As mentioned above, this data is from Rosen and Halgren (2021). You can download the original at https://zenodo.org/records/10150880.
 # For convenience, we have included the average connectivity matrix (log scaled probability from streamline counts) available from that link within this repository.
-data = matread("/Users/achesebro/Documents/GitHub/Neuroblox.jl/examples/larter_breakspear/averageConnectivity_Fpt.mat")
+data = matread("averageConnectivity_Fpt.mat")
 
 # Extract the data
 adj = data["Fpt"]
@@ -118,7 +118,7 @@ prob = remake(prob; tspan=(0.0, sim_dur))
 @time sol = solve(prob, AutoVern7(Rodas4()), saveat=2)
 
 # Instead of plotting the data, let's save it out to a CSV file for later analysis
-CSV.write("/Users/achesebro/Documents/GitHub/Neuroblox.jl/examples/larter_breakspear/example_output.csv", DataFrame(sol))
+CSV.write("example_output.csv", DataFrame(sol))
 
 # You should see a noticeable difference in speed compared to the first time, and notice you save the overhead of structural_simplify.
 

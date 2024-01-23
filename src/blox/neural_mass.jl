@@ -119,22 +119,21 @@ end
 
     Create a harmonic oscillator blox with the specified parameters.
     The formal definition of this blox is:
-    """
-    # ```math
-    #     \\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
-    #     \\frac{dy}{dt} = -(\\omega^2)*x
-    # ```
-"""
+
+```math
+\\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
+\\frac{dy}{dt} = -(\\omega^2)*x
+```
     where ``jcn`` is any input to the blox.
     
 
 Arguments:
-- `name`: Name given to `ODESystem` object within the blox.
-- `namespace`: Additional namespace above `name` if needed for inheritance.
-- `ω`: Base frequency. Note the default value is scaled to give oscillations in milliseconds to match other blocks.
-- `ζ`: Damping ratio.
-- `k`: Gain.
-- `h`: Threshold.
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- ω: Base frequency. Note the default value is scaled to give oscillations in milliseconds to match other blocks.
+- ζ: Damping ratio.
+- k: Gain.
+- h: Threshold.
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
@@ -159,22 +158,22 @@ end
 
     Create a Jansen Rit blox as described in Liu et al.
     The formal definition of this blox is:
- """
-    # ```math
-    #     \\frac{dx}{dt} = y-\\frac{2}{\\tau}x
-    #     \\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
-    # ```
-"""
-    where ``jcn`` is any input to the blox.
+
+```math
+\\frac{dx}{dt} = y-\\frac{2}{\\tau}x
+\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+```
+
+where ``jcn`` is any input to the blox.
 
 Arguments:
-- `name`: Name given to `ODESystem` object within the blox.
-- `namespace`: Additional namespace above `name` if needed for inheritance.
-- `τ`: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
-- `H`: See equation for use.
-- `λ`: See equation for use.
-- `r`: See equation for use.
-- `cortical`: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- τ: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
+- H: See equation for use.
+- λ: See equation for use.
+- r: See equation for use.
+- cortical: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
 
 Citations:
 1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
@@ -217,17 +216,16 @@ end
 
     Create a standard Wilson Cowan blox.
     The formal definition of this blox is:
- """
-    # ```math
-    #     \\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))}
-    #     \\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \\theta_I)}
-    # ```
-"""
-    where ``jcn`` is any input to the blox.
+
+```math
+\\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))}
+\\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \\theta_I)}
+```
+where ``jcn`` is any input to the blox.
 
 Arguments:
-- `name`: Name given to `ODESystem` object within the blox.
-- `namespace`: Additional namespace above `name` if needed for inheritance.
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
 - Others: See equation for use.
 """
 struct WilsonCowan <: NeuralMassBlox
@@ -268,8 +266,8 @@ end
     If you need to modify the parameters, see Chesebro et al. and van Nieuwenhuizen et al. for physiological ranges.
 
 Arguments:
-- `name`: Name given to `ODESystem` object within the blox.
-- `namespace`: Additional namespace above `name` if needed for inheritance.
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
 - Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citations:
