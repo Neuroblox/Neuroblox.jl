@@ -132,7 +132,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)    
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
         maybe_set_state_post!(lr,sys_in.spikes_cumulative)
         bc.learning_rules[w] = lr
@@ -190,7 +190,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         bc.learning_rules[w] = lr
     end
 
@@ -373,7 +373,7 @@ function (bc::BloxConnector)(
     kwargs = (kwargs..., weight=wt_ar)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         sys_matr = get_namespaced_sys(get_matrisome(str))
         maybe_set_state_post!(lr, sys_matr.H)
         kwargs = (kwargs..., learning_rule=lr)
@@ -431,7 +431,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
         maybe_set_state_post!(lr, sys_in.H)
         bc.learning_rules[w] = lr
@@ -497,7 +497,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        bc.learning_rules[w] = deepcopy(kwargs[:learning_rule])
     end
 
     eq = sys_in.jcn ~ w*sys_out.H*sys_out.jcn
@@ -526,8 +526,10 @@ function sample_affect!(integ, u, p, ctx)
     R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
    # R = integ.p[p[1]]
     v = rand(Poisson(R))
-    @info R
-    @info v
+    @show p
+    @show integ.p[p[1]]
+    @show integ.p[p[2]]
+    @show integ.p[p[3]]
     integ.p[p[3]] = v
     #integ.p[p[2]] = v
 end
@@ -544,7 +546,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        bc.learning_rules[w] = deepcopy(kwargs[:learning_rule])
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
