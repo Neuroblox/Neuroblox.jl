@@ -1495,9 +1495,9 @@ version = "0.16.14"
 
 [[deps.MLJTuning]]
 deps = ["ComputationalResources", "Distributed", "Distributions", "LatinHypercubeSampling", "MLJBase", "ProgressMeter", "Random", "RecipesBase", "StatisticalMeasuresBase"]
-git-tree-sha1 = "44dc126646a15018d7829f020d121b85b4def9bc"
+git-tree-sha1 = "8d435794dbfba25509f6b32ab5e55779db1bfda2"
 uuid = "03970b2e-30c4-11ea-3135-d1576263f10f"
-version = "0.8.0"
+version = "0.8.1"
 
 [[deps.MLStyle]]
 git-tree-sha1 = "bc38dff0548128765760c79eb7388a4b37fae2c8"
