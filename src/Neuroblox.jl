@@ -153,6 +153,27 @@ function random_initials(odesys::ODESystem, blox)
     return u0
 end
 
+function print_license()
+    printstyled("Important Note: ", bold = true)
+    print("""Neuroblox is a commercial product of Neuroblox, Inc.
+It is free to use for non-commercial academic teaching
+and research purposes. For commercial users, license fees apply.
+Please refer to the End User License Agreement
+(https://neuroblox.org/eula/) for details.
+Please contact sales@neuroblox.org for purchasing information.
+
+To report any bugs, issues, or feature requests for Neuroblox software,
+please use the public Github repository NeurobloxIssues, located at
+https://github.com/Neuroblox/NeurobloxIssues.
+""")
+end
+
+function __init__()
+    if Preferences.@load_preference("PrintLicense", true)
+        print_license()
+    end
+end
+
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, 
     next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
