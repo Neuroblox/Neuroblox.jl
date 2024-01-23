@@ -159,7 +159,7 @@ function print_license()
 It is free to use for non-commercial academic teaching
 and research purposes. For commercial users, license fees apply.
 Please refer to the End User License Agreement
-(https://neuroblox.org/eula/) for details.
+(https://github.com/Neuroblox/NeurobloxEULA) for details.
 Please contact sales@neuroblox.org for purchasing information.
 
 To report any bugs, issues, or feature requests for Neuroblox software,
