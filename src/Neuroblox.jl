@@ -169,9 +169,9 @@ https://github.com/Neuroblox/NeurobloxIssues.
 end
 
 function __init__()
-    if Preferences.@load_preference("PrintLicense", true)
+    #if Preferences.@load_preference("PrintLicense", true)
         print_license()
-    end
+    #end
 end
 
 export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, 
