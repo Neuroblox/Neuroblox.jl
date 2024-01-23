@@ -81,6 +81,7 @@ Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
+include("utilities/bold_methods.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
 include("datafitting/spectralDCM.jl")
@@ -180,5 +181,6 @@ export create_adjacency_edges!
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, get_hemodynamic_observers
+export boldsignal_endo_balloon
 
 end

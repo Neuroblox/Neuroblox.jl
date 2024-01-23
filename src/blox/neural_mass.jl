@@ -87,18 +87,18 @@ Create standard linear neural mass blox with a single internal state.
 There are no parameters in this blox.
 This is a blox of the sort used for spectral DCM modeling.
 The formal definition of this blox is:
-"""
 
-# ```math
-# \\frac{d}{dx} = \\sum{jcn}
-# ```
-"""
-where ``jcn`` is any input to the blox.
+
+```math
+\\frac{d}{dx} = \\sum{jcn}
+```
+
+where ``jcn``` is any input to the blox.
 
 
 Arguments:
-- `name`: Options containing specification about deterministic.
-- `namespace`: Additional namespace above `name` if needed for inheritance.
+- name: Options containing specification about deterministic.
+- namespace: Additional namespace above name if needed for inheritance.
 """
 
 struct LinearNeuralMass <: NeuralMassBlox
