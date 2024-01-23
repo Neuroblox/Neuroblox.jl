@@ -245,7 +245,8 @@ function get_weights(agent::Agent, blox_out, blox_in)
 
     idxs_weight = findall(ps) do p
         n = String(Symbol(p))
-        occursin("w_", n) && occursin(name_out, n) && occursin(name_in, n)
+        r = Regex("w.*$(name_out).*$(name_in)")
+        occursin(r, n)
     end
     
     return pv[map_idxs[idxs_weight]]
