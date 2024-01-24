@@ -127,8 +127,8 @@ function input_equations(blox)
             ) 
         else
             namespace_equation(
-                sys_eqs[idx], 
-                sys, 
+                sys_eqs[idx],
+                sys,
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         end

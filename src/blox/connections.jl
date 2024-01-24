@@ -183,8 +183,8 @@ function (bc::BloxConnector)(
     bloxin::CanonicalMicroCircuitBlox;
     kwargs...
 )
-    sysparts_out = blox_parts(bloxout)
-    sysparts_in = blox_parts(bloxin)
+    sysparts_out = get_blox_parts(bloxout)
+    sysparts_in = get_blox_parts(bloxin)
 
     wm = get_weightmatrix(kwargs, namespaced_nameof(bloxin), namespaced_nameof(bloxout))
 
