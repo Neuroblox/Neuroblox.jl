@@ -122,9 +122,9 @@ function input_equations(blox)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
-                sys, 
+                sys,
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
-            )
+            ) 
         else
             namespace_equation(
                 sys_eqs[idx], 
@@ -158,9 +158,19 @@ weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
 weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
 
+get_blox_parts(blox) = blox.parts
+
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
         return kwargs[:weight]
+    else
+        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_weightmatrix(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :weightmatrix)
+        return kwargs[:weightmatrix]
     else
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
     end
