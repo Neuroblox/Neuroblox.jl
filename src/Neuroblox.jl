@@ -181,7 +181,7 @@ export boldsignal, BalloonModel
 export vecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
-export create_adjacency_edges!
+export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, get_hemodynamic_observers
