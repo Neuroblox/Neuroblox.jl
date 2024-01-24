@@ -160,8 +160,7 @@ function random_initials(odesys::ODESystem, blox)
     return u0
 end
 
-export jansen_rit_spm12, 
-    next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
+export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, synaptic_network, van_der_pol
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
@@ -174,8 +173,7 @@ export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, 
-    connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
+export SynapticConnections, create_rl_loop
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
