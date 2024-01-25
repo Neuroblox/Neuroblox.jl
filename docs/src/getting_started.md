@@ -70,11 +70,15 @@ add_blox!.(Ref(g), blox)
 create_adjacency_edges!(g, adj_matrix_lin)
 
 @named final_system = system_from_graph(g, params)
-
+final_delays = graph_delays(g)
 sim_dur = 2000.0 # Simulate for 2 Seconds
 final_system_sys = structural_simplify(final_system)
-prob = ODEProblem(final_system_sys, [], (0.0, sim_dur),[])
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=1)
 
-sol = solve(prob, Tsit5(), saveat=1)
-#plot(sol)
+plot(sol_dde_no_delays)
 ```
