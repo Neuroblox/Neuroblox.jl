@@ -347,9 +347,9 @@ version = "0.10.8"
 
 [[deps.CategoricalDistributions]]
 deps = ["CategoricalArrays", "Distributions", "Missings", "OrderedCollections", "Random", "ScientificTypes"]
-git-tree-sha1 = "3124343a1b0c9a2f5fdc1d9bcc633ba11735a4c4"
+git-tree-sha1 = "6d4569d555704cdf91b3417c0667769a4a7cbaa2"
 uuid = "af321ab8-2d2e-40a6-b165-3d674595d28e"
-version = "0.1.13"
+version = "0.1.14"
 
     [deps.CategoricalDistributions.extensions]
     UnivariateFiniteDisplayExt = "UnicodePlots"
@@ -359,9 +359,9 @@ version = "0.1.13"
 
 [[deps.ChainRules]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "Distributed", "GPUArraysCore", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "SparseInverseSubset", "Statistics", "StructArrays", "SuiteSparse"]
-git-tree-sha1 = "237cb6c8e662b7648f8ccdb336e0d8faedfc24b8"
+git-tree-sha1 = "07fbef147241b3869deb9cb08b10a2fc37600101"
 uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "1.58.2"
+version = "1.59.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
@@ -1216,9 +1216,9 @@ version = "1.10.0"
 
 [[deps.IterationControl]]
 deps = ["EarlyStopping", "InteractiveUtils"]
-git-tree-sha1 = "d7df9a6fdd82a8cfdfe93a94fcce35515be634da"
+git-tree-sha1 = "e663925ebc3d93c1150a7570d114f9ea2f664726"
 uuid = "b3c1a2ee-3fec-4384-bf48-272ea71de57c"
-version = "0.5.3"
+version = "0.5.4"
 
 [[deps.IteratorInterfaceExtensions]]
 git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
@@ -1722,9 +1722,9 @@ version = "0.16.14"
 
 [[deps.MLJTuning]]
 deps = ["ComputationalResources", "Distributed", "Distributions", "LatinHypercubeSampling", "MLJBase", "ProgressMeter", "Random", "RecipesBase", "StatisticalMeasuresBase"]
-git-tree-sha1 = "44dc126646a15018d7829f020d121b85b4def9bc"
+git-tree-sha1 = "8d435794dbfba25509f6b32ab5e55779db1bfda2"
 uuid = "03970b2e-30c4-11ea-3135-d1576263f10f"
-version = "0.8.0"
+version = "0.8.1"
 
 [[deps.MLStyle]]
 git-tree-sha1 = "bc38dff0548128765760c79eb7388a4b37fae2c8"
