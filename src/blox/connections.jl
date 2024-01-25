@@ -42,13 +42,13 @@ function get_callbacks(g, bc; t_block=missing)
         end
         if !isempty(eqs_params) && !isempty(eqs)
             cbs_spikes = (t_block + eps(float(t_block))) => eqs
-            cbs_params = t_block => eqs_params
+            cbs_params = (t_block - eps(float(t_block))) => eqs_params
             return vcat(cbs_params, cbs_spikes, bc.events)
         elseif isempty(eqs_params) && !isempty(eqs)
             cbs_spikes = (t_block + eps(float(t_block))) => eqs
             return vcat(cbs_spikes, bc.events)
         elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = t_block => eqs_params
+            cbs_params = (t_block - eps(float(t_block))) => eqs_params
             return vcat(cbs_params, bc.events)
         else
             return bc.events
@@ -132,7 +132,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)    
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
         maybe_set_state_post!(lr,sys_in.spikes_cumulative)
         bc.learning_rules[w] = lr
@@ -230,7 +230,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         bc.learning_rules[w] = lr
     end
 
@@ -413,7 +413,7 @@ function (bc::BloxConnector)(
     kwargs = (kwargs..., weight=wt_ar)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         sys_matr = get_namespaced_sys(get_matrisome(str))
         maybe_set_state_post!(lr, sys_matr.H)
         kwargs = (kwargs..., learning_rule=lr)
@@ -471,7 +471,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        lr = kwargs[:learning_rule]
+        lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
         maybe_set_state_post!(lr, sys_in.H)
         bc.learning_rules[w] = lr
@@ -492,17 +492,27 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str_in)
 
     t_event = get_event_time(kwargs, nameof(str_out), nameof(str_in))
-    cb_matr = t_event => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
-    cb_strios = t_event => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
+    cb_matr = [t_event] => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
+    cb_strios = [t_event] => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
+    
+    #H should be reset to 1 at the beginning of each trial
+    cb_matr_init = [0.1] => [sys_matr_in.H ~ 1]
+    cb_strios_init = [0.1] => [sys_strios_in.H ~ 1]
+
     push!(bc.events, cb_matr)
     push!(bc.events, cb_strios)
+    push!(bc.events, cb_matr_init)
+    push!(bc.events, cb_strios_init)
 
     for neuron in neurons_in
         sys_neuron = get_namespaced_sys(neuron)
         # Large negative current added to shut down the Striatum spiking neurons.
         # Value is hardcoded for now, as it's more of a hack, not user option. 
-        cb_neuron = t_event => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
+        cb_neuron = [t_event] => [sys_neuron.I_bg ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
+        # lateral inhibition current I_bg should be set to 0 at the beginning of each trial
+        cb_neuron_init = [0.1] => [sys_neuron.I_bg ~ 0]
         push!(bc.events, cb_neuron)
+        push!(bc.events, cb_neuron_init)
     end
 end
 
@@ -527,10 +537,11 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        bc.learning_rules[w] = deepcopy(kwargs[:learning_rule])
     end
 
     eq = sys_in.jcn ~ w*sys_out.H*sys_out.jcn
+  
 
     accumulate_equation!(bc, eq)
 end
@@ -547,13 +558,20 @@ end
 sample_poisson(λ) = rand(Poisson(λ))
 @register_symbolic sample_poisson(λ)
 
+
 """
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
     R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
+   # R = integ.p[p[1]]
     v = rand(Poisson(R))
+    @show p
+    @show integ.p[p[1]]
+    @show integ.p[p[2]]
+    @show integ.p[p[3]]
     integ.p[p[3]] = v
+    #integ.p[p[2]] = v
 end
 
 function (bc::BloxConnector)(
@@ -568,11 +586,12 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
-        bc.learning_rules[w] = kwargs[:learning_rule]
+        bc.learning_rules[w] = deepcopy(kwargs[:learning_rule])
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
+    cb = [t_event+eps(t_event)] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
+   # cb = t_event => (sample_affect!, [], [sys_out.R, sys_out.spikes_window], nothing)
     push!(bc.events, cb)
 
     eq = sys_in.jcn ~ w*sys_out.spikes_window
@@ -638,5 +657,6 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     sys1 = get_namespaced_sys(matr1)
     sys2 = get_namespaced_sys(matr2)
 
-    as.competitor_states = [sys1.ρ, sys2.ρ]
+    as.competitor_states = [sys1.ρ_, sys2.ρ_] #HACK : accessing values of rho at a specific time after the simulation
+    #as.competitor_params = [sys1.H, sys2.H]
 end

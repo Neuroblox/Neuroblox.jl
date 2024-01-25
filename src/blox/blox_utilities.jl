@@ -205,6 +205,23 @@ function get_event_time(kwargs, name_blox1, name_blox2)
     end
 end
 
+function get_weights(agent::Agent, blox_out, blox_in)
+    ps = parameters(agent.odesystem)
+    pv = agent.problem.p
+    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
+
+    name_out = String(namespaced_nameof(blox_out))
+    name_in = String(namespaced_nameof(blox_in))
+
+    idxs_weight = findall(ps) do p
+        n = String(Symbol(p))
+        r = Regex("w.*$(name_out).*$(name_in)")
+        occursin(r, n)
+    end
+    
+    return pv[map_idxs[idxs_weight]]
+end
+
 function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
     spikes, _ = argmaxima(x)
     peakproms!(spikes, x; minprom, maxheight)
