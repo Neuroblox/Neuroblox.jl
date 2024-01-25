@@ -5,6 +5,12 @@ This tutorial will introduce you to simulating brain dynamics using Neuroblox.
 ## Example 1 : Building an oscillating circuit from two Wilson-Cowan Neural Mass Models
 
 ```@example Wilson-Cowan
+using Neuroblox
+using DifferentialEquations
+using Graphs
+using MetaGraphs
+using Plots
+
 @named WC1 = WilsonCowan()
 @named WC2 = WilsonCowan()
 
@@ -70,5 +76,5 @@ final_system_sys = structural_simplify(final_system)
 prob = ODEProblem(final_system_sys, [], (0.0, sim_dur),[])
 
 sol = solve(prob, Tsit5(), saveat=1)
-plot(sol)
+#plot(sol)
 ```
