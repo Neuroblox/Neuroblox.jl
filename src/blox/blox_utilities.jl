@@ -1,57 +1,17 @@
-# function progress_scope(params; lvl=0)
-#     para_list = []
-#     for p in params
-#         pp = ModelingToolkit.unwrap(p)
-#         if ModelingToolkit.hasdefault(pp)
-#             d = ModelingToolkit.getdefault(pp)
-#             if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
-#                 if lvl==0
-#                     pp = ParentScope(pp)
-#                 else
-#                     pp = DelayParentScope(pp,lvl)
-#                 end
-#             end
-#         end
-#         push!(para_list,ModelingToolkit.wrap(pp))
-#     end
-#     return para_list
-# end
-
 """
-This function progresses the scope of parameters and leaves floating point values untouched
+    function paramscoping(;kwargs...)
+    
+    Scope arguments that are already a symbolic model parameter thereby keep the correct namespace 
+    and make those that are not yet symbolic a symbol.
+    Keyword arguments are used, because parameter definition require names, not just values.
 """
-function progress_scope(args...)
-    paramlist = []
-    for p in args
-        if p isa Num
-            p = ParentScope(p)
-            # pp = ModelingToolkit.unwrap(p)
-            # if ModelingToolkit.hasdefault(pp)
-            #     d = ModelingToolkit.getdefault(pp)
-            #     if typeof(d)==SymbolicUtils.BasicSymbolic{Real}
-            #         pp = ParentScope(pp)
-            #     end
-            # end
-            # push!(para_list,ModelingToolkit.wrap(pp))
-            push!(paramlist, p)
-        else
-            push!(paramlist, p)
-        end
-    end
-    return paramlist
-end
-
-"""
-    This function compiles already existing parameters with floats after making them parameters.
-    Keyword arguments are used because parameter definition requires names, not just values
-"""
-function compileparameterlist(;kwargs...)
+function paramscoping(;kwargs...)
     paramlist = []
     for (kw, v) in kwargs
-        if v isa Union{Float64, Int}  # note that Num is also subtype of Real. Thus union of types seems to be the solution.
-            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
+        if v isa Num
+            paramlist = vcat(paramlist, ParentScope(v))
         else
-            paramlist = vcat(paramlist, v)
+            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
         end
     end
     return paramlist
@@ -162,13 +122,13 @@ function input_equations(blox)
         if isnothing(idx)
             namespace_equation(
                 inp ~ 0, 
-                sys, 
+                sys,
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
-            )
+            ) 
         else
             namespace_equation(
-                sys_eqs[idx], 
-                sys, 
+                sys_eqs[idx],
+                sys,
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             )
         end
@@ -198,9 +158,19 @@ weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
 weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
 
+get_blox_parts(blox) = blox.parts
+
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
         return kwargs[:weight]
+    else
+        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_weightmatrix(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :weightmatrix)
+        return kwargs[:weightmatrix]
     else
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
     end
@@ -249,10 +219,24 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     return length(spikes)
 end
 
-function get_hemodynamic_observers(sys_from_graph, nr)
+"""
+    function get_hemodynamic_observers(sys, nr)
+    
+    Function extracts those states of an MTK system that were tagged "hemodynamic_observer".
+
+    Arguments:
+    - `sys`: MTK system
+    - `nr` : number of regions of a model
+
+    Returns:
+    - `obs_idx`: indices of states with "hemodynamic_observer" tag in MTK system
+    - `obs_states`: states with "hemodynamic_observer" tag in MTK system
+
+"""
+function get_hemodynamic_observers(sys, nr)
     obs_idx = Dict([k => [] for k in 1:nr])
     obs_states = Dict([k => [] for k in 1:nr])
-    for (i, s) in enumerate(states(sys_from_graph))
+    for (i, s) in enumerate(states(sys))
         if isequal(getdescription(s), "hemodynamic_observer")
             regionidx = parse(Int64, split(string(s), "₊")[1][end])
             push!(obs_idx[regionidx], i)
@@ -262,17 +246,30 @@ function get_hemodynamic_observers(sys_from_graph, nr)
     return (obs_idx, obs_states)
 end
 
-function addnontunableparams(param, model)
-    newparam = []
+"""
+    function addnontunableparams(param, model)
+    
+    Function adds parameters of a model that were not marked as tunable to a list of tunable parameters
+    and respects the MTK ordering of parameters.
+
+    Arguments:
+    - `paramlist`: parameters of an MTK system that were tagged as tunable
+    - `sys`: MTK system
+
+    Returns:
+    - `completeparamlist`: complete parameter list of a system, including those that were not tagged as tunable
+"""
+function addnontunableparams(paramlist, sys)
+    completeparamlist = []
     k = 0
-    for p in parameters(model)
+    for p in parameters(sys)
         if istunable(p)
             k += 1
-            push!(newparam, param[k])
+            push!(completeparamlist, paramlist[k])
         else
-            push!(newparam, Symbolics.getdefaultval(p))
+            push!(completeparamlist, Symbolics.getdefaultval(p))
         end
     end
-    append!(newparam, param[k+1:end])
-    return newparam
+    append!(completeparamlist, paramlist[k+1:end])
+    return completeparamlist
 end

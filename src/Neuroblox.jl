@@ -8,12 +8,18 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-import LinearAlgebra as la
+using ForwardDiff: Dual, Partials, jacobian
+using ForwardDiff
+ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
+using ChainRules: _eigen_norm_phase_fwd!
+
+using LinearAlgebra
+using ToeplitzMatrices: Toeplitz
+using ExponentialUtilities: exponential!
+
 using AbstractFFTs
 using FFTW
-import ToeplitzMatrices as tm
 using DSP, Statistics
-import ExponentialUtilities as eu
 using OrdinaryDiffEq
 using DifferentialEquations
 using Interpolations
@@ -52,7 +58,7 @@ abstract type AbstractNeuronBlox <: AbstractBlox end
 abstract type NeuralMassBlox <: AbstractBlox end
 abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
-abstract type ObserverBlox <: AbstractBlox end
+abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -81,6 +87,7 @@ Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
+include("utilities/bold_methods.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
 include("datafitting/spectralDCM.jl")
@@ -174,11 +181,9 @@ function __init__()
     #end
 end
 
-export harmonic_oscillator, jansen_ritC, jansen_ritSC, jansen_rit_spm12, 
-    next_generation, thetaneuron, qif_neuron, if_neuron, hh_neuron_excitatory, 
-    hh_neuron_inhibitory, synaptic_network, van_der_pol, wilson_cowan
-export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox, LinearNeuralMassBlox,
-    WilsonCowanBlox, HarmonicOscillatorBlox, JansenRitCBlox, JansenRitSCBlox, LarterBreakspearBlox,
+export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
+    hh_neuron_inhibitory, synaptic_network, van_der_pol
+export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
@@ -189,18 +194,18 @@ export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus
 export PowerSpectrumBlox, BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
-export LinearConnections, SynapticConnections, ODEfromGraph, ODEfromGraphNeuron, 
-    connectcomplexblox, spikeconnections, adjmatrixfromdigraph, create_rl_loop
+export SynapticConnections, create_rl_loop
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export boldsignal, BalloonModel
-export vecparam, unvecparam, csd_Q, spectralVI
+export vecparam, csd_Q, spectralVI
 export simulate, random_initials
 export system_from_graph, graph_delays
-export create_adjacency_edges!
+export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, get_hemodynamic_observers
+export boldsignal_endo_balloon
 
 end

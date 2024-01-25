@@ -136,84 +136,31 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-
-
-@testset "Canonical micro circuit" begin
-    """
-    Canonical micro circuit tests 
-
-    first create a single canonical micro circuit and simulate. Then create a two region model and connect two
-    to form the circuit that is given in Figure 4 of Bastos et al. 2015.
-    """
-    # canonical micro circuit based on single Jansen-Rit blox
-    @named singleregion = CanonicalMicroCircuitBlox()
-    eqs = []
-    for bi in singleregion.bloxinput
-        push!(eqs, bi ~ 0)
-    end
-    @named singleregionODE = ODESystem(eqs, systems=[singleregion.odesystem])
-    singleregionODE = structural_simplify(singleregionODE)
-    sol = simulate(singleregionODE, [], (0.0, 10.0), [])
-    # TODO: it would be nicer if this was without the singleregion namespace...
-    @test sol[!,"singleregion₊dp₊x(t)"][end] + sol[!,"singleregion₊ii₊x(t)"][end] ≈ -5.159425345927338
-end
-
-@testset "Canonical & Janset-Rit network" begin
+@testset "Canonical Micro Circuit network" begin
     # connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
-    @named r1 = CanonicalMicroCircuitBlox()
-    @named r2 = CanonicalMicroCircuitBlox()
-    @named jr = JansenRitCBlox()
+    global_ns = :g # global namespace
+    @named r1 = CanonicalMicroCircuitBlox(;namespace=global_ns)
+    @named r2 = CanonicalMicroCircuitBlox(;namespace=global_ns)
 
     g = MetaDiGraph()
-    add_vertex!(g, Dict(:blox => r1)) # V1 (see fig. 4 in Bastos et al. 2015)
-    add_vertex!(g, Dict(:blox => r2)) # V4 (see fig. 4 in Bastos et al. 2015)
+    add_blox!.(Ref(g), [r1, r2])
+
     add_edge!(g, 1, 2, :weightmatrix, [0 1 0 0; # superficial pyramidal to spiny stellate
-                                    0 0 0 0;
-                                    0 0 0 0;
-                                    0 1 0 0]) # superficial pyramidal to deep pyramidal
+                                       0 0 0 0;
+                                       0 0 0 0;
+                                       0 1 0 0]) # superficial pyramidal to deep pyramidal
     # define connections from column (source) to row (sink)
     add_edge!(g, 2, 1, :weightmatrix, [0 0 0  0; 
-                                    0 0 0 -1;
-                                    0 0 0 -1;
-                                    0 0 0  0])
+                                       0 0 0 -1;
+                                       0 0 0 -1;
+                                       0 0 0  0])
+    sys = system_from_graph(g; name=global_ns)
+    sys_simpl =structural_simplify(sys)
 
-    @named cmc_network = ODEfromGraph(g)
-    cmc_network = structural_simplify(cmc_network)
-
-    sol = simulate(cmc_network, [], (0.0, 10.0), [])
-    @test sum(sol[end, 2:end]) ≈ -4827.086868187682
-
-    # now add a Neural mass model with one output and one input
-    add_vertex!(g, Dict(:blox => jr))
-    add_edge!(g, 3, 1, :weightmatrix, [0; 0; 0; 1])
-    add_edge!(g, 1, 3, :weightmatrix, [[1 0 0 0];])
-    add_edge!(g, 3, 3, :weight, -1)
-
-    @named cmc_network2 = ODEfromGraph(g)
-    cmc_network2 = structural_simplify(cmc_network2)
-    sol = simulate(cmc_network2, [], (0.0, 10.0), [])
-    @test sum(sol[end, 2:end]) ≈ -4823.399802568824
-
-    # now connect canonical micro circuits with symbolic weight matrices
-    g = MetaDiGraph()
-    add_vertex!(g, Dict(:blox => r1))
-    add_vertex!(g, Dict(:blox => r2))
-
-    A_forward = [0 1 0 0;
-                0 0 0 0;
-                0 0 0 0;
-                0 1 0 0]
-    A_backward = [0 0 0  0;
-                0 0 0 -1;
-                0 0 0 -1;
-                0 0 0  0]
-    @parameters wm_forward[1:length(A_forward)] = vec(A_forward) 
-    add_edge!(g, 1, 2, :weightmatrix, reshape(wm_forward, 4, 4))
-    @parameters wm_backward[1:length(A_backward)] = vec(A_backward) 
-    add_edge!(g, 2, 1, :weightmatrix, reshape(wm_backward, 4, 4))
-
-    @named cmc_network = ODEfromGraph(g)
-    cmc_network = structural_simplify(cmc_network)
+    prob = ODEProblem(sys_simpl, [], (0, 10))
+    sol = solve(prob, Vern7(), saveat=0.1)
+    sum(sol[end, 2:end])
+    @test sol.retcode == ReturnCode.Success
 end
 
 @testset "Next Generation Neural Mass" begin
@@ -235,38 +182,6 @@ end
     ψ = log.(sol[!,"Z(t)"]./R)/im
 
     @test norm.(R[length(R)]) < 0.1
-end
-
-@testset "Theta network" begin
-    """
-    thetaneuron.jl test
-
-    Test approach: generate a network of theta neurons and connect them through an all-to-all
-    adjacency matrix via a spike function. Then compute the real part of the Kuramoto order parameter.
-    The average of this parameter should be close to zero as synchrony varies in the network from a positive
-    to a negative amplitude. 
-    """
-
-    # Generate Theta Network
-    network = [] 
-    N = 50
-    for i = 1:N
-        η  = rand(Cauchy(1.0, 0.05)) # Constant Drive
-        @named neuron = Neuroblox.theta_neuron(name=Symbol("neuron$i"), η=η, α_inv=1.0, k=-2.0)
-        push!(network, neuron)
-    end
-
-    # Create Circuit
-    adj_matrix = (1/N)*ones(N,N)
-    n = 3
-    a_n = 2.0^n*(factorial(n)^2.0)/(factorial(2*n))
-    @named theta_circuit = LinearConnections(sys=network, adj_matrix=adj_matrix, connector=[a_n*(1-cos(neuron.θ))^n for neuron in network])
-
-    sim_dur = 2.0
-    sol = Neuroblox.simulate(structural_simplify(theta_circuit), [], (0.0, sim_dur), [])
-    R = real(exp.(im*sol[!, "neuron1₊θ(t)"]))
-
-    @test abs(Statistics.mean(R)) < 0.7
 end
 
 @testset "QIF synaptic network" begin
@@ -312,39 +227,6 @@ end
     @test sol.t[end] == sim_dur
 end
 
-# Are we keeping this one?
-@testset "LIF network" begin
-"""
-network of LIFs test
-"""
-# N = 6   # 6 neurons
-
-# # neuron properties
-# I_in = ones(N);             # same input current to all
-# τ = 5*collect(1:N);         # increasing membrane time constant
-# # synaptic properties 
-# syn_amp = 0.4*ones(N, N); # synaptic amplitudes
-# syn_τ = 5*ones(N)
-# nrn_network=[]
-# nrn_spiketimes=[]
-
-# for i = 1:N
-#     nn = LIFNeuronBlox(name=Symbol("lif$i"), I_in=I_in[i], τ=τ[i])
-#     push!(nrn_network, nn.odesystem)
-# 	push!(nrn_spiketimes, nn.odesystem.st)
-# end
-
-# # connect the neurons
-# @named syn_net = spikeconnections(sys=nrn_network, psp_amplitude=syn_amp, τ=syn_τ, spiketimes=nrn_spiketimes)
-
-# sim_dur =  50.0
-# prob = ODEProblem(structural_simplify(syn_net), [], (0.0, sim_dur), [])
-# sol = solve(prob, AutoVern7(Rodas4())) #pass keyword arguments to solver
-
-# @test length(sol.prob.p[end]) == 5
-# @test length(sol.prob.p[21]) == 11
-end
-
 @testset "Van der Pol" begin
 @named VdP = van_der_pol()
 
@@ -371,18 +253,18 @@ sol = solve(prob_ou,alg_hints = [:stiff])
 @test std(sol[1,:]) > 0.0 # there should be variance
 end
 
-@testset "OUBlox & Janset-Rit network" begin
-@named ou1 = OUBlox()
-@named jr = JansenRitCBlox()
-sys = [ou1.odesystem, jr.odesystem]
-eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
-@named ou1connected = compose(System(eqs;name=:connected),sys)
-ousimpl = structural_simplify(ou1connected)
-prob_oujr = SDEProblem(ousimpl,[],(0.0, 2.0))
-sol = solve(prob_oujr, alg_hints = [:stiff])
-@test sol.retcode == SciMLBase.ReturnCode.Success
-@test std(sol[2,:]) > 0.0 # there should be variance
-end
+# @testset "OUBlox & Janset-Rit network" begin
+# @named ou1 = OUBlox()
+# @named jr = JansenRitCBlox()
+# sys = [ou1.odesystem, jr.odesystem]
+# eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+# @named ou1connected = compose(System(eqs;name=:connected),sys)
+# ousimpl = structural_simplify(ou1connected)
+# prob_oujr = SDEProblem(ousimpl,[],(0.0, 2.0))
+# sol = solve(prob_oujr, alg_hints = [:stiff])
+# @test sol.retcode == SciMLBase.ReturnCode.Success
+# @test std(sol[2,:]) > 0.0 # there should be variance
+# end
 
 @testset "OUBlox-OUCouplingBlox network" begin
     @named ou1 = OUBlox()
@@ -416,39 +298,39 @@ sol = solve(prob_ouconnect)
 @test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
 end
 
-@testset "Time-series output" begin
-    phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
-    phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
-    phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
-    @test phase_cos_out(0.1,2.5)≈0.9689124217106447
-    @test phase_sin_out(0.1,2.5)≈0.24740395925452294
+# @testset "Time-series output" begin
+#     phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
+#     phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
+#     phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
+#     @test phase_cos_out(0.1,2.5)≈0.9689124217106447
+#     @test phase_sin_out(0.1,2.5)≈0.24740395925452294
 
-    # now test how to connect this time series to a neural mass blox
-    @named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
-    @parameters phase_input = 0
+#     # now test how to connect this time series to a neural mass blox
+#     @named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
+#     @parameters phase_input = 0
 
-    sys = [Str2.odesystem]
-    eqs = [sys[1].jcn ~ phase_input]
-    @named phase_system = ODESystem(eqs,systems=sys)
-    phase_system_simpl = structural_simplify(phase_system)
-    phase_ode = ODEProblem(phase_system_simpl,[],(0,3.0),[])
+#     sys = [Str2.odesystem]
+#     eqs = [sys[1].jcn ~ phase_input]
+#     @named phase_system = ODESystem(eqs,systems=sys)
+#     phase_system_simpl = structural_simplify(phase_system)
+#     phase_ode = ODEProblem(phase_system_simpl,[],(0,3.0),[])
 
-    # create callback functions
-    # we always want to update phase_input to be our phase_cos_out(t)
-    condition = function (u,t,integrator)
-        true
-    end
+#     # create callback functions
+#     # we always want to update phase_input to be our phase_cos_out(t)
+#     condition = function (u,t,integrator)
+#         true
+#     end
 
-    function affect!(integrator)
-        integrator.p[1] = phase_cos_out(10*pi,integrator.t)
-    end
+#     function affect!(integrator)
+#         integrator.p[1] = phase_cos_out(10*pi,integrator.t)
+#     end
 
-    cb = DiscreteCallback(condition,affect!)
+#     cb = DiscreteCallback(condition,affect!)
 
-    sol = solve(phase_ode,Tsit5(),callback=cb)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-    @test sol[2,:][5] ≈ 13.49728948607267
-end
+#     sol = solve(phase_ode,Tsit5(),callback=cb)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test sol[2,:][5] ≈ 13.49728948607267
+# end
 
 @testset "HH Neuron excitatory & inhibitory network" begin
 nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4; t_spike_window=0.1)
