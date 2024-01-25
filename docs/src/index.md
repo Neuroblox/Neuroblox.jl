@@ -1,79 +1,17 @@
 # Neuroblox
 
+## About
+Neuroblox.jl is designed for computational neuroscience and psychiatry applications. Our tools range from control circuit system identification to brain circuit simulations bridging scales from spiking neurons to fMRI-derived circuits, parameter-fitting models to neuroimaging data, interactions between the brain and other physiological systems, experimental optimization, and scientific machine learning.
+
+## Description
+Neuroblox.jl is based on a library of modular computational building blocks (“blox”) in the form of systems of symbolic dynamic differential equations that can be combined to describe large-scale brain dynamics.  Once a model is built, it can be simulated efficiently and fit electrophysiological and neuroimaging data.  Moreover, the circuit behavior of multiple model variants can be investigated to aid in distinguishing between competing hypotheses.
+We employ ModelingToolkit.jl to describe the dynamical behavior of blox as symbolic (stochastic/delay) differential equations.  Our libraries of modular blox consist of individual neurons (Hodgkin-Huxley, IF, QIF, LIF, etc.), neural mass models (Jansen-Rit, Wilson-Cowan, Lauter-Breakspear, Next Generation, microcanonical circuits etc.) and biomimetically-constrained control circuit elements.  A GUI designed to be intuitive to neuroscientists allows researchers to build models that automatically generate high-performance systems of numerical ordinary/stochastic differential equations from which one can run stimulations with parameters fit to experimental data.  Our benchmarks show that the increase in speed for simulation often exceeds a factor of 100 as compared to neural mass model implementation by the Virtual Brain (python) and similar packages in MATLAB.  For parameter fitting of brain circuit dynamical models, we use Turing.jl to perform probabilistic modeling, including Hamilton-Monte-Carlo sampling and Automated Differentiation Variational Inference.
+
 ## Installation
 
-To install LinearSolve.jl, use the Julia package manager:
+To install Neuroblox.jl, use the Julia package manager:
 
 ```julia
 using Pkg
-Pkg.add("LinearSolve")
-```
-
-## Community Channels
-
-  - There are a few community forums:
-
-      + The #diffeq-bridged and #sciml-bridged channels in the
-        [Julia Slack](https://julialang.org/slack/)
-      + The #diffeq-bridged and #sciml-bridged channels in the
-        [Julia Zulip](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
-      + On the [Julia Discourse forums](https://discourse.julialang.org)
-      + See also [SciML Community page](https://sciml.ai/community/)
-
-## Reproducibility
-
-```@raw html
-<details><summary>The documentation of this package was built using these direct dependencies,</summary>
-```
-
-```@example
-using Pkg # hide
-Pkg.status() # hide
-```
-
-```@raw html
-</details>
-```
-
-```@raw html
-<details><summary>and using this machine and Julia version.</summary>
-```
-
-```@example
-using InteractiveUtils # hide
-versioninfo() # hide
-```
-
-```@raw html
-</details>
-```
-
-```@raw html
-<details><summary>A more complete overview of all dependencies and their versions is also provided.</summary>
-```
-
-```@example
-using Pkg # hide
-Pkg.status(; mode = PKGMODE_MANIFEST) # hide
-```
-
-```@raw html
-</details>
-```
-
-```@eval
-using TOML
-using Markdown
-version = TOML.parse(read("../../Project.toml", String))["version"]
-name = TOML.parse(read("../../Project.toml", String))["name"]
-link_manifest = "https://github.com/SciML/" * name * ".jl/tree/gh-pages/v" * version *
-                "/assets/Manifest.toml"
-link_project = "https://github.com/SciML/" * name * ".jl/tree/gh-pages/v" * version *
-               "/assets/Project.toml"
-Markdown.parse("""You can also download the
-[manifest]($link_manifest)
-file and the
-[project]($link_project)
-file.
-""")
+Pkg.add("Neuroblox")
 ```
