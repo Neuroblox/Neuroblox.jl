@@ -32,8 +32,8 @@ plot(sol)
 In this example, we will construct a Parkinsons model from eight Jansen-Rit Neural Mass Models.  The Jansen-Rit Neural Mass model is defined by the following differential equations:
 
 ```math
-\\frac{dx}{dt} = y-\\frac{2}{\\tau}x
-\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+\frac{dx}{dt} = y-\frac{2}{\tau}x
+\frac{dy}{dt} = -\frac{x}{\tau^2} + \frac{H}{\tau} [\frac{2\lambda}{1+\text{exp}(-r*\sum{jcn})} - \lambda]
 ```
 
 ```@example Jansen-Rit
