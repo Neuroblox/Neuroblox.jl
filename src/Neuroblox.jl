@@ -182,5 +182,6 @@ export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, get_hemodynamic_observers
 export get_weights
+export boldsignal_endo_balloon
 
 end

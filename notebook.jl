@@ -64,10 +64,10 @@ begin
 	@named tan_nrn = HHNeuronExciBlox(;namespace=global_ns) #7
 	@named gpi1 = GPi(N_inhib=25;namespace=global_ns) #8
 	@named gpi2 = GPi(N_inhib=25;namespace=global_ns) #9
-	@named gpe1 = GPe(N_inhib=25;namespace=global_ns) #10
-	@named gpe2 = GPe(N_inhib=25;namespace=global_ns) #11
-	@named STN1 = STN(N_exci=25,I_bg=3*ones(25);namespace=global_ns) #12
-    @named STN2 = STN(N_exci=25,I_bg=3*ones(25);namespace=global_ns) #13
+	@named gpe1 = GPe(N_inhib=15;namespace=global_ns) #10
+	@named gpe2 = GPe(N_inhib=15;namespace=global_ns) #11
+	@named STN1 = STN(N_exci=15,I_bg=3*ones(25);namespace=global_ns) #12
+    @named STN2 = STN(N_exci=15,I_bg=3*ones(25);namespace=global_ns) #13
 	@named Thal1 = Thalamus(N_exci=25;namespace=global_ns) #14
 	@named Thal2 = Thalamus(N_exci=25;namespace=global_ns) #15
 
@@ -136,6 +136,9 @@ begin
 	
 	
 end
+
+# ╔═╡ d8b7f8ff-89d5-45bf-a357-ce0c0d181aef
+hebbian_mod.state_post
 
 # ╔═╡ fd33687b-1277-4689-acff-ef0f6c93b036
 
@@ -239,6 +242,49 @@ zero([0.9,-1])
 # ╔═╡ 78c45058-d2ee-4c1c-92f9-5d43e0647ecf
 eps()
 
+# ╔═╡ 7c165152-cb7f-4070-bfbe-2e6c50e224ca
+
+
+# ╔═╡ 98392a18-6499-43b6-9bd2-d23b26117c1d
+Gray.(perf)
+
+# ╔═╡ eca74b0a-e61b-45cb-b36c-40dcffc1da36
+begin
+	function get_CS_weights(agent,blox_out,blox_in)
+	#blox_out=PFC
+	#blox_in = STR1
+	ps = parameters(agent.odesystem)
+    pv = agent.problem.p
+    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
+
+    name_out = String(Neuroblox.namespaced_nameof(blox_out))
+    name_in = String(Neuroblox.namespaced_nameof(blox_in))
+
+    idxs_weight = findall(ps) do p
+        n = String(Symbol(p))
+        occursin("w_", n) && occursin(name_out, n) && occursin(name_in, n) && occursin("matrisome",n)
+    end
+
+	w_ar = pv[map_idxs[idxs_weight]]
+	return w_ar
+	end
+end
+
+# ╔═╡ 610da6ed-4ede-473f-b5a9-676b1a19413f
+begin
+
+	w_ar1=get_CS_weights(agent,PFC,STR1)
+end
+
+# ╔═╡ d780fc51-1e27-412f-8072-f6fc29604781
+size(w_ar1)
+
+# ╔═╡ 36621957-4ef1-498d-99b7-cb9d8b036bfc
+mean(w_ar1)
+
+# ╔═╡ 1391eb15-57a7-430d-b818-7dcd8aaac4ae
+Gray.(w_ar1/maximum(w_ar1))
+
 # ╔═╡ 5705a3d8-d5c2-4c52-82b9-91ad05a43733
 #eqs=equations(agent.odesystem);
 
@@ -270,7 +316,7 @@ begin
 		perf_smth[ii-19] = mean(perf[ii-19:ii])
 		
 	end
-	plot(perf_smth,ylims=(0,1))
+	plot(collect(20:500),perf_smth[1:481],ylims=(0,1),xlims=(0,500))
 end
 
 # ╔═╡ 432effe7-77c2-4163-99f5-1ba95a3052e8
@@ -297,7 +343,7 @@ end
 sol(0;idxs=stt)
 
 # ╔═╡ a252da3e-8554-4120-9419-c90c07be5ad2
-sol(1:10;idxs=AS.competitor_states[2])
+sol(1:10;idxs=AS.competitor_states[1])
 
 # ╔═╡ 10cfc03b-525e-4666-be1c-cc5074c40933
     sol.retcode
@@ -365,14 +411,15 @@ plot!(sol.t,[VV[thal2_ar,:]'],legend=false,yticks=[],color = "blue",size = (1000
 end
 
 # ╔═╡ fc3610bc-8f62-4f23-b740-527eb2a94e79
-plot(sol.t,ss[vlist[exc2[4]]+8,:])
+plot(sol.t,ss[vlist[exc2[4]]+7,:])
 
 # ╔═╡ 7f6120ca-61bc-4161-b827-26560bc5f28c
 plot(sol.t,mean(V[exc1,:],dims=1)')
 
 # ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
 begin 
-
+warm=0
+	if warm==1
 	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
 	t_warmup=800
     #N_trials = env.N_trials
@@ -407,6 +454,9 @@ begin
         weights[w] = defs[w]
     end
 
+	w_CS1=zeros(N_trials,100)
+    w_CS2=zeros(N_trials,100)
+	end
 end
 
 
@@ -416,13 +466,25 @@ size(u0)
 # ╔═╡ 6aabdb11-ff58-4434-bdff-5c2d7e80ed68
 weights
 
+# ╔═╡ 9077290a-e7e6-4822-bb25-dc9a833a2715
+Gray.(w_CS1[1:450,:]/maximum(w_CS1[1:60,:]))
+
+# ╔═╡ 4af5a936-88de-4c5f-a41c-6f14ca451cca
+Gray.(w_CS2[1:500,:]/maximum(w_CS2[1:60,:]))
+
+# ╔═╡ d6f941e6-ad36-4672-89bd-0423dc2fe667
+begin
+plot(mean(w_CS1,dims=2))
+plot!(mean(w_CS2,dims=2))	
+end
+
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
 learning=1
 	
 	if learning==1
 		
-    for ii = 18:N_trials
+    for ii = 486:N_trials
         prob4 = agent.problem
         stim_params = Neuroblox.get_trial_stimulus(env)
         prob4 = remake(prob4; p = merge(weights, stim_params), u0 = u0,tspan=(0,1600))
@@ -433,6 +495,10 @@ learning=1
             sol2 = solve(prob4, Vern7())
         #end
 		    agent.problem = prob4
+
+		    w_CS1[ii,:]=get_CS_weights(agent,PFC,STR1)
+		    w_CS2[ii,:]=get_CS_weights(agent,PFC,STR2)
+		    
             @info env.current_trial
         #u0 = sol[1:end,end] # next run should continue where the last one ended
 
@@ -483,6 +549,7 @@ env.category
 # ╠═ee0c04b9-57c9-44bc-b092-218019a545ec
 # ╠═d37ba3dd-78df-4e18-ac76-3864a2e9216e
 # ╠═8abc4a4b-4acf-4c25-a10c-33278329c9f4
+# ╠═d8b7f8ff-89d5-45bf-a357-ce0c0d181aef
 # ╠═fd33687b-1277-4689-acff-ef0f6c93b036
 # ╠═07e91c2c-3a1b-49d8-855b-9568e9697bb1
 # ╠═7e997ed5-20d1-424f-827c-f0bb2432149a
@@ -537,6 +604,16 @@ env.category
 # ╠═709f2677-8627-4069-9827-618b906be7fa
 # ╠═78c45058-d2ee-4c1c-92f9-5d43e0647ecf
 # ╠═b7e84b20-0b80-478c-bc88-2883f80bcbb4
+# ╠═9077290a-e7e6-4822-bb25-dc9a833a2715
+# ╠═4af5a936-88de-4c5f-a41c-6f14ca451cca
+# ╠═d6f941e6-ad36-4672-89bd-0423dc2fe667
+# ╠═7c165152-cb7f-4070-bfbe-2e6c50e224ca
+# ╠═98392a18-6499-43b6-9bd2-d23b26117c1d
+# ╠═610da6ed-4ede-473f-b5a9-676b1a19413f
+# ╠═eca74b0a-e61b-45cb-b36c-40dcffc1da36
+# ╠═d780fc51-1e27-412f-8072-f6fc29604781
+# ╠═36621957-4ef1-498d-99b7-cb9d8b036bfc
+# ╠═1391eb15-57a7-430d-b818-7dcd8aaac4ae
 # ╠═5705a3d8-d5c2-4c52-82b9-91ad05a43733
 # ╠═07bb7cce-498e-4ed6-b3e3-8fd31eb913fb
 # ╠═f1d77711-8db9-4c1d-9d5d-2ab172ef5f99
