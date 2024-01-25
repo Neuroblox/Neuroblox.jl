@@ -8,20 +8,33 @@ boldsignal   : computes BOLD signal
 """
 
 """
-### Input variables ###
-name : name of ODE system
-jcn  : neural activity
-s    : vascular signal
-lnf  : logarithm of rCBF
-lnν  : logarithm of venous volume
-lnq  : logarithm of deoxyhemoglobin (dHb)
+    BalloonModel(;name, namespace=nothing, lnκ=0.0, lnτ=0.0)
 
-### Parameter ###
-lnκ  : logarithmic prefactor to signal decay H[1], set to 0 for standard parameter value.
-lnτ  : logarithmic prefactor to transit time H[3], set to 0 for standard parameter value.
+    Create a balloon model blox which computes the hemodynamic responses to some underlying neuronal activity
+    The formal definition of this blox is:
+ """
+    # ```math
+    #     \\frac{ds}{dt} = \\text{jcn} - \\kappa s - \\gamma (u-1)
+    #     \\frac{du}{dt} = s
+    #     \\frac{d\\nu}{dt} = u - v^{1/\\alpha}
+    #     \\frac{dq}{dt} = u E(u, E_0)/E_0 - v^{1/\\alpha} q/v
+    # ```
+"""
+    where ``jcn`` is any input to the blox (represents the neuronal activity)
 
-### Return variables ###
-returns an ODESystem of the biophysical model for the hemodynamics
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- `namespace`: Additional namespace above `name` if needed for inheritance.
+- `lnκ`: logarithmic prefactor to signal decay H[1], set to 0 for standard parameter value.
+- `lnτ`: logarithmic prefactor to transit time H[3], set to 0 for standard parameter value.
+
+NB: the prefix ln of the variables u, ν, q as well as the parameters κ, τ denotes their transformation into logarithmic space
+to enforce their positivity. This transformation is considered in the derivates of the model equations below. 
+
+Citations:
+1. Stephan K E, Weiskopf N, Drysdale P M, Robinson P A, and Friston K J. Comparing Hemodynamic Models with DCM. NeuroImage 38, no. 3 (2007): 387–401. doi: 10.1016/j.neuroimage.2007.07.040
+2. Hofmann D, Chesebro A G, Rackauckas C, Mujica-Parodi L R, Friston K J, Edelman A, and Strey H H. Leveraging Julia's Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed, 2023. doi: 10.1101/2023.10.27.564407
+
 """
 struct BalloonModel <: ObserverBlox
     params
@@ -39,17 +52,17 @@ struct BalloonModel <: ObserverBlox
         =#
 
         H = [0.64, 0.32, 2.00, 0.32, 0.4]
-        p = progress_scope(lnκ, lnτ)  # progress scope if needed
-        p = compileparameterlist(lnκ=p[1], lnτ=p[2])  # finally compile all parameters
-        lnκ, lnτ = p  # assign the modified parameters
+        # p = progress_scope(lnκ, lnτ)                  # progress scope if needed
+        p = paramscoping(lnκ=lnκ, lnτ=lnτ)  # finally compile all parameters
+        lnκ, lnτ = p                                  # assign the modified parameters
         
-        sts = @variables s(t)=1.0 lnf(t)=1.0 lnν(t)=1.0 [output=true, description="hemodynamic_observer"] lnq(t)=1.0 [output=true, description="hemodynamic_observer"] jcn(t)=0.0 [input=true]
+        sts = @variables s(t)=1.0 lnu(t)=1.0 lnν(t)=1.0 [output=true, description="hemodynamic_observer"] lnq(t)=1.0 [output=true, description="hemodynamic_observer"] jcn(t)=0.0 [input=true]
 
         eqs = [
-            D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnf) - 1),
-            D(lnf) ~ s / exp(lnf),
-            D(lnν) ~ (exp(lnf) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
-            D(lnq) ~ (exp(lnf)/exp(lnq)*((1 - (1 - H[5])^(exp(lnf)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
+            D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnu) - 1),
+            D(lnu) ~ s / exp(lnu),
+            D(lnν) ~ (exp(lnu) - exp(lnν)^(H[4]^-1)) / (H[3]*exp(lnτ)*exp(lnν)),
+            D(lnq) ~ (exp(lnu)/exp(lnq)*((1 - (1 - H[5])^(exp(lnu)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ))
         ]
         sys = System(eqs, name=name)
         new(p, Num(0), sts[5], sys, namespace)
@@ -57,22 +70,28 @@ struct BalloonModel <: ObserverBlox
 end
 
 
-
 """
-BOLD signal model as described in: 
+    boldsignal(;name, lnϵ=0.0)
 
-Stephan KE, Weiskopf N, Drysdale PM, Robinson PA, Friston KJ (2007)
-Comparing hemodynamic models with DCM. NeuroImage 38: 387-401.
+    Bold signal observer function. This requires connection to the variables ν and q of a balloon model.
+    The formal definition of this blox is:
+ """
+    # ```math
+    #     \\lambda(\\nu, q) = V_0 \\left[ k_1 (1-q) + k_2 \\left( 1 - \\frac{q}{v} \\right) + k_3 (1-v)\\right]
+    # ```
+"""
 
-### Input variables ###
-lnν  : logarithm of venous volume
-lnq  : logarithm of deoxyhemoglobin (dHb)
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- lnϵ  : logarithm of ratio of intra- to extra-vascular signal
 
-### Parameter ###
-lnϵ  : logarithm of ratio of intra- to extra-vascular signal
+NB: the prefix ln of the variables ν, q as well as the parameters ϵ denotes their transformation into logarithmic space
+to enforce their positivity.
 
-### Return variables ###
-returns ODESystem
+Citations:
+1. Stephan K E, Weiskopf N, Drysdale P M, Robinson P A, and Friston K J. Comparing Hemodynamic Models with DCM. NeuroImage 38, no. 3 (2007): 387–401. doi: 10.1016/j.neuroimage.2007.07.040
+2. Hofmann D, Chesebro A G, Rackauckas C, Mujica-Parodi L R, Friston K J, Edelman A, and Strey H H. Leveraging Julia's Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed, 2023. doi: 10.1101/2023.10.27.564407
+
 """
 function boldsignal(;name, lnϵ=0.0)
     # NB: Biophysical constants for 1.5T scanners
@@ -87,7 +106,7 @@ function boldsignal(;name, lnϵ=0.0)
     nu0 = 40.3
     # resting oxygen extraction fraction
     E0  = 0.4
-    # -Coefficients in BOLD signal model
+    # Coefficients in BOLD signal model
     k1  = 4.3*nu0*E0*TE
 
     params = @parameters lnϵ=lnϵ

@@ -1,125 +1,6 @@
 @parameters t
 D = Differential(t)
 
-mutable struct LinearNeuralMassBlox <: AbstractComponent
-    connector::Num
-    odesystem::ODESystem
-    function LinearNeuralMassBlox(;name)
-        states = @variables x(t) jcn(t)
-        eqs = D(x) ~ jcn
-        odesys = ODESystem(eqs, t, states, []; name=name)
-        new(odesys.x, odesys)
-    end
-end
-
-mutable struct HarmonicOscillatorBlox <: NeuralMassBlox
-    # all parameters are Num as to allow symbolic expressions
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function HarmonicOscillatorBlox(;name, ω=25*(2*pi), ζ=1.0, k=625*(2*pi), h=35.0)
-        params = progress_scope(ω, ζ, k, h)
-        params = compileparameterlist(ω=params[1], ζ=params[2], k=params[3], h=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        ω, ζ, k, h = params
-        eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
-                  D(y) ~ -(ω^2)*x]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const harmonic_oscillator = HarmonicOscillatorBlox
-
-# This is for later to connect the icons to the different blox
-# function gui.icon(Type::HarmonicOscillatorBlox)
-#    return HarmonicOscillatorImage
-
-mutable struct JansenRitCBlox <: NeuralMassBlox
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function JansenRitCBlox(;name, τ=0.001, H=20.0, λ=5.0, r=0.15)
-        params = progress_scope(τ, H, λ, r)
-        params = compileparameterlist(τ=params[1], H=params[2], λ=params[3], r=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        τ, H, λ, r = params
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const jansen_ritC = JansenRitCBlox
-
-mutable struct  JansenRitSCBlox <: NeuralMassBlox
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function JansenRitSCBlox(;name, τ=0.014, H=20.0, λ=400.0, r=0.1)
-        params = progress_scope(τ, H, λ, r)
-        params = compileparameterlist(τ=params[1], H=params[2], λ=params[3], r=params[4])
-        sts    = @variables x(t)=1.0 y(t)=1.0 jcn(t)=0.0
-        τ, H, λ, r = params
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                  D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(odesys.x,[odesys.x],[odesys.x,odesys.y],
-            Dict(odesys.x => (-1.0,1.0), odesys.y => (-1.0,1.0)),
-            odesys)
-    end
-end
-# this assignment is temporary until all the code is changed to the new name
-const jansen_ritSC = JansenRitSCBlox
-
-mutable struct WilsonCowanBlox <: NeuralMassBlox
-    τ_E::Num
-    τ_I::Num
-    a_E::Num
-    a_I::Num
-    c_EE::Num
-    c_EI::Num
-    c_IE::Num
-    c_II::Num
-    θ_E::Num
-    θ_I::Num
-    η::Num
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    odesystem::ODESystem
-    function WilsonCowanBlox(;name,
-                          τ_E=1.0,
-                          τ_I=1.0,
-                          a_E=1.2,
-                          a_I=2.0,
-                          c_EE=5.0,
-                          c_IE=6.0,
-                          c_EI=10.0,
-                          c_II=1.0,
-                          θ_E=2.0,
-                          θ_I=3.5,
-                          η=1.0)
-        params = @parameters τ_E=τ_E τ_I=τ_I a_E=a_E a_I=a_I c_EE=c_EE c_IE=c_IE c_EI=c_EI c_II=c_II θ_E=θ_E θ_I=θ_I η=η
-        sts    = @variables E(t)=1.0 I(t)=1.0 jcn(t)=0.0 P(t)=0.0
-        eqs    = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
-                  D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(τ_E,τ_I,a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η, odesys.E, [odesys.E],[odesys.E, odesys.I],odesys)
-    end
-end
-
 mutable struct NextGenerationBlox <: NeuralMassBlox
     C::Num
     Δ::Num
@@ -199,105 +80,27 @@ end
 # this assignment is temporary until all the code is changed to the new name
 const next_generation = NextGenerationBlox
 
-mutable struct LarterBreakspearBlox <: NeuralMassBlox
-    C::Num
-    δ_VZ::Num
-    T_Ca::Num
-    δ_Ca::Num
-    g_Ca::Num
-    V_Ca::Num
-    T_K::Num
-    δ_K::Num
-    g_K::Num
-    V_K::Num
-    T_Na::Num
-    δ_Na::Num
-    g_Na::Num
-    V_Na::Num
-    V_L::Num
-    g_L::Num
-    V_T::Num
-    Z_T::Num
-    Q_Vmax::Num
-    Q_Zmax::Num
-    IS::Num
-    a_ee::Num
-    a_ei::Num
-    a_ie::Num
-    a_ne::Num
-    a_ni::Num
-    b::Num
-    τ_K::Num
-    ϕ::Num
-    r_NMDA::Num
-    connector::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
-    function LarterBreakspearBlox(;name,
-                          T_Ca=-0.01,
-                          δ_Ca=0.15,
-                          g_Ca=1.0,
-                          V_Ca=1.0,
-                          T_K=0.0,
-                          δ_K=0.3,
-                          g_K=2.0,
-                          V_K=-0.7,
-                          T_Na=0.3,
-                          δ_Na=0.15,
-                          g_Na=6.7,
-                          V_Na=0.53,
-                          V_L=-0.5,
-                          g_L=0.5,
-                          V_T=0.0,
-                          Z_T=0.0,
-                          δ_VZ=0.61,
-                          Q_Vmax=1.0,
-                          Q_Zmax=1.0,
-                          IS = 0.3,
-                          a_ee=0.36,
-                          a_ei=2.0,
-                          a_ie=2.0,
-                          a_ne=1.0,
-                          a_ni=0.4,
-                          b=0.1,
-                          τ_K=1.0,
-                          ϕ=0.7,
-                          r_NMDA=0.25,
-                          C=0.35)
-        params = @parameters C=C δ_VZ=δ_VZ T_Ca=T_Ca δ_Ca=δ_Ca g_Ca=g_Ca V_Ca=V_Ca T_K=T_K δ_K=δ_K g_K=g_K V_K=V_K T_Na=T_Na δ_Na=δ_Na g_Na=g_Na V_Na=V_Na V_L=V_L g_L=g_L V_T=V_T Z_T=Z_T Q_Vmax=Q_Vmax Q_Zmax=Q_Zmax IS=IS a_ee=a_ee a_ei=a_ei a_ie=a_ie a_ne=a_ne a_ni=a_ni b=b τ_K=τ_K ϕ=ϕ r_NMDA=r_NMDA
-        sts    = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 Q_V(t) Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
-
-        eqs    = [D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
-                          g_K * W * (V - V_K) - g_L * (V - V_L) -
-                          (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
-                          a_ie * Z * Q_Z + a_ne * IS,
-                  D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
-                  D(W) ~ ϕ * (m_K - W) / τ_K,
-                  Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
-                  Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
-                  m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
-                  m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
-                  m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L,
-        g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA,
-        0.5*Q_Vmax*(1 + tanh((odesys.V-V_T)/δ_VZ)),
-        [odesys.V],[odesys.V, odesys.Z, odesys.W],
-        Dict(odesys.V => (-1.0,1.0), odesys.Z => (-1.0,1.0), odesys.W => (0.0,1.0)),
-        odesys)
-    end
-end
-
 """
-New versions of blox begin here!
-"""
+    LinearNeuralMass(name, namespace)
+
+Create standard linear neural mass blox with a single internal state.
+There are no parameters in this blox.
+This is a blox of the sort used for spectral DCM modeling.
+The formal definition of this blox is:
 
 
+```math
+\\frac{d}{dx} = \\sum{jcn}
+```
+
+where ``jcn``` is any input to the blox.
+
+
+Arguments:
+- name: Options containing specification about deterministic.
+- namespace: Additional namespace above name if needed for inheritance.
 """
-Units note: no units because no parameters :)
-"""
+
 struct LinearNeuralMass <: NeuralMassBlox
     output
     jcn
@@ -312,8 +115,25 @@ struct LinearNeuralMass <: NeuralMassBlox
 end
 
 """
-Units note: Frequency should be tuned by user.
-Updated with additional factors to make ms.
+    HarmonicOscillator(name, namespace, ω, ζ, k, h)
+
+    Create a harmonic oscillator blox with the specified parameters.
+    The formal definition of this blox is:
+
+```math
+\\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
+\\frac{dy}{dt} = -(\\omega^2)*x
+```
+    where ``jcn`` is any input to the blox.
+    
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- ω: Base frequency. Note the default value is scaled to give oscillations in milliseconds to match other blocks.
+- ζ: Damping ratio.
+- k: Gain.
+- h: Threshold.
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
@@ -322,8 +142,8 @@ struct HarmonicOscillator <: NeuralMassBlox
     odesystem
     namespace
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
-        p = progress_scope(ω, ζ, k, h)
-        p = compileparameterlist(ω=p[1], ζ=p[2], k=p[3], h=p[4])
+        # p = progress_scope(ω, ζ, k, h)
+        p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
@@ -334,10 +154,31 @@ struct HarmonicOscillator <: NeuralMassBlox
 end
 
 """
-Units note: all units from the original Parkinson's paper EXCEPT τ. 
-The original delays were in seconds, so multiplied to be consistent with other blocks in ms.
+    JansenRit(name, namespace, τ, H, λ, r, cortical)
+
+    Create a Jansen Rit blox as described in Liu et al.
+    The formal definition of this blox is:
+
+```math
+\\frac{dx}{dt} = y-\\frac{2}{\\tau}x
+\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+```
+
+where ``jcn`` is any input to the blox.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- τ: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
+- H: See equation for use.
+- λ: See equation for use.
+- r: See equation for use.
+- cortical: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+
+Citations:
+1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
+
 """
-# Constructing a new Jansen Rit blox to handle both delays and non-delays, along with default parameter inputs
 struct JansenRit <: NeuralMassBlox
     params
     output
@@ -357,8 +198,8 @@ struct JansenRit <: NeuralMassBlox
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
 
-        p = progress_scope(τ, H, λ, r)
-        p = compileparameterlist(τ=p[1], H=p[2], λ=p[3], r=p[4])
+        # p = progress_scope(τ, H, λ, r)
+        p = paramscoping(τ=τ, H=H, λ=λ, r=r)
         τ, H, λ, r = p
         sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
         eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
@@ -371,8 +212,21 @@ struct JansenRit <: NeuralMassBlox
 end
 
 """
-Units note: Unclear where the defaults come from (close but not quite Wilson-Cowan referenced in TVB and elsewhere).
-They're on the same order of magnitude as the original parameters which are in ms, so good to go for now.
+    WilsonCown(name, namespace, τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
+
+    Create a standard Wilson Cowan blox.
+    The formal definition of this blox is:
+
+```math
+\\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))}
+\\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \\theta_I)}
+```
+where ``jcn`` is any input to the blox.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Others: See equation for use.
 """
 struct WilsonCowan <: NeuralMassBlox
     params
@@ -394,8 +248,8 @@ struct WilsonCowan <: NeuralMassBlox
                         θ_I=3.5,
                         η=1.0
     )
-        p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
-        p = compileparameterlist(τ_E=p[1], τ_I=p[2], a_E=p[3], a_I=p[4], c_EE=p[5], c_IE=p[6], c_EI=p[7], c_II=p[8], θ_E=p[9], θ_I=p[10], η=p[11])
+        # p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
+        p = paramscoping(τ_E=τ_E, τ_I=τ_I, a_E=a_E, a_I=a_I, c_EE=c_EE, c_IE=c_IE, c_EI=c_EI, c_II=c_II, θ_E=θ_E, θ_I=θ_I, η=η)
         τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
         sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t)=0.0 [input=true] #P(t)=0.0
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
@@ -406,7 +260,21 @@ struct WilsonCowan <: NeuralMassBlox
 end
 
 """
-Units note: From Yamashita et al. paper, designed to be in ms. Good to go for now.
+    LarterBreakspear(name, namespace, ...)
+
+    Create a Larter Breakspear blox described in Endo et al. For a full list of the parameters used see the reference.
+    If you need to modify the parameters, see Chesebro et al. and van Nieuwenhuizen et al. for physiological ranges.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citations:
+1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091.
+2. Chesebro AG, Mujica-Parodi LR, Weistuch C. Ion gradient-driven bifurcations of a multi-scale neuronal model. Chaos Solitons Fractals. 2023 Feb;167:113120. doi: 10.1016/j.chaos.2023.113120. 
+3. van Nieuwenhuizen, H, Chesebro, AG, Polis, C, Clarke, K, Strey, HH, Weistuch, C, Mujica-Parodi, LR. Ketosis regulates K+ ion channels, strengthening brain-wide signaling disrupted by age. Preprint. bioRxiv 2023.05.10.540257; doi: https://doi.org/10.1101/2023.05.10.540257. 
+
 """
 struct LarterBreakspear <: NeuralMassBlox
     params
@@ -448,8 +316,8 @@ struct LarterBreakspear <: NeuralMassBlox
                         r_NMDA=0.25,
                         C=0.35
     )
-        p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
-        p = compileparameterlist(C=p[1], δ_VZ=p[2], T_Ca=p[3], δ_Ca=p[4], g_Ca=p[5], V_Ca=p[6], T_K=p[7], δ_K=p[8], g_K=p[9], V_K=p[10], T_Na=p[11], δ_Na=p[12], g_Na=p[13],V_Na=p[14], V_L=p[15], g_L=p[16], V_T=p[17], Z_T=p[18], Q_Vmax=p[19], Q_Zmax=p[20], IS=p[21], a_ee=p[22], a_ei=p[23], a_ie=p[24], a_ne=p[25], a_ni=p[26], b=p[27], τ_K=p[28], ϕ=p[29], r_NMDA=p[30])
+        # p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
+        p = paramscoping(C=C, δ_VZ=δ_VZ, T_Ca=T_Ca, δ_Ca=δ_Ca, g_Ca=g_Ca, V_Ca=V_Ca, T_K=T_K, δ_K=δ_K, g_K=g_K, V_K=V_K, T_Na=T_Na, δ_Na=δ_Na, g_Na=g_Na, V_Na=V_Na, V_L=V_L, g_L=g_L, V_T=V_T, Z_T=Z_T, Q_Vmax=Q_Vmax, Q_Zmax=Q_Zmax, IS=IS, a_ee=a_ee, a_ei=a_ei, a_ie=a_ie, a_ne=a_ne, a_ni=a_ni, b=b, τ_K=τ_K, ϕ=ϕ, r_NMDA=r_NMDA)
         C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
         
         sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)

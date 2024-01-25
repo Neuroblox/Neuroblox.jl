@@ -179,6 +179,46 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    bloxout::CanonicalMicroCircuitBlox,
+    bloxin::CanonicalMicroCircuitBlox;
+    kwargs...
+)
+    sysparts_out = get_blox_parts(bloxout)
+    sysparts_in = get_blox_parts(bloxin)
+
+    wm = get_weightmatrix(kwargs, namespaced_nameof(bloxin), namespaced_nameof(bloxout))
+
+    idxs = findall(!iszero, wm)
+    for idx in idxs
+        bc(sysparts_out[idx[2]], sysparts_in[idx[1]]; weight=wm[idx])
+    end
+end
+
+# define a sigmoid function
+sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
+
+function (bc::BloxConnector)(
+    bloxout::JansenRitSPM12, 
+    bloxin::JansenRitSPM12; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    x = namespace_expr(bloxout.output, sys_out)
+    r = namespace_expr(bloxout.params[2], sys_out)
+    push!(bc.weights, r)
+
+    eq = sys_in.jcn ~ sigmoid(x, r)*w
+    
+    accumulate_equation!(bc, eq)
+end
+
+
+function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
     bloxin::NeuralMassBlox; 
     kwargs...
@@ -308,7 +348,7 @@ function (bc::BloxConnector)(
     kwargs...
 )
     neurons_in = get_exci_neurons(wta_in)
-        
+
     for neuron_postsyn in neurons_in
         bc(neuron_out, neuron_postsyn; kwargs...)
     end
