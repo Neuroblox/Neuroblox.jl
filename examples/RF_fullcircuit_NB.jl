@@ -418,7 +418,7 @@ plot(sol.t,mean(V[exc1,:],dims=1)')
 
 # ╔═╡ 14e2806e-5cdd-4b0b-b8c7-8c6d2c7e349c
 begin 
-warm=0
+warm=1
 	if warm==1
 	#function run_experiment_test!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
 	t_warmup=800
@@ -480,7 +480,7 @@ end
 
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
-learning=1
+learning=0
 	
 	if learning==1
 		
