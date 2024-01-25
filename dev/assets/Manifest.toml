@@ -2409,9 +2409,9 @@ version = "0.4.0+0"
 
 [[deps.Roots]]
 deps = ["Accessors", "ChainRulesCore", "CommonSolve", "Printf"]
-git-tree-sha1 = "af540898b1e6ca7aa6ba7213c05052809c6c522a"
+git-tree-sha1 = "39ebae5b76c8cd5629bec21adfca78b437dac1e6"
 uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
-version = "2.1.0"
+version = "2.1.1"
 
     [deps.Roots.extensions]
     RootsForwardDiffExt = "ForwardDiff"
