@@ -43,40 +43,39 @@ using Graphs
 using MetaGraphs
 using Plots
 
-@named str = JansenRit(τ=2.2, H=20, λ=300, r=0.3)
-@named gpe = JansenRit(τ=40.0, cortical=false) # all default subcortical except τ
-@named stn = JansenRit(τ=10.0, H=20, λ=500, r=0.1)
-@named gpi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRit(τ=2.0, H=10, λ=20, r=5)
-@named EI  = JansenRit(τ=10.0, H=20, λ=5, r=5)
-@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
-@named II  = JansenRit(τ=2000.0, H=60, λ=5, r=5)
-blox = [str, gpe, stn, gpi, Th, EI, PY, II]
+@named GPe       = JansenRit(τ=40.0, H=20, λ=400, r=0.1)
+@named STN       = JansenRit(τ=10.0, H=20, λ=500, r=0.1)
+@named GPi       = JansenRit(τ=14.0, H=20, λ=400, r=0.1)
+@named Thalamus  = JansenRit(τ=2.0, H=10, λ=20, r=5)
+@named PFC       = JansenRit(τ=1.0, H=20, λ=5, r=0.15)
+blox = [GPe, STN, GPi, Thalamus, PFC]
 
 # Store parameters to be passed later on
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
-adj_matrix_lin = [0 0 0 0 0 0 0 0;
-            -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
-            0 -0.5*C_BG_Th 0 0 0 0 C_Cor_BG_Th 0;
-            0 -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
-            0 0 0 -0.5*C_BG_Th 0 0 0 0;
-            0 0 0 0 C_BG_Th_Cor 0 6*C_Cor 0;
-            0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
-            0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
-
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
-create_adjacency_edges!(g, adj_matrix_lin)
 
-@named final_system = system_from_graph(g, params)
-final_delays = graph_delays(g)
+add_edge!(g,1,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,1,2,:weight, C_BG_Th)
+add_edge!(g,2,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,2,5,:weight, C_Cor_BG_Th)
+add_edge!(g,3,1,:weight, -0.5*C_BG_Th)
+add_edge!(g,3,2,:weight, C_BG_Th)
+add_edge!(g,4,3,:weight, -0.5*C_BG_Th)
+add_edge!(g,4,4,:weight, C_BG_Th_Cor)
+
+@named sys = system_from_graph(g, params)
+sys_delays = graph_delays(g)
 sim_dur = 2000.0 # Simulate for 2 Seconds
-final_system_sys = structural_simplify(final_system)
-prob = DDEProblem(final_system_sys,
+sys = structural_simplify(sys)
+
+# Jansen-Rit allows delays and therefore we create a delayed
+# differential equation problem
+prob = DDEProblem(sys,
     [],
     (0.0, sim_dur),
-    constant_lags = final_delays)
+    constant_lags = sys_delays)
 alg = MethodOfSteps(Vern7())
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 
