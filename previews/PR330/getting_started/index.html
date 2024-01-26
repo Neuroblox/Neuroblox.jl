@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting Started · Neuroblox</title><meta name="title" content="Getting Started · Neuroblox"/><meta property="og:title" content="Getting Started · Neuroblox"/><meta property="twitter:title" content="Getting Started · Neuroblox"/><meta name="description" content="Documentation for Neuroblox."/><meta property="og:description" content="Documentation for Neuroblox."/><meta property="twitter:description" content="Documentation for Neuroblox."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Neuroblox logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Neuroblox</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Neuroblox</a></li><li class="is-active"><a class="tocitem" href>Getting Started</a><ul class="internal"><li><a class="tocitem" href="#Example-1-:-Building-an-oscillating-circuit-from-two-Wilson-Cowan-Neural-Mass-Models"><span>Example 1 : Building an oscillating circuit from two Wilson-Cowan Neural Mass Models</span></a></li><li><a class="tocitem" href="#Example-2-:-Building-a-Brain-Circuit-using-Neural-Mass-Models"><span>Example 2 : Building a Brain Circuit using Neural Mass Models</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../release_notes/">Release Notes</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Getting Started</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Getting Started</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Neuroblox/Neuroblox.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Neuroblox/Neuroblox.jl/blob/master/docs/src/getting_started.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="neuroblox_example"><a class="docs-heading-anchor" href="#neuroblox_example">Getting Started with Neuroblox</a><a id="neuroblox_example-1"></a><a class="docs-heading-anchor-permalink" href="#neuroblox_example" title="Permalink"></a></h1><p>This tutorial will introduce you to simulating brain dynamics using Neuroblox.</p><h2 id="Example-1-:-Building-an-oscillating-circuit-from-two-Wilson-Cowan-Neural-Mass-Models"><a class="docs-heading-anchor" href="#Example-1-:-Building-an-oscillating-circuit-from-two-Wilson-Cowan-Neural-Mass-Models">Example 1 : Building an oscillating circuit from two Wilson-Cowan Neural Mass Models</a><a id="Example-1-:-Building-an-oscillating-circuit-from-two-Wilson-Cowan-Neural-Mass-Models-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1-:-Building-an-oscillating-circuit-from-two-Wilson-Cowan-Neural-Mass-Models" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Neuroblox
+using DifferentialEquations
+using Graphs
+using MetaGraphs
+using Plots
+
+@named WC1 = WilsonCowan()
+@named WC2 = WilsonCowan()
+
+adj = [-1 6; 6 -1]
+g = MetaDiGraph()
+add_blox!.(Ref(g), [WC1, WC2])
+create_adjacency_edges!(g, adj)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+prob = ODEProblem(sys, [], (0.0, 100), [])
+sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+plot(sol)</code></pre><img src="aaaee576.svg" alt="Example block output"/><h2 id="Example-2-:-Building-a-Brain-Circuit-using-Neural-Mass-Models"><a class="docs-heading-anchor" href="#Example-2-:-Building-a-Brain-Circuit-using-Neural-Mass-Models">Example 2 : Building a Brain Circuit using Neural Mass Models</a><a id="Example-2-:-Building-a-Brain-Circuit-using-Neural-Mass-Models-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2-:-Building-a-Brain-Circuit-using-Neural-Mass-Models" title="Permalink"></a></h2><p>In this example, we will construct a Parkinsons model from eight Jansen-Rit Neural Mass Models.  The Jansen-Rit Neural Mass model is defined by the following differential equations:</p><p class="math-container">\[\frac{dx}{dt} = y-\frac{2}{\tau}x
+\frac{dy}{dt} = -\frac{x}{\tau^2} + \frac{H}{\tau} [\frac{2\lambda}{1+\text{exp}(-r*\sum{jcn})} - \lambda]\]</p><pre><code class="language-julia hljs">using Neuroblox
+using DifferentialEquations
+using Graphs
+using MetaGraphs
+using Plots
+
+@named str = JansenRit(τ=2.2, H=20, λ=300, r=0.3)
+@named gpe = JansenRit(τ=40.0, cortical=false) # all default subcortical except τ
+@named stn = JansenRit(τ=10.0, H=20, λ=500, r=0.1)
+@named gpi = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=2.0, H=10, λ=20, r=5)
+@named EI  = JansenRit(τ=10.0, H=20, λ=5, r=5)
+@named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2000.0, H=60, λ=5, r=5)
+blox = [str, gpe, stn, gpi, Th, EI, PY, II]
+
+# Store parameters to be passed later on
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
+
+adj_matrix_lin = [0 0 0 0 0 0 0 0;
+            -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+            0 -0.5*C_BG_Th 0 0 0 0 C_Cor_BG_Th 0;
+            0 -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+            0 0 0 -0.5*C_BG_Th 0 0 0 0;
+            0 0 0 0 C_BG_Th_Cor 0 6*C_Cor 0;
+            0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
+            0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
+
+g = MetaDiGraph()
+add_blox!.(Ref(g), blox)
+create_adjacency_edges!(g, adj_matrix_lin)
+
+@named final_system = system_from_graph(g, params)
+final_delays = graph_delays(g)
+sim_dur = 2000.0 # Simulate for 2 Seconds
+final_system_sys = structural_simplify(final_system)
+prob = DDEProblem(final_system_sys,
+    [],
+    (0.0, sim_dur),
+    constant_lags = final_delays)
+alg = MethodOfSteps(Vern7())
+sol_dde_no_delays = solve(prob, alg, saveat=1)
+
+plot(sol_dde_no_delays)</code></pre><img src="88ba2cc1.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Neuroblox</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 26 January 2024 13:22">Friday 26 January 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
