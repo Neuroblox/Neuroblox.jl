@@ -9,9 +9,19 @@ We employ ModelingToolkit.jl to describe the dynamical behavior of blox as symbo
 
 ## Installation
 
-To install Neuroblox.jl, use the Julia package manager:
+To install Neuroblox.jl, first add the JuliaHubRegistry and then use the Julia package manager:
 
 ```julia
 using Pkg
+Pkg.add("PkgAuthentication")
+using PkgAuthentication
+PkgAuthentication.install("juliahub.com")
+Pkg.Registry.add()
 Pkg.add("Neuroblox")
 ```
+
+## Licensing
+
+Neuroblox is free for non-commerical and academic use. For full details of the license, please see 
+[the Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, get in contact
+with sales@neuroblox.org.
