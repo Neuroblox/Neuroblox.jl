@@ -18,5 +18,5 @@ makedocs(sitename = "Neuroblox",
     pages = pages)
 
 deploydocs(;
-    repo = "github.com/Neuroblox/Neuroblox.jl",
+    repo = "github.com/Neuroblox/NeurobloxDocsHost",
     push_preview = true)
