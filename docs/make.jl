@@ -17,6 +17,8 @@ makedocs(sitename = "Neuroblox",
         #canonical = "https://docs.sciml.ai/LinearSolve/stable/"),
     pages = pages)
 
-deploydocs(;
-    repo = "github.com/Neuroblox/NeurobloxDocsHost",
-    push_preview = true)
+repo =  "github.com/Neuroblox/NeurobloxDocsHost"
+
+withenv("GITHUB_REPOSITORY" => repo) do
+    deploydocs(; repo = repo, push_preview = true)
+end
