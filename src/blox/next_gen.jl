@@ -103,9 +103,13 @@ g = MetaDiGraph()
 add_blox!(g, hmm)
 @named final_system = system_from_graph(g)
 final_system = structural_simplify(final_system)
-sim_dur = 60.0
+sim_dur = 20.0
 prob = ODEProblem(final_system, [], (0.0, sim_dur))
-sol = solve(prob, AutoVern7(Rodas4()); saveat=0.001)
+sol = solve(prob, AutoVern7(Rodas4()); saveat=0.02)
+next_ugh = []
+for i = 1:length(sol.u)
+    push!(next_ugh, sol.u[i][2])
+end
 
 @named hmm = CCSingleMass()
 
@@ -116,3 +120,28 @@ final_system = structural_simplify(final_system)
 sim_dur = 700.0
 prob = ODEProblem(final_system, [], (0.0, sim_dur))
 sol = solve(prob, AutoVern7(Rodas4()); saveat=0.1)
+
+
+
+## Temp bonus
+
+all_ugh = zeros(32492, 1001)
+
+for roi = 1:32492
+    
+    @named hmm = MPRMassEI(J_ee=15*(1+(rand()/5-0.1)), J_ie=15*(1+(rand()/5-0.1)), J_ei=15*(1+(rand()/5-0.1)), J_ii=15*(1+(rand()/5-0.1)), η̄ₑ=-5*(1+(rand()/5-0.1)), η̄ᵢ=-5*(1+(rand()/5-0.1)), Δₑ=1*(1+(rand()/5-0.1)), Δᵢ=1*(1+(rand()/5-0.1)))
+
+    g = MetaDiGraph()
+    add_blox!(g, hmm)
+    @named final_system = system_from_graph(g)
+    final_system = structural_simplify(final_system)
+    sim_dur = 20.0
+    prob = ODEProblem(final_system, [], (0.0, sim_dur))
+    sol = solve(prob, AutoVern7(Rodas4()); saveat=0.02)
+    next_ugh = []
+    for i = 1:length(sol.u)
+        push!(next_ugh, sol.u[i][2])
+    end
+    all_ugh[roi, :] = next_ugh
+    println(roi)
+end
