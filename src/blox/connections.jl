@@ -566,10 +566,6 @@ function sample_affect!(integ, u, p, ctx)
     R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
    # R = integ.p[p[1]]
     v = rand(Poisson(R))
-    @show p
-    @show integ.p[p[1]]
-    @show integ.p[p[2]]
-    @show integ.p[p[3]]
     integ.p[p[3]] = v
     #integ.p[p[2]] = v
 end

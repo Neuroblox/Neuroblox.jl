@@ -148,7 +148,6 @@ end
 
 function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     comp_vals = sol(p.t_decision; idxs=p.competitor_states)
-    @info comp_vals
     return argmax(comp_vals)
 end
 """
@@ -237,7 +236,8 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=
             sol = solve(prob; alg_hints = [:stiff], kwargs...)
         end
 
-        u0 = sol[1:end,end] # next run should continue where the last one ended
+        #u0 = sol[1:end,end] # next run should continue where the last one ended   
+                             # In the paper we assume sufficient time interval before net stimulus so that system reaches back to steady state, so we don't continue from previous trial's endpoint
 
         if isnothing(action_selection)
             feedback = 1
@@ -297,6 +297,6 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights::Dict{
         prob = remake(prob; p = merge(weights)) #updates the weights in prob
         increment_trial!(env)
         agent.problem = prob
-        u0 = sol[1:end,end]
+       # u0 = sol[1:end,end]
     end
 end
