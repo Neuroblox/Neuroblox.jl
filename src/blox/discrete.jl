@@ -6,10 +6,12 @@ struct Matrisome <: AbstractDiscrete
     odesystem
     namespace
 
-    function Matrisome(; name, namespace=nothing, t_event=180.0) #HACK : this t_event has to be informed from the t_event in Action Selection block
+    function Matrisome(; name, namespace=nothing, t_event=180.0)
+        #HACK : this t_event has to be informed from the t_event in Action Selection block
         @variables t 
         sts = @variables ρ(t)=0.0 ρ_(t)
-        ps = @parameters H=1 jcn=0.0 [input=true] jcn_=0.0 H_=1 #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
+        #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
+        ps = @parameters H=1 TAN_spikes=0.0 jcn=0.0 [input=true] jcn_=0.0 H_=1 
         eqs = [
             ρ ~ H*jcn,
             ρ_ ~ H_*jcn_
@@ -49,7 +51,7 @@ struct TAN <: AbstractDiscrete
     function TAN(; name, namespace=nothing, κ=100, λ=1)
         @variables t 
         sts = @variables R(t)=κ 
-        ps = @parameters κ=κ spikes_window=0.0 jcn=0.0 [input=true]
+        ps = @parameters κ=κ jcn=0.0 [input=true]
         eqs = [
                 R ~ minimum([κ, κ/(λ*jcn + eps())])
               ]
