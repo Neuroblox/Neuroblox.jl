@@ -131,8 +131,6 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 	function HHNeuronExciBlox(;
         name, 
         namespace=nothing,
-        t_spike_window=90.0,
-        θ_spike=0.0,
         E_syn=0.0, 
         G_syn=3, 
         I_bg=0,
@@ -196,18 +194,15 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			   D(G)~(-1/τ₂)*G + z,
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn),
 			   D(Gₛₜₚ)~(-1/τ₃)*Gₛₜₚ + (z/5)*(kₛₜₚ-Gₛₜₚ),
-               # HACK : need to define a Differential equation for spikes
+               # HACK : need to define a Differential equation for spike counting
                # the alternative of having it as an algebraic equation with [irreducible=true]
                # leads to incorrect or unstable solutions. Needs more attention!
                D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
                D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
         
-       # spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
-
 		sys = ODESystem(
             eqs, t, sts, ps; 
-            #name = Symbol(name),discrete_events = spike_reset_cb
 			name = Symbol(name)
 			)
 
@@ -221,8 +216,6 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	function HHNeuronInhibBlox(;
         name, 
         namespace = nothing, 
-        t_spike_window=90.0,
-        θ_spike=0.0,
         E_syn=-70.0,
         G_syn=11.5,
         I_bg=0,
@@ -283,15 +276,10 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ₂)*G + z,
 			   D(z)~(-1/τ₁)*z + G_asymp(V,G_syn)
-               #D(spikes_cumulative) ~ spk_const*G_asymp(V,G_syn),
-               #D(spikes_window) ~ spk_const*G_asymp(V,G_syn)
 		]
-
-       # spike_reset_cb = [(t_spike_window + eps(float(t_spike_window))) => [spikes_window ~ 0]]
 
         sys = ODESystem(
             eqs, t, sts, ps; 
-           # name = Symbol(name), discrete_events = spike_reset_cb
 			name = Symbol(name)
         )
         

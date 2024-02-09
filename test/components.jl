@@ -333,8 +333,8 @@ end
 # end
 
 @testset "HH Neuron excitatory & inhibitory network" begin
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4; t_spike_window=0.1)
-nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6; t_spike_window=0.1)
+nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
+nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
 nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2, freq=3)
 assembly = [nn1, nn2, nn3]
 
@@ -358,7 +358,7 @@ end
 @testset "NextGenerationEIBlox connected to neuron" begin
     global_ns = :g 
     @named LC = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
-    @named nn = HHNeuronExciBlox(;namespace=global_ns, t_spike_window=0.1)
+    @named nn = HHNeuronExciBlox(;namespace=global_ns)
     assembly = [LC, nn]
     g = MetaDiGraph()
     add_blox!.(Ref(g), assembly)
