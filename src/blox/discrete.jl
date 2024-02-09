@@ -53,7 +53,7 @@ struct TAN <: AbstractDiscrete
         sts = @variables R(t)=κ 
         ps = @parameters κ=κ jcn=0.0 [input=true]
         eqs = [
-                R ~ minimum([κ, κ/(λ*jcn + eps())])
+                R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
               ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
@@ -73,8 +73,8 @@ struct SNc <: AbstractModulator
         sts = @variables R(t)=κ_DA R_(t)=κ_DA 
         ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [
-                R ~ minimum([κ_DA, κ_DA/(λ_DA*jcn + eps())]),
-                R_ ~ minimum([κ_DA, κ_DA/(λ_DA*jcn_ + eps())])
+                R ~ min(κ_DA, κ_DA/(λ_DA*jcn + sqrt(eps()))),
+                R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
               ]
 
         R_cb = [[t_event+3*eps(t_event)] => [jcn_ ~ jcn]]     
