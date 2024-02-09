@@ -41,14 +41,14 @@ function get_callbacks(g, bc; t_block=missing)
            
         end
         if !isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + eps(float(t_block))) => eqs
-            cbs_params = (t_block - eps(float(t_block))) => eqs_params
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
             return vcat(cbs_params, cbs_spikes, bc.events)
         elseif isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + eps(float(t_block))) => eqs
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
             return vcat(cbs_spikes, bc.events)
         elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = (t_block - eps(float(t_block))) => eqs_params
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
             return vcat(cbs_params, bc.events)
         else
             return bc.events
@@ -585,7 +585,7 @@ function (bc::BloxConnector)(
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = [t_event+eps(t_event)] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_in.TAN_spikes], nothing)
+    cb = [t_event+sqrt(eps(t_event))] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_in.TAN_spikes], nothing)
     push!(bc.events, cb)
 
     eq = sys_in.jcn ~ w*sys_in.TAN_spikes

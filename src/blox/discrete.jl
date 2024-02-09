@@ -19,7 +19,7 @@ struct Matrisome <: AbstractDiscrete
         cb_eqs = [ jcn_ ~ jcn,
                     H_ ~ H
                  ]
-        Rho_cb = [[t_event+3*eps(t_event)] => cb_eqs]   
+        Rho_cb = [[t_event + sqrt(eps(t_event))] => cb_eqs]   
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = Rho_cb)
 
         new(sys, namespace)
@@ -77,7 +77,7 @@ struct SNc <: AbstractModulator
                 R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
               ]
 
-        R_cb = [[t_event+3*eps(t_event)] => [jcn_ ~ jcn]]     
+        R_cb = [[t_event + sqrt(eps(t_event))] => [jcn_ ~ jcn]]     
 
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = R_cb)
 
