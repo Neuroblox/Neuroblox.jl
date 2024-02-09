@@ -8,11 +8,11 @@ mutable struct BloxConnector
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
-        eqs = reduce(vcat, input_equations.(bloxs)) 
-        weights = reduce(vcat, weight_parameters.(bloxs))
-        delays = reduce(vcat, delay_parameters.(bloxs))
-        events = reduce(vcat, event_callbacks.(bloxs))
-        learning_rules = reduce(merge, weight_learning_rules.(bloxs))
+        eqs = mapreduce(input_equations, vcat, bloxs) 
+        weights = mapreduce(weight_parameters, vcat, bloxs)
+        delays = mapreduce(delay_parameters, vcat, bloxs)
+        events = mapreduce(event_callbacks, vcat, bloxs)
+        learning_rules = mapreduce(weight_learning_rules, merge, bloxs)
 
         new(eqs, weights, delays, events, learning_rules)
     end
