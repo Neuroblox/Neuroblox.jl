@@ -495,7 +495,8 @@ function (bc::BloxConnector)(
     cb_matr = [t_event] => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     cb_strios = [t_event] => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     
-    #H should be reset to 1 at the beginning of each trial
+    # HACK: H should be reset to 1 at the beginning of each trial
+    # Such callbacks should be moved to RL-specific functions like `run_experiment!`
     cb_matr_init = [0.1] => [sys_matr_in.H ~ 1]
     cb_strios_init = [0.1] => [sys_strios_in.H ~ 1]
 
