@@ -495,7 +495,8 @@ function (bc::BloxConnector)(
     cb_matr = [t_event] => [sys_matr_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     cb_strios = [t_event] => [sys_strios_in.H ~ IfElse.ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, 0, 1)]
     
-    #H should be reset to 1 at the beginning of each trial
+    # HACK: H should be reset to 1 at the beginning of each trial
+    # Such callbacks should be moved to RL-specific functions like `run_experiment!`
     cb_matr_init = [0.1] => [sys_matr_in.H ~ 1]
     cb_strios_init = [0.1] => [sys_strios_in.H ~ 1]
 
@@ -564,10 +565,8 @@ sample_poisson(λ) = rand(Poisson(λ))
 """
 function sample_affect!(integ, u, p, ctx)
     R = minimum([integ.p[p[1]]/(integ.p[p[2]] + eps()), integ.p[p[1]]])
-   # R = integ.p[p[1]]
     v = rand(Poisson(R))
     integ.p[p[3]] = v
-    #integ.p[p[2]] = v
 end
 
 function (bc::BloxConnector)(
@@ -586,13 +585,10 @@ function (bc::BloxConnector)(
     end
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = [t_event+eps(t_event)] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_out.spikes_window], nothing)
-   # cb = t_event => (sample_affect!, [], [sys_out.R, sys_out.spikes_window], nothing)
+    cb = [t_event+eps(t_event)] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_in.TAN_spikes], nothing)
     push!(bc.events, cb)
 
-    eq = sys_in.jcn ~ w*sys_out.spikes_window
-
-    #eq = sys_in.jcn ~ w*rand(Poisson(sys_out.R))
+    eq = sys_in.jcn ~ w*sys_in.TAN_spikes
 
     accumulate_equation!(bc, eq)
 end
@@ -606,7 +602,7 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(discr_in)
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
-    cb = t_event => [sys_in.H ~ IfElse.ifelse(sys_out.H*sys_out.jcn > sys_in.H*sys_in.jcn, 0, 1)]
+    cb = [t_event] => [sys_in.H ~ IfElse.ifelse(sys_out.H*sys_out.jcn > sys_in.H*sys_in.jcn, 0, 1)]
     push!(bc.events, cb)
 end
 
