@@ -562,7 +562,7 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
     nr = ncol(data);                     # number of regions
     sts = states(stateevolutionmodel)    # variables of model
     ns = length(sts)                     # number of states in total
-
+ 
     dt = csdsetup[:dt];                  # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
     ω = csdsetup[:freq];                 # frequencies at which the CSD is evaluated
     p = csdsetup[:p];                    # order of MAR
@@ -584,21 +584,22 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
     # match states of observation model with different states of evolution model
     obs = get_hemodynamic_observers(stateevolutionmodel, nr)
     obsstates = map(obs -> [initcond[s] for s in obs], values(obs[2]))
-    derivatives = Dict(:∂f => par -> jac_f(statevals, addnontunableparams(par, neuraldynmodel), t),
+    derivatives = Dict(:∂f => par -> jac_f(statevals, addnontunableparams(par, stateevolutionmodel), t),
                        :∂g => par -> grad_full(grad_g, obsstates, obs[1], par, nr, ns))
-
 
     μθ_pr = vecparam(OrderedDict(prior.name .=> prior.mean))      # note: μθ_po is posterior and μθ_pr is prior
     θΣ = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
     ### Collect prior means and covariances ###
     Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
+    nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
+    nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
 
     λ = 8 * ones(nh) 
     f = param -> csd_fmri_mtf(ω, p, derivatives, param)
 
-    F0 = F
-    previous_F = F
     dfdp = zeros(ComplexF64, length(w)*nd^2, np)
+    np = count(x -> x.tunable==true, parameters(stateevolutionmodel)) # number of parameters
+    ny = length(y)                                                    # total number of response variables
 
     # state variable
     vbstate = VBState(
@@ -609,11 +610,11 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
         λ,             # metaparameter
         zeros(np),     # parameter estimation error ϵ_θ
         μθ_po,         # parameter posterior mean
-        θΣ_po,            # parameter posterior covariance
+        θΣ_po,         # parameter posterior covariance
         zeros(np),
         zeros(np, np)
     )
-   
+
     vbsetup = VBSetup(
         f,                    # function that computes the cross-spectral density at fixed point 'initcond'
         1e-1,                 # tolerance
