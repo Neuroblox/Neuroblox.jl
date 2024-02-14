@@ -5,14 +5,14 @@ using MAT
 vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
 data = DataFrame(vars["data"], :auto)   # turn data into DataFrame
 x = vars["x"]                           # initial conditions
-nd = ncol(data)                         # number of dimensions
-
+nrr = ncol(data)                         # number of recorded regions
+max_iter = 126
 ########## assemble the model ##########
 
 g = MetaDiGraph()
 regions = Dict()
 @parameters κ=0.0 [tunable = true]     # define brain-wide decay parameter for hemodynamics
-for ii = 1:nd
+for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
     regions[ii] = 2ii - 1    # store index of neural mass model
@@ -53,26 +53,37 @@ for (i, r) in enumerate(rnames)
 end
 
 modelparam = OrderedDict()
+np = 0
 for par in parameters(neuronmodel)
     if istunable(par)
         modelparam[par] = Symbolics.getdefaultval(par)
+        np += 1
     end
 end
-
+params_idx = Dict(:evolpars => 1:np)
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
+n = length(modelparam[:lnα]);
+params_idx[:lnα] = np+1:np+n;
+np += n;
 modelparam[:lnβ] = [0.0, 0.0];           # global observation noise, ln(β) as above
-modelparam[:lnγ] = zeros(Float64, nd);   # region specific observation noise
-modelparam[:C] = ones(Float64, nd);     # C as in equation 3. NB: whatever C is defined to be here, it will be replaced in csd_approx. Another strange thing of SPM12...
+n = length(modelparam[:lnβ]);
+params_idx[:lnβ] = np+1:np+n;
+np += n;
+modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
+params_idx[:lnγ] = np+1:np+nrr;
+np += nrr
 
+nop = 0    # numberparams_idx of observation model parameters
 for par in parameters(bold)
     modelparam[par] = Symbolics.getdefaultval(par)
+    nop += 1
 end
+params_idx[:obspars] = np+1:np+nop
 
 # define prior variances
 paramvariance = copy(modelparam)
-paramvariance[:C] = zeros(Float64, nd);
-paramvariance[:lnγ] = ones(Float64, nd)./64.0;
+paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
 paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0; 
 paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
 for (k, v) in paramvariance
@@ -87,14 +98,30 @@ for (k, v) in paramvariance
     end
 end
 
-params = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
-hyperparams = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter precision, needs to be a matrix
+priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter precision, needs to be a matrix
                    :μλ_pr => [vars["hE"]]             # prior metaparameter mean, needs to be a vector
-                  )
+                  );
 
-csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"])
-results = spectralVI(data, neuronmodel, bold, initcond, csdsetup, params, hyperparams)
+csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
+foo = Ref{Any}()
+(state, setup) = setup_sDCM(data, neuronmodel, bold, initcond, csdsetup, priors, hyperpriors, params_idx);
 
+for iter in 1:1
+    run_sDCM_iteration!(state, setup)
+    print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
+    if iter >= 4
+        criterion = state.dF[end-3:end] .< setup.tolerance
+        if all(criterion)
+            print("convergence\n")
+            break
+        end
+    end
+end
+print("maxixmum iterations reached\n")
+A, B = foo[]
+size.(foo[])
+state.dF[end-3:end]
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @show results.F, vars["F"]
 @test results.F < vars["F"]*0.99
