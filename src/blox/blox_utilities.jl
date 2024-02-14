@@ -58,7 +58,7 @@ function get_namespaced_sys(blox)
     sys = get_sys(blox)
     ODESystem(
         equations(sys), 
-        independent_variable(sys), 
+        only(independent_variables(sys)), 
         states(sys), 
         parameters(sys); 
         name = namespaced_nameof(blox)
