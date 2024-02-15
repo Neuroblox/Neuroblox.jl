@@ -81,7 +81,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
     if ∂f isa Vector
         ∂f = reshape(∂f, sqrt(length(∂f)), sqrt(length(∂f)))
     end
-Main.foo[] = ∂f, params[params_idx[:evolpars]]
+
     dfdu = [0.0625  0.0     0.0
     0.0     0.0     0.0
     0.0     0.0     0.0
@@ -120,6 +120,7 @@ Main.foo[] = ∂f, params[params_idx[:evolpars]]
             end
         end
     end
+    Main.foo[] = S, dgdv, dvdu
 
     return S
 end
@@ -575,12 +576,13 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
     statevals = [v for v in values(initcond)]
     # match states of observation model with different states of evolution model
     obs = get_hemodynamic_observers(stateevolutionmodel, nr)
-    obsstates = map(obs -> [initcond[s] for s in obs], values(obs[2]))
+    obsstates = Dict(map((v, k) -> k => [initcond[s] for s in v], values(obs[2]), keys(obs[2])))
     derivatives = Dict(:∂f => par -> jac_f(statevals, addnontunableparams(par, stateevolutionmodel), t),
                        :∂g => par -> grad_full(grad_g, obsstates, obs[1], par, nr, ns))
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
+    Main.foo[] = derivatives, μθ_pr, grad_g
     ### Collect prior means and covariances ###
     Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
@@ -763,6 +765,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     ϵ_θ += dθ
     state.μθ_po = μθ_pr + ϵ_θ
     dF = dot(dFdθ, dθ);
+
     state.v = v
     append!(state.dF, dF)
 
