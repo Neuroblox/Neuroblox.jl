@@ -69,4 +69,10 @@ using CSV
     @test any(init_params[map_idxs[idxs_weight]] .!= final_params[map_idxs[idxs_weight]])
     # All non-weight parameters need to be the same.
     @test all(init_params[map_idxs[idxs_other_params]] .== final_params[map_idxs[idxs_other_params]])
+
+    reset!(agent)
+    @test all(init_params .== agent.problem.p) 
+
+    reset!(env)
+    @test env.current_trial == 1
 end
