@@ -86,14 +86,14 @@ function maybe_set_state_post!(lr::AbstractLearningRule, state)
     end
 end
 
-mutable struct ClassificationEnvironment <: AbstractEnvironment
-    const name
-    const namespace
-    const source
-    const category
-    const N_trials
-    const t_trial
-    current_trial
+mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
+    const name::Symbol
+    const namespace::Symbol
+    const source::S
+    const category::Vector{Int}
+    const N_trials::Int
+    const t_trial::Float64
+    current_trial::Int
 
     function ClassificationEnvironment(data::DataFrame; name, namespace=nothing, t_stimulus, t_pause)
         stim = ImageStimulus(
@@ -108,14 +108,14 @@ mutable struct ClassificationEnvironment <: AbstractEnvironment
         N_trials = stim.N_stimuli
         t_trial = t_stimulus + t_pause
 
-        new(name, namespace, stim, category, N_trials, t_trial, 1)
+        new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, category, N_trials, t_trial, 1)
     end
 
     function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
         t_trial = stim.t_stimulus + stim.t_pause
         N_trials = stim.N_stimuli
 
-        new(name, namespace, stim, stim.category, N_trials, t_trial, 1)
+        new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, stim.category, N_trials, t_trial, 1)
     end
 end
 
@@ -133,11 +133,11 @@ end
 abstract type AbstractActionSelection <: AbstractBlox end
 
 mutable struct GreedyPolicy <: AbstractActionSelection
-    const name
-    const namespace
-    competitor_states 
-    competitor_params
-    const t_decision
+    const name::Symbol
+    const namespace::Symbol
+    competitor_states::Vector{Num}
+    competitor_params::Vector{Num}
+    const t_decision::Float64
 
     function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing, competitor_params=nothing)
         sts = isnothing(competitor_states) ? Num[] : competitor_states
@@ -150,6 +150,7 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     comp_vals = sol(p.t_decision; idxs=p.competitor_states)
     return argmax(comp_vals)
 end
+
 """
 function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
     ps = parameters(sys)
@@ -166,11 +167,13 @@ function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
     return argmax(comp_vals)
 end
 """
-mutable struct Agent 
-    odesystem
-    problem
-    action_selection
-    learning_rules
+
+mutable struct Agent{S,P,A,LR}
+    odesystem::S
+    problem::P
+    action_selection::A
+    learning_rules::LR
+    init_params::Vector{Float64}
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
@@ -188,7 +191,9 @@ mutable struct Agent
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        new(ss, prob, policy, learning_rules)
+        
+
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules)}(ss, prob, policy, learning_rules, init_params)
     end
 end
 
