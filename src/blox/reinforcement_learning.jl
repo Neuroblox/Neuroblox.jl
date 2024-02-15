@@ -186,8 +186,9 @@ mutable struct Agent{S,P,A,LR}
         u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
         p = haskey(kwargs, :p) ? kwargs[:p] : []
         
-        prob = ODEProblem(ss, u0, (0,1), p)
-
+        prob = ODEProblem(ss, u0, (0.,1.), p)
+        init_params = prob.p
+        
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
