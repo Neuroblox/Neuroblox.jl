@@ -123,6 +123,8 @@ end
 
 increment_trial!(env::AbstractEnvironment) = env.current_trial += 1
 
+reset!(env::AbstractEnvironment) = env.current_trial = 1
+
 function get_trial_stimulus(env::ClassificationEnvironment)
     stim_params = env.source.stim_parameters
     stim_values = env.source.IMG[:, env.current_trial]
@@ -198,7 +200,7 @@ mutable struct Agent{S,P,A,LR}
     end
 end
 
-
+reset!(ag::Agent) = ag.problem = remake(ag.problem; p = ag.init_params)
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
     N_trials = env.N_trials
