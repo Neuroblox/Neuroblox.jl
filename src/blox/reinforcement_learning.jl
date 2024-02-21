@@ -234,7 +234,6 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=
     end
 
     for _ in Base.OneTo(N_trials)
-        @show env.current_trial
         stim_params = get_trial_stimulus(env)
         prob = remake(prob; p = merge(weights, stim_params), u0=u0)
 
