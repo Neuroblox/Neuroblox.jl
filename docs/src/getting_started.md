@@ -7,7 +7,7 @@ This tutorial will introduce you to simulating brain dynamics using Neuroblox.
 The Wilson–Cowan model describes the dynamics of interactions between populations of excitatory and inhibitory neurons. Each Wilson-Cowan Blox is described by the follwoing equations:
 
 ```math
-\frac{dE}{dt} = \frac{-E}{\tau_E} + \frac{1}{1 + \text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \theta_E + \eta*(\sum{jcn}))}\\
+\frac{dE}{dt} = \frac{-E}{\tau_E} + \frac{1}{1 + \text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \theta_E + \eta*(\sum{jcn}))}\\[10pt]
 \frac{dI}{dt} = \frac{-I}{\tau_I} + \frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \theta_I)}
 ```
 
@@ -22,18 +22,17 @@ using Plots
 
 @named WC1 = WilsonCowan()
 @named WC2 = WilsonCowan()
-```
 
-The last two statements create the two Wilson-Cowan Blox: WC1 and WC2.
-In the following, adding the two Blox into a directed graph as nodes and
-then we are creating weighted edges between the two nodes using an adjacency matrix.
-
-```@example Wilson-Cowan
-adj = [-1 6; 6 -1]
 g = MetaDiGraph()
 add_blox!.(Ref(g), [WC1, WC2])
+
+adj = [-1 6; 6 -1]
 create_adjacency_edges!(g, adj)
+
 ```
+
+First, we create the two Wilson-Cowan Blox: WC1 and WC2. Next, we add the two Blox into a directed graph as nodes and then we are creating weighted edges between the two nodes using an adjacency matrix.
+
 Now we are ready to build the ModelingToolkit System.  Structural simplify creates the final set of equations in which all substiutions are made.
 
 ```@example Wilson-Cowan
@@ -85,14 +84,13 @@ Again, we create a graph and add the Blox as nodes
 ```@example Jansen-Rit
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
-```
-ModelingToolkit allows us to create parameters that can be passed into the equations symbolically
-```@example Jansen-Rit
+
 params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 ```
+ModelingToolkit allows us to create parameters that can be passed into the equations symbolically.
 
-Add the edges as specified in Table 2 of Liu et al.
-This is a subset of the edges selected to run a shorter version of the model. Edges can also be created using an adjacency matrix as in the previous example.
+We add edges as specified in Table 2 of Liu et al.
+We only implemented a subset of the nodes and edges to describe a less complex version of the model. Edges can also be created using an adjacency matrix as in the previous example.
 
 ```@example Jansen-Rit
 add_edge!(g, 2, 1, Dict(:weight => -0.5*C_BG_Th))
