@@ -15,6 +15,7 @@ using CSV, MAT, DataFrames # Import/export data functions
 using MetaGraphs # Set up graph of systems
 using DifferentialEquations # Needed for solver TODO: make a new simulate that can handle system_from_graph
 using StatsBase # Needed for rescaling the DTI matrix
+using Random # Needed to seed the random generator
 #using Plots # Only uncomment if you actually want to do plotting, otherwise save yourself the overhead
 
 # A note on the data: this is a 360-region parcellation of the brain. For this example, we'll extract and rescale the left hemisphere default mode network.
@@ -29,7 +30,7 @@ data = matread("averageConnectivity_Fpt.mat")
 
 # Extract the data
 adj = data["Fpt"]
-adj[findall(isnan, adj)] .= 0 # Replace NaNs with 0s
+adj[findall(isnan, adj)] .= minimum((filter(!isnan,adj))) # Replace NaNs with 0s - needs to be minimum for rescaling in next step
 adj = StatsBase.transform(StatsBase.fit(UnitRangeTransform, adj, dims=2), adj) # Equivalent of Matlab rescale function. Resamples to unit range.
 
 # For the purpose of this simulation, we want something that will run relatively quickly.
@@ -37,6 +38,8 @@ adj = StatsBase.transform(StatsBase.fit(UnitRangeTransform, adj, dims=2), adj) #
 # Original indices with networks are listed in allTables.xlsx at the same download link from the Rosen and Halgren (2021) dataset listed above.
 left_indices = [30, 31, 32, 33, 34, 35, 61, 62, 64, 65, 66, 67, 68, 69, 70, 71, 72, 76, 87, 88, 90, 93, 94, 118, 119, 120, 126, 130, 131, 132, 134, 150, 151, 155, 161, 162, 164, 165, 176, 177]
 adj = adj[left_indices, left_indices]
+adj[adj .< 0.75] .= 0 # Threshold the connectivity matrix to make it sparser
+adj = adj ./ 4 # Rescale so regions aren't overly connected
 
 # Extract the names of the regions
 names = data["parcelIDs"]
@@ -50,13 +53,17 @@ names = names[left_indices]
 # Number of regions in this particular dataset
 N = 40
 
+# Set the random seed for reproducibility. Because the DTI is scaled in an ad-hoc way it's not guaranteed to produce interpretable results for all random values.
+# Feel free to change this, but do be cautious in examining results.
+rng = MersenneTwister(42) 
+
 # Create list of all blocks
 blocks = Vector{LarterBreakspear}(undef, N)
 
 for i in 1:N
     # Since we're creating an ODESystem inside of the blox, we need to use a symbolic name
     # Why the extra noise in connectivity? The DTI scaling is arbitrary in this demo, so adding stochasticity to this parameter helps things from just immediately synchronizing.
-    blocks[i] = LarterBreakspear(name=Symbol(names[i]), C=rand()*0.3)
+    blocks[i] = LarterBreakspear(name=Symbol(names[i]))
 end
 
 # Create a graph using the blocks and the DTI defined adjacency matrix
@@ -114,11 +121,11 @@ prob2 = remake(prob; u0=u₀)
 # In that case, you can try to re-run the simulation with a different initial condition or parameter set.
 # In a real study, you'd allow even these long runs to finish, but for the sake of this tutorial we'll just stop it early.
 sim_dur = 6e5
-prob = remake(prob; tspan=(0.0, sim_dur))
+prob = remake(prob2; tspan=(0.0, sim_dur))
 @time sol = solve(prob, AutoVern7(Rodas4()), saveat=2)
 
 # Instead of plotting the data, let's save it out to a CSV file for later analysis
-CSV.write("example_output.csv", DataFrame(sol))
+#CSV.write("example_output.csv", DataFrame(sol))
 
 # You should see a noticeable difference in speed compared to the first time, and notice you save the overhead of structural_simplify.
 

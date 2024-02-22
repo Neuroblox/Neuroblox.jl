@@ -60,13 +60,14 @@ const INTEGER = "integer"
 const MENU = "menu"
 const NODE = "node"
 const LINK = "link"
+const FILE = "file"
 
 function arguments(::Type{Neuroblox.ImageStimulus})
   OrderedDict(
     :height => NCAD(15, INTEGER, 1, 100,[], false),
     :width => NCAD(15, INTEGER, 1, 100,[], false),
     :N_stims => NCAD(20, INTEGER, 1, 1000, [], false),
-    :file => NCAD("image_example.csv", STRING, 0, 0,[], false),
+    :file => NCAD("", FILE, 0, 0,["Images"], false),
     :t_stimulus => NCAD(700, NUMBER, 10, 10000,[],true),
     :t_pause => NCAD(300, NUMBER, 10, 10000,[],true)
   )
@@ -121,6 +122,11 @@ end
 
 function plotdetail(::Type{Neuroblox.JansenRit})
   OrderedDict(:detail => ["x","y"], :nodetail => ["x"])
+end
+
+function arguments(::Type{Neuroblox.LinearNeuralMass})
+  OrderedDict(
+  )
 end
 
 function arguments(::Type{Neuroblox.WilsonCowan})
