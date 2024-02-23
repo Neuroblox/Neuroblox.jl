@@ -178,7 +178,7 @@ eighty_neurons_solve = BenchSetup(
 #------------------------------------------------------------------------------
 
 rf_learning_setup = BenchSetup(
-    name="RF_learning_simple neurons and graph creation",
+    name="RF_learning_simple agent and envionment creation",
     setup=quote
         using CSV,DataFrames, Neuroblox, DifferentialEquations, MetaGraphs
         
@@ -245,36 +245,17 @@ rf_learning_setup = BenchSetup(
         add_edge!(g, d[STR2], d[AS])# str2->AS
         add_edge!(g, d[STR1], d[SNcb], Dict(:weight => 1)) # str1->Snc
         add_edge!(g, d[STR2], d[SNcb], Dict(:weight => 1))  # str2->Snc
+
+        agent = Agent(g; name=:ag, t_block = 90)
+        env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
     end
-)
-
-rf_learning_agent_creation = BenchSetup(
-    name = "RF_learning_simple Agent creation",
-    setup = quote
-        $(rf_learning_setup.setup)
-        $(rf_learning_setup.bench)
-    end,
-    args = [:g],
-    bench = :(agent = Agent(g; name=:ag, t_block = 90))
-)
-
-rf_learning_environment_creation = BenchSetup(
-    name = "RF_learning_simple Environment creation",
-    setup = quote
-        $(rf_learning_setup.setup)
-        $(rf_learning_setup.bench)
-    end,
-    args = [:stim, :global_ns],
-    bench = :(env = ClassificationEnvironment(stim; name=:env, namespace=global_ns))
 )
 
 rf_learning_three_trials = BenchSetup(
     name="RF_learning_simple run_experiment (three trials)",
     setup=quote
         $(rf_learning_setup.setup) # re-use the setup
-        $(rf_learning_setup.bench)   # re-use the benchmark for this setup
-        $(rf_learning_agent_creation.bench) # Bring in the agent
-        $(rf_learning_environment_creation.bench) # Bring in the environment
+        $(rf_learning_setup.bench) # re-use the benchmark for this setup
     end,
     # Setup code is run before each benchmark sample
     sample_setup = quote

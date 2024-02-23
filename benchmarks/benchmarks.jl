@@ -5,6 +5,7 @@ using Random
 using DelimitedFiles
 using Dates
 using BenchmarkTools
+using CSV
 
 seed = 12345
 Random.seed!(seed)
@@ -44,8 +45,6 @@ to_benchmark = [
     eighty_neurons_solve
 
     rf_learning_setup
-    rf_learning_agent_creation
-    rf_learning_environment_creation
     rf_learning_three_trials
 ]
 
