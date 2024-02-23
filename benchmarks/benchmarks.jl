@@ -4,6 +4,7 @@ using MacroTools
 using Random
 using DelimitedFiles
 using Dates
+using BenchmarkTools
 
 Random.seed!(12345)
 include(joinpath(@__DIR__(), "utils.jl"))
