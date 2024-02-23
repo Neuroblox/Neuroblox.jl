@@ -74,11 +74,11 @@ end
 
 Base.@kwdef struct BenchSetup
     name::String
-    prelude::Expr = Expr(:block, nothing)
     setup::Expr = Expr(:block, nothing)
+    sample_setup::Expr = Expr(:block, nothing)
     args::Vector{Symbol} = Symbol[]
     bench::Expr
-    teardown::Expr = Expr(:block, nothing)
+    sample_teardown::Expr = Expr(:block, nothing)
     seconds::Int = 1000
     samples::Int = 100
     evals::Int = 5
@@ -86,35 +86,46 @@ end
 
 maybe_quote(x) = x isa Union{Symbol, Expr} ? QuoteNode(x) : x
 
-function runbench((; name, prelude, setup, args, bench, teardown, seconds, evals, samples)::BenchSetup)
+function BenchmarkTools.run((;
+                             name,
+                             setup,
+                             sample_setup,
+                             args,
+                             bench,
+                             sample_teardown,
+                             seconds,
+                             evals,
+                             samples)::BenchSetup)
     # Create a single distributed proc 
     id = only(addprocs(1))
     @info "Running benchmark \"$(name)\""
     bench_args = map(args) do arg
         :($arg = $(Expr(:$, :(maybe_quote($arg)))))
     end
-    bench_setup = Expr(:block, bench_args..., setup)
-    if Base.isexpr(prelude, :block)
-        prelude.head = :toplevel
+    bench_setup = Expr(:block, bench_args..., sample_setup)
+    if Base.isexpr(setup, :block)
+        setup.head = :toplevel
     end
     f = Distributed.spawnat(
         id, () -> begin
             @eval begin
                 using BenchmarkTools
+                using Random
+                Random.seed!($seed)
                 include(joinpath(@__DIR__(), "utils.jl"))
             end
-            @eval $prelude
+            @eval $setup
             
             ttfx = @eval let $((:($arg = $arg) for arg ∈ args)...)
-                $setup
+                $sample_setup
                 res = @eval @time_data $name $bench
-                $teardown
+                $sample_teardown
                 res
             end
             @info "TTFX result for $name: " ttfx
             
             runtime_bench = @eval let $((:($arg = $arg) for arg ∈ args)...)
-                @benchmark($bench, setup=$bench_setup, teardown=$teardown,
+                @benchmark($bench, setup=$bench_setup, teardown=$sample_teardown,
                            seconds=$seconds, evals=$evals, samples=$samples)
             end
             @info "runtime benchmark result for $name: " runtime_bench
@@ -126,25 +137,24 @@ function runbench((; name, prelude, setup, args, bench, teardown, seconds, evals
     result
 end
 
-function summarize_benchmark_data(bench_results)
-    v = map(bench_results) do (; name, ttfx_data, runtime_data)
-        (;
-         benchmark_name=name,
-         
-         initial_runtime_ns = float(ttfx_data.run_time_ns),
-         initial_compiletime_percent = 100 * ttfx_data.compile_time_ns / ttfx_data.run_time_ns,
-         warmed_up_minimum_runtime_ns = minimum(runtime_data.times),
+function summarize_benchmark_data(bench_result)
+    (; name, ttfx_data, runtime_data) = bench_result 
+   
+    (;
+     benchmark_name=name,
+     
+     initial_runtime_ns = float(ttfx_data.run_time_ns),
+     initial_compiletime_percent = 100 * ttfx_data.compile_time_ns / ttfx_data.run_time_ns,
+     warmed_up_minimum_runtime_ns = minimum(runtime_data.times),
 
-         
-         initial_alloced_bytes = ttfx_data.allocated_bytes,
-         initial_gc_time_ns = float(ttfx_data.gc_time_ns),
-         initial_gc_alloc_count = ttfx_data.gc_alloc_count,
+     
+     initial_alloced_bytes = ttfx_data.allocated_bytes,
+     initial_gc_time_ns = float(ttfx_data.gc_time_ns),
+     initial_gc_alloc_count = ttfx_data.gc_alloc_count,
 
-         warmed_up_allocated_bytes = runtime_data.memory,
-         warmed_up_mean_gc_time_ns = mean(runtime_data.gctimes),
-         warmed_up_gc_alloc_count = runtime_data.allocs,
-         )
-    end
-    DataFrame(v)
+     warmed_up_allocated_bytes = runtime_data.memory,
+     warmed_up_mean_gc_time_ns = mean(runtime_data.gctimes),
+     warmed_up_gc_alloc_count = runtime_data.allocs,
+     )
 end
 
