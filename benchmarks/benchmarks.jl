@@ -36,7 +36,7 @@ The tabular benchmark data will include the following columns:
 
 - `metadata` a list of metadata about the benchmark process. All empty except for the first entry which contains information about the latest commit of Neuroblox.jl when the benchmark was run, and detailed information about the computer which ran the benchmark.
 """
-function run_and_save_benchmarks(; benches::AbstractVector{BenchSetup} = to_benchmark,
+function run_and_save_benchmarks(; benches::AbstractVector{BenchSetup} = neuroblox_benchmark_suite,
                                  filename  = joinpath(@__DIR__(),
                                                    "benchmark_history",
                                                    "benchmarks-$(now()).csv"))
