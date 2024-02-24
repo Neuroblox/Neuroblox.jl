@@ -2,6 +2,15 @@
 
 Tools for benchmarking Neuroblox.jl
 
+The standard way to use this would be to navigate to this directory, `Pkg.activate` it, then do
+
+```julia
+include("benchmarks.jl")
+run_and_save_benchmarks()
+```
+
+## Docstrings: 
+
 <details><summary> run_and_save_benchmarks </summary>
 <p>
 

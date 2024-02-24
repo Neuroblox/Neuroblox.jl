@@ -5,6 +5,15 @@ open(joinpath(@__DIR__(), "README.md"), "w+") do io
     # Neuroblox Benchmark suite
 
     Tools for benchmarking Neuroblox.jl
+
+    The standard way to use this would be to navigate to this directory, `Pkg.activate` it, then do
+
+    ```julia
+    include("benchmarks.jl")
+    run_and_save_benchmarks()
+    ```
+
+    ## Docstrings: 
     """)
     for sym ∈ (:run_and_save_benchmarks, :BenchSetup, :neuroblox_benchmark_suite, :run, :summarize_benchmark_data)
         println(io, "<details><summary> $sym </summary>\n<p>\n")
