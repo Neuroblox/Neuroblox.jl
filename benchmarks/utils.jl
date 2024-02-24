@@ -177,7 +177,7 @@ function BenchmarkTools.run((;
         # BenchmarkTools.jl
         runtime_bench = @eval let $((:($arg = $arg) for arg ∈ args)...) # Arguments that should be taken from the setup phase and passed like function arguments to the inner benchmark, rather than global variables
             @benchmark($bench,
-                       setup=$bench_setup,
+                       setup=$sample_setup,
                        teardown=$sample_teardown,
                        seconds=$seconds,
                        evals=$evals,
