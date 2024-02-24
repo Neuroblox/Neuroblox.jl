@@ -53,11 +53,12 @@ function run_and_save_benchmarks(; benches::AbstractVector{BenchSetup} = neurobl
 
     df.metadata[1] = """
     ------------------------------
+    Random seed: $seed
+    ------------------------------
     Neuroblox Commit:
 
     $commit_info
 
-    ------------------------------
     ------------------------------
     Benchmark run on:
 
