@@ -145,7 +145,7 @@ function BenchmarkTools.run((;
     end
 
     # insert all these interpolated arguments into the bench setup block.
-    sample_setup = Expr(:block, bench_args..., sample_setup)
+    bench_sample_setup = Expr(:block, bench_args..., sample_setup)
     
     # This helps with if someone does `using Foo` in the `setup` block. 
     if Base.isexpr(setup, :block)
@@ -155,7 +155,8 @@ function BenchmarkTools.run((;
     # Run the benchmarks in a fresh process from Distributed.jl. This helps ensure that the benchmark is run "fresh"
     # with no compilation from previously run benchmarks interfering with the gathered data.
     id = only(addprocs(1))
-    f = Distributed.spawnat(id, () -> begin
+    
+    f = Distributed.spawnat(id, function ()
         @eval begin
             using BenchmarkTools
             include(joinpath(@__DIR__(), "utils.jl")) # We need this for the structs and macros defined here.
@@ -177,7 +178,7 @@ function BenchmarkTools.run((;
         # BenchmarkTools.jl
         runtime_bench = @eval let $((:($arg = $arg) for arg ∈ args)...) # Arguments that should be taken from the setup phase and passed like function arguments to the inner benchmark, rather than global variables
             @benchmark($bench,
-                       setup=$sample_setup,
+                       setup=$bench_sample_setup,
                        teardown=$sample_teardown,
                        seconds=$seconds,
                        evals=$evals,
@@ -188,7 +189,7 @@ function BenchmarkTools.run((;
     end)
     result = fetch(f) # fetch the results
     rmprocs([id]) # throw away the process
-
+    
     result
 end
 
