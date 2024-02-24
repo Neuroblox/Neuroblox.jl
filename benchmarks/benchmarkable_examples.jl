@@ -128,21 +128,29 @@ jansen_ritt_solve = BenchSetup(
 )
 
 #------------------------------------------------------------------------------
-# 80 Random Neurons
+# 40 Random Neurons
 #------------------------------------------------------------------------------
 
-eighty_neurons_system_creation = BenchSetup(
-    name="80 randomly connected neurons system creation",
+forty_neurons_system_creation = BenchSetup(
+    name="40 randomly connected neurons system creation",
     setup = :(using Neuroblox, DifferentialEquations, Graphs, MetaGraphs),
-    bench = let N = 80
+    bench = let N = 40, rng = Xoshiro(seed)
         neuron_names = [Symbol(:neuron,i) for i ∈ 1:N]
         neurons = map(1:N) do i
-            type = rand((:HarmonicOscillator, :LinearNeuralMass, :WilsonCowan))
+            type = rand(rng, (:HarmonicOscillator, :LinearNeuralMass, :WilsonCowan))
             :(@named $(neuron_names[i]) = $type())
+        end
+        adj = randn(rng, N, N)
+        for i ∈ 1:N
+            for j ∈ 1:N
+                if rand(rng) < 0.20
+                    adj[i, j] = 0
+                end
+            end
         end
         quote
             $(Expr(:block, neurons...))
-            adj = rand($N, $N)
+            adj = $adj
             g = MetaDiGraph()
             add_blox!.(Ref(g), [$(neuron_names...)])
             create_adjacency_edges!(g, adj)
@@ -151,26 +159,29 @@ eighty_neurons_system_creation = BenchSetup(
     end
 )
 
-eighty_neurons_structural_simplify = BenchSetup(
-    name="80 randomly connected neurons structural simplify",
+forty_neurons_structural_simplify = BenchSetup(
+    name="40 randomly connected neurons structural simplify",
     setup = quote
-        $(eighty_neurons_system_creation.setup)
-        $(eighty_neurons_system_creation.bench)
+        using Neuroblox, DifferentialEquations, Graphs, MetaGraphs
+        $(forty_neurons_system_creation.setup)
+        $(forty_neurons_system_creation.bench)
     end,
     args = [:sys,],
     bench = :(final_sys = structural_simplify(sys))
 )
 
-eighty_neurons_solve = BenchSetup(
-    name="80 randomly connected neurons solve",
+forty_neurons_solve = BenchSetup(
+    name="40 randomly connected neurons solve",
     setup = quote
-        $(eighty_neurons_structural_simplify.setup)
-        $(eighty_neurons_structural_simplify.bench)
-        sim_dur = 1_000.0
+        using Neuroblox, DifferentialEquations, Graphs, MetaGraphs
+        $(forty_neurons_structural_simplify.setup)
+        $(forty_neurons_structural_simplify.bench)
+        sim_dur = 50.0
         prob = ODEProblem(final_sys, [], (0.0, sim_dur),[])
     end,
     args = [:prob,],
-    bench = :(solve(prob, AutoVern7(Rodas4()), saveat=0.1))
+    bench = :(solve(prob, Vern7()# , saveat=0.1
+                    ))
 )
 
 #------------------------------------------------------------------------------
