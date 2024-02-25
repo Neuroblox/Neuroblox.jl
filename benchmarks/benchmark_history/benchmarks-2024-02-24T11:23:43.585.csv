@@ -1,0 +1,56 @@
+benchmark_name,initial_runtime_ns,initial_compiletime_percent,warmed_up_minimum_runtime_ns,warmed_up_median_runtime_ns,initial_alloced_bytes,initial_gc_time_ns,initial_gc_alloc_count,warmed_up_allocated_bytes,warmed_up_median_gc_time_ns,warmed_up_gc_alloc_count,metadata
+Load NeuroBlox,2.3689213282e10,0.9605418985057539,49708.4,57840.4,708067611,8.4616221e8,9865576,14712,0.0,146,"------------------------------
+Neuroblox Commit:
+
+Git Commit:
+Commit Author: Name: Mason Protter, Email: mason.protter@icloud.com, Time: 2024-02-24 17:22:59+01:00
+Committer: Name: Mason Protter, Email: mason.protter@icloud.com, Time: 2024-02-24 17:22:59+01:00
+SHA: 8d39ad99177d01b7fec501c875b724eb44def36c
+Message:
+fix sample setup
+
+
+------------------------------
+------------------------------
+Benchmark run on:
+
+Julia Version 1.10.1
+Commit 7790d6f0641 (2024-02-13 20:41 UTC)
+Build Info:
+  Official https://julialang.org/ release
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+      Ubuntu 22.04.3 LTS
+  uname: Linux 5.15.0-94-generic #104-Ubuntu SMP Tue Jan 9 15:25:40 UTC 2024 x86_64 x86_64
+  CPU: AMD EPYC 7532 32-Core Processor: 
+                 speed         user         nice          sys         idle          irq
+       #1-64  1500 MHz   36831493 s      20687 s    1488026 s  610210021 s          0 s
+  Memory: 62.646976470947266 GB (30179.05859375 MB free)
+  Uptime: 1.01382693e6 sec
+  Load Avg:  23.09  19.09  18.11
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-15.0.7 (ORCJIT, znver2)
+Threads: 16 default, 0 interactive, 8 GC (on 64 virtual cores)
+Environment:
+  JULIA_NUM_THREADS = 16
+  MODULESHOME = /usr/share/modules
+  MANPATH = :
+  HOME = /shared/home/mason
+  TERM = screen
+  PATH = /shared/home/mason/.juliaup/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+  MODULEPATH = /gpfs/shared/modulefiles:/usr/share/modules/modulefiles
+
+"
+Create LinearNeuralMass,1.341931212e9,99.70725026999372,136454.8,141049.7,121010280,1.38613665e8,1767459,33800,0.0,602,
+Harmonic Oscillator system creation,7.627280553e9,99.71800202115891,3.2645118e6,3.3476793e6,629220056,2.80532331e8,9020746,773248,0.0,14025,
+Harmonic Oscillator structural simplify,6.328241536e9,99.6353857249484,4.5152328e6,4.6711626e6,484370976,1.91971592e8,6930668,1468456,0.0,23131,
+Harmonic Oscillator solve,4.426762989e9,97.31985307786262,1.015780046e8,1.105760651e8,380593208,1.03119086e8,5166826,36117328,8.4045782e6,261615,
+Jansen-Ritt system creation,8.629570402e9,99.46279314217941,2.26080786e7,2.4186183299999997e7,751370136,6.14411505e8,10806664,4996656,0.0,91539,
+Jansen-Ritt structural simplify,6.534040501e9,99.47871538300402,1.30600202e7,1.46482039e7,501144352,1.72191768e8,7186954,4948888,0.0,69411,
+Jansen-Ritt solve,4.494750214e9,73.90513289600123,1.1920581394e9,1.2825090629e9,1706325792,2.47025326e8,14100853,1500799168,2.493041477e8,11151973,
+40 randomly connected neurons system creation,1.5438616888e10,88.22216346716046,1.6309225704e9,1.6880669004e9,1205756944,8.05258818e8,18341269,375690560,7.84903415e7,6479060,
+40 randomly connected neurons structural simplify,1.0763618282e10,60.512716870425336,3.9282565634e9,4.0224453687e9,3363512680,4.86392699e8,31750486,2874459600,2.346931983e8,24756368,
+40 randomly connected neurons solve,2.0764418816e10,99.86013018106907,2.81746992e7,2.95260945e7,511097716,1.32650335e8,9185143,5267248,0.0,8397,
+RF_learning_simple agent and envionment creation,3.93546498608e11,10.615794321070537,3.547249751278e11,3.547249751278e11,389967141616,3.007737433e10,2102480891,390868456628,3.11829260584e10,2071661808,
+RF_learning_simple run_experiment (three trials),1.463582102466e12,18.443110551583878,1.181199463249e12,1.190139770507e12,438096672434,8.14319374759e11,258818535,426681803520,8.27850111267e11,61756677,
