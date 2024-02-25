@@ -120,7 +120,6 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
             end
         end
     end
-    Main.foo[] = S, dgdv, dvdu
 
     return S
 end
@@ -582,7 +581,7 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
-    Main.foo[] = derivatives, μθ_pr, grad_g
+
     ### Collect prior means and covariances ###
     Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q

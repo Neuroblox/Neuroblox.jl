@@ -99,7 +99,7 @@ for (k, v) in paramvariance
 end
 
 priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
-hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1,1),   # prior metaparameter precision, needs to be a matrix
+hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
                    :μλ_pr => [vars["hE"]]             # prior metaparameter mean, needs to be a vector
                   );
 
@@ -119,7 +119,7 @@ for iter in 1:12
     end
 end
 print("maxixmum iterations reached\n")
-derivatives, modpar, grad = foo[]
+params, params_idx, p = foo[]
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
 @show results.F, vars["F"]
