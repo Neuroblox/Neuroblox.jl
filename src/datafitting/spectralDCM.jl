@@ -75,7 +75,7 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     return Eigen(evals, evecs)
 end
 
-
+using Serialization
 function transferfunction_fmri(ω, derivatives, params, params_idx)
     ∂f = derivatives[:∂f](params[params_idx[:evolpars]])
     if ∂f isa Vector
@@ -120,7 +120,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
             end
         end
     end
-
+serialize("tmp.dat", S)
     return S
 end
 
@@ -638,6 +638,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     Q = setup.Q
 
     dfdp = jacobian(f, μθ_po)
+    Main.foo[] = dfdp, μθ_po
     norm_dfdp = matlab_norm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
@@ -645,13 +646,13 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         for i = 1:4
             # reset expansion point and increase regularization
             v = min(v - 2, -4);
-            t = exp(v - logdet(dFdpp)/np)
+            t = exp(v - logdet(dFdθθ)/np)
 
             # E-Step: update
             if t > exp(16)
-                ϵ_θ = ϵ_θ - dFdpp \ dFdp    # -inv(dfdx)*f
+                ϵ_θ = ϵ_θ - dFdθθ \ dFdθ    # -inv(dfdx)*f
             else
-                ϵ_θ = ϵ_θ + expv(t, dFdpp, dFdpp \ dFdp) - dFdpp \ dFdp   # (expm(dfdx*t) - I)*inv(dfdx)*f
+                ϵ_θ = ϵ_θ + expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ   # (expm(dfdx*t) - I)*inv(dfdx)*f
             end
 
             μθ_po = μθ_pr + ϵ_θ
@@ -766,6 +767,8 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     dF = dot(dFdθ, dθ);
 
     state.v = v
+    state.dFdθθ = dFdθθ
+    state.dFdθ = dFdθ
     append!(state.dF, dF)
 
     return state
