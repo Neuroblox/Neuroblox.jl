@@ -62,14 +62,14 @@ sol_dde_no_delays = solve(prob, alg, saveat=1)
 # Example of delayed connections
 
 # First, recreate the graph to remove previous connections
-@named Str = JansenRitDelayed(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
-@named GPE = JansenRitDelayed(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
-@named STN = JansenRitDelayed(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
-@named GPI = JansenRitDelayed(cortical=false) # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRitDelayed(τ=0.002*τ_factor, H=10, λ=20, r=5)
-@named EI  = JansenRitDelayed(τ=0.01*τ_factor, H=20, λ=5, r=5)
-@named PY  = JansenRitDelayed(cortical=true) # default parameters cortical Jansen Rit blox
-@named II  = JansenRitDelayed(τ=2.0*τ_factor, H=60, λ=5, r=5)
+@named Str = JansenRit(τ=0.0022*τ_factor, H=20, λ=300, r=0.3, delayed=true)
+@named GPE = JansenRit(τ=0.04*τ_factor, cortical=false, delayed=true) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1, delayed=true)
+@named GPI = JansenRit(cortical=false, delayed=true) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10, λ=20, r=5, delayed=true)
+@named EI  = JansenRit(τ=0.01*τ_factor, H=20, λ=5, r=5, delayed=true)
+@named PY  = JansenRit(cortical=true, delayed=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0*τ_factor, H=60, λ=5, r=5, delayed=true)
 blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
