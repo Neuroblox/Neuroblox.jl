@@ -2,6 +2,9 @@ module Neuroblox
 
 using Reexport
 @reexport using ModelingToolkit
+const t = ModelingToolkit.t_nounits
+const D = ModelingToolkit.D_nounits
+export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
 @reexport using Graphs: add_edge!
 

@@ -40,8 +40,8 @@ neuronmodel = structural_simplify(neuronmodel)
 # measurement model
 @named bold = boldsignal()
 
-# attribute initial conditions to states
-all_s = states(neuronmodel)
+# attribute initial conditions to unknowns
+all_s = unknowns(neuronmodel)
 initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), all_s); 

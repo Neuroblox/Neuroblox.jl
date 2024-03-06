@@ -59,7 +59,7 @@ function get_namespaced_sys(blox)
     ODESystem(
         equations(sys), 
         only(independent_variables(sys)), 
-        states(sys), 
+        unknowns(sys), 
         parameters(sys); 
         name = namespaced_nameof(blox)
     ) 
@@ -239,28 +239,28 @@ end
 """
     function get_hemodynamic_observers(sys, nr)
     
-    Function extracts those states of an MTK system that were tagged "hemodynamic_observer".
+    Function extracts those unknowns of an MTK system that were tagged "hemodynamic_observer".
 
     Arguments:
     - `sys`: MTK system
     - `nr` : number of regions of a model
 
     Returns:
-    - `obs_idx`: indices of states with "hemodynamic_observer" tag in MTK system
-    - `obs_states`: states with "hemodynamic_observer" tag in MTK system
+    - `obs_idx`: indices of unknowns with "hemodynamic_observer" tag in MTK system
+    - `obs_unknowns`: unknowns with "hemodynamic_observer" tag in MTK system
 
 """
 function get_hemodynamic_observers(sys, nr)
     obs_idx = Dict([k => [] for k in 1:nr])
-    obs_states = Dict([k => [] for k in 1:nr])
-    for (i, s) in enumerate(states(sys))
+    obs_unknowns = Dict([k => [] for k in 1:nr])
+    for (i, s) in enumerate(unknowns(sys))
         if isequal(getdescription(s), "hemodynamic_observer")
             regionidx = parse(Int64, split(string(s), "₊")[1][end])
             push!(obs_idx[regionidx], i)
-            push!(obs_states[regionidx], s)
+            push!(obs_unknowns[regionidx], s)
         end
     end
-    return (obs_idx, obs_states)
+    return (obs_idx, obs_unknowns)
 end
 
 """

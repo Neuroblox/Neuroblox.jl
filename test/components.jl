@@ -74,17 +74,17 @@ New Jansen-Rit tests
     params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
 
     adj_matrix_lin = [0 0 0 0 0 0 0 0;
-                -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
-                0 -0.5*C_BG_Th 0 0 0 0 C_Cor_BG_Th 0;
-                0 -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
-                0 0 0 -0.5*C_BG_Th 0 0 0 0;
-                0 0 0 0 C_BG_Th_Cor 0 6*C_Cor 0;
-                0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
-                0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
+                      -0.5*C_BG_Th -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+                      0            -0.5*C_BG_Th 0 0 0 0 C_Cor_BG_Th 0;
+                      0 -0.5*C_BG_Th C_BG_Th 0 0 0 0 0;
+                      0 0 0 -0.5*C_BG_Th 0 0 0 0;
+                      0 0 0 0 C_BG_Th_Cor 0 6*C_Cor 0;
+                      0 0 0 0 0 4.8*C_Cor 0 -1.5*C_Cor;
+                      0 0 0 0 0 0 1.5*C_Cor 3.3*C_Cor]
 
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), blox)
-        create_adjacency_edges!(g, adj_matrix_lin)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), blox)
+    create_adjacency_edges!(g, adj_matrix_lin)
 
     @named final_system = system_from_graph(g, params)
     final_delays = graph_delays(g)
@@ -219,7 +219,7 @@ end
     @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn)
 
     @test typeof(syn_net) == ODESystem
-    @test length(states(syn_net)) == 3*N_nrn
+    @test length(unknowns(syn_net)) == 3*N_nrn
 
     sim_dur =  2.0
     prob = ODEProblem(syn_net, [], (0.0, sim_dur), [])
@@ -228,11 +228,11 @@ end
 end
 
 @testset "Van der Pol" begin
-@named VdP = van_der_pol()
-
-prob_vdp = SDEProblem(VdP,[0.1,0.1],[0.0, 20.0],[])
-sol = solve(prob_vdp,EM(),dt=0.1)
-@test sol.retcode == SciMLBase.ReturnCode.Success
+    @named VdP = van_der_pol()
+    
+    prob_vdp = SDEProblem(complete(VdP),[0.1,0.1],[0.0, 20.0],[])
+    sol = solve(prob_vdp,EM(),dt=0.1)
+    @test sol.retcode == SciMLBase.ReturnCode.Success
 end
 
 """
@@ -242,15 +242,15 @@ Test for OUBlox generator.
 """
 
 @testset "OUBlox " begin
-@named ou1 = OUBlox()
-sys = [ou1.odesystem]
-eqs = [sys[1].jcn ~ 0.0]
-@named ou1connected = compose(System(eqs;name=:connected),sys)
-ousimpl = structural_simplify(ou1connected)
-prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
-sol = solve(prob_ou,alg_hints = [:stiff])
-@test sol.retcode == SciMLBase.ReturnCode.Success
-@test std(sol[1,:]) > 0.0 # there should be variance
+    @named ou1 = OUBlox()
+    sys = [ou1.odesystem]
+    eqs = [sys[1].jcn ~ 0.0]
+    @named ou1connected = compose(System(eqs, t; name=:connected),sys)
+    ousimpl = structural_simplify(ou1connected)
+    prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
+    sol = solve(prob_ou,alg_hints = [:stiff])
+    @test sol.retcode == SciMLBase.ReturnCode.Success
+    @test std(sol[1,:]) > 0.0 # there should be variance
 end
 
 # @testset "OUBlox & Janset-Rit network" begin
@@ -271,7 +271,7 @@ end
     @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
     sys = [ou1.odesystem, oucp.odesystem]
     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
-    @named ou1connected = compose(System(eqs;name=:connected),sys)
+    @named ou1connected = compose(System(eqs, t;name=:connected),sys)
     ousimpl = structural_simplify(ou1connected)
     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
     sol = solve(prob_oucp)
@@ -280,22 +280,22 @@ end
 end
 
 @testset "OUBlox-OUCouplingBlox larger network" begin
-@named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-@named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-@named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
-@named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
-eqs = [sys[1].jcn ~ oucp1.connector,
-        sys[2].jcn ~ oucp2.connector,
-        sys[3].jcn ~ ou2.connector,
-        sys[4].jcn ~ ou1.connector]
-@named ouconnected = compose(System(eqs;name=:connected),sys)
-ousimpl = structural_simplify(ouconnected)
-prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
-sol = solve(prob_ouconnect)
-@test sol.retcode == SciMLBase.ReturnCode.Success
-@test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-@test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
+    @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+    @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+    @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
+    @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
+    sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
+    eqs = [sys[1].jcn ~ oucp1.connector,
+           sys[2].jcn ~ oucp2.connector,
+           sys[3].jcn ~ ou2.connector,
+           sys[4].jcn ~ ou1.connector]
+    @named ouconnected = compose(System(eqs, t; name=:connected), sys)
+    ousimpl = structural_simplify(ouconnected)
+    prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
+    sol = solve(prob_ouconnect)
+    @test sol.retcode == SciMLBase.ReturnCode.Success
+    @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+    @test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
 end
 
 # @testset "Time-series output" begin
@@ -333,26 +333,26 @@ end
 # end
 
 @testset "HH Neuron excitatory & inhibitory network" begin
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
-nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
-nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2, freq=3)
-assembly = [nn1, nn2, nn3]
+    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
+    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
+    nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2, freq=3)
+    assembly = [nn1, nn2, nn3]
 
-# Adjacency matrix : 
-#adj = [0 1 0
-#       0 0 1
-#       0.2 0 0]
-g = MetaDiGraph()
-add_blox!.(Ref(g), assembly)
-add_edge!(g, 1, 2, :weight, 1)
-add_edge!(g, 2, 3, :weight, 1)
-add_edge!(g, 3, 1, :weight, 0.2)
-      
-@named neuron_net = system_from_graph(g)
-prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
-sol = solve(prob, Vern7())
-@test neuron_net isa ODESystem
-@test sol.retcode == ReturnCode.Success
+    # Adjacency matrix : 
+    #adj = [0 1 0
+    #       0 0 1
+    #       0.2 0 0]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), assembly)
+    add_edge!(g, 1, 2, :weight, 1)
+    add_edge!(g, 2, 3, :weight, 1)
+    add_edge!(g, 3, 1, :weight, 0.2)
+    
+    @named neuron_net = system_from_graph(g)
+    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
+    sol = solve(prob, Vern7())
+    @test neuron_net isa ODESystem
+    @test sol.retcode == ReturnCode.Success
 end
 
 @testset "NextGenerationEIBlox connected to neuron" begin

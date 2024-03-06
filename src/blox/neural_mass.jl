@@ -1,6 +1,3 @@
-@parameters t
-D = Differential(t)
-
 mutable struct NextGenerationBlox <: NeuralMassBlox
     C::Num
     Δ::Num
@@ -109,7 +106,7 @@ struct LinearNeuralMass <: NeuralMassBlox
     function LinearNeuralMass(;name, namespace=nothing)
         sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
         eqs = [D(x) ~ jcn]
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         new(sts[1], sts[2], sys, namespace)
     end
 end
@@ -148,7 +145,7 @@ struct HarmonicOscillator <: NeuralMassBlox
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         new(p, sts[1], sts[3], sys, namespace)
     end
 end
@@ -204,7 +201,7 @@ struct JansenRit <: NeuralMassBlox
         sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
         eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
                D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent
         new(p, sts[1], sts[3], sys, namespace)
@@ -254,7 +251,7 @@ struct WilsonCowan <: NeuralMassBlox
         sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t)=0.0 [input=true] #P(t)=0.0
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         new(p, sts[1], sts[3], sys, namespace)
     end
 end
@@ -333,7 +330,7 @@ struct LarterBreakspear <: NeuralMassBlox
                 m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
                 m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                 m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
-        sys = System(eqs; name=name)
+        sys = System(eqs, t; name=name)
         new(p, sts[5], sts[4], sys, namespace)
     end
 end

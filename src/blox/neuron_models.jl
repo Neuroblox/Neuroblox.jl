@@ -1,7 +1,5 @@
 abstract type AbstractInhNeuronBlox <: AbstractNeuronBlox end
 abstract type AbstractExciNeuronBlox <: AbstractNeuronBlox end
-@parameters t
-D = Differential(t)
 
 #Quadratic Integrate and Fire neurons 
 mutable struct QIFNeuronBlox <: AbstractNeuronBlox

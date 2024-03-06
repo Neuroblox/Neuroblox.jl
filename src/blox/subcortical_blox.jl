@@ -59,11 +59,11 @@ struct Striatum <: CompositeBlox
     end
     
     m = if isnothing(namespace) 
-        [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
     else
         @variables t
         sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-        [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
     end
 
     new(namespace, parts, sys, bc, m)
@@ -125,11 +125,11 @@ struct GPi <: CompositeBlox
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
             @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
         new(namespace, parts, sys, bc, m)
@@ -182,11 +182,11 @@ struct GPe <: CompositeBlox
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
             @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
         new(namespace, parts, sys, bc, m)
@@ -240,11 +240,11 @@ struct Thalamus <: CompositeBlox
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
-            [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
             @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
         new(namespace, parts, sys, bc, m)
@@ -301,17 +301,17 @@ struct STN <: CompositeBlox
     # to potentially add more terms to the same connections.
     sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
     
-    # TO DO : m is a subset of states to be plotted in the GUI. 
+    # TO DO : m is a subset of unknowns to be plotted in the GUI. 
     # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
     # since it is not an essential part of the blox.
     m = if isnothing(namespace) 
-        [s for s in states.((sys,), states(sys)) if contains(string(s), "V(t)")]
+        [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
     else
         @variables t
-        # HACK : Need to define an empty system to add the correct namespace to states.
-        # Adding a dispatch `ModelingToolkit.states(::Symbol, ::AbstractArray)` upstream will solve this.
+        # HACK : Need to define an empty system to add the correct namespace to unknowns.
+        # Adding a dispatch `ModelingToolkit.unknowns(::Symbol, ::AbstractArray)` upstream will solve this.
         sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-        [s for s in states.((sys_namespace,), states(sys)) if contains(string(s), "V(t)")]
+        [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
     end
 
     new(namespace, parts, sys, bc, m)

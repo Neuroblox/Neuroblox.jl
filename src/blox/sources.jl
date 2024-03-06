@@ -1,5 +1,3 @@
-@parameters t
-
 #CosineSource
 mutable struct CosineSource	
     f::Num
