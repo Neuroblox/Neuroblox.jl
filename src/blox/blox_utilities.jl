@@ -59,7 +59,7 @@ function get_namespaced_sys(blox)
     ODESystem(
         equations(sys), 
         only(independent_variables(sys)), 
-        states(sys), 
+        unknowns(sys), 
         parameters(sys); 
         name = namespaced_nameof(blox)
     ) 
@@ -254,7 +254,7 @@ function get_dynamic_states(sys)
     sts = []
     idx_u = Int[]
     idx_m = Int[]
-    for (i, s) in enumerate(states(sys))
+    for (i, s) in enumerate(unknowns(sys))
         if getdescription(s) == "ext_input"
             push!(idx_u, i)
         elseif getdescription(s) == "measurement"

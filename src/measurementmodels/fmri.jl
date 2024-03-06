@@ -84,8 +84,57 @@ struct BalloonModel <: ObserverBlox
             D(lnq) ~ (exp(lnu)/exp(lnq)*((1 - (1 - H[5])^(exp(lnu)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ)),
             bold   ~ B[2]*(k1 - k1*exp(lnq) + exp(lnϵ)*B[3]*B[5]*B[1] - exp(lnϵ)*B[3]*B[5]*B[1]*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
         ]
-
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         new(p, Num(0), sts[5], sys, namespace)
     end
+end
+
+
+"""
+    boldsignal(;name, lnϵ=0.0)
+
+    Bold signal observer function. This requires connection to the variables ν and q of a balloon model.
+    The formal definition of this blox is:
+ """
+    # ```math
+    #     \\lambda(\\nu, q) = V_0 \\left[ k_1 (1-q) + k_2 \\left( 1 - \\frac{q}{v} \\right) + k_3 (1-v)\\right]
+    # ```
+"""
+
+Arguments:
+- `name`: Name given to `ODESystem` object within the blox.
+- lnϵ  : logarithm of ratio of intra- to extra-vascular signal
+
+NB: the prefix ln of the variables ν, q as well as the parameters ϵ denotes their transformation into logarithmic space
+to enforce their positivity.
+
+Citations:
+1. Stephan K E, Weiskopf N, Drysdale P M, Robinson P A, and Friston K J. Comparing Hemodynamic Models with DCM. NeuroImage 38, no. 3 (2007): 387–401. doi: 10.1016/j.neuroimage.2007.07.040
+2. Hofmann D, Chesebro A G, Rackauckas C, Mujica-Parodi L R, Friston K J, Edelman A, and Strey H H. Leveraging Julia's Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed, 2023. doi: 10.1101/2023.10.27.564407
+
+"""
+function boldsignal(;name, lnϵ=0.0)
+    # NB: Biophysical constants for 1.5T scanners
+    # Time to echo
+    TE  = 0.04
+    # resting venous volume (%)
+    V0  = 4
+    # slope r0 of intravascular relaxation rate R_iv as a function of oxygen 
+    # saturation S:  R_iv = r0*[(1 - S)-(1 - S0)] (Hz)
+    r0  = 25
+    # frequency offset at the outer surface of magnetized vessels (Hz)
+    nu0 = 40.3
+    # resting oxygen extraction fraction
+    E0  = 0.4
+    # Coefficients in BOLD signal model
+    k1  = 4.3*nu0*E0*TE
+
+    params = @parameters lnϵ=lnϵ
+    vars = @variables bold(t) lnν(t) lnq(t)   # TODO: got to be really careful with the current implementation! A simple permutation of this breaks the algorithm!
+
+    eqs = [
+        bold ~ V0*(k1 - k1*exp(lnq) + exp(lnϵ)*r0*E0*TE - exp(lnϵ)*r0*E0*TE*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
+    ]
+
+    ODESystem(eqs, t, vars, params; name=name)
 end

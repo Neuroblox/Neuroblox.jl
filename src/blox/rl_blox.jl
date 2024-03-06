@@ -1,6 +1,4 @@
 
-@parameters t
-
 mutable struct LearningBlox
     ω::Num
     d::Num

@@ -17,7 +17,7 @@ mutable struct JansenRitSPM12 <: NeuralMassBlox
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + jcn/τ]
 
-        sys = System(eqs, name=name)
+        sys = System(eqs, t, name=name)
         new(p, sts[1], sts[3], sys, namespace)
     end
 end

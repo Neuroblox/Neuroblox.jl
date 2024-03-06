@@ -4,7 +4,7 @@ using Neuroblox, OrdinaryDiffEq, Statistics
 CosineSource Test
 """
 # Compare CosineBlox (_nb) to Cosine from MTK Standard Library
-@parameters t
+
 @named int = Integrator()
 # CosineBlox
 @named src_nb   = CosineSource(f=1, a=2, phi=0, offset=1, tstart=2)
