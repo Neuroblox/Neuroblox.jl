@@ -50,19 +50,27 @@ final_system_sys = structural_simplify(final_system)
 # Collect the graph delays and create a DDEProblem. This will all be zero in this case.
 final_delays = graph_delays(g)
 sim_dur = 1000.0 # Simulate for 1 second
-prob = DDEProblem(final_system_sys,
+prob = ODEProblem(final_system_sys,
     [],
-    (0.0, sim_dur),
-    constant_lags = final_delays)
+    (0.0, sim_dur))
 
 # Select the algorihm. MethodOfSteps will return the same as Vern7() in this case because there are no non-zero delays, but is required since this is a DDEProblem.
-alg = MethodOfSteps(Vern7())
+alg = Vern7()
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 
 
 # Example of delayed connections
 
 # First, recreate the graph to remove previous connections
+@named Str = JansenRitDelayed(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
+@named GPE = JansenRitDelayed(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
+@named STN = JansenRitDelayed(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
+@named GPI = JansenRitDelayed(cortical=false) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRitDelayed(τ=0.002*τ_factor, H=10, λ=20, r=5)
+@named EI  = JansenRitDelayed(τ=0.01*τ_factor, H=20, λ=5, r=5)
+@named PY  = JansenRitDelayed(cortical=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRitDelayed(τ=2.0*τ_factor, H=60, λ=5, r=5)
+blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
 

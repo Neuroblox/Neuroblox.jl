@@ -156,6 +156,64 @@ end
 """
     JansenRit(name, namespace, τ, H, λ, r, cortical)
 
+    Create a Jansen Rit blox with optional delays as described in Liu et al.
+    The formal definition of this blox is:
+
+```math
+\\frac{dx}{dt} = y-\\frac{2}{\\tau}x
+\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+```
+
+where ``jcn`` is any input to the blox.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- τ: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
+- H: See equation for use.
+- λ: See equation for use.
+- r: See equation for use.
+- cortical: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+
+Citations:
+1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
+
+"""
+struct JansenRitDelayed <: NeuralMassBlox
+    params
+    output
+    jcn
+    odesystem
+    namespace
+    function JansenRitDelayed(;name,
+                        namespace=nothing,
+                        τ=nothing, 
+                        H=nothing, 
+                        λ=nothing, 
+                        r=nothing, 
+                        cortical=true)
+
+        τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
+        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
+        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
+        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
+
+        # p = progress_scope(τ, H, λ, r)
+        p = paramscoping(τ=τ, H=H, λ=λ, r=r)
+        τ, H, λ, r = p
+        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        sys = System(eqs, name=name)
+        #can't use outputs because x(t) is Num by then
+        #wrote inputs similarly to keep consistent
+        new(p, sts[1], sts[3], sys, namespace)
+    end
+end
+
+"""
+    JansenRit(name, namespace, τ, H, λ, r, cortical)
+
     Create a Jansen Rit blox as described in Liu et al.
     The formal definition of this blox is:
 
@@ -201,9 +259,9 @@ struct JansenRit <: NeuralMassBlox
         # p = progress_scope(τ, H, λ, r)
         p = paramscoping(τ=τ, H=H, λ=λ, r=r)
         τ, H, λ, r = p
-        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
-        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+        sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+        eqs = [D(x) ~ y - ((2/τ)*x),
+               D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
         sys = System(eqs, name=name)
         #can't use outputs because x(t) is Num by then
         #wrote inputs similarly to keep consistent

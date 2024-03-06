@@ -185,7 +185,7 @@ export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitat
     hh_neuron_inhibitory, synaptic_network, van_der_pol
 export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
-export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
+export LinearNeuralMass, HarmonicOscillator, JansenRit, JansenRitDelayed, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!

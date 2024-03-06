@@ -90,11 +90,10 @@ New Jansen-Rit tests
     final_delays = graph_delays(g)
     sim_dur = 2000.0 # Simulate for 2 Seconds
     final_system_sys = structural_simplify(final_system)
-    prob = DDEProblem(final_system_sys,
+    prob = ODEProblem(final_system_sys,
         [],
-        (0.0, sim_dur),
-        constant_lags = final_delays)
-    alg = MethodOfSteps(Vern7())
+        (0.0, sim_dur))
+    alg = Vern7()
     sol_dde_no_delays = solve(prob, alg, saveat=1)
     @test sol_dde_no_delays.retcode == ReturnCode.Success
 end
