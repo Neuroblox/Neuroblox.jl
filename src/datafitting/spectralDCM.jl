@@ -120,7 +120,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
             end
         end
     end
-serialize("tmp.dat", S)
+
     return S
 end
 
@@ -191,6 +191,7 @@ end
         y_part = (p->p.partials).(real(y)) + (p->p.partials).(imag(y))*im
         y = map((x1, x2) -> Dual{tagtype(real(y)[1]), ComplexF64, length(x2)}(x1, Partials(Tuple(x2))), y_vals, y_part)
     end
+    serialize("tmp1.dat", (G, dt, mar, y, p))
     return y
 end
 
@@ -622,7 +623,6 @@ end
 
 function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     μθ_po = state.μθ_po
-    Σθ_po = state.Σθ_po
 
     λ = state.λ
     v = state.v
@@ -637,8 +637,8 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
     Q = setup.Q
 
-    dfdp = jacobian(f, μθ_po)
-    Main.foo[] = dfdp, μθ_po
+    dfdp = jacobian(f, μθ_po) * deserialize("tmp.dat")[vcat(1:20, 24), :]
+
     norm_dfdp = matlab_norm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
@@ -657,7 +657,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
             μθ_po = μθ_pr + ϵ_θ
 
-            dfdp = jacobian(f, μθ_po)
+            dfdp = jacobian(f, μθ_po) * deserialize("tmp.dat")[vcat(1:20, 24), :]
 
             # check for stability
             norm_dfdp = matlab_norm(dfdp, Inf);
@@ -679,16 +679,16 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     JPJ = zeros(real(eltype(J)), size(J, 2), size(J, 2), size(Q, 3))
     dFdλ = zeros(eltype(J), nh)
     dFdλλ = zeros(real(eltype(J)), nh, nh)
-    local iΣ, Σλ_po, ϵ_λ
+    local iΣ, Σλ_po, Σθ_po, ϵ_λ
     for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM12 code.
         iΣ = zeros(eltype(J), ny, ny)
         for i = 1:nh
-            iΣ .+= Q[:,:,i]*exp(λ[i])
+            iΣ .+= Q[:, :, i] * exp(λ[i])
         end
 
         Pp = real(J' * iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why is this okay?
         Σθ_po = inv(Pp + Πθ_pr)
-
+serialize("tmp1.dat", (J, iΣ, nh))
         for i = 1:nh
             P[:,:,i] = Q[:,:,i]*exp(λ[i])
             PΣ[:,:,i] = iΣ \ P[:,:,i]
@@ -706,6 +706,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         dFdλ = dFdλ - Πλ_pr*ϵ_λ
         dFdλλ = dFdλλ - Πλ_pr
         Σλ_po = inv(-dFdλλ)
+serialize("tmp2.dat", (dFdλ, ϵ_λ, μλ_pr, dFdλλ))
 
         t = exp(4 - spm_logdet(dFdλλ)/length(λ))
         # E-Step: update
@@ -720,6 +721,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         λ = λ + dλ
 
         dF = dot(dFdλ, dλ)
+serialize("tmp3.dat", (dF, dλ))
         # NB: it is unclear as to whether this is being reached. In this first tests iterations seem to be 
         # trapped in a periodic orbit jumping around between 1250 and 940. At that point the results become
         # somewhat arbitrary. The iterations stop at 8, whatever the last value of iΣ etc. is will be carried on.
