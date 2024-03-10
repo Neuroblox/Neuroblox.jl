@@ -201,9 +201,6 @@ end
 
 reset!(ag::Agent) = ag.problem = remake(ag.problem; p = ag.init_params)
 
-
-
-
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
