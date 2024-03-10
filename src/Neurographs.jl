@@ -29,6 +29,7 @@ get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
 function connector_from_graph(g::MetaDiGraph)
     bloxs = get_blox(g)
     link = BloxConnector(bloxs)
+
     for v in vertices(g)
         b = get_prop(g, v, :blox)
         for vn in inneighbors(g, v)
@@ -37,7 +38,6 @@ function connector_from_graph(g::MetaDiGraph)
             link(bn, b; kwargs...)
         end
     end
-
     return link
 end
 
@@ -59,29 +59,23 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, t_block=missing
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=missing)
-    @variables t
     blox_syss = get_sys(g)
-
     connection_eqs = get_equations_with_state_lhs(bc)
-    
-    cbs = identity.(get_callbacks(g, bc; t_block))
 
+    cbs = identity.(get_callbacks(g, bc; t_block))
     return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
-    @variables t
+
     blox_syss = get_sys(g)
 
     connection_eqs = get_equations_with_state_lhs(bc)
-    
     cbs = identity.(get_callbacks(g, bc; t_block))
-    
     return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)
-    @variables t
     return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
 end
 
