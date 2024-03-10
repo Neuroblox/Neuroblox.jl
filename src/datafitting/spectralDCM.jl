@@ -75,7 +75,6 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     return Eigen(evals, evecs)
 end
 
-using Serialization
 function transferfunction_fmri(ω, derivatives, params, params_idx)
     ∂f = derivatives[:∂f](params[params_idx[:evolpars]])
     if ∂f isa Vector
@@ -191,7 +190,6 @@ end
         y_part = (p->p.partials).(real(y)) + (p->p.partials).(imag(y))*im
         y = map((x1, x2) -> Dual{tagtype(real(y)[1]), ComplexF64, length(x2)}(x1, Partials(Tuple(x2))), y_vals, y_part)
     end
-    serialize("tmp1.dat", (G, dt, mar, y, p))
     return y
 end
 
@@ -602,6 +600,7 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
         [],            # delta free energy
         8*ones(nh),    # metaparameter, initial condition. TODO: why are we not just using the prior mean?
         zeros(np),     # parameter estimation error ϵ_θ
+        [zeros(np), 8*ones(nh)],      # memorize reset state
         μθ_pr,         # parameter posterior mean
         Σθ_pr,         # parameter posterior covariance
         zeros(np),
@@ -635,9 +634,10 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (np, ny, nq, nh) = setup.systemnums
     (μθ_pr, μλ_pr) = setup.systemvecs
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
+    # Πθ_pr = deserialize("tmp.dat")[vcat(1:20, 24), :]' *Πθ_pr* deserialize("tmp.dat")[vcat(1:20, 24), :]
     Q = setup.Q
 
-    dfdp = jacobian(f, μθ_po) * deserialize("tmp.dat")[vcat(1:20, 24), :]
+    dfdp = jacobian(f, μθ_po)# * deserialize("tmp.dat")[vcat(1:20, 24), :]
 
     norm_dfdp = matlab_norm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
@@ -657,7 +657,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
             μθ_po = μθ_pr + ϵ_θ
 
-            dfdp = jacobian(f, μθ_po) * deserialize("tmp.dat")[vcat(1:20, 24), :]
+            dfdp = jacobian(f, μθ_po) #* deserialize("tmp.dat")[vcat(1:20, 24), :]
 
             # check for stability
             norm_dfdp = matlab_norm(dfdp, Inf);
@@ -688,7 +688,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
         Pp = real(J' * iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why is this okay?
         Σθ_po = inv(Pp + Πθ_pr)
-serialize("tmp1.dat", (J, iΣ, nh))
+
         for i = 1:nh
             P[:,:,i] = Q[:,:,i]*exp(λ[i])
             PΣ[:,:,i] = iΣ \ P[:,:,i]
@@ -706,7 +706,6 @@ serialize("tmp1.dat", (J, iΣ, nh))
         dFdλ = dFdλ - Πλ_pr*ϵ_λ
         dFdλλ = dFdλλ - Πλ_pr
         Σλ_po = inv(-dFdλλ)
-serialize("tmp2.dat", (dFdλ, ϵ_λ, μλ_pr, dFdλλ))
 
         t = exp(4 - spm_logdet(dFdλλ)/length(λ))
         # E-Step: update
@@ -721,7 +720,7 @@ serialize("tmp2.dat", (dFdλ, ϵ_λ, μλ_pr, dFdλλ))
         λ = λ + dλ
 
         dF = dot(dFdλ, dλ)
-serialize("tmp3.dat", (dF, dλ))
+
         # NB: it is unclear as to whether this is being reached. In this first tests iterations seem to be 
         # trapped in a periodic orbit jumping around between 1250 and 940. At that point the results become
         # somewhat arbitrary. The iterations stop at 8, whatever the last value of iΣ etc. is will be carried on.
@@ -739,8 +738,7 @@ serialize("tmp3.dat", (dF, dλ))
 
     if F > state.F[end] || state.iter < 3
         # accept current state
-        state.ϵ_θ = ϵ_θ
-        state.λ = λ
+        state.reset_state = [ϵ_θ, λ]
         append!(state.F, F)
         state.Σθ_po = Σθ_po
         # Conditional update of gradients and curvature
@@ -750,8 +748,7 @@ serialize("tmp3.dat", (dF, dλ))
         v = min(v + 1/2, 4);
     else
         # reset expansion point
-        ϵ_θ = state.ϵ_θ
-        λ = state.λ
+        ϵ_θ, λ = state.reset_state
         # and increase regularization
         v = min(v - 2, -4);
     end
@@ -769,6 +766,8 @@ serialize("tmp3.dat", (dF, dλ))
     dF = dot(dFdθ, dθ);
 
     state.v = v
+    state.ϵ_θ = ϵ_θ
+    state.λ = λ
     state.dFdθθ = dFdθθ
     state.dFdθ = dFdθ
     append!(state.dF, dF)

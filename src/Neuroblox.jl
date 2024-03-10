@@ -93,6 +93,7 @@ mutable struct VLState
     dF::Vector{Float64}
     λ::Vector{Float64}
     ϵ_θ::Vector{Float64}
+    reset_state::Vector{Any}
     μθ_po::Vector{Float64}
     Σθ_po::Matrix{Float64}
     dFdθ::Vector{Float64}

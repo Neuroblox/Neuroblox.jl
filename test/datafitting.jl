@@ -104,9 +104,12 @@ hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter p
                   );
 
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
+foo1 = Ref{Any}()
+foo2 = Ref{Any}()
+foo3 = Ref{Any}()
 
 (state, setup) = setup_sDCM(data, neuronmodel, bold, initcond, csdsetup, priors, hyperpriors, params_idx);
-for iter in 1:12
+for iter in 1:26
     state.iter = iter
     run_sDCM_iteration!(state, setup)
     print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
@@ -121,6 +124,6 @@ end
 print("maxixmum iterations reached\n")
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###
-@show results.F, vars["F"]
-@test results.F < vars["F"]*0.99
-@test results.F > vars["F"]*1.01
+@show state.F[end], vars["F"]
+@test state.F[end] < vars["F"]*0.99
+@test state.F[end] > vars["F"]*1.01
