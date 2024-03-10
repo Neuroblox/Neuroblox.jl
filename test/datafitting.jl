@@ -57,7 +57,7 @@ np = 0
 for par in parameters(neuronmodel)
     if istunable(par)
         modelparam[par] = Symbolics.getdefaultval(par)
-        np += 1
+        global np += 1
     end
 end
 params_idx = Dict(:evolpars => 1:np)
@@ -77,7 +77,7 @@ np += nrr
 nop = 0    # numberparams_idx of observation model parameters
 for par in parameters(bold)
     modelparam[par] = Symbolics.getdefaultval(par)
-    nop += 1
+    global nop += 1
 end
 params_idx[:obspars] = np+1:np+nop
 
@@ -104,9 +104,6 @@ hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter p
                   );
 
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
-foo1 = Ref{Any}()
-foo2 = Ref{Any}()
-foo3 = Ref{Any}()
 
 (state, setup) = setup_sDCM(data, neuronmodel, bold, initcond, csdsetup, priors, hyperpriors, params_idx);
 for iter in 1:26
