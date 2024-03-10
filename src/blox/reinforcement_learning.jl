@@ -176,6 +176,7 @@ mutable struct Agent{S,P,A,LR,PA}
     action_selection::A
     learning_rules::LR
     init_params::PA
+    # simsys::SS
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
@@ -189,16 +190,19 @@ mutable struct Agent{S,P,A,LR,PA}
         p = haskey(kwargs, :p) ? kwargs[:p] : []
         
         prob = ODEProblem(ss, u0, (0.,1.), p)
-        init_params = prob.p
+        init_params = deepcopy(prob.p)
         
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)}(ss, prob, policy, learning_rules, init_params)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(ss, prob, policy, learning_rules, init_params, #=ss=#)
     end
 end
 
 reset!(ag::Agent) = ag.problem = remake(ag.problem; p = ag.init_params)
+
+
+
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=200.0; kwargs...)
     N_trials = env.N_trials
@@ -234,7 +238,11 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=
     for _ in Base.OneTo(N_trials)
 
         stim_params = get_trial_stimulus(env)
-        prob = remake(prob; p = merge(weights, stim_params), u0=u0)
+
+        to_update = merge(weights, stim_params)
+        new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
+
+        prob = remake(prob; p = new_params, u0=u0)
         if haskey(kwargs, :alg)
             sol = solve(prob, kwargs[:alg]; kwargs...)
         else
