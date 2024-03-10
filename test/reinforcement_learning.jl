@@ -51,7 +51,7 @@ using CSV
 
     agent = Agent(g; name=:ag, t_block = t_trial/5);
     ps = parameters(agent.odesystem)
-    init_params = agent.problem.p
+    init_params = reduce(vcat, agent.problem.p)
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
     idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
     idx_stim = findall(x -> occursin("stim₊", String(Symbol(x))), ps)
@@ -64,14 +64,14 @@ using CSV
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
     run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
 
-    final_params = agent.problem.p
+    final_params = reduce(vcat, agent.problem.p)
     # At least some weights need to be different.
     @test any(init_params[map_idxs[idxs_weight]] .!= final_params[map_idxs[idxs_weight]])
     # All non-weight parameters need to be the same.
     @test all(init_params[map_idxs[idxs_other_params]] .== final_params[map_idxs[idxs_other_params]])
 
     reset!(agent)
-    @test all(init_params .== agent.problem.p) 
+    @test all(init_params .== reduce(vcat, agent.problem.p)) 
 
     reset!(env)
     @test env.current_trial == 1

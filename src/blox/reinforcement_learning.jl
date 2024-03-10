@@ -170,12 +170,12 @@ function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
 end
 """
 
-mutable struct Agent{S,P,A,LR}
+mutable struct Agent{S,P,A,LR,PA}
     odesystem::S
     problem::P
     action_selection::A
     learning_rules::LR
-    init_params::Vector{Float64}
+    init_params::PA
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
@@ -194,9 +194,7 @@ mutable struct Agent{S,P,A,LR}
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        
-
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules)}(ss, prob, policy, learning_rules, init_params)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)}(ss, prob, policy, learning_rules,init_params)
     end
 end
 
@@ -234,15 +232,15 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, t_warmup=
     end
 
     for _ in Base.OneTo(N_trials)
-        @show env.current_trial
+
         stim_params = get_trial_stimulus(env)
         prob = remake(prob; p = merge(weights, stim_params), u0=u0)
-
         if haskey(kwargs, :alg)
             sol = solve(prob, kwargs[:alg]; kwargs...)
         else
             sol = solve(prob; alg_hints = [:stiff], kwargs...)
         end
+        
 
         #u0 = sol[1:end,end] # next run should continue where the last one ended   
                              # In the paper we assume sufficient time interval before net stimulus so that system reaches back to steady state, so we don't continue from previous trial's endpoint
