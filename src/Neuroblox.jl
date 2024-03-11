@@ -85,6 +85,32 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 # dictionary type for Blox parameters
 Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
+# struct types for Variational Laplace
+mutable struct VLState
+    iter::Int
+    v::Float64             # log ascent rate
+    F::Vector{Float64}
+    dF::Vector{Float64}
+    λ::Vector{Float64}
+    ϵ_θ::Vector{Float64}
+    reset_state::Vector{Any}
+    μθ_po::Vector{Float64}
+    Σθ_po::Matrix{Float64}
+    dFdθ::Vector{Float64}
+    dFdθθ::Matrix{Float64}
+end
+
+struct VLSetup
+    model_at_x0
+    y_csd::Array{Complex}
+    tolerance::Float64
+    systemnums::Vector{Int}
+    systemvecs::Vector{Vector{Float64}}
+    systemmatrices::Vector{Matrix{Float64}}
+    Q::Matrix{Complex}
+end
+
+
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("utilities/bold_methods.jl")
@@ -199,7 +225,7 @@ export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export boldsignal, BalloonModel
-export vecparam, csd_Q, spectralVI
+export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
