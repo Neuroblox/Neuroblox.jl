@@ -69,14 +69,14 @@ The original paper units are in seconds we therefore need to multiply all parame
 ```@example Jansen-Rit
 τ_factor = 1000
 
-@named Str = JansenRit(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
+@named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
 @named GPE = JansenRit(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
-@named STN = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
+@named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
 @named GPI = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRit(τ=0.002*τ_factor, H=10, λ=20, r=5)
-@named EI  = JansenRit(τ=0.01*τ_factor, H=20, λ=5, r=5)
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=5, r=5)
 @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
-@named II  = JansenRit(τ=2.0*τ_factor, H=60, λ=5, r=5)
+@named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5)
 blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
 ```
 Again, we create a graph and add the Blox as nodes
@@ -124,17 +124,14 @@ final_system_sys = structural_simplify(final_system)
 ```
 Our Jansen-Rit model allows delayed edges, and we therefore need to collect those delays (in our case all delays are zero).  Then we build a Delayed Differential Equations Problem (DDEProblem).
 ```@example Jansen-Rit
-final_delays = graph_delays(g)
 sim_dur = 1000.0 # Simulate for 1 second
-prob = DDEProblem(final_system_sys,
+prob = ODEProblem(final_system_sys,
     [],
-    (0.0, sim_dur),
-    constant_lags = final_delays)
+    (0.0, sim_dur))
 ```
 We select an algorithm and solve the system
-
 ```@example Jansen-Rit
-alg = MethodOfSteps(Vern7())
+alg = Tsit5()
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 plot(sol_dde_no_delays)
 ```
