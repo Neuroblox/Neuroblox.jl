@@ -98,6 +98,53 @@ New Jansen-Rit tests
     @test sol_dde_no_delays.retcode == ReturnCode.Success
 end
 
+@testset "Jansen-Rit with delay" begin
+    τ_factor = 1000
+    @named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3, delayed=true)
+    @named GPE = JansenRit(τ=0.04*τ_factor, cortical=false, delayed=true) # all default subcortical except τ
+    @named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1, delayed=true)
+    @named GPI = JansenRit(cortical=false, delayed=true) # default parameters subcortical Jansen Rit blox
+    @named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5, delayed=true)
+    @named EI  = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=5, r=5, delayed=true)
+    @named PY  = JansenRit(cortical=true, delayed=true) # default parameters cortical Jansen Rit blox
+    @named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5, delayed=true)
+    blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), blox)
+    
+    # Now, add the edges with the specified delays. Again, if you prefer, there's a version using adjacency and delay matrices to assign all at once.
+    add_edge!(g, 2, 1, Dict(:weight => -0.5*60, :delay => 1))
+    add_edge!(g, 2, 2, Dict(:weight => -0.5*60, :delay => 2))
+    add_edge!(g, 2, 3, Dict(:weight => 60, :delay => 1))
+    add_edge!(g, 3, 2, Dict(:weight => -0.5*60, :delay => 1))
+    add_edge!(g, 3, 7, Dict(:weight => 5, :delay => 1))
+    add_edge!(g, 4, 2, Dict(:weight => -0.5*60, :delay => 4))
+    add_edge!(g, 4, 3, Dict(:weight => 60, :delay => 1))
+    add_edge!(g, 5, 4, Dict(:weight => -0.5*60, :delay => 2))
+    add_edge!(g, 6, 5, Dict(:weight => 5, :delay => 1))
+    add_edge!(g, 6, 7, Dict(:weight => 6*60, :delay => 2))
+    add_edge!(g, 7, 6, Dict(:weight => 4.8*60, :delay => 3))
+    add_edge!(g, 7, 8, Dict(:weight => -1.5*60, :delay => 1))
+    add_edge!(g, 8, 7, Dict(:weight => 1.5*60, :delay => 4))
+    add_edge!(g, 8, 8, Dict(:weight => 3.3*60, :delay => 1))
+    
+    # Now you can run the same code as above, but it will handle the delays automatically.
+    @named final_system = system_from_graph(g, params)
+    final_system_sys = structural_simplify(final_system)
+    
+    # Collect the graph delays and create a DDEProblem.
+    final_delays = graph_delays(g)
+    sim_dur = 1000.0 # Simulate for 1 second
+    prob = DDEProblem(final_system_sys,
+        [],
+        (0.0, sim_dur),
+        constant_lags = final_delays)
+    
+    # Select the algorihm. MethodOfSteps is now needed because there are non-zero delays.
+    alg = MethodOfSteps(Vern7())
+    sol_dde_with_delays = solve(prob, alg, saveat=1)
+    @test sol_dde_with_delays.retcode == ReturnCode.Success
+end
 
 @testset "Wilson-Cowan" begin
     @named WC1 = WilsonCowan()
