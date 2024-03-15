@@ -119,7 +119,7 @@ add_edge!(g,4,4,:weight, C_BG_Th_Cor)
 Now we are ready to build the ModelingToolkit System and apply structural simplification to the equations.
 
 ```@example Jansen-Rit
-@named final_system = system_from_graph(g, params)
+@named final_system = system_from_graph(g)
 final_system_sys = structural_simplify(final_system)
 ```
 Our Jansen-Rit model allows delayed edges, and we therefore need to collect those delays (in our case all delays are zero).  Then we build a Delayed Differential Equations Problem (DDEProblem).

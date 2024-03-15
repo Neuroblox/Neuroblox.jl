@@ -129,7 +129,7 @@ end
     add_edge!(g, 8, 8, Dict(:weight => 3.3*60, :delay => 1))
     
     # Now you can run the same code as above, but it will handle the delays automatically.
-    @named final_system = system_from_graph(g, params)
+    @named final_system = system_from_graph(g)
     final_system_sys = structural_simplify(final_system)
     
     # Collect the graph delays and create a DDEProblem.
