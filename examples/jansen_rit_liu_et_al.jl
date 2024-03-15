@@ -8,14 +8,14 @@ using MetaGraphs # Set up graph of systems
 τ_factor = 1000 #needed because the paper units were in seconds, and we need ms to be consistent
 
 # Create Jansen-Rit blocks with the same parameters as the paper and store them in a list
-@named Str = JansenRit(τ=0.0022*τ_factor, H=20, λ=300, r=0.3)
+@named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
 @named GPE = JansenRit(τ=0.04*τ_factor, cortical=false) # all default subcortical except τ
-@named STN = JansenRit(τ=0.01*τ_factor, H=20, λ=500, r=0.1)
+@named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
 @named GPI = JansenRit(cortical=false) # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRit(τ=0.002*τ_factor, H=10, λ=20, r=5)
-@named EI  = JansenRit(τ=0.01*τ_factor, H=20, λ=5, r=5)
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5)
+@named EI  = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=5, r=5)
 @named PY  = JansenRit(cortical=true) # default parameters cortical Jansen Rit blox
-@named II  = JansenRit(τ=2.0*τ_factor, H=60, λ=5, r=5)
+@named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5)
 blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
 
 # test graphs
@@ -50,19 +50,27 @@ final_system_sys = structural_simplify(final_system)
 # Collect the graph delays and create a DDEProblem. This will all be zero in this case.
 final_delays = graph_delays(g)
 sim_dur = 1000.0 # Simulate for 1 second
-prob = DDEProblem(final_system_sys,
+prob = ODEProblem(final_system_sys,
     [],
-    (0.0, sim_dur),
-    constant_lags = final_delays)
+    (0.0, sim_dur))
 
 # Select the algorihm. MethodOfSteps will return the same as Vern7() in this case because there are no non-zero delays, but is required since this is a DDEProblem.
-alg = MethodOfSteps(Vern7())
+alg = Vern7()
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 
 
 # Example of delayed connections
 
 # First, recreate the graph to remove previous connections
+@named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3, delayed=true)
+@named GPE = JansenRit(τ=0.04*τ_factor, cortical=false, delayed=true) # all default subcortical except τ
+@named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1, delayed=true)
+@named GPI = JansenRit(cortical=false, delayed=true) # default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5, delayed=true)
+@named EI  = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=5, r=5, delayed=true)
+@named PY  = JansenRit(cortical=true, delayed=true) # default parameters cortical Jansen Rit blox
+@named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5, delayed=true)
+blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
 
@@ -83,7 +91,7 @@ add_edge!(g, 8, 7, Dict(:weight => 1.5*60, :delay => 4))
 add_edge!(g, 8, 8, Dict(:weight => 3.3*60, :delay => 1))
 
 # Now you can run the same code as above, but it will handle the delays automatically.
-@named final_system = system_from_graph(g, params)
+@named final_system = system_from_graph(g)
 final_system_sys = structural_simplify(final_system)
 
 # Collect the graph delays and create a DDEProblem.

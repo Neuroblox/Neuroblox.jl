@@ -153,8 +153,9 @@ struct HarmonicOscillator <: NeuralMassBlox
     end
 end
 
+
 """
-    JansenRit(name, namespace, τ, H, λ, r, cortical)
+    JansenRit(name, namespace, τ, H, λ, r, cortical, delayed)
 
     Create a Jansen Rit blox as described in Liu et al.
     The formal definition of this blox is:
@@ -174,6 +175,7 @@ Arguments:
 - λ: See equation for use.
 - r: See equation for use.
 - cortical: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
+- delayed: Boolean to indicate whether states are delayed
 
 Citations:
 1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
@@ -191,23 +193,34 @@ struct JansenRit <: NeuralMassBlox
                         H=nothing, 
                         λ=nothing, 
                         r=nothing, 
-                        cortical=true)
+                        cortical=true, 
+                        delayed=false)
 
         τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
-        H = isnothing(H) ? 20.0 : H # H doesn't have different parameters for cortical and subcortical
+        H = isnothing(H) ? 0.02 : H # H doesn't have different parameters for cortical and subcortical
         λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
 
         # p = progress_scope(τ, H, λ, r)
         p = paramscoping(τ=τ, H=H, λ=λ, r=r)
         τ, H, λ, r = p
-        sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
-        eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-               D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-        sys = System(eqs, name=name)
-        #can't use outputs because x(t) is Num by then
-        #wrote inputs similarly to keep consistent
-        new(p, sts[1], sts[3], sys, namespace)
+        if !delayed
+            sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+            eqs = [D(x) ~ y - ((2/τ)*x),
+                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+            sys = System(eqs, name=name)
+            #can't use outputs because x(t) is Num by then
+            #wrote inputs similarly to keep consistent
+            return new(p, sts[1], sts[3], sys, namespace)
+        else
+            sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+            eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+                   D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+            sys = System(eqs, name=name)
+            #can't use outputs because x(t) is Num by then
+            #wrote inputs similarly to keep consistent
+            return new(p, sts[1], sts[3], sys, namespace)
+        end
     end
 end
 
