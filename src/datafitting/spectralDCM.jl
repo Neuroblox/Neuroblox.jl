@@ -248,14 +248,14 @@ function spm_logdet(M)
 end
 
 """
-    vecparam(param::OrderedDict{Any, Any})
+    vecparam(param::OrderedDict)
 
     Function to flatten an ordered dictionary of model parameters and return a simple list of parameter values.
 
     Arguments:
     - `param`: dictionary of model parameters (may contain numbers and lists of numbers)
 """
-function vecparam(param::OrderedDict{Any, Any})
+function vecparam(param::OrderedDict)
     flatparam = Float64[]
     for v in values(param)
         if (typeof(v) <: Array)

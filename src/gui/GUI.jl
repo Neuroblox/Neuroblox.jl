@@ -75,16 +75,15 @@ end
 
 function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
   OrderedDict(
-    # :BlockSize => NCAD(5, INTEGER, 1, 40, []),
-    :E_syn_exci => NCAD(1.0, NUMBER, 0.01, 100.0,[],true),
-    :G_syn_exci => NCAD(5.0, NUMBER, 0.01, 20.0,[],true),
-    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[],true),
+    :N_exci => NCAD(5, INTEGER, 1, 40, [],true),
+    :E_syn_exci => NCAD(0.0, NUMBER, -100, 100.0,[],true),
+    :G_syn_exci => NCAD(3.0, NUMBER, -100.0, 100.0,[],true),
     :phase => NCAD(0, NUMBER, 0.0, 2*π,[],true),
-	  :τ_exci => NCAD(0.105, NUMBER, 0.01, 2.0,[],true),
-    :E_syn_inhib => NCAD(1.0, NUMBER, 0.01, 100.0,[],true),
+	  :τ_exci => NCAD(5, NUMBER, 0.01, 20.0,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -100, 100.0,[],true),
     :G_syn_inhib => NCAD(5.0, NUMBER, 0.01, 20.0,[],true),
-    :I_in => NCAD(0.0, NUMBER, 0.01, 20.0,[],true),
-	  :τ_inhib => NCAD(0.105, NUMBER, 0.01, 2.0,[],true)
+	  :τ_inhib => NCAD(70, NUMBER, 0.01, 200,[],true),
+    :freq => NCAD(0.0, NUMBER, 0.0, 200, [], true)
   )
 end
 
@@ -322,8 +321,6 @@ end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
   OrderedDict(
-    :t_spike_window => NCAD(90.0, NUMBER, 0.1, 100.0,[],true),
-    :θ_spike => NCAD(0.0, NUMBER, 0.0, 2*π,[],true),
     :E_syn => NCAD(0.0, NUMBER, 0.01, 100.0,[],true),
     :G_syn => NCAD(3.0, NUMBER, 0.01, 20.0,[],true),
     :I_bg => NCAD(0.0, NUMBER, 0.0, 20.0,[],true),
