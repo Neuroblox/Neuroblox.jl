@@ -97,11 +97,10 @@ add_edge!(g, 8, 8, Dict(:weight => 3.3*C_Cor))
 final_delays = graph_delays(g)
 sim_dur = 2000.0 # Simulate for 2 Seconds
 final_system_sys = structural_simplify(final_system)
-prob = DDEProblem(final_system_sys,
+prob = ODEProblem(final_system_sys,
     [],
-    (0.0, sim_dur),
-    constant_lags = final_delays)
-alg = MethodOfSteps(Vern7())
+    (0.0, sim_dur))
+alg = Vern7()
 sol_dde_no_delays = solve(prob, alg, saveat=1)
 sol2 = DataFrame(sol_dde_no_delays)
 @test isapprox(sol2[!, "gpi₊x(t)"][500:1000], sol[!, "gpi₊x(t)"][500:1000], rtol=1e-8)
