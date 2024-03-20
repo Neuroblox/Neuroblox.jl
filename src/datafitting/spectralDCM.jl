@@ -313,6 +313,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
+
     derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
