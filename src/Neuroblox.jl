@@ -40,7 +40,6 @@ using ModelingToolkit: get_namespace, get_systems, isparameter,
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
-using IfElse
 
 using DelimitedFiles: readdlm
 using CSV: read

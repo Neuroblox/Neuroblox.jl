@@ -40,7 +40,6 @@ end
     @named osc2 = HarmonicOscillator()
 
     params = @parameters k=1.0
-    @show typeof(params)
     adj = [0 k; k 0]
     g = MetaDiGraph()
     add_blox!.(Ref(g), [osc1, osc2])
