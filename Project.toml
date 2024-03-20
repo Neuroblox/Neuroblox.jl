@@ -1,7 +1,7 @@
 name = "Neuroblox"
 uuid = "769b91e5-4c60-41ee-bfae-153c84203cb2"
 repo = "https://github.com/Neuroblox/Neuroblox.jl.git"
-version = "0.3.1"
+version = "0.4.0"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
