@@ -40,7 +40,6 @@ end
     @named osc2 = HarmonicOscillator()
 
     params = @parameters k=1.0
-    @show typeof(params)
     adj = [0 k; k 0]
     g = MetaDiGraph()
     add_blox!.(Ref(g), [osc1, osc2])
@@ -86,17 +85,17 @@ New Jansen-Rit tests
     add_blox!.(Ref(g), blox)
     create_adjacency_edges!(g, adj_matrix_lin)
 
-    # @named final_system = system_from_graph(g, params)
-    # final_delays = graph_delays(g)
-    # sim_dur = 2000.0 # Simulate for 2 Seconds
-    # final_system_sys = structural_simplify(final_system)
-    # prob = DDEProblem(final_system_sys,
-    #     [],
-    #     (0.0, sim_dur),
-    #     constant_lags = final_delays)
-    # alg = MethodOfSteps(Vern7())
-    # sol_dde_no_delays = solve(prob, alg, saveat=1)
-    # @test sol_dde_no_delays.retcode == ReturnCode.Success
+    @named final_system = system_from_graph(g, params)
+    final_delays = graph_delays(g)
+    sim_dur = 2000.0 # Simulate for 2 Seconds
+    final_system_sys = structural_simplify(final_system)
+    prob = DDEProblem(final_system_sys,
+        [],
+        (0.0, sim_dur),
+        constant_lags = final_delays)
+    alg = MethodOfSteps(Vern7())
+    sol_dde_no_delays = solve(prob, alg, saveat=1)
+    @test sol_dde_no_delays.retcode == ReturnCode.Success
 end
 
 

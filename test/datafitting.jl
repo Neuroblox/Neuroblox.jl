@@ -35,7 +35,8 @@ end
 
 # compose model
 @named neuronmodel = system_from_graph(g)
-neuronmodel = structural_simplify(neuronmodel)
+# We need to use split=false here because we rely on a specific parameter ordering
+neuronmodel = structural_simplify(neuronmodel; split=false)
 
 # measurement model
 @named bold = boldsignal()

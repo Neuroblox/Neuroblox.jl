@@ -81,6 +81,7 @@ function transferfunction_fmri(w, idx_A, derivatives, params)
     C = params[(6+2nd+nd^2):(5+3nd+nd^2)]
     C /= 16.0   # TODO: unclear why C is devided by 16 but see spm_fx_fmri.m:49
     ∂f = derivatives[:∂f](params[1:(nd^2+nd+1)])   #convert(Array{Real}, substitute(derivatives[:∂f], params))
+
     if ∂f isa Vector
         ∂f = reshape(∂f, sqrt(length(∂f)), sqrt(length(∂f)))
     end
@@ -517,6 +518,7 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     statevals = [v for v in values(initcond)]
     obs = get_hemodynamic_observers(neuraldynmodel, nr)
     obsstates = map(obs -> [initcond[s] for s in obs], values(obs[2]))
+    
     derivatives = Dict(:∂f => par -> jac_f(statevals, addnontunableparams(par, neuraldynmodel), t),
                        :∂g => par -> grad_full(grad_g, obsstates, obs[1], par, nr, ns))
 
