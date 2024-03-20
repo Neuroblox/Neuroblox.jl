@@ -552,7 +552,7 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
     # compute cross-spectral density
     y = Matrix(data);
     nr = ncol(data);                     # number of regions
-    sts = states(stateevolutionmodel)    # variables of model
+    sts = unknowns(stateevolutionmodel)  # variables of model
     ns = length(sts)                     # number of states in total
 
     dt = csdsetup[:dt];                  # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
