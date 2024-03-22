@@ -92,11 +92,11 @@ for (k, v) in paramvariance
 end
 
 priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
-hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
-                   :μλ_pr => [vars["hE"]]              # prior metaparameter mean, needs to be a vector
-                  );
+hyperpriors = (Πλ_pr = vars["ihC"]*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
+               μλ_pr = [vars["hE"]]              # prior metaparameter mean, needs to be a vector
+               );
 
-csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
+csdsetup = (p = 8, freq = vec(vars["Hz"]), dt = vars["dt"]);
 
 (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
 for iter in 1:128

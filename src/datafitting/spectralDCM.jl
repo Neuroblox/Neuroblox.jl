@@ -58,7 +58,7 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     nd = size(M, 1)
     A = (p->p.value).(M)
     F = eigen(A, sortby=nothing, permute=true)
-    λ, V = F.values, F.vectors
+    λ, V = F
     local ∂λ_agg, ∂V_agg
     # compute eigenvalue and eigenvector derivatives for all partials
     for i = 1:np
@@ -66,7 +66,7 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
         tmp = V \ dA
         ∂K = tmp * V   # V^-1 * dA * V
         ∂Kdiag = @view ∂K[diagind(∂K)]
-        ∂λ_tmp = eltype(λ) <: Real ? real.(∂Kdiag) : copy(∂Kdiag)   # why do only copy when complex??
+        ∂λ_tmp = eltype(λ) <: Real ? real.(∂Kdiag) : copy(∂Kdiag)   # copy only needed for Complex because `real.(v)` makes a new array
         ∂K ./= transpose(λ) .- λ
         fill!(∂Kdiag, 0)
         ∂V_tmp = mul!(tmp, V, ∂K)
@@ -79,23 +79,27 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
             ∂λ_agg = cat(∂λ_agg, ∂λ_tmp, dims=2)
         end
     end
-    ∂V = Array{Partials}(undef, nd, nd)
-    ∂λ = Array{Partials}(undef, nd)
     # reassemble the aggregated vectors and values into a Partials type
-    for i = 1:nd
-        ∂λ[i] = Partials(Tuple(∂λ_agg[i, :]))
-        for j = 1:nd
-            ∂V[i, j] = Partials(Tuple(∂V_agg[i, j, :]))
-        end
+    ∂V = map(Iterators.product(1:nd, 1:nd)) do (i, j)
+        Partials(NTuple{np}(∂V_agg[i, j, :]))
+    end
+    ∂λ = map(1:nd) do i
+        Partials(NTuple{np}(∂λ_agg[i, :]))
     end
     if eltype(V) <: Complex
-        evals = map((x,y)->Complex(Dual{T, Float64, length(y)}(real(x), Partials(Tuple(real(y)))), 
-                                   Dual{T, Float64, length(y)}(imag(x), Partials(Tuple(imag(y))))), F.values, ∂λ)
-        evecs = map((x,y)->Complex(Dual{T, Float64, length(y)}(real(x), Partials(Tuple(real(y)))), 
-                                   Dual{T, Float64, length(y)}(imag(x), Partials(Tuple(imag(y))))), F.vectors, ∂V)
+        evals = map(λ, ∂λ) do x, y
+            rex, imx = reim(x)
+            rey, imy = real.(Tuple(y)), imag.(Tuple(y))
+            Complex(Dual{T}(rex, Partials(rey)), Dual{T}(imx, Partials(imy)))
+        end
+        evecs = map(V, ∂V) do x, y
+            rex, imx = reim(x)
+            rey, imy = real.(Tuple(y)), imag.(Tuple(y))
+            Complex(Dual{T}(rex, Partials(rey)), Dual{T}(imx, Partials(imy)))
+        end
     else
-        evals = Dual{T, Float64, length(∂λ[1])}.(F.values, ∂λ)
-        evecs = Dual{T, Float64, length(∂V[1])}.(F.vectors, ∂V)
+        evals = Dual{T}.(λ, ∂λ)
+        evecs = Dual{T}.(V, ∂V)
     end
     return Eigen(evals, evecs)
 end
@@ -123,8 +127,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
         for i = 1:ng
             for k = 1:nk
                 # transfer functions (FFT of kernel)
-                Sk = (1im*2*pi*ω .- Λ[k]).^-1
-                S[:,i,j] .+= ∂g∂v[i,k]*∂v∂u[k,j]*Sk
+                S[:,i,j] .+= (dgdv[i,k]*dvdu[k,j]) .* ((1im*2*pi) .* ω .- Λ[k]).^-1 
             end
         end
     end
@@ -158,7 +161,7 @@ function csd_approx(ω, derivatives, params, params_idx)
     Gu = zeros(eltype(G), nω, nd, nd)
     Gn = zeros(eltype(G), nω, nd, nd)
     for i = 1:nd
-        Gu[:, i, i] .+= exp(α[1])*G
+        Gu[:, i, i] .+= exp(α[1]) .* G
     end
     # region specific observation noise (1/f or AR(1) form)
     G = ω.^(-exp(β[2])/2)
@@ -214,9 +217,9 @@ end
 """
 function matlab_norm(M, p)
     if p == 1
-        return maximum(vec(sum(abs.(M),dims=1)))
+        return maximum(sum(abs, M, dims=1))
     elseif p == Inf
-        return maximum(vec(sum(abs.(M),dims=2)))
+        return maximum(sum(abs, M, dims=2))
     elseif p == 2
         print("Not implemented yet!\n")
         return NaN
@@ -235,7 +238,7 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q .+ matlab_norm(Q, 1)/32*Matrix(I, size(Q)))   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q + matlab_norm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
     return Q
 end
 
@@ -250,10 +253,10 @@ end
 function spm_logdet(M)
     TOL = 1e-16
     s = diag(M)
-    if sum(abs.(s)) != sum(abs.(M[:]))
-        ~, s, ~ = svd(M)
+    if sum(abs, s) != sum(abs, M)
+        s = svdvals(M)
     end
-    return sum(log.(s[(s .> TOL) .& (s .< TOL^-1)]))
+    return sum((log(sval) for sval in s if TOL < sval < inv(TOL)), init=zero(eltype(s))) 
 end
 
 """
@@ -267,7 +270,7 @@ end
 function vecparam(param::OrderedDict)
     flatparam = Float64[]
     for v in values(param)
-        if (typeof(v) <: Array)
+        if v isa Array
             for vv in v
                 push!(flatparam, vv)
             end
@@ -313,7 +316,6 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
-
     derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
@@ -334,7 +336,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
         0,             # iter
         -4,            # log ascent rate
         [-Inf],        # free energy
-        [],            # delta free energy
+        Float64[],            # delta free energy
         8*ones(nh),    # metaparameter, initial condition. TODO: why are we not just using the prior mean?
         zeros(np),     # parameter estimation error ϵ_θ
         [zeros(np), 8*ones(nh)],      # memorize reset state
@@ -358,13 +360,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
 end
 
 function run_sDCM_iteration!(state::VLState, setup::VLSetup)
-    μθ_po = state.μθ_po
-
-    λ = state.λ
-    v = state.v
-    ϵ_θ = state.ϵ_θ
-    dFdθ = state.dFdθ
-    dFdθθ = state.dFdθθ
+    (;μθ_po, λ, v, ϵ_θ, dFdθ, dFdθθ) = state
 
     f = setup.model_at_x0
     y = setup.y_csd              # cross-spectral density
