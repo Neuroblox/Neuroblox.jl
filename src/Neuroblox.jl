@@ -102,14 +102,14 @@ mutable struct VLState
     dFdθθ::Matrix{Float64}
 end
 
-struct VLSetup
-    model_at_x0
-    y_csd::Array{Complex}
+struct VLSetup{F}
+    model_at_x0::F
+    y_csd::Array{ComplexF64}
     tolerance::Float64
     systemnums::Vector{Int}
     systemvecs::Vector{Vector{Float64}}
     systemmatrices::Vector{Matrix{Float64}}
-    Q::Matrix{Complex}
+    Q::Matrix{ComplexF64}
 end
 
 
