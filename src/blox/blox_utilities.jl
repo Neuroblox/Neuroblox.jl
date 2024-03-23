@@ -264,6 +264,24 @@ function get_hemodynamic_observers(sys, nr)
 end
 
 """
+    function get_states_without_drive(sys)
+    
+    Function extracts states from the system that are not marked as a drive (external input)
+"""
+function get_states_without_drive(sys)
+    sts = []
+    idx_drive = Int[]
+    for (i, s) in enumerate(states(sys))
+        if getdescription(s) ≠ "drive"
+            push!(sts, s)
+        else
+            push!(idx_drive, i)
+        end
+    end
+    sts, idx_drive
+end
+
+"""
     function addnontunableparams(param, model)
     
     Function adds parameters of a model that were not marked as tunable to a list of tunable parameters
