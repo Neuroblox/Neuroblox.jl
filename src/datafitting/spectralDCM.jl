@@ -80,42 +80,29 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
     if ∂f isa Vector
         ∂f = reshape(∂f, sqrt(length(∂f)), sqrt(length(∂f)))
     end
+    idx_c = deleteat!([1:size(∂f, 1);], params_idx[:u_states])
+    ∂f∂x = ∂f[idx_c, idx_c]
+    ∂f∂u = ∂f[idx_c, params_idx[:u_states]]
 
-    dfdu = [0.0625  0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0625  0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0625
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0]
-
-    F = eigen(∂f)
+    F = eigen(∂f∂x)
     Λ = F.values
     V = F.vectors
 
-    ∂g = derivatives[:∂g](params[params_idx[:obspars]][1])
-    dgdv = ∂g*V
-    dvdu = V\dfdu          # u is external variable which we don't use right now. With external variable this would read V/dfdu
+    ∂g∂x = derivatives[:∂g](params[params_idx[:obspars]][1])[:, idx_c]
+    ∂g∂v = ∂g∂x*V
+    ∂v∂u = V\∂f∂u               # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
     nω = size(ω, 1)            # number of frequencies
-    ng = size(∂g, 1)           # number of outputs
-    nu = size(dvdu, 2)         # number of inputs
+    ng = size(∂g∂x, 1)         # number of outputs
+    nu = size(∂v∂u, 2)         # number of inputs
     nk = size(V, 2)            # number of modes
-    S = zeros(Complex{real(eltype(dvdu))}, nω, ng, nu)
+    S = zeros(Complex{real(eltype(∂v∂u))}, nω, ng, nu)
     for j = 1:nu
         for i = 1:ng
             for k = 1:nk
                 # transfer functions (FFT of kernel)
                 Sk = (1im*2*pi*ω .- Λ[k]).^-1
-                S[:,i,j] .+= dgdv[i,k]*dvdu[k,j]*Sk
+                S[:,i,j] .+= ∂g∂v[i,k]*∂v∂u[k,j]*Sk
             end
         end
     end
@@ -634,10 +621,9 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (np, ny, nq, nh) = setup.systemnums
     (μθ_pr, μλ_pr) = setup.systemvecs
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
-    # Πθ_pr = deserialize("tmp.dat")[vcat(1:20, 24), :]' *Πθ_pr* deserialize("tmp.dat")[vcat(1:20, 24), :]
     Q = setup.Q
 
-    dfdp = jacobian(f, μθ_po)# * deserialize("tmp.dat")[vcat(1:20, 24), :]
+    dfdp = jacobian(f, μθ_po)
 
     norm_dfdp = matlab_norm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);

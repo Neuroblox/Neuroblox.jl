@@ -32,7 +32,7 @@ using Distributions
 
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
-                    AbstractODESystem
+                    AbstractODESystem, VariableTunable
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
@@ -232,7 +232,7 @@ export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, get_hemodynamic_observers
-export get_weights
+export get_weights, get_states_without_drive
 export boldsignal_endo_balloon
 
 end

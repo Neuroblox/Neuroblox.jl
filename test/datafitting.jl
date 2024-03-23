@@ -41,7 +41,7 @@ neuronmodel = structural_simplify(neuronmodel)
 @named bold = boldsignal()
 
 # attribute initial conditions to states
-all_s = states(neuronmodel)
+all_s, idx_drive = get_states_without_drive(neuronmodel)
 initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), all_s); 
@@ -53,32 +53,30 @@ for (i, r) in enumerate(rnames)
 end
 
 modelparam = OrderedDict()
-np = 0
-for par in parameters(neuronmodel)
-    if istunable(par)
-        modelparam[par] = Symbolics.getdefaultval(par)
-        global np += 1
-    end
+for par in tunable_parameters(neuronmodel)
+    modelparam[par] = Symbolics.getdefaultval(par)
 end
-params_idx = Dict(:evolpars => 1:np)
+np = length(modelparam)
+params_idx = Dict(:evolpars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
 n = length(modelparam[:lnα]);
-params_idx[:lnα] = np+1:np+n;
+params_idx[:lnα] = collect(np+1:np+n);
 np += n;
 modelparam[:lnβ] = [0.0, 0.0];           # global observation noise, ln(β) as above
 n = length(modelparam[:lnβ]);
-params_idx[:lnβ] = np+1:np+n;
+params_idx[:lnβ] = collect(np+1:np+n);
 np += n;
 modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
-params_idx[:lnγ] = np+1:np+nrr;
+params_idx[:lnγ] = collect(np+1:np+nrr);
 np += nrr
+params_idx[:u_states] = idx_drive
 
-nop = 0    # numberparams_idx of observation model parameters
 for par in parameters(bold)
     modelparam[par] = Symbolics.getdefaultval(par)
-    global nop += 1
 end
+# number params_idx of observation model parameters
+nop = length(parameters(bold))
 params_idx[:obspars] = np+1:np+nop
 
 # define prior variances
@@ -106,7 +104,7 @@ hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter p
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
 
 (state, setup) = setup_sDCM(data, neuronmodel, bold, initcond, csdsetup, priors, hyperpriors, params_idx);
-for iter in 1:26
+for iter in 1:128
     state.iter = iter
     run_sDCM_iteration!(state, setup)
     print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
