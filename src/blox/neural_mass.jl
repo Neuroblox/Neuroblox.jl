@@ -110,7 +110,7 @@ struct LinearNeuralMass <: NeuralMassBlox
     function LinearNeuralMass(;name, namespace=nothing, C=0.0625)
         p = paramscoping(C=C)
         C = setmetadata(p[1], VariableTunable, false)   # TODO: change paramscoping to be able to pass tunable flag
-        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true] u(t) [irreducible=true, description="drive"]
+        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true] u(t) [irreducible=true, description="ext_input"]
         eqs = [D(x) ~ jcn + C*u,
                 u ~ 1.0]
         sys = System(eqs, name=name)

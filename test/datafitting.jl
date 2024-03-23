@@ -11,13 +11,13 @@ max_iter = 126
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters κ=0.0 [tunable = true]     # define brain-wide decay parameter for hemodynamics
+@parameters κ=0.0 [tunable = true] ϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
     regions[ii] = 2ii - 1    # store index of neural mass model
     # add hemodynamic observer
-    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ)
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ, lnϵ=ϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
     add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
@@ -37,17 +37,14 @@ end
 @named neuronmodel = system_from_graph(g)
 neuronmodel = structural_simplify(neuronmodel)
 
-# measurement model
-@named bold = boldsignal()
-
 # attribute initial conditions to states
-all_s, idx_drive = get_states_without_drive(neuronmodel)
-initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
+ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
+initcond = OrderedDict{typeof(ds_states[1]), eltype(x)}()
 rnames = []
-map(x->push!(rnames, split(string(x), "₊")[1]), all_s); 
+map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
 rnames = unique(rnames);
 for (i, r) in enumerate(rnames)
-    for (j, s) in enumerate(all_s[r .== map(x -> x[1], split.(string.(all_s), "₊"))])   # TODO: fix this solution, it is not robust!!
+    for (j, s) in enumerate(ds_states[r .== map(x -> x[1], split.(string.(ds_states), "₊"))])
         initcond[s] = x[i, j]
     end
 end
@@ -57,7 +54,7 @@ for par in tunable_parameters(neuronmodel)
     modelparam[par] = Symbolics.getdefaultval(par)
 end
 np = length(modelparam)
-params_idx = Dict(:evolpars => collect(1:np))
+params_idx = Dict(:dspars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
 n = length(modelparam[:lnα]);
@@ -70,14 +67,8 @@ np += n;
 modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
 params_idx[:lnγ] = collect(np+1:np+nrr);
 np += nrr
-params_idx[:u_states] = idx_drive
-
-for par in parameters(bold)
-    modelparam[par] = Symbolics.getdefaultval(par)
-end
-# number params_idx of observation model parameters
-nop = length(parameters(bold))
-params_idx[:obspars] = np+1:np+nop
+params_idx[:u] = idx_u
+params_idx[:bold] = idx_bold
 
 # define prior variances
 paramvariance = copy(modelparam)
@@ -103,7 +94,7 @@ hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter p
 
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
 
-(state, setup) = setup_sDCM(data, neuronmodel, bold, initcond, csdsetup, priors, hyperpriors, params_idx);
+(state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
 for iter in 1:128
     state.iter = iter
     run_sDCM_iteration!(state, setup)
