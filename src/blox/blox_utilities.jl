@@ -237,48 +237,33 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
 end
 
 """
-    function get_hemodynamic_observers(sys, nr)
+    function get_dynamic_states(sys)
     
-    Function extracts those states of an MTK system that were tagged "hemodynamic_observer".
+    Function extracts states from the system that are dynamic variables, 
+    get also indices of external inputs (u(t)) and measurements (like bold(t))
 
     Arguments:
     - `sys`: MTK system
-    - `nr` : number of regions of a model
 
     Returns:
-    - `obs_idx`: indices of states with "hemodynamic_observer" tag in MTK system
-    - `obs_states`: states with "hemodynamic_observer" tag in MTK system
-
+    - `sts`  : states of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
+    - `idx_u`: indices of states that represent external inputs
+    - `idx_m`: indices of states that represent measurements
 """
-function get_hemodynamic_observers(sys, nr)
-    obs_idx = Dict([k => [] for k in 1:nr])
-    obs_states = Dict([k => [] for k in 1:nr])
-    for (i, s) in enumerate(states(sys))
-        if isequal(getdescription(s), "hemodynamic_observer")
-            regionidx = parse(Int64, split(string(s), "₊")[1][end])
-            push!(obs_idx[regionidx], i)
-            push!(obs_states[regionidx], s)
-        end
-    end
-    return (obs_idx, obs_states)
-end
-
-"""
-    function get_states_without_drive(sys)
-    
-    Function extracts states from the system that are not marked as a drive (external input)
-"""
-function get_states_without_drive(sys)
+function get_dynamic_states(sys)
     sts = []
-    idx_drive = Int[]
+    idx_u = Int[]
+    idx_m = Int[]
     for (i, s) in enumerate(states(sys))
-        if getdescription(s) ≠ "drive"
-            push!(sts, s)
+        if getdescription(s) == "ext_input"
+            push!(idx_u, i)
+        elseif getdescription(s) == "measurement"
+            push!(idx_m, i)
         else
-            push!(idx_drive, i)
+            push!(sts, s)
         end
     end
-    sts, idx_drive
+    sts, idx_u, idx_m
 end
 
 """
