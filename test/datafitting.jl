@@ -11,13 +11,13 @@ max_iter = 126
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters κ=0.0 [tunable = true] ϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
     regions[ii] = 2ii - 1    # store index of neural mass model
     # add hemodynamic observer
-    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ, lnϵ=ϵ)
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
     add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
