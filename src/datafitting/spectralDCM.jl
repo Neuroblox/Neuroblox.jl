@@ -76,46 +76,30 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
 end
 
 function transferfunction_fmri(ω, derivatives, params, params_idx)
-    ∂f = derivatives[:∂f](params[params_idx[:evolpars]])
-    if ∂f isa Vector
-        ∂f = reshape(∂f, sqrt(length(∂f)), sqrt(length(∂f)))
-    end
+    ∂f = derivatives(params[params_idx[:dspars]])
+    idx_ds = deleteat!([1:size(∂f, 1);], sort(vcat(params_idx[:bold], params_idx[:u])))
+    ∂f∂x = ∂f[idx_ds, idx_ds]
+    ∂f∂u = ∂f[idx_ds, params_idx[:u]]
+    ∂g∂x = ∂f[params_idx[:bold], idx_ds]
 
-    dfdu = [0.0625  0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0625  0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0625
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0
-    0.0     0.0     0.0]
-
-    F = eigen(∂f)
+    F = eigen(∂f∂x)
     Λ = F.values
     V = F.vectors
 
-    ∂g = derivatives[:∂g](params[params_idx[:obspars]][1])
-    dgdv = ∂g*V
-    dvdu = V\dfdu          # u is external variable which we don't use right now. With external variable this would read V/dfdu
+    ∂g∂v = ∂g∂x*V
+    ∂v∂u = V\∂f∂u               # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
     nω = size(ω, 1)            # number of frequencies
-    ng = size(∂g, 1)           # number of outputs
-    nu = size(dvdu, 2)         # number of inputs
+    ng = size(∂g∂x, 1)         # number of outputs
+    nu = size(∂v∂u, 2)         # number of inputs
     nk = size(V, 2)            # number of modes
-    S = zeros(Complex{real(eltype(dvdu))}, nω, ng, nu)
+    S = zeros(Complex{real(eltype(∂v∂u))}, nω, ng, nu)
     for j = 1:nu
         for i = 1:ng
             for k = 1:nk
                 # transfer functions (FFT of kernel)
                 Sk = (1im*2*pi*ω .- Λ[k]).^-1
-                S[:,i,j] .+= dgdv[i,k]*dvdu[k,j]*Sk
+                S[:,i,j] .+= ∂g∂v[i,k]*∂v∂u[k,j]*Sk
             end
         end
     end
@@ -547,7 +531,7 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     return variationalbayes(y_csd, derivatives, freqs, V, p, priors, 128)
 end
 
-function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdsetup, priors, hyperpriors, params_idx)
+function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, params_idx)
     # compute cross-spectral density
     y = Matrix(data);
     nr = ncol(data);                     # number of regions
@@ -560,23 +544,10 @@ function setup_sDCM(data, stateevolutionmodel, observationmodel, initcond, csdse
     mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, ω, dt^-1);      # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
 
-    grad_full = function(grad, obsstates, obsidx, params, nr, ns)
-        tmp = zeros(typeof(params), nr, ns)
-        for i in 1:nr
-            tmp[i, obsidx[i]] = grad(vcat([1], obsstates[i]), params, t)[2:end] # [(length(obsstates[i])+1):-1:2] TODO: using the reverse will improve results but is wrong.
-        end
-        return tmp
-    end
-
-    jac_f = generate_jacobian(stateevolutionmodel, expression = Val{false})[1]
-    grad_g = generate_jacobian(observationmodel, expression = Val{false})[1]     # computes gradient since output is a scalar
+    jac_fg = generate_jacobian(stateevolutionmodel, expression = Val{false})[1]
 
     statevals = [v for v in values(initcond)]
-    # match states of observation model with different states of evolution model
-    obs = get_hemodynamic_observers(stateevolutionmodel, nr)
-    obsstates = Dict(map((v, k) -> k => [initcond[s] for s in v], values(obs[2]), keys(obs[2])))
-    derivatives = Dict(:∂f => par -> jac_f(statevals, addnontunableparams(par, stateevolutionmodel), t),
-                       :∂g => par -> grad_full(grad_g, obsstates, obs[1], par, nr, ns))
+    derivatives = par -> jac_fg(statevals, addnontunableparams(par, stateevolutionmodel), t)
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
@@ -634,10 +605,9 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (np, ny, nq, nh) = setup.systemnums
     (μθ_pr, μλ_pr) = setup.systemvecs
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
-    # Πθ_pr = deserialize("tmp.dat")[vcat(1:20, 24), :]' *Πθ_pr* deserialize("tmp.dat")[vcat(1:20, 24), :]
     Q = setup.Q
 
-    dfdp = jacobian(f, μθ_po)# * deserialize("tmp.dat")[vcat(1:20, 24), :]
+    dfdp = jacobian(f, μθ_po)
 
     norm_dfdp = matlab_norm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);

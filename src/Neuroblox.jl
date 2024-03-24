@@ -32,7 +32,7 @@ using Distributions
 
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
-                    AbstractODESystem
+                    AbstractODESystem, VariableTunable
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
@@ -224,15 +224,14 @@ export SynapticConnections, create_rl_loop
 export add_blox!
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export boldsignal, BalloonModel
 export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
-export addnontunableparams, get_hemodynamic_observers
-export get_weights
-export boldsignal_endo_balloon
+export addnontunableparams
+export get_weights, get_dynamic_states
+export BalloonModel, boldsignal_endo_balloon
 
 end
