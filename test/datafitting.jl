@@ -39,7 +39,7 @@ neuronmodel = structural_simplify(neuronmodel)
 
 # attribute initial conditions to states
 ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
-initcond = OrderedDict{typeof(ds_states[1]), eltype(x)}()
+initcond = OrderedDict(ds_states .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
 rnames = unique(rnames);

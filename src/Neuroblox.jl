@@ -14,6 +14,7 @@ ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
 using ChainRules: _eigen_norm_phase_fwd!
 
 using LinearAlgebra
+using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
