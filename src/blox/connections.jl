@@ -652,3 +652,64 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     as.competitor_states = [sys1.ρ_, sys2.ρ_] #HACK : accessing values of rho at a specific time after the simulation
     #as.competitor_params = [sys1.H, sys2.H]
 end
+
+# Connects spiking neuron to another spiking neuron
+# None of these neurons have delays yet
+function (bc::BloxConnector)(
+    bloxout::AbstractNeuronBlox, 
+    bloxin::AbstractNeuronBlox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    cr = "basic"
+    if haskey(kwargs, :connection_rule)
+        cr = deepcopy(kwargs[:connection_rule])
+    end
+
+    # Logic based on connection rule type
+    # Default is simply weight * activity
+    if isequal(cr, "basic")
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x*w
+    elseif isequal(cr, "psp")
+        eq = sys_in.jcn ~ w*sys_out.G*(sys_out.E_syn - sys_in.V)
+    else
+        error("Connection rule not recognized")
+    end
+    
+    accumulate_equation!(bc, eq)
+end
+
+# Connects a neural mass as a driving input to a spiking neuron
+function (bc::BloxConnector)(
+    bloxout::AbstractNeuronBlox, 
+    bloxin::NeuralMassBlox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    if typeof(bloxout.output) == Num
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x*w
+    else
+        @variables t
+        delay = get_delay(kwargs, nameof(bloxout), nameof(bloxin))
+        τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
+        τ = only(@parameters $(τ_name)=delay)
+        push!(bc.delays, τ)
+
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x(t-τ)*w
+    end
+    
+    accumulate_equation!(bc, eq)
+end

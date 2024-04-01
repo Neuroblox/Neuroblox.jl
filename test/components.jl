@@ -557,3 +557,17 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success 
 end
+
+@testset "LIFNeuron Network" begin
+    @named lif1 = LIFNeuron(I_in=1.0)
+    @named lif2 = LIFNeuron(I_in=0.1)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [lif1, lif2])
+    add_edge!(g, 1, 2, Dict(:weight => 1.0, :connection_rule => "psp"))
+    add_edge!(g, 2, 1, Dict(:weight => 0.5, :connection_rule => "psp"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success 
+end

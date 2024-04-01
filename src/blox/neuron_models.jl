@@ -287,10 +287,63 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	end
 end	
 
-	
+struct LIFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function LIFNeuron(;name,
+					   namespace=nothing, 
+					   C=1.0,
+					   Eₘ = -70.0,
+					   Rₘ = 100.0,
+					   τ₁=0.1,
+					   τ₂=10.0,
+					   τᵣ=3,
+					   θ = -50.0,
+					   E_syn=0,
+					   G_syn=0.2,
+					   I_in=0,
+					   freq=0,
+					   phase=0)
+		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ₁=τ₁, τ₂=τ₂, τᵣ=τᵣ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in, freq=freq, phase=phase)
+		C, Eₘ, Rₘ, τ₁, τ₂, τᵣ, θ, E_syn, G_syn, I_in, freq, phase = p
+		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 I_syn(t)=0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + I_syn)/(C+Cₜ),
+				D(G)~(-1/τ₂)*G + z,
+				D(z)~(-1/τ₁)*z,
+				D(Cₜ)~(-1/τᵣ)*Cₜ,
+				I_syn ~ jcn
+			  ]
+		ev = [V~θ] => [V~Eₘ,z~G_syn,Cₜ~10]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[6], sts[1], sys, namespace)
+	end
+end
 
 
+struct QIFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function QIFNeuron()
 
-	
+	end
+end
 
+struct IzhikevichNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function IzhikevichNeuron()
 
+	end
+end
