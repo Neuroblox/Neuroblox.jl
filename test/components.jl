@@ -571,3 +571,17 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success 
 end
+
+@testset "QIFNeuron Network" begin
+    @named qif1 = QIFNeuron(I_in=3.0)
+    @named qif2 = QIFNeuron(I_in=1.0)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [qif1, qif2])
+    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "psp"))
+    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 50.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end

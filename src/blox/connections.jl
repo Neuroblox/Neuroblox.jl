@@ -678,6 +678,7 @@ function (bc::BloxConnector)(
         eq = sys_in.jcn ~ x*w
     elseif isequal(cr, "psp")
         eq = sys_in.jcn ~ w*sys_out.G*(sys_out.E_syn - sys_in.V)
+        println(eq)
     else
         error("Connection rule not recognized")
     end
@@ -686,6 +687,7 @@ function (bc::BloxConnector)(
 end
 
 # Connects a neural mass as a driving input to a spiking neuron
+# UNTESTED YET
 function (bc::BloxConnector)(
     bloxout::AbstractNeuronBlox, 
     bloxin::NeuralMassBlox; 

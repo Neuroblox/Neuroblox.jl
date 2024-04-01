@@ -34,6 +34,7 @@ mutable struct QIFNeuronBlox <: AbstractNeuronBlox
 end
 
 # Leaky Integrate and Fire neuron with synaptic dynamics
+# Deprecated in favor of LIFNeuron below
 mutable struct IFNeuronBlox <: AbstractNeuronBlox
     # all parameters are Num as to allow symbolic expressions
     C::Num
@@ -331,8 +332,29 @@ struct QIFNeuron <: AbstractNeuronBlox
 	voltage
     odesystem
     namespace
-	function QIFNeuron()
-
+	function QIFNeuron(;name, 
+						namespace=nothing,
+						C=1.0,
+						ω=0.0,
+						E_syn=0.0,
+						G_syn=1.0, 
+						τ₁=10.0,
+						τ₂=10.0,
+						I_in=0.0, 
+						Eₘ=0.0,
+						Vᵣₑₛ=-70.0,
+						θ=25.0)
+		p = paramscoping(C=C, ω=ω, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
+		C, ω, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
+		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 I_syn(t)=0.0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ ((V-Eₘ)^2+I_in+I_syn)/C,
+		 		D(G)~(-1/τ₂)*G + z,
+	        	D(z)~(-1/τ₁)*z,
+				I_syn ~ jcn
+	    	  ]
+   		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[5], sts[1], sys, namespace)
 	end
 end
 
