@@ -288,6 +288,31 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	end
 end	
 
+struct IFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function IFNeuron(;name,
+					   namespace=nothing, 
+					   C=1.0,
+					   θ = -50.0,
+					   Eₘ= -70.0,
+					   I_in=0)
+		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
+		C, θ, Eₘ, I_in = p
+		sts = @variables V(t) = -70.00 I_syn(t)=0.0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ (I_in + I_syn)/C,
+				I_syn ~ jcn
+			  ]
+		ev = [V~θ] => [V~Eₘ]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[1], sts[3], sts[1], sys, namespace)
+	end
+end
+
 struct LIFNeuron <: AbstractNeuronBlox
 	params
     output
@@ -358,30 +383,35 @@ struct QIFNeuron <: AbstractNeuronBlox
 	end
 end
 
-struct IzhikevichNeuron <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
-    namespace
-	function IzhikevichNeuron(;name,
-							   namspace=nothing,
-							   α=0.02,
-							   η=0.2,
-							   a=0.02,
-							   b=0.2,
-							   θ=-65.0,
-							   vᵣ=-65.0,
-							   wⱼ=0.0,
-							   gₛ=0.5,
-							   eᵣ=-70.0,
-							   τ=10.0)
-		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
-		α, η, a, b, θ, vᵣ, wⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t) G(t) w(t) I_syn(t) jcn(t) [input=true]
-		eqs = [
-			
-		]
-	end
-end
+# This is largely the Chen and Campbell Izhikevich implementation, with synaptic dynamics adjusted to reflect the LIF/QIF implementations above
+# struct IzhikevichNeuron <: AbstractNeuronBlox
+# 	params
+#     output
+#     jcn
+# 	voltage
+#     odesystem
+#     namespace
+# 	function IzhikevichNeuron(;name,
+# 							   namspace=nothing,
+# 							   α=0.02,
+# 							   η=0.2,
+# 							   a=0.02,
+# 							   b=0.2,
+# 							   θ=-65.0,
+# 							   vᵣ=-65.0,
+# 							   wⱼ=0.0,
+# 							   gₛ=0.5,
+# 							   eᵣ=-70.0,
+# 							   τ=10.0)
+# 		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
+# 		α, η, a, b, θ, vᵣ, wⱼ, gₛ, eᵣ, τ = p
+# 		sts = @variables V(t) G(t) w(t) I_syn(t) jcn(t) [input=true]
+# 		eqs = [ D(V) ~ V*(V-α) - w + η + I_syn,
+# 				D(w) ~ a*(b*V - w),
+# 				D(G) ~ (-1/τ)*G + gₛ,
+# 				I_syn ~ jcn
+# 			  ]
+
+# 		]
+# 	end
+# end

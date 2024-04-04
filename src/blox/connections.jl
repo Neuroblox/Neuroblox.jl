@@ -668,17 +668,17 @@ function (bc::BloxConnector)(
 
     cr = "basic"
     if haskey(kwargs, :connection_rule)
-        cr = deepcopy(kwargs[:connection_rule])
+        cr = kwargs[:connection_rule]
     end
 
     # Logic based on connection rule type
     # Default is simply weight * activity
+    # Add get_connection_rules to utils
     if isequal(cr, "basic")
         x = namespace_expr(bloxout.output, sys_out)
         eq = sys_in.jcn ~ x*w
     elseif isequal(cr, "psp")
         eq = sys_in.jcn ~ w*sys_out.G*(sys_out.E_syn - sys_in.V)
-        println(eq)
     else
         error("Connection rule not recognized")
     end
