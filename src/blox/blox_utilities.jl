@@ -290,3 +290,12 @@ function addnontunableparams(paramlist, sys)
     append!(completeparamlist, paramlist[k+1:end])
     return completeparamlist
 end
+
+function get_connection_rule(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :connection_rule)
+        return kwargs[:connection_rule]
+    else
+        @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
+        return "basic"
+    end
+end

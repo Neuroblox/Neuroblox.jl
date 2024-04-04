@@ -384,34 +384,34 @@ struct QIFNeuron <: AbstractNeuronBlox
 end
 
 # This is largely the Chen and Campbell Izhikevich implementation, with synaptic dynamics adjusted to reflect the LIF/QIF implementations above
-# struct IzhikevichNeuron <: AbstractNeuronBlox
-# 	params
-#     output
-#     jcn
-# 	voltage
-#     odesystem
-#     namespace
-# 	function IzhikevichNeuron(;name,
-# 							   namspace=nothing,
-# 							   α=0.02,
-# 							   η=0.2,
-# 							   a=0.02,
-# 							   b=0.2,
-# 							   θ=-65.0,
-# 							   vᵣ=-65.0,
-# 							   wⱼ=0.0,
-# 							   gₛ=0.5,
-# 							   eᵣ=-70.0,
-# 							   τ=10.0)
-# 		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
-# 		α, η, a, b, θ, vᵣ, wⱼ, gₛ, eᵣ, τ = p
-# 		sts = @variables V(t) G(t) w(t) I_syn(t) jcn(t) [input=true]
-# 		eqs = [ D(V) ~ V*(V-α) - w + η + I_syn,
-# 				D(w) ~ a*(b*V - w),
-# 				D(G) ~ (-1/τ)*G + gₛ,
-# 				I_syn ~ jcn
-# 			  ]
+struct IzhikevichNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function IzhikevichNeuron(;name,
+							   namspace=nothing,
+							   α=0.02,
+							   η=0.2,
+							   a=0.02,
+							   b=0.2,
+							   θ=-65.0,
+							   vᵣ=-65.0,
+							   wⱼ=0.0,
+							   gₛ=0.5,
+							   eᵣ=-70.0,
+							   τ=10.0)
+		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
+		α, η, a, b, θ, vᵣ, wⱼ, gₛ, eᵣ, τ = p
+		sts = @variables V(t) G(t) w(t) I_syn(t) jcn(t) [input=true]
+		eqs = [ D(V) ~ V*(V-α) - w + η + I_syn,
+				D(w) ~ a*(b*V - w),
+				D(G) ~ (-1/τ)*G + gₛ,
+				I_syn ~ jcn
+			  ]
 
-# 		]
-# 	end
-# end
+		]
+	end
+end

@@ -666,14 +666,9 @@ function (bc::BloxConnector)(
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    cr = "basic"
-    if haskey(kwargs, :connection_rule)
-        cr = kwargs[:connection_rule]
-    end
+    cr = get_connection_rule(kwargs, nameof(bloxout), nameof(bloxin))
 
     # Logic based on connection rule type
-    # Default is simply weight * activity
-    # Add get_connection_rules to utils
     if isequal(cr, "basic")
         x = namespace_expr(bloxout.output, sys_out)
         eq = sys_in.jcn ~ x*w
@@ -687,7 +682,7 @@ function (bc::BloxConnector)(
 end
 
 # Connects a neural mass as a driving input to a spiking neuron
-# UNTESTED YET
+# Should be used with care because units will be strange (NMM typically outputs voltage but neuron inputs are typically currents)
 function (bc::BloxConnector)(
     bloxout::AbstractNeuronBlox, 
     bloxin::NeuralMassBlox; 
