@@ -558,7 +558,7 @@ end
     @test sol.retcode == ReturnCode.Success 
 end
 
-@testset "IFNeuron Network" begin
+@testset "IF Neuron Network" begin
     @named if1 = IFNeuron(I_in=3.0)
     @named if2 = IFNeuron(I_in=1.0)
     g = MetaDiGraph()
@@ -572,7 +572,7 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "LIFNeuron Network" begin
+@testset "LIF Neuron Network" begin
     @named lif1 = LIFNeuron(I_in=1.0)
     @named lif2 = LIFNeuron(I_in=0.1)
     g = MetaDiGraph()
@@ -586,7 +586,7 @@ end
     @test sol.retcode == ReturnCode.Success 
 end
 
-@testset "QIFNeuron Network" begin
+@testset "QIF Neuron Network" begin
     @named qif1 = QIFNeuron(I_in=3.0)
     @named qif2 = QIFNeuron(I_in=1.0)
     g = MetaDiGraph()
@@ -596,6 +596,20 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 50.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "Izhikeveich Neuron Network" begin
+    @named izh1 = IzhikevichNeuron()
+    @named izh2 = IzhikevichNeuron(η=0.14)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [izh1, izh2])
+    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
+    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "basic"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end

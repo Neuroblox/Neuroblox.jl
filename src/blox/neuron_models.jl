@@ -392,26 +392,29 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
     odesystem
     namespace
 	function IzhikevichNeuron(;name,
-							   namspace=nothing,
-							   α=0.02,
-							   η=0.2,
-							   a=0.02,
-							   b=0.2,
-							   θ=-65.0,
-							   vᵣ=-65.0,
-							   wⱼ=0.0,
-							   gₛ=0.5,
-							   eᵣ=-70.0,
-							   τ=10.0)
-		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
-		α, η, a, b, θ, vᵣ, wⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t) G(t) w(t) I_syn(t) jcn(t) [input=true]
+							   namespace=nothing,
+							   α=0.6215,
+							   η=0.12,
+							   a=0.0077,
+							   b=-0.0062,
+							   θ=200.0,
+							   vᵣ=-200.0,
+							   wⱼ=0.0189,
+							   sⱼ=1.2308,
+							   gₛ=1.2308,
+							   eᵣ=1.0,
+							   τ=2.6)
+		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
+		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
+		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 I_syn(t)=0.0 jcn(t)=0.0 [input=true]
 		eqs = [ D(V) ~ V*(V-α) - w + η + I_syn,
 				D(w) ~ a*(b*V - w),
-				D(G) ~ (-1/τ)*G + gₛ,
+				D(G) ~ (-1/τ)*G + z,
+				D(z) ~ (-1/τ)*z,
 				I_syn ~ jcn
 			  ]
-
-		]
+		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~sⱼ]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[6], sts[1], sys, namespace)
 	end
 end
