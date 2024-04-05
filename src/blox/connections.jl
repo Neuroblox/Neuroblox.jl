@@ -661,10 +661,14 @@ function (bc::BloxConnector)(
     kwargs...
 )
 
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    eq = get_connection_rule(kwargs, bloxout, bloxin, w)
+    cr = get_connection_rule(kwargs, bloxout, bloxin, w)
+    eq = sys_in.jcn ~ cr
     
     accumulate_equation!(bc, eq)
 end
