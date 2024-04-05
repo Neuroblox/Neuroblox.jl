@@ -356,6 +356,25 @@ function arguments(::Type{Neuroblox.HHNeuronInhibBlox}) #TODO: add correct setti
   )
 end
 
+function plotdetail(::Type{Neuroblox.QIFNeuron})
+  OrderedDict(:detail => ["V","G","z"], :nodetail => ["V"])
+end
+
+function arguments(::Type{Neuroblox.QIFNeuron}) #TODO: add correct settings for the arguments
+  OrderedDict(
+    :C => NCAD(1.0, NUMBER, 0.1, 100.0,[],true),
+    :ω => NCAD(0.0, NUMBER, 0.0, 100.0,[],true),
+    :E_syn => NCAD(0.0, NUMBER, -10, 10,[],true),
+    :G_syn => NCAD(1.0, NUMBER, 0.1, 5,[],true),
+    :τ₁ => NCAD(10.0, NUMBER, 1, 100,[],true),
+    :τ₂ => NCAD(10.0, NUMBER, 1, 100,[],true),
+    :I_in  => NCAD(0.0, NUMBER, -25, 25,[],true),
+    :Eₘ => NCAD(0.0, NUMBER, -10, 10,[],true),
+    :Vᵣₑₛ => NCAD(-70, NUMBER, -100, -55,[],true),
+	  :θ => NCAD(25, NUMBER, 0, 50,[],true)
+  )
+end
+
 function plotdetail(::Type{Neuroblox.HHNeuronInhibBlox})
   OrderedDict(:detail => ["V","n","m","h"], :nodetail => ["V"])
 end
