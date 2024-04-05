@@ -291,11 +291,28 @@ function addnontunableparams(paramlist, sys)
     return completeparamlist
 end
 
-function get_connection_rule(kwargs, name_blox1, name_blox2)
+function get_connection_rule(kwargs, bloxout, bloxin, w)
     if haskey(kwargs, :connection_rule)
-        return kwargs[:connection_rule]
+        cr = kwargs[:connection_rule]
     else
+        name_blox1 = nameof(bloxout)
+        name_blox1 = nameof(bloxin)
         @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
-        return "basic"
+        cr = "basic"
     end
+
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+     # Logic based on connection rule type
+     if isequal(cr, "basic")
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x*w
+    elseif isequal(cr, "psp")
+        eq = sys_in.jcn ~ w*sys_out.G*(sys_out.E_syn - sys_in.V)
+    else
+        error("Connection rule not recognized")
+    end
+
+    return eq
 end

@@ -660,23 +660,11 @@ function (bc::BloxConnector)(
     bloxin::AbstractNeuronBlox; 
     kwargs...
 )
-    sys_out = get_namespaced_sys(bloxout)
-    sys_in = get_namespaced_sys(bloxin)
 
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    cr = get_connection_rule(kwargs, nameof(bloxout), nameof(bloxin))
-
-    # Logic based on connection rule type
-    if isequal(cr, "basic")
-        x = namespace_expr(bloxout.output, sys_out)
-        eq = sys_in.jcn ~ x*w
-    elseif isequal(cr, "psp")
-        eq = sys_in.jcn ~ w*sys_out.G*(sys_out.E_syn - sys_in.V)
-    else
-        error("Connection rule not recognized")
-    end
+    eq = get_connection_rule(kwargs, bloxout, bloxin, w)
     
     accumulate_equation!(bc, eq)
 end
