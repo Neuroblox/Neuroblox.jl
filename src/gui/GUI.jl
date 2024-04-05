@@ -99,9 +99,9 @@ function arguments(::Type{Neuroblox.HarmonicOscillator})
   OrderedDict(
     #:measurement => NCAD("Measurement", MENU, 1 , 4 ,["none","fMRI", "EEG", "LFP"]),
     # MENU NCAD("title of menue", MENU, default, #ofoptions, list of options)
-    :ω => NCAD(25*(2*pi), NUMBER, (2*pi), 150*(2*pi),[],true),
+    :ω => NCAD(25*(2*pi)/1000, NUMBER, (2*pi)/1000, 150*(2*pi)/1000,[],true),
     :ζ => NCAD(1.0, NUMBER, -1.0, 1.0,[],true),
-    :k => NCAD(625*(2*pi), NUMBER, (2*pi), 22500*(2*pi),[],true),
+    :k => NCAD(625*(2*pi)/1000, NUMBER, (2*pi), 22500*(2*pi)/1000,[],true),
     :h => NCAD(35.0, NUMBER, 0.01, 90.0,[],true)
   )
 end
@@ -112,8 +112,8 @@ end
 
 function arguments(::Type{Neuroblox.JansenRit})
   OrderedDict(
-    :τ => NCAD(0.014, NUMBER, 0.001, 0.1,[],true),
-    :H => NCAD(20.0, NUMBER, 0.0, 500.0,[],true),
+    :τ => NCAD(1, NUMBER, 1, 14,[],true),
+    :H => NCAD(20.0, NUMBER, 0.0, 0.5,[],true),
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[],true),
     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[],true)
   )
@@ -317,6 +317,17 @@ function arguments(::Type{Neuroblox.GreedyPolicy})
   OrderedDict(
     :t_decision => NCAD(300.0, NUMBER, 0.1, 1000.0,[],true)
   )
+end
+
+function arguments(::Type{Neuroblox.TAN})
+  OrderedDict(
+    :κ => NCAD(100, NUMBER, 0.1, 200,[],true),
+    :λ => NCAD(1, NUMBER, 0.1, 2,[],true)
+  )
+end
+
+function plotdetail(::Type{Neuroblox.TAN})
+  OrderedDict(:mean => "R", :detail => ["R"])
 end
 
 function arguments(::Type{Neuroblox.HHNeuronExciBlox}) #TODO: add correct settings for the arguments
