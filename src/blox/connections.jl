@@ -652,3 +652,53 @@ function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome
     as.competitor_states = [sys1.ρ_, sys2.ρ_] #HACK : accessing values of rho at a specific time after the simulation
     #as.competitor_params = [sys1.H, sys2.H]
 end
+
+# Connects spiking neuron to another spiking neuron
+# None of these neurons have delays yet
+function (bc::BloxConnector)(
+    bloxout::AbstractNeuronBlox, 
+    bloxin::AbstractNeuronBlox; 
+    kwargs...
+)
+
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    cr = get_connection_rule(kwargs, bloxout, bloxin, w)
+    eq = sys_in.jcn ~ cr
+    
+    accumulate_equation!(bc, eq)
+end
+
+# Connects a neural mass as a driving input to a spiking neuron
+# Should be used with care because units will be strange (NMM typically outputs voltage but neuron inputs are typically currents)
+function (bc::BloxConnector)(
+    bloxout::AbstractNeuronBlox, 
+    bloxin::NeuralMassBlox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    if typeof(bloxout.output) == Num
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x*w
+    else
+        @variables t
+        delay = get_delay(kwargs, nameof(bloxout), nameof(bloxin))
+        τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
+        τ = only(@parameters $(τ_name)=delay)
+        push!(bc.delays, τ)
+
+        x = namespace_expr(bloxout.output, sys_out)
+        eq = sys_in.jcn ~ x(t-τ)*w
+    end
+    
+    accumulate_equation!(bc, eq)
+end

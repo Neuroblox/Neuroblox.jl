@@ -34,6 +34,7 @@ mutable struct QIFNeuronBlox <: AbstractNeuronBlox
 end
 
 # Leaky Integrate and Fire neuron with synaptic dynamics
+# Deprecated in favor of LIFNeuron below
 mutable struct IFNeuronBlox <: AbstractNeuronBlox
     # all parameters are Num as to allow symbolic expressions
     C::Num
@@ -287,10 +288,168 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	end
 end	
 
-	
+# Paramater bounds for GUI
+# C = [0.1, 100]
+# θ = [-65, -45]
+# Eₘ = [-100, -55] - If Eₘ >= θ obvious instability
+# I_in = [-25, 25]
+struct IFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function IFNeuron(;name,
+					   namespace=nothing, 
+					   C=1.0,
+					   θ = -50.0,
+					   Eₘ= -70.0,
+					   I_in=0)
+		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
+		C, θ, Eₘ, I_in = p
+		sts = @variables V(t) = -70.00 jcn(t)=0.0 [input=true]
+		eqs = [D(V) ~ (I_in + jcn)/C]
+		ev = [V~θ] => [V~Eₘ]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[1], sts[2], sts[1], sys, namespace)
+	end
+end
 
+# Paramater bounds for GUI
+# C = [0.1, 100]
+# Eₘ = [-100, -55]
+# Rₘ = [50, 200]
+# τ₁ = [0.01, 1]
+# τ₂ = [1.0, 10.0]
+# τᵣ = [1, 10]
+# θ = [-65, -45]
+# E_syn = [-10, 10]
+# G_syn = [0.1, 1]
+# I_in = [-25, 25]
+# freq = [0, 100]
+# phase = [0, 2π]
+struct LIFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function LIFNeuron(;name,
+					   namespace=nothing, 
+					   C=1.0,
+					   Eₘ = -70.0,
+					   Rₘ = 100.0,
+					   τ₁=0.1,
+					   τ₂=10.0,
+					   τᵣ=3,
+					   θ = -50.0,
+					   E_syn=0,
+					   G_syn=0.2,
+					   I_in=0,
+					   freq=0,
+					   phase=0)
+		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ₁=τ₁, τ₂=τ₂, τᵣ=τᵣ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in, freq=freq, phase=phase)
+		C, Eₘ, Rₘ, τ₁, τ₂, τᵣ, θ, E_syn, G_syn, I_in, freq, phase = p
+		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + jcn)/(C+Cₜ),
+				D(G)~(-1/τ₂)*G + z,
+				D(z)~(-1/τ₁)*z,
+				D(Cₜ)~(-1/τᵣ)*Cₜ
+			  ]
+		ev = [V~θ] => [V~Eₘ,z~G_syn,Cₜ~10]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[5], sts[1], sys, namespace)
+	end
+end
 
+# Paramater bounds for GUI
+# C = [0.1, 100]
+# ω = [0, 100]
+# E_syn = [-10, 10]
+# G_syn = [0.1, 1]
+# τ₁ = [1, 100]
+# τ₂ = [1, 100]
+# I_in = [-25, 25]
+# Eₘ = [-10, 10]
+# Vᵣₑₛ = [-100, -55]
+# θ = [0, 50]
 
-	
-
-
+struct QIFNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function QIFNeuron(;name, 
+						namespace=nothing,
+						C=1.0,
+						ω=0.0,
+						E_syn=0.0,
+						G_syn=1.0, 
+						τ₁=10.0,
+						τ₂=10.0,
+						I_in=0.0, 
+						Eₘ=0.0,
+						Vᵣₑₛ=-70.0,
+						θ=25.0)
+		p = paramscoping(C=C, ω=ω, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
+		C, ω, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
+		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ ((V-Eₘ)^2+I_in+jcn)/C,
+		 		D(G)~(-1/τ₂)*G + z,
+	        	D(z)~(-1/τ₁)*z
+	    	  ]
+   		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[4], sts[1], sys, namespace)
+	end
+end
+# Paramater bounds for GUI
+# α = [0.1, 1]
+# η = [0, 1]
+# a = [0.001, 0.5]
+# b = [-0.01, 0.01]
+# θ = [50, 250]
+# vᵣ = [-250, -50]
+# wⱼ = [0.001, 0.1]
+# sⱼ = [0.5, 10]
+# gₛ = [0.5, 10]
+# eᵣ = [0.5, 10]
+# τ = [1, 10]
+# This is largely the Chen and Campbell Izhikevich implementation, with synaptic dynamics adjusted to reflect the LIF/QIF implementations above
+struct IzhikevichNeuron <: AbstractNeuronBlox
+	params
+    output
+    jcn
+	voltage
+    odesystem
+    namespace
+	function IzhikevichNeuron(;name,
+							   namespace=nothing,
+							   α=0.6215,
+							   η=0.12,
+							   a=0.0077,
+							   b=-0.0062,
+							   θ=200.0,
+							   vᵣ=-200.0,
+							   wⱼ=0.0189,
+							   sⱼ=1.2308,
+							   gₛ=1.2308,
+							   eᵣ=1.0,
+							   τ=2.6)
+		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
+		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
+		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
+				D(w) ~ a*(b*V - w),
+				D(G) ~ (-1/τ)*G + z,
+				D(z) ~ (-1/τ)*z
+			  ]
+		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~sⱼ]
+		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		new(p, sts[2], sts[5], sts[1], sys, namespace)
+	end
+end

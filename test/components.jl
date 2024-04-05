@@ -557,3 +557,59 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success 
 end
+
+@testset "IF Neuron Network" begin
+    @named if1 = IFNeuron(I_in=3.0)
+    @named if2 = IFNeuron(I_in=1.0)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [if1, if2])
+    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
+    add_edge!(g, 2, 1, Dict(:weight => -1.0, :connection_rule => "basic"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 10.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "LIF Neuron Network" begin
+    @named lif1 = LIFNeuron(I_in=1.0)
+    @named lif2 = LIFNeuron(I_in=0.1)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [lif1, lif2])
+    add_edge!(g, 1, 2, Dict(:weight => 1.0, :connection_rule => "psp"))
+    add_edge!(g, 2, 1, Dict(:weight => 0.5, :connection_rule => "psp"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success 
+end
+
+@testset "QIF Neuron Network" begin
+    @named qif1 = QIFNeuron(I_in=3.0)
+    @named qif2 = QIFNeuron(I_in=1.0)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [qif1, qif2])
+    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "psp"))
+    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 50.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "Izhikeveich Neuron Network" begin
+    @named izh1 = IzhikevichNeuron()
+    @named izh2 = IzhikevichNeuron(η=0.14)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [izh1, izh2])
+    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
+    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "basic"))
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
