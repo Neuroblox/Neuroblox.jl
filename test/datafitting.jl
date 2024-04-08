@@ -6,7 +6,7 @@ vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
 data = DataFrame(vars["data"], :auto)   # turn data into DataFrame
 x = vars["x"]                           # initial conditions
 nrr = ncol(data)                         # number of recorded regions
-max_iter = 126
+max_iter = 128
 ########## assemble the model ##########
 
 g = MetaDiGraph()

@@ -17,27 +17,27 @@ tagtype(::Dual{T,V,N}) where {T,V,N} = T
 
 # struct types for Variational Laplace
 mutable struct VLState
-    iter::Int
-    v::Float64             # log ascent rate
-    F::Vector{Float64}
-    dF::Vector{Float64}
-    λ::Vector{Float64}
-    ϵ_θ::Vector{Float64}
-    reset_state::Vector{Any}
-    μθ_po::Vector{Float64}
-    Σθ_po::Matrix{Float64}
-    dFdθ::Vector{Float64}
-    dFdθθ::Matrix{Float64}
+    iter::Int                    # number of iteration
+    v::Float64                   # log ascent rate of SPM style Levenberg-Marquardt optimization
+    F::Vector{Float64}           # free energy vector (store at each iteration)
+    dF::Vector{Float64}          # predicted free energy changes (store at each iteration)
+    λ::Vector{Float64}           # hyperparameter
+    ϵ_θ::Vector{Float64}         # prediction error of parameters θ
+    reset_state::Vector{Any}     # store state to reset to [ϵ_θ and λ] when the free energy deteriorates
+    μθ_po::Vector{Float64}       # posterior expectation value of parameters 
+    Σθ_po::Matrix{Float64}       # posterior covariance matrix of parameters
+    dFdθ::Vector{Float64}        # free energy gradient w.r.t. parameters
+    dFdθθ::Matrix{Float64}       # free energy Hessian w.r.t. parameters
 end
 
 struct VLSetup
-    model_at_x0
-    y_csd::Array{Complex}
-    tolerance::Float64
-    systemnums::Vector{Int}
-    systemvecs::Vector{Vector{Float64}}
-    systemmatrices::Vector{Matrix{Float64}}
-    Q::Matrix{Complex}
+    model_at_x0                               # model evaluated at initial conditions
+    y_csd::Array{Complex}                     # cross-spectral density approximated by fitting MARs to data
+    tolerance::Float64                        # convergence criterion
+    systemnums::Vector{Int}                   # several integers -> np: n. parameters, ny: n. datapoints, nq: n. Q matrices, nh: n. hyperparameters
+    systemvecs::Vector{Vector{Float64}}       # μθ_pr: prior expectation values of parameters and μλ_pr: prior expectation values of hyperparameters
+    systemmatrices::Vector{Matrix{Float64}}   # Πθ_pr: prior precision matrix of parameters, Πλ_pr: prior precision matrix of hyperparameters
+    Q::Matrix{Complex}                        # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
 end
 
 """
@@ -669,7 +669,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
             μθ_po = μθ_pr + ϵ_θ
 
-            dfdp = jacobian(f, μθ_po) #* deserialize("tmp.dat")[vcat(1:20, 24), :]
+            dfdp = jacobian(f, μθ_po)
 
             # check for stability
             norm_dfdp = matlab_norm(dfdp, Inf);
