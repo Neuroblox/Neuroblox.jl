@@ -15,6 +15,31 @@ variationalbayes : main routine that computes the variational Bayes estimate of 
 
 tagtype(::Dual{T,V,N}) where {T,V,N} = T
 
+# struct types for Variational Laplace
+mutable struct VLState
+    iter::Int
+    v::Float64             # log ascent rate
+    F::Vector{Float64}
+    dF::Vector{Float64}
+    λ::Vector{Float64}
+    ϵ_θ::Vector{Float64}
+    reset_state::Vector{Any}
+    μθ_po::Vector{Float64}
+    Σθ_po::Matrix{Float64}
+    dFdθ::Vector{Float64}
+    dFdθθ::Matrix{Float64}
+end
+
+struct VLSetup
+    model_at_x0
+    y_csd::Array{Complex}
+    tolerance::Float64
+    systemnums::Vector{Int}
+    systemvecs::Vector{Vector{Float64}}
+    systemmatrices::Vector{Matrix{Float64}}
+    Q::Matrix{Complex}
+end
+
 """
     function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     
@@ -531,35 +556,52 @@ function spectralVI(data, neuraldynmodel, observationmodel, initcond, csdsetup, 
     return variationalbayes(y_csd, derivatives, freqs, V, p, priors, 128)
 end
 
-function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, params_idx)
+"""
+    function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, params_idx)
+
+    Interface function to performs variational inference to fit model parameters to empirical cross spectral density.
+    The current implementation provides a Variational Laplace fit (see function above `variationalbayes`).
+
+    Arguments:
+    - `data`        : dataframe with column names corresponding to the regions of measurement.
+    - `model`       : MTK model, including state evolution and measurement.
+    - `initcond`    : dictionary of initial conditions, numerical values for all states
+    - `csdsetup`    : dictionary of parameters required for the computation of the cross spectral density
+    -- `dt`         : sampling interval
+    -- `freq`       : frequencies at which to evaluate the CSD
+    -- `p`          : order parameter of the multivariate autoregression model
+    - `priors`      : dataframe of parameters with the following columns:
+    -- `name`       : corresponds to MTK model name
+    -- `mean`       : corresponds to prior mean value
+    -- `variance`   : corresponds to the prior variances
+    - `hyperpriors` : dataframe of parameters with the following columns:
+    -- `Πλ_pr`      : prior precision matrix for λ hyperparameter(s)
+    -- `μλ_pr`      : prior mean(s) for λ hyperparameter(s)
+    - `params_idx`  : indices to separate model parameters from other parameters. Needed for the computation of AD gradient.
+"""
+function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params_idx)
     # compute cross-spectral density
-    y = Matrix(data);
-    nr = ncol(data);                     # number of regions
-    sts = states(stateevolutionmodel)    # variables of model
-    ns = length(sts)                     # number of states in total
+    dt = csdsetup[:dt];              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
+    ω = csdsetup[:freq];             # frequencies at which the CSD is evaluated
+    p = csdsetup[:p];                # order of MAR
+    mar = mar_ml(Matrix(data), p);   # compute MAR from time series y and model order p
+    y_csd = mar2csd(mar, ω, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
 
-    dt = csdsetup[:dt];                  # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
-    ω = csdsetup[:freq];                 # frequencies at which the CSD is evaluated
-    p = csdsetup[:p];                    # order of MAR
-    mar = mar_ml(y, p);                  # compute MAR from time series y and model order p
-    y_csd = mar2csd(mar, ω, dt^-1);      # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-
-    jac_fg = generate_jacobian(stateevolutionmodel, expression = Val{false})[1]
+    jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
-    derivatives = par -> jac_fg(statevals, addnontunableparams(par, stateevolutionmodel), t)
+    derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
     μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
 
     ### Collect prior means and covariances ###
-    Q = csd_Q(y_csd);                 # compute prior of Q, the precision (of the data) components. See Friston etal. 2007 Appendix A
+    Q = csd_Q(y_csd);                 # compute functional connectivity prior Q. See Friston etal. 2007 Appendix A
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
 
     f = params -> csd_fmri_mtf(ω, p, derivatives, params, params_idx)
 
-    # dfdp = zeros(ComplexF64, length(ω)*nd^2, np)
     np = length(μθ_pr)     # number of parameters
     ny = length(y_csd)     # total number of response variables
 
@@ -584,9 +626,9 @@ function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyper
         y_csd,                # empirical cross-spectral density
         1e-1,                 # tolerance
         [np, ny, nq, nh],     # number of parameters, number of data points, number of Qs, number of hyperparameters
-        [μθ_pr, hyperpriors[:μλ_pr]],            # parameter and hyperparameter prior mean
+        [μθ_pr, hyperpriors[:μλ_pr]],          # parameter and hyperparameter prior mean
         [inv(Σθ_pr), hyperpriors[:Πλ_pr]],     # parameter and hyperparameter prior precision matrices
-        Q                                   # components of data precision matrix
+        Q                                      # components of data precision matrix
     )
     return (vlstate, vlsetup)
 end
