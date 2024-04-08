@@ -6,18 +6,18 @@ vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
 data = DataFrame(vars["data"], :auto)   # turn data into DataFrame
 x = vars["x"]                           # initial conditions
 nrr = ncol(data)                         # number of recorded regions
-max_iter = 126
+max_iter = 128
 ########## assemble the model ##########
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters κ=0.0 [tunable = true] ϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
     regions[ii] = 2ii - 1    # store index of neural mass model
     # add hemodynamic observer
-    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ, lnϵ=ϵ)
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
     add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
@@ -39,7 +39,7 @@ neuronmodel = structural_simplify(neuronmodel)
 
 # attribute initial conditions to states
 ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
-initcond = OrderedDict{typeof(ds_states[1]), eltype(x)}()
+initcond = OrderedDict(ds_states .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
 rnames = unique(rnames);
