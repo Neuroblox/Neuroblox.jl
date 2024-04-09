@@ -570,3 +570,23 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
+
+@testset "Single Block - Doesn't Work" begin
+    @named solo = JansenRit()
+    g = MetaDiGraph()
+    add_blox!(g, solo)
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "Single Block - Works" begin
+    @named solo = JansenRit()
+    sys = solo.odesystem
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
