@@ -3,24 +3,27 @@ using MAT
 
 ### Load data ###
 vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
-data = DataFrame(vars["data"], :auto)   # turn data into DataFrame
-x = vars["x"]                           # initial conditions
+data = DataFrame(vars["data"], :auto)    # turn data into DataFrame
+x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
 max_iter = 128
 ########## assemble the model ##########
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=0.0625 [tunable = false]
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
-    regions[ii] = 2ii - 1    # store index of neural mass model
+    regions[ii] = nv(g)    # store index of neural mass model
+    taskinput = ExternalInput(;name=Symbol("r$(ii)₊ei"), I=1.0)
+    add_blox!(g, taskinput)
+    add_edge!(g, nv(g), nv(g) - 1, Dict(:weight => C))
     # add hemodynamic observer
     observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
-    add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
+    add_edge!(g, nv(g) - 2, nv(g), Dict(:weight => 1.0))
 end
 
 # add symbolic weights
