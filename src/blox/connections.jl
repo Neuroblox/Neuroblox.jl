@@ -293,6 +293,30 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+# additional dispatch to connect to a stimulus blox, first crafted for ExternalInput
+function (bc::BloxConnector)(
+    bloxout::StimulusBlox,
+    bloxin::NeuralMassBlox;
+    weight=1
+)
+
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
+    if typeof(weight) == Num # Symbol
+        w = weight
+    else
+        w = only(@parameters $(w_name)=weight)
+    end    
+    push!(bc.weights, w)
+    Main.foo[] = sys_out, bloxout.output
+    x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
+    eq = sys_in.jcn ~ x*w
+
+    accumulate_equation!(bc, eq)
+end
+
 # # Ok yes this is a bad dispatch but the whole compound blocks implementation is hacky and needs fixing @@
 # # Opening an issue to loop back to this during clean up week
 # function (bc::BloxConnector)(

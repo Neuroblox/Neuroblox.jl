@@ -1,5 +1,18 @@
 @parameters t
 
+# Simple input blox
+mutable struct ExternalInput <: StimulusBlox
+    namespace
+    output::Num
+    odesystem::ODESystem
+    function ExternalInput(;name, I=1.0, namespace=nothing)
+        sts = @variables u(t) [irreducible=true, description="ext_input"]
+        eqs = [u ~ I]
+        odesys = System(eqs, t, sts, []; name=name)
+        new(namespace, sts[1], odesys)
+    end
+end
+
 #CosineSource
 mutable struct CosineSource	
     f::Num
