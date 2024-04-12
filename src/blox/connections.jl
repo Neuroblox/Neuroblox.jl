@@ -310,7 +310,7 @@ function (bc::BloxConnector)(
         w = only(@parameters $(w_name)=weight)
     end    
     push!(bc.weights, w)
-    Main.foo[] = sys_out, bloxout.output
+
     x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
     eq = sys_in.jcn ~ x*w
 

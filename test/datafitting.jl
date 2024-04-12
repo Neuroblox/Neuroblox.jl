@@ -11,7 +11,7 @@ max_iter = 128
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters κ=0.0 [tunable = true] ϵ=0.0 [tunable=true] C=0.0625 [tunable = false]
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=0.0625 [tunable = false]
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
