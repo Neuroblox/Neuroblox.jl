@@ -11,7 +11,7 @@ max_iter = 128
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=0.0625 [tunable = false]
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=1/16 [tunable = false]
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
@@ -76,7 +76,7 @@ params_idx[:bold] = idx_bold
 # define prior variances
 paramvariance = copy(modelparam)
 paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
-paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0; 
+paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0;
 paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
 for (k, v) in paramvariance
     if occursin("A[", string(k))
@@ -98,7 +98,7 @@ hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter p
 csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
 
 (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
-for iter in 1:128
+for iter in 1:max_iter
     state.iter = iter
     run_sDCM_iteration!(state, setup)
     print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
