@@ -6,7 +6,7 @@ vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
 data = DataFrame(vars["data"], :auto)    # turn data into DataFrame
 x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
-max_iter = 126
+max_iter = 128
 ########## assemble the model ##########
 
 g = MetaDiGraph()
@@ -20,7 +20,7 @@ for ii = 1:nrr
     add_blox!(g, taskinput)
     add_edge!(g, nv(g), nv(g) - 1, Dict(:weight => C))
     # add hemodynamic observer
-    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=κ, lnϵ=ϵ)
+    observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
     add_edge!(g, nv(g) - 2, nv(g), Dict(:weight => 1.0))
@@ -42,7 +42,7 @@ neuronmodel = structural_simplify(neuronmodel)
 
 # attribute initial conditions to states
 ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
-initcond = OrderedDict{typeof(ds_states[1]), eltype(x)}()
+initcond = OrderedDict(ds_states .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
 rnames = unique(rnames);
