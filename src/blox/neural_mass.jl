@@ -229,7 +229,7 @@ struct JansenRit <: NeuralMassBlox
 end
 
 """
-    WilsonCown(name, namespace, τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
+    WilsonCowan(name, namespace, τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
 
     Create a standard Wilson Cowan blox.
     The formal definition of this blox is:

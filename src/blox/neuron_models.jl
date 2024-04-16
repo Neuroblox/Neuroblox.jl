@@ -167,11 +167,34 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 	end
 end	
 
+"""
+    IFNeuron(name, namespace, C, θ, Eₘ, I_in)
+
+    Create a basic integrate-and-fire neuron.
+    This follows Lapicque's equation (see Abbott [1], with parameters chosen to match the LIF/QIF neurons implemented as well):
+
+```math
+\\frac{dV}{dt} = \\frac{I_{in} + jcn}{C}
+```
+where ``jcn`` is any input to the blox.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- C: Membrane capicitance (μF).
+- θ: Threshold voltage (mV).
+- Eₘ: Resting membrane potential (mV).
+- I_in: External current input (μA).
+
+References:
+1. Abbott, L. Lapicque's introduction of the integrate-and-fire model neuron (1907). Brain Res Bull 50, 303-304 (1999).
+"""
+
 # Paramater bounds for GUI
-# C = [0.1, 100]
-# θ = [-65, -45]
-# Eₘ = [-100, -55] - If Eₘ >= θ obvious instability
-# I_in = [-25, 25]
+# C = [0.1, 100] μF
+# θ = [-65, -45] mV
+# Eₘ = [-100, -55] mV - If Eₘ >= θ obvious instability
+# I_in = [-2.5, 2.5] μA
 struct IFNeuron <: AbstractNeuronBlox
 	params
     output
@@ -196,18 +219,90 @@ struct IFNeuron <: AbstractNeuronBlox
 end
 
 # Paramater bounds for GUI
-# C = [0.1, 100]
-# Eₘ = [-100, -55]
-# Rₘ = [50, 200]
-# τ₁ = [0.01, 1]
-# τ₂ = [1.0, 10.0]
-# τᵣ = [1, 10]
-# θ = [-65, -45]
+# C = [0.1, 100] μF
+# Eₘ = [-100, -55] mV
+# Rₘ = [50, 200] Ω
+# τ₁ = [0.01, 1] ms
+# τ₂ = [1.0, 10.0] ms
+# τᵣ = [1, 10] ms
+# θ = [-65, -45] mV
 # E_syn = [-10, 10]
 # G_syn = [0.1, 1]
-# I_in = [-25, 25]
+# I_in = [-2.0, 2.0] mA
 # freq = [0, 100]
 # phase = [0, 2π]
+# struct LIFNeuron <: AbstractNeuronBlox
+# 	params
+#     output
+#     jcn
+# 	voltage
+#     odesystem
+#     namespace
+# 	function LIFNeuron(;name,
+# 					   namespace=nothing, 
+# 					   C=1.0,
+# 					   Eₘ = -70.0,
+# 					   Rₘ = 100.0,
+# 					   τ₁=0.1,
+# 					   τ₂=10.0,
+# 					   τᵣ=3,
+# 					   θ = -50.0,
+# 					   E_syn=0,
+# 					   G_syn=0.2,
+# 					   I_in=0,
+# 					   freq=0,
+# 					   phase=0)
+# 		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ₁=τ₁, τ₂=τ₂, τᵣ=τᵣ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in, freq=freq, phase=phase)
+# 		C, Eₘ, Rₘ, τ₁, τ₂, τᵣ, θ, E_syn, G_syn, I_in, freq, phase = p
+# 		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 jcn(t)=0.0 [input=true]
+# 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + jcn)/(C+Cₜ),
+# 				D(G)~(-1/τ₂)*G + z,
+# 				D(z)~(-1/τ₁)*z,
+# 				D(Cₜ)~(-1/τᵣ)*Cₜ
+# 			  ]
+# 		ev = [V~θ] => [V~Eₘ, z~G_syn,Cₜ~10]
+# 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+# 		new(p, sts[2], sts[5], sts[1], sys, namespace)
+# 	end
+# end
+
+
+"""
+    LIFNeuron(name, namespace, C, θ, Eₘ, I_in)
+
+    Create a leaky integrate-and-fire neuron.
+    This largely follows the formalism and parameters given in Chapter 8 of Sterratt et al. [1], with the following equations:
+
+```math
+\\frac{dV}{dt} = \\frac{\\frac{-(V-E_m)}{R_m} + I_{in} + jcn}{C}
+\\frac{dG}{dt} = -\\frac{1}{\\tau}G
+```
+
+where ``jcn`` is any synaptic input to the blox (presumably a current G from another neuron).
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- C: Membrane capicitance (μF).
+- Eₘ: Resting membrane potential (mV).
+- Rₘ: Membrane resistance (kΩ).
+- τ: Synaptic time constant (ms).
+- θ: Threshold voltage (mV).
+- E_syn: Synaptic reversal potential (mV).
+- G_syn: Synaptic conductance (μA/mV).
+- I_in: External current input (μA).
+
+References:
+1. Sterratt, D., Graham, B., Gillies, A., & Willshaw, D. (2011). Principles of Computational Modelling in Neuroscience. Cambridge University Press.
+"""
+# C = [1.0, 10.0] μF
+# Eₘ = [-100, -55] mV
+# Rₘ = [1, 100] kΩ
+# τ = [1.0, 100.0] ms
+# θ = [-65, -45] mV
+# E_syn = [-100, -55] mV
+# G_syn = [0.001, 0.01] μA/mV (bastardized μS - off by factor of 1000)
+# I_in = [-2.5, 2.5] μA (you will cook real neurons with these currents)
 struct LIFNeuron <: AbstractNeuronBlox
 	params
     output
@@ -219,25 +314,20 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   namespace=nothing, 
 					   C=1.0,
 					   Eₘ = -70.0,
-					   Rₘ = 100.0,
-					   τ₁=0.1,
-					   τ₂=10.0,
-					   τᵣ=3,
+					   Rₘ = 10.0,
+					   τ = 10.0,
 					   θ = -50.0,
-					   E_syn=0,
-					   G_syn=0.2,
-					   I_in=0,
-					   freq=0,
-					   phase=0)
-		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ₁=τ₁, τ₂=τ₂, τᵣ=τᵣ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in, freq=freq, phase=phase)
-		C, Eₘ, Rₘ, τ₁, τ₂, τᵣ, θ, E_syn, G_syn, I_in, freq, phase = p
+					   E_syn=-70.0,
+					   G_syn=0.002,
+					   I_in=0.0)
+		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
+		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
 		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 jcn(t)=0.0 [input=true]
-		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in*(sin((t*freq*2*pi/1000)+phase)+1) + jcn)/(C+Cₜ),
-				D(G)~(-1/τ₂)*G + z,
-				D(z)~(-1/τ₁)*z,
-				D(Cₜ)~(-1/τᵣ)*Cₜ
+		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
+				D(G)~(-1/τ)*G,
 			  ]
-		ev = [V~θ] => [V~Eₘ,z~G_syn,Cₜ~10]
+
+		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
 		new(p, sts[2], sts[5], sts[1], sys, namespace)
 	end
@@ -286,6 +376,7 @@ struct QIFNeuron <: AbstractNeuronBlox
 		new(p, sts[2], sts[4], sts[1], sys, namespace)
 	end
 end
+
 # Paramater bounds for GUI
 # α = [0.1, 1]
 # η = [0, 1]
