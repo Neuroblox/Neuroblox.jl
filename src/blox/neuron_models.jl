@@ -195,6 +195,7 @@ References:
 # θ = [-65, -45] mV
 # Eₘ = [-100, -55] mV - If Eₘ >= θ obvious instability
 # I_in = [-2.5, 2.5] μA
+# Remember: synaptic weights need to be in μA/mV, so they're very small!
 struct IFNeuron <: AbstractNeuronBlox
 	params
     output

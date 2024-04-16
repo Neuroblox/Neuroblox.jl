@@ -516,15 +516,15 @@ end
 end
 
 @testset "IF Neuron Network" begin
-    @named if1 = IFNeuron(I_in=3.0)
-    @named if2 = IFNeuron(I_in=1.0)
+    @named if1 = IFNeuron(I_in=2.5)
+    @named if2 = IFNeuron(I_in=1.5)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [if1, if2])
-    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
-    add_edge!(g, 2, 1, Dict(:weight => -1.0, :connection_rule => "basic"))
+    add_edge!(g, 1, 2, Dict(:weight => -0.008, :connection_rule => "basic"))
+    add_edge!(g, 2, 1, Dict(:weight => -0.007, :connection_rule => "basic"))
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 10.0))
+    prob = ODEProblem(sys_simpl, [], (0, 100.0))
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
