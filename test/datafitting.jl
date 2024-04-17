@@ -41,14 +41,15 @@ end
 neuronmodel = structural_simplify(neuronmodel; split=false)
 
 # attribute initial conditions to states
-ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
-initcond = OrderedDict(ds_states .=> 0.0)
-
+sts, idx_sts = get_dynamic_states(neuronmodel)
+idx_u = get_idx_tagged_vars(neuronmodel, "ext_input")         # get index of external input state
+idx_bold = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+initcond = OrderedDict(sts .=> 0.0)
 rnames = []
-map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
+map(x->push!(rnames, split(string(x), "₊")[1]), sts);
 rnames = unique(rnames);
 for (i, r) in enumerate(rnames)
-    for (j, s) in enumerate(ds_states[r .== map(x -> x[1], split.(string.(ds_states), "₊"))])
+    for (j, s) in enumerate(sts[r .== map(x -> x[1], split.(string.(sts), "₊"))])
         initcond[s] = x[i, j]
     end
 end
@@ -58,22 +59,22 @@ for par in tunable_parameters(neuronmodel)
     modelparam[par] = Symbolics.getdefaultval(par)
 end
 np = length(modelparam)
-params_idx = Dict(:dspars => collect(1:np))
+indices = Dict(:dspars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
 n = length(modelparam[:lnα]);
-params_idx[:lnα] = collect(np+1:np+n);
+indices[:lnα] = collect(np+1:np+n);
 np += n;
 modelparam[:lnβ] = [0.0, 0.0];           # global observation noise, ln(β) as above
 n = length(modelparam[:lnβ]);
-params_idx[:lnβ] = collect(np+1:np+n);
+indices[:lnβ] = collect(np+1:np+n);
 np += n;
 modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
-params_idx[:lnγ] = collect(np+1:np+nrr);
+indices[:lnγ] = collect(np+1:np+nrr);
 np += nrr
-params_idx[:u] = idx_u
-params_idx[:bold] = idx_bold
-
+indices[:u] = idx_u
+indices[:bold] = idx_bold
+indices[:sts] = idx_sts
 # define prior variances
 paramvariance = copy(modelparam)
 paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
@@ -98,7 +99,7 @@ hyperpriors = (Πλ_pr = vars["ihC"]*ones(1, 1),   # prior metaparameter precisi
 
 csdsetup = (p = 8, freq = vec(vars["Hz"]), dt = vars["dt"]);
 
-(state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
+(state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices);
 for iter in 1:max_iter
     state.iter = iter
     run_sDCM_iteration!(state, setup)

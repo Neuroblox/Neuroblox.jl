@@ -263,18 +263,46 @@ end
 """
 function get_dynamic_states(sys)
     sts = []
-    idx_u = Int[]
-    idx_m = Int[]
-    for (i, s) in enumerate(unknowns(sys))
-        if getdescription(s) == "ext_input"
-            push!(idx_u, i)
-        elseif getdescription(s) == "measurement"
-            push!(idx_m, i)
-        else
+    idx = []
+    for (i, s) in enumerate(states(sys))
+        if !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
             push!(sts, s)
+            push!(idx, i)
         end
     end
-    sts, idx_u, idx_m
+    return sts, idx
+end
+
+function get_eqidx_tagged_vars(sys, tag)
+    idx = Int[]
+    vars = []
+    eqs = equations(sys)
+    for s in states(sys)
+        if getdescription(s) == tag
+            push!(vars, s)
+        end
+    end
+
+    for v in vars
+        for (i, e) in enumerate(eqs)
+            for s in Symbolics.get_variables(e)
+                if string(s) == string(v)
+                    push!(idx, i)
+                end 
+            end
+        end
+    end
+    return idx
+end
+
+function get_idx_tagged_vars(sys, tag)
+    idx = Int[]
+    for (i, s) in enumerate(states(sys))
+        if (getdescription(s) == tag)
+            push!(idx, i)
+        end
+    end
+    return idx
 end
 
 """

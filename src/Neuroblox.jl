@@ -209,7 +209,7 @@ export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams
-export get_weights, get_dynamic_states
+export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel, boldsignal_endo_balloon
 
 end
