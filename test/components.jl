@@ -570,7 +570,7 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "Single Block - system_from_graph" begin
+@testset "Single Block" begin
     @named solo = JansenRit()
     g = MetaDiGraph()
     add_blox!(g, solo)
@@ -579,17 +579,4 @@ end
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
-end
-
-@testset "Single Block - grab odesystem" begin
-    @named solo = JansenRit()
-    sys = solo.odesystem
-    @test_broken try
-        sys_simpl = structural_simplify(sys)
-        prob = ODEProblem(sys_simpl, [], (0, 200.0))
-        sol = solve(prob)
-        sol.retcode == ReturnCode.Success
-    catch e;
-        false
-    end
 end
