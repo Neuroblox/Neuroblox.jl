@@ -35,15 +35,11 @@ end
 
 # compose model
 @named neuronmodel = system_from_graph(g)
-# We need to use split=false here because we rely on a specific parameter ordering
 neuronmodel = structural_simplify(neuronmodel; split=false)
 
-# measurement model
-@named bold = boldsignal()
-
-# attribute initial conditions to unknowns
-all_s = unknowns(neuronmodel)
-initcond = OrderedDict{typeof(all_s[1]), eltype(x)}()
+# attribute initial conditions to states
+ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
+initcond = OrderedDict(ds_states .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
 rnames = unique(rnames);
@@ -92,11 +88,11 @@ for (k, v) in paramvariance
 end
 
 priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
-hyperpriors = (Πλ_pr = vars["ihC"]*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
-               μλ_pr = [vars["hE"]]              # prior metaparameter mean, needs to be a vector
-               );
+hyperpriors = Dict(:Πλ_pr => vars["ihC"]*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
+                   :μλ_pr => [vars["hE"]]              # prior metaparameter mean, needs to be a vector
+                  );
 
-csdsetup = (p = 8, freq = vec(vars["Hz"]), dt = vars["dt"]);
+csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
 
 (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
 for iter in 1:128

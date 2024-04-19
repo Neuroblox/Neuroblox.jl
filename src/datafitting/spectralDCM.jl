@@ -30,14 +30,14 @@ mutable struct VLState
     dFdθθ::Matrix{Float64}       # free energy Hessian w.r.t. parameters
 end
 
-struct VLSetup
-    model_at_x0                               # model evaluated at initial conditions
-    y_csd::Array{Complex}                     # cross-spectral density approximated by fitting MARs to data
+struct VLSetup{Model, N}
+    model_at_x0::Model                        # model evaluated at initial conditions
+    y_csd::Array{ComplexF64, N}                 # cross-spectral density approximated by fitting MARs to data
     tolerance::Float64                        # convergence criterion
     systemnums::Vector{Int}                   # several integers -> np: n. parameters, ny: n. datapoints, nq: n. Q matrices, nh: n. hyperparameters
     systemvecs::Vector{Vector{Float64}}       # μθ_pr: prior expectation values of parameters and μλ_pr: prior expectation values of hyperparameters
     systemmatrices::Vector{Matrix{Float64}}   # Πθ_pr: prior precision matrix of parameters, Πλ_pr: prior precision matrix of hyperparameters
-    Q::Matrix{Complex}                        # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
+    Q::Matrix{ComplexF64}                     # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
 end
 
 """
@@ -116,7 +116,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
     V = F.vectors
 
     ∂g∂v = ∂g∂x*V
-    ∂v∂u = V\∂f∂u               # u is external variable which we don't use right now. With external variable this would read V/dfdu
+    ∂v∂u = V\∂f∂u              # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
     nω = size(ω, 1)            # number of frequencies
     ng = size(∂g∂x, 1)         # number of outputs
@@ -127,7 +127,7 @@ function transferfunction_fmri(ω, derivatives, params, params_idx)
         for i = 1:ng
             for k = 1:nk
                 # transfer functions (FFT of kernel)
-                S[:,i,j] .+= (dgdv[i,k]*dvdu[k,j]) .* ((1im*2*pi) .* ω .- Λ[k]).^-1 
+                S[:,i,j] .+= (∂g∂v[i,k]*∂v∂u[k,j]) .* ((1im*2*pi) .* ω .- Λ[k]).^-1 
             end
         end
     end
@@ -312,7 +312,6 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
     p = csdsetup[:p];                # order of MAR
     mar = mar_ml(Matrix(data), p);   # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, ω, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
@@ -345,7 +344,6 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
         zeros(np),
         zeros(np, np)
     )
-
     # variational laplace setup
     vlsetup = VLSetup(
         f,                    # function that computes the cross-spectral density at fixed point 'initcond'
