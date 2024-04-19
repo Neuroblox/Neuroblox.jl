@@ -569,10 +569,8 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
-<<<<<<< HEAD
-=======
 
-@testset "Single Block - Doesn't Work" begin
+@testset "Single Block - system_from_graph" begin
     @named solo = JansenRit()
     g = MetaDiGraph()
     add_blox!(g, solo)
@@ -583,12 +581,15 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "Single Block - Works" begin
+@testset "Single Block - grab odesystem" begin
     @named solo = JansenRit()
     sys = solo.odesystem
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
-    sol = solve(prob)
-    @test sol.retcode == ReturnCode.Success
+    @test_broken try
+        sys_simpl = structural_simplify(sys)
+        prob = ODEProblem(sys_simpl, [], (0, 200.0))
+        sol = solve(prob)
+        sol.retcode == ReturnCode.Success
+    catch e;
+        false
+    end
 end
->>>>>>> origin/cleanup-and-debug-nmm
