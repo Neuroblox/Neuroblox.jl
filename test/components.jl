@@ -229,49 +229,6 @@ end
     @test norm.(R[length(R)]) < 0.1
 end
 
-@testset "QIF synaptic network" begin
-    """
-    qif_neuron.jl and synaptic_network.jl test
-
-    This test generates a network of quadratic integrate and fire neurons 
-    using qif_neuron.jl and connects them with synapses using synaptic_network.jl
-    This should successfully generate a structurally simplified ODESystem for 
-    the entire network. If N is number of neurons and S+1 is the number of state variables
-    for each neuron (S internal variables and 1 synaptic input), then the total number of states
-    for the resulting ODESystem for network should be N*S.
-    """
-
-    #Generate qif neurons
-    N_nrn = 10	
-    nrn_network=[]
-
-    ω₀ = 0.269
-    Δω = 0.042
-
-    for ii = 1:N_nrn
-        nn = QIFNeuronBlox(name=Symbol("nrn$ii"),C=30.0,E_syn=-10,G_syn=1,ω=rand(Cauchy(ω₀,Δω)),τ=35)
-        push!(nrn_network,nn.odesystem)
-    end
-
-    # create synaptic network
-    k = 0.105 #synaptic weight
-    adj = ones(N_nrn,N_nrn)
-    for ii = 1:N_nrn
-        adj[ii,ii]=0
-    end
-    syn = adj.*k/N_nrn
-
-    @named syn_net = synaptic_network(sys=nrn_network,adj_matrix=syn)
-
-    @test typeof(syn_net) == ODESystem
-    @test length(unknowns(syn_net)) == 3*N_nrn
-
-    sim_dur =  2.0
-    prob = ODEProblem(syn_net, [], (0.0, sim_dur), [])
-    sol = solve(prob,Rodas5(),saveat=0.01,reltol=1e-4,abstol=1e-4)
-    @test sol.t[end] == sim_dur
-end
-
 @testset "Van der Pol" begin
     @named VdP = van_der_pol()
     
@@ -558,26 +515,26 @@ end
 end
 
 @testset "IF Neuron Network" begin
-    @named if1 = IFNeuron(I_in=3.0)
-    @named if2 = IFNeuron(I_in=1.0)
+    @named if1 = IFNeuron(I_in=2.5)
+    @named if2 = IFNeuron(I_in=1.5)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [if1, if2])
-    add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
-    add_edge!(g, 2, 1, Dict(:weight => -1.0, :connection_rule => "basic"))
+    add_edge!(g, 1, 2, Dict(:weight => -0.008, :connection_rule => "basic"))
+    add_edge!(g, 2, 1, Dict(:weight => -0.007, :connection_rule => "basic"))
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 10.0))
+    prob = ODEProblem(sys_simpl, [], (0, 100.0))
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
 
 @testset "LIF Neuron Network" begin
-    @named lif1 = LIFNeuron(I_in=1.0)
-    @named lif2 = LIFNeuron(I_in=0.1)
+    @named lif1 = LIFNeuron(I_in=2.2)
+    @named lif2 = LIFNeuron(I_in=2.1)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [lif1, lif2])
     add_edge!(g, 1, 2, Dict(:weight => 1.0, :connection_rule => "psp"))
-    add_edge!(g, 2, 1, Dict(:weight => 0.5, :connection_rule => "psp"))
+    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
@@ -586,7 +543,7 @@ end
 end
 
 @testset "QIF Neuron Network" begin
-    @named qif1 = QIFNeuron(I_in=3.0)
+    @named qif1 = QIFNeuron(I_in=2.5)
     @named qif2 = QIFNeuron(I_in=1.0)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [qif1, qif2])
@@ -594,7 +551,7 @@ end
     add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 50.0))
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
@@ -612,3 +569,26 @@ end
     sol = solve(prob)
     @test sol.retcode == ReturnCode.Success
 end
+<<<<<<< HEAD
+=======
+
+@testset "Single Block - Doesn't Work" begin
+    @named solo = JansenRit()
+    g = MetaDiGraph()
+    add_blox!(g, solo)
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "Single Block - Works" begin
+    @named solo = JansenRit()
+    sys = solo.odesystem
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+>>>>>>> origin/cleanup-and-debug-nmm
