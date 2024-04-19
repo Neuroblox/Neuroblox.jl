@@ -241,7 +241,6 @@ end
     
     Function extracts states from the system that are dynamic variables, 
     get also indices of external inputs (u(t)) and measurements (like bold(t))
-
     Arguments:
     - `sys`: MTK system
 

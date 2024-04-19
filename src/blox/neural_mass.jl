@@ -222,6 +222,10 @@ struct JansenRit <: NeuralMassBlox
             #wrote inputs similarly to keep consistent
             return new(p, sts[1], sts[3], sys, namespace)
         end
+        sys = System(eqs, t, name=name)
+        #can't use outputs because x(t) is Num by then
+        #wrote inputs similarly to keep consistent
+        return new(p, sts[1], sts[3], sys, namespace)
     end
 end
 
