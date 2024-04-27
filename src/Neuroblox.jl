@@ -121,7 +121,7 @@ end
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(blox.odesystem, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
-    statesV = [s for s in states(blox.odesystem) if contains(string(s),"V")]
+    statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
     df = DataFrame(sol)
@@ -145,7 +145,7 @@ And outputs:
     u0 : Float64 vector of initial conditions
 """
 function random_initials(odesys::ODESystem, blox)
-    odestates = states(odesys)
+    odestates = unknowns(odesys)
     u0 = Float64[]
     init_dict = Dict{Num,Tuple{Float64,Float64}}()
 

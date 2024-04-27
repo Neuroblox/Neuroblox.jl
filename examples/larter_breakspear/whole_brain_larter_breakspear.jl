@@ -98,7 +98,7 @@ prob = ODEProblem(sys, u₀, (0.0, sim_dur), [])
 
 # More interesting is to choose the plot from a specific region and see the results. Here, we'll plot a specific region's average voltage.
 # First, confirm the region (left orbitofrontal cortex)
-states(sys)[64] # Should give L_OFC₊V(t)
+unknowns(sys)[64] # Should give L_OFC₊V(t)
 # Next plot just this variable
 #plot(sol, idxs=(64))
 
