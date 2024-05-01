@@ -5,6 +5,7 @@ using Graphs
 using MetaGraphs
 using DataFrames
 using CSV
+using ModelingToolkit: getp
 
 @testset "Cortical-Cortical plasticity test" begin
     t_trial = 100 # ms
@@ -40,12 +41,19 @@ using CSV
     idx_jcn = findall(x -> occursin("jcn", String(Symbol(x))), ps)
     idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn))
 
+
+    params_at(idxs) = getp(agent.problem, parameters(agent.odesystem)[idxs])(agent.problem)
+    init_params_all = params_at(:)
+    init_params_idxs_weight = params_at(idxs_weight)
+    init_params_idxs_other_params = params_at(idxs_other_params)
+
+    
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
     run_experiment!(agent, env; alg=Tsit5(), reltol=1e-6,abstol=1e-9)
 
     final_params = agent.problem.p
     # At least some weights need to be different.
-    @test any(init_params[map_idxs[idxs_weight]] .!= final_params[map_idxs[idxs_weight]])
+    @test any(init_params_idxs_weight .!= params_at(idxs_weight))
     # All non-weight parameters need to be the same.
-    @test all(init_params[map_idxs[idxs_other_params]] .== final_params[map_idxs[idxs_other_params]])
+    @test all(init_params_idxs_other_params .== params_at(idxs_other_params))
 end

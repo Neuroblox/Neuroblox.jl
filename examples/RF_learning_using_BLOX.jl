@@ -158,7 +158,7 @@ end
 begin
 	#extract membrane voltages of every neuron
     getsys=agent.odesystem;
-	st=states(getsys)
+	st=unknowns(getsys)
 	vlist=Int64[]
 	for ii = 1:length(st)
 		if contains(string(st[ii]), "V(t)")

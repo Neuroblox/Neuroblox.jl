@@ -2,6 +2,9 @@ module Neuroblox
 
 using Reexport
 @reexport using ModelingToolkit
+const t = ModelingToolkit.t_nounits
+const D = ModelingToolkit.D_nounits
+export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
 @reexport using Graphs: add_edge!
 
@@ -37,7 +40,6 @@ using ModelingToolkit: get_namespace, get_systems, isparameter,
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
-using IfElse
 
 using DelimitedFiles: readdlm
 using CSV: read
@@ -96,7 +98,6 @@ include("blox/neural_mass.jl")
 include("blox/cortical_blox.jl")
 include("blox/canonicalmicrocircuit.jl")
 include("blox/neuron_models.jl")
-include("blox/synaptic_network.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 include("blox/sources.jl")
@@ -120,7 +121,7 @@ end
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(blox.odesystem, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
-    statesV = [s for s in states(blox.odesystem) if contains(string(s),"V")]
+    statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
     df = DataFrame(sol)
@@ -144,7 +145,7 @@ And outputs:
     u0 : Float64 vector of initial conditions
 """
 function random_initials(odesys::ODESystem, blox)
-    odestates = states(odesys)
+    odestates = unknowns(odesys)
     u0 = Float64[]
     init_dict = Dict{Num,Tuple{Float64,Float64}}()
 
@@ -183,9 +184,9 @@ function __init__()
 end
 
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
-    hh_neuron_inhibitory, synaptic_network, van_der_pol
-export IFNeuronBlox, LIFNeuronBlox, QIFNeuronBlox, HHNeuronExciBlox, HHNeuronInhibBlox,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron
+    hh_neuron_inhibitory, van_der_pol
+export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron,
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
