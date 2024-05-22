@@ -168,6 +168,14 @@ function get_weight(kwargs, name_blox1, name_blox2)
     end
 end
 
+function get_gap_weight(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :gap_weight)
+        return kwargs[:gap_weight]
+    else
+        error("Gap junction weight from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
 function get_weightmatrix(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weightmatrix)
         return kwargs[:weightmatrix]
@@ -195,6 +203,10 @@ end
 
 function get_sta(kwargs, name_blox1, name_blox2)
     haskey(kwargs, :sta) ? kwargs[:sta] : false    
+end
+
+function get_gap(kwargs, name_blox1, name_blox2)
+    haskey(kwargs, :gap) ? kwargs[:gap] : false    
 end
 
 function get_event_time(kwargs, name_blox1, name_blox2)

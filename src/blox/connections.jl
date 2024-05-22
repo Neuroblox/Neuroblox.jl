@@ -80,6 +80,21 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     return w
 end
 
+function generate_gap_weight_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    gap_weight = get_gap_weight(kwargs, name_out, name_in)
+    gw_name = Symbol("g_w_$(name_out)_$(name_in)")
+    if typeof(gap_weight) == Num   # Symbol
+        gw = gap_weight
+    else
+        gw = only(@parameters $(gw_name)=gap_weight)
+    end    
+
+    return gw
+end
+
 function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
     density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_in) * length(neurons_out)
@@ -121,8 +136,8 @@ function params(bc::BloxConnector)
 end
 
 function (bc::BloxConnector)(
-    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
-    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
     kwargs...
 )
     sys_out = get_namespaced_sys(HH_out)
@@ -144,8 +159,18 @@ function (bc::BloxConnector)(
     else
         sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     end
-    
+
     accumulate_equation!(bc, eq)
+
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
 end
 
 function (bc::BloxConnector)(

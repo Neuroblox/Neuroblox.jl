@@ -186,11 +186,11 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 		T=37
     )
 		sts = @variables begin 
-			V(t)=-67.00 
-			n(t)=0.32 
-			m(t)=0.05 
-			h(t)=0.59 
-			mM(t)=0.32
+			V(t)=-63.83 
+			n(t)=0.062
+			m(t)=0.027
+			h(t)=0.99
+			mM(t)=0.022
 			I_syn(t)=0.0 
 			[input=true] 
             I_in(t)=0.0
@@ -198,6 +198,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			I_asc(t)=0.0
 			[input=true]
 			G(t)=0.0 
+			[output = true] 
 		end
 
 		ps = @parameters begin 
@@ -274,24 +275,28 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
     )
 		sts = @variables begin 
 			V(t)=-70.00 
-			n(t)=0.32 
-			h(t)=0.59 
+			n(t)=0.032 
+			h(t)=0.059 
 			mD(t)=0.05
-			hD(t)=0.59
+			hD(t)=0.059
 			I_syn(t)=0.0 
+			[input=true] 
+			I_gap(t)=0.0
 			[input=true] 
             I_in(t)=0.0
             [input=true]
 			I_asc(t)=0.0
 			[input=true]
 			G(t)=0.0 
+			[output = true] 
 			Gₛ(t)=0.0 
+			[output = true] 
 		end
 
 		ps = @parameters begin 
 			E_syn=E_syn 
-			G_Na = 100 
-			G_K  = 80 
+			G_Na = 112.5 
+			G_K  = 225 
 			G_L = 0.25 
 			G_D = 6
 			E_Na = 50 
@@ -321,9 +326,9 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
-			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
-			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
+			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_gap+I_asc+I_in+σ*χ), 
+			   D(n)~(n_inf(V)-n)/τₙ(V), 
+			   D(h)~(h_inf(V)-h)/τₕ(V),
 			   D(mD)~(mD_inf(V)-mD)/τₘD(V),
 			   D(hD)~(hD_inf(V)-hD)/τₕD(V),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
@@ -359,9 +364,9 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
     )
 		sts = @variables begin 
 			V(t)=-67.00 
-			n(t)=0.32 
+			n(t)=0.032 
 			m(t)=0.05 
-			h(t)=0.59 
+			h(t)=0.059 
 			I_syn(t)=0.0 
 			[input=true] 
             I_in(t)=0.0
@@ -369,6 +374,7 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			I_asc(t)=0.0
 			[input=true]
 			G(t)=0.0 
+			[output = true] 
 		end
 
 		ps = @parameters begin 
@@ -437,10 +443,9 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
     )
 		sts = @variables begin 
 			V(t)=-67.00 
-			n(t)=0.32 
+			n(t)=0.032 
 			m(t)=0.05 
-			h(t)=0.59 
-			mM(t)=0.32
+			h(t)=0.059 
 			I_syn(t)=0.0 
 			[input=true] 
             I_in(t)=0.0
@@ -448,6 +453,7 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			I_asc(t)=0.0
 			[input=true]
 			G(t)=0.0 
+			[output = true] 
 		end
 
 		ps = @parameters begin 
@@ -486,9 +492,7 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
-			   D(mM)~(αₘₘ(V)*(1-mM)-βₘₘ(V)*mM),
-			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
-			  
+			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)			  
 		]
         
 		sys = System(
