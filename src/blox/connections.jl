@@ -415,7 +415,7 @@ function (bc::BloxConnector)(
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
         sys_matr = get_namespaced_sys(get_matrisome(str))
-        maybe_set_state_post!(lr, sys_matr.H)
+        maybe_set_state_post!(lr, sys_matr.H_learning)
         kwargs = (kwargs..., learning_rule=lr)
     end
 
@@ -473,7 +473,7 @@ function (bc::BloxConnector)(
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
-        maybe_set_state_post!(lr, sys_in.H)
+        maybe_set_state_post!(lr, sys_in.H_learning)
         bc.learning_rules[w] = lr
     end
 
