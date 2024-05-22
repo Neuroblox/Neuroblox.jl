@@ -9,12 +9,16 @@ struct Matrisome <: AbstractDiscrete
     function Matrisome(; name, namespace=nothing, t_event=180.0)
         #HACK : this t_event has to be informed from the t_event in Action Selection block
         @variables t 
-        sts = @variables ρ(t)=0.0 ρ_(t)
+        # HACK: H_learning is a state version of the H parameter. 
+        # It will be simplified away, but we need to access its value in the solution object 
+        # to calculate the weight_gradient for reinforcement learning after the simulation.
+        sts = @variables ρ(t)=1.0 ρ_(t)=1.0 H_learning(t)=1.0
         #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
         ps = @parameters H=1 TAN_spikes=0.0 jcn=0.0 [input=true] jcn_=0.0 H_=1 
         eqs = [
             ρ ~ H*jcn,
-            ρ_ ~ H_*jcn_
+            ρ_ ~ H_*jcn_,
+            H_learning ~ H
         ]
         cb_eqs = [ jcn_ ~ jcn,
                     H_ ~ H
@@ -32,10 +36,14 @@ struct Striosome <: AbstractDiscrete
 
     function Striosome(; name, namespace=nothing)
         @variables t 
-        sts = @variables ρ(t)=0.0 
+        # HACK: H_learning is a state version of the H parameter. 
+        # It will be simplified away, but we need to access its value in the solution object 
+        # to calculate the weight_gradient for reinforcement learning after the simulation.
+        sts = @variables ρ(t)=0.0 H_learning(t)=1.0
         ps = @parameters H=1 jcn=0.0 [input=true]
         eqs = [
                 ρ ~ H*jcn,
+                H_learning ~ H
               ]
        
         sys = ODESystem(eqs, t, sts, ps; name)
