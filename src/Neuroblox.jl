@@ -98,6 +98,7 @@ include("blox/neural_mass.jl")
 include("blox/cortical_blox.jl")
 include("blox/canonicalmicrocircuit.jl")
 include("blox/neuron_models.jl")
+include("blox/DBS_Model_Blox_Adam_Brown.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 include("blox/sources.jl")
@@ -187,7 +188,7 @@ export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitat
     hh_neuron_inhibitory, van_der_pol
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,
-    HHNeuronInhib_GPe_Adam_Blox
+    HHNeuronInhib_GPe_Adam_Blox, Striatum_MSN_Adam, Striatum_FSI_Adam, GPe_Adam, STN_Adam
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity

@@ -6,7 +6,7 @@ struct CorticalBlox <: CompositeBlox
 
     function CorticalBlox(;
         name, 
-        N_wta,
+        N_wta=20,
         namespace=nothing,
         N_exci=5,
         E_syn_exci=0.0,

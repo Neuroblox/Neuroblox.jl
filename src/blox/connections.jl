@@ -136,7 +136,7 @@ function params(bc::BloxConnector)
 end
 
 function (bc::BloxConnector)(
-    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
     HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
     kwargs...
 )
@@ -154,12 +154,68 @@ function (bc::BloxConnector)(
     end
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
+
+    
     eq = if STA
         sys_in.I_syn ~ -w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
         sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     end
 
+    accumulate_equation!(bc, eq)
+    
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
+
+end
+
+function (bc::BloxConnector)(
+    HH_out::HHNeuronInhib_FSI_Adam_Blox,
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(HH_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
+    push!(bc.weights, w)    
+
+    eq = sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
+    
+    accumulate_equation!(bc, eq)
+
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
+end
+
+function (bc::BloxConnector)(
+    HH_out::HHNeuronInhib_FSI_Adam_Blox,
+    HH_in::HHNeuronInhib_FSI_Adam_Blox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(HH_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
+    push!(bc.weights, w)    
+
+        
+    eq = sys_in.I_syn ~ -w * sys_out.Gₛ * (sys_in.V - sys_out.E_syn)
+    
     accumulate_equation!(bc, eq)
 
     GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
