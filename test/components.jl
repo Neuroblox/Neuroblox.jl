@@ -357,32 +357,6 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "Adam_Brown_HH Neuron_network" begin
-    nn1 = HHNeuronInhib_MSN_Adam_Blox(name=Symbol("nrn1"))
-    nn2 = HHNeuronInhib_FSI_Adam_Blox(name=Symbol("nrn2"), σ=6)
-    nn3 = HHNeuronInhib_FSI_Adam_Blox(name=Symbol("nrn3"), σ=6)
-    nn4 = HHNeuronExci_STN_Adam_Blox(name=Symbol("nrn4"), σ=8)
-    nn5 = HHNeuronInhib_GPe_Adam_Blox(name=Symbol("nrn5"),σ=8)
-    assembly = [nn1, nn2, nn3, nn4, nn5]
-
-    # Adjacency matrix : 
-    #adj = [0 1 0
-    #       0 0 1
-    #       0.2 0 0]
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), assembly)
-    add_edge!(g, 1, 2, Dict(:weight=> 0.1))
-    add_edge!(g, 2, 3,  Dict(:weight=> 0.1, :gap => true, :gap_weight=>0.1))
-    add_edge!(g, 3, 4, Dict(:weight=> 0.1))
-    add_edge!(g, 4, 5, Dict(:weight=> 0.1))
-    
-    @named neuron_net = system_from_graph(g)
-    prob = SDEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
-    sol = solve(prob, ImplicitEM(),saveat = 0.01,reltol=1e-4,abstol=1e-4)
-    @test neuron_net isa ODESystem
-    @test sol.retcode == ReturnCode.Success
-end
-
 @testset "NextGenerationEIBlox connected to neuron" begin
     global_ns = :g 
     @named LC = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)

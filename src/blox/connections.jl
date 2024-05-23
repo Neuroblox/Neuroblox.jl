@@ -120,6 +120,17 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     end
 end
 
+function indegree_constrained_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
+    density = get_density(kwargs, name_out, name_in)
+    in_degree =  Int(ceil(density * length(neurons_out)))
+    for neuron_postsyn in neurons_in
+        idx = sample(collect(1:length(neurons_out)), in_degree; replace=false)
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; kwargs...)
+        end
+    end
+end
+
 """
     Helper to merge delays and weights into a single vector
 """
@@ -227,6 +238,39 @@ function (bc::BloxConnector)(
         eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
         accumulate_equation!(bc, eq3) 
     end
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
+    cb_in::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::STN_Adam,
+    cb_in::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
+    cb_in::STN_Adam;
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end
 
 function (bc::BloxConnector)(
