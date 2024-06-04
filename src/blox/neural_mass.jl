@@ -355,3 +355,82 @@ struct LarterBreakspear <: NeuralMassBlox
         new(p, sts[5], sts[4], sys, namespace)
     end
 end
+
+"""
+    Generic2dOscillator(name, namespace, ...)
+
+    The Generic2dOscillator model is a generic dynamic system with two state
+    variables. The dynamic equations of this model are composed of two ordinary
+    differential equations comprising two nullclines. The first nullcline is a
+    cubic function as it is found in most neuron and population models; the
+    second nullcline is arbitrarily configurable as a polynomial function up to
+    second order. The manipulation of the latter nullcline's parameters allows
+    to generate a wide range of different behaviours.
+
+    Equations:
+
+    ```math
+            \\begin{align}
+            \\dot{V} &= d \\, \\tau (-f V^3 + e V^2 + g V + \\alpha W + \\gamma I) \\\\
+            \\dot{W} &= \\dfrac{d}{\tau}\\,\\,(c V^2 + b V - \\beta W + a)
+            \\end{align}
+    ```
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citations:
+FitzHugh, R., Impulses and physiological states in theoretical
+models of nerve membrane, Biophysical Journal 1: 445, 1961.
+
+Nagumo et.al, An Active Pulse Transmission Line Simulating
+Nerve Axon, Proceedings of the IRE 50: 2061, 1962.
+
+Stefanescu, R., Jirsa, V.K. Reduced representations of
+heterogeneous mixed neural networks with synaptic coupling.
+Physical Review E, 83, 2011.
+
+Jirsa VK, Stefanescu R.  Neural population modes capture
+biologically realistic large-scale network dynamics. Bulletin of
+Mathematical Biology, 2010.
+
+Stefanescu, R., Jirsa, V.K. A low dimensional description
+of globally coupled heterogeneous neural networks of excitatory and
+inhibitory neurons. PLoS Computational Biology, 4(11), 2008).
+
+"""
+struct Generic2dOscillator <: NeuralMassBlox
+    params
+    output
+    jcn
+    odesystem
+    namespace
+    function Generic2dOscillator(;
+                        name,
+                        namespace=nothing,
+                        τ=1.0,
+                        a=-2.0,
+                        b=-10.0,
+                        c=0.0,
+                        d=0.02,
+                        e=3.0,
+                        f=1.0,
+                        g=0.0,
+                        α=1.0,
+                        β=1.0,
+                        γ=6e-2,
+                        bn=5e-4,
+    )
+        p = paramscoping(τ=τ, a=a,b=b,c=c,d=d,e=e,f=f,g=g,α=α,β=β,γ=γ)
+        τ,a,b,c,d,e,f,g,α,β,γ = p
+        
+        sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t)=0.0 [input=true]
+        @brownian w
+        eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
+                D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * w]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sts[1], sts[3], sys, namespace)
+    end
+end

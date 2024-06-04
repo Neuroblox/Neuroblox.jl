@@ -56,7 +56,7 @@ get_sys(sys::AbstractODESystem) = sys
 
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
-    ODESystem(
+    System(
         equations(sys), 
         only(independent_variables(sys)), 
         unknowns(sys), 
