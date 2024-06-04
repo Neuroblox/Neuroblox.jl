@@ -27,11 +27,11 @@ create_adjacency_edges!(g, wm)
 sys = structural_simplify(sys)
 
 prob = SDEProblem(sys,rand(-2:0.1:4,76*2), (0.0, 10*60e3), [])
-@time sol = solve(prob, EulerHeun(), dt=0.5, saveat=5)
-
+@time sol = solve(prob, EulerHeun(), dt=0.5)
+df = DataFrame(sol)
+names(df)
 plot(sol.t,sol[5,:],xlims=(0,10000))
 
-solv = Array(sol[1:2:end,1:1000])'
 cs = []
 for i in 1:Int((length(sol.t)-1)/1000)-1
     solv = Array(sol[1:2:end,(i-1)*1000+1:(i*1000)])'
@@ -49,5 +49,5 @@ for i in 1:76
     end
 end
 p
-heatmap(-log10.(p) .* (p .< 0.05))
+heatmap(log10.(p) .* (p .< 0.05))
 heatmap(wm)

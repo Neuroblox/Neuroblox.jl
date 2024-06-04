@@ -428,7 +428,7 @@ struct Generic2dOscillator <: NeuralMassBlox
         
         sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t)=0.0 [input=true]
         @brownian w
-        eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W + γ * jcn) + bn * w,
+        eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
                 D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * w]
         sys = System(eqs, t, sts, p; name=name)
         new(p, sts[1], sts[3], sys, namespace)
