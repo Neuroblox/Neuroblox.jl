@@ -67,9 +67,9 @@ end
 
 function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
     state_mod = get_modulator_state(hmp.modulator)
-    val_pre = only(sol(hmp.t_pre; idxs = [hmp.state_pre]))
-    val_post = only(sol(hmp.t_post; idxs = [hmp.state_post]))
-    val_mod = only(sol(hmp.t_mod; idxs = [state_mod]))
+    val_pre = sol(hmp.t_pre; idxs = hmp.state_pre)
+    val_post = sol(hmp.t_post; idxs = hmp.state_post)
+    val_mod = sol(hmp.t_mod; idxs = state_mod)
 
     return hmp(val_pre, val_post, val_mod, w, feedback)
 end

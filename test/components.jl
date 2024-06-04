@@ -510,7 +510,7 @@ end
     sys = system_from_graph(g; name=namespace=global_ns)
     sys_simpl =structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0,2))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success 
 end
 
@@ -524,7 +524,7 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 100.0))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
 
@@ -538,7 +538,7 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success 
 end
 
@@ -552,7 +552,7 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
 
@@ -566,7 +566,7 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
 
@@ -577,6 +577,6 @@ end
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
-    sol = solve(prob)
+    sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
