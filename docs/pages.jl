@@ -2,7 +2,9 @@
 
 pages = ["index.md",
     "Getting Started" => "getting_started.md",
-    #"Tutorials" => Any[],
+    "Tutorials" => Any[
+        "tutorials/resting_state_wb.md"
+    ],
     #"Manual" => Any[],
     "API" => "api.md",
     "Release Notes" => "release_notes.md",
