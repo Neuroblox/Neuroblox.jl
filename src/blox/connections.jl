@@ -80,6 +80,21 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     return w
 end
 
+function generate_gap_weight_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    gap_weight = get_gap_weight(kwargs, name_out, name_in)
+    gw_name = Symbol("g_w_$(name_out)_$(name_in)")
+    if typeof(gap_weight) == Num   # Symbol
+        gw = gap_weight
+    else
+        gw = only(@parameters $(gw_name)=gap_weight)
+    end    
+
+    return gw
+end
+
 function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
     density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_in) * length(neurons_out)
@@ -105,6 +120,17 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     end
 end
 
+function indegree_constrained_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
+    density = get_density(kwargs, name_out, name_in)
+    in_degree =  Int(ceil(density * length(neurons_out)))
+    for neuron_postsyn in neurons_in
+        idx = sample(collect(1:length(neurons_out)), in_degree; replace=false)
+        for neuron_presyn in neurons_out[idx]
+            bc(neuron_presyn, neuron_postsyn; kwargs...)
+        end
+    end
+end
+
 """
     Helper to merge delays and weights into a single vector
 """
@@ -121,8 +147,8 @@ function params(bc::BloxConnector)
 end
 
 function (bc::BloxConnector)(
-    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
-    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
     kwargs...
 )
     sys_out = get_namespaced_sys(HH_out)
@@ -139,13 +165,112 @@ function (bc::BloxConnector)(
     end
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
+
+    
     eq = if STA
         sys_in.I_syn ~ -w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
         sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     end
+
+    accumulate_equation!(bc, eq)
+    
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
+
+end
+
+function (bc::BloxConnector)(
+    HH_out::HHNeuronInhib_FSI_Adam_Blox,
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(HH_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
+    push!(bc.weights, w)    
+
+    eq = sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     
     accumulate_equation!(bc, eq)
+
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
+end
+
+function (bc::BloxConnector)(
+    HH_out::HHNeuronInhib_FSI_Adam_Blox,
+    HH_in::HHNeuronInhib_FSI_Adam_Blox; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(HH_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
+    push!(bc.weights, w)    
+
+        
+    eq = sys_in.I_syn ~ -w * sys_out.Gₛ * (sys_in.V - sys_out.E_syn)
+    
+    accumulate_equation!(bc, eq)
+
+    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
+    if GAP
+        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_gap)
+        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
+        accumulate_equation!(bc, eq2) 
+        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
+        accumulate_equation!(bc, eq3) 
+    end
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
+    cb_in::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::STN_Adam,
+    cb_in::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
+    cb_in::STN_Adam;
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end
 
 function (bc::BloxConnector)(
@@ -415,7 +540,7 @@ function (bc::BloxConnector)(
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
         sys_matr = get_namespaced_sys(get_matrisome(str))
-        maybe_set_state_post!(lr, sys_matr.H)
+        maybe_set_state_post!(lr, sys_matr.H_learning)
         kwargs = (kwargs..., learning_rule=lr)
     end
 
@@ -473,7 +598,7 @@ function (bc::BloxConnector)(
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
-        maybe_set_state_post!(lr, sys_in.H)
+        maybe_set_state_post!(lr, sys_in.H_learning)
         bc.learning_rules[w] = lr
     end
 
