@@ -104,12 +104,11 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     return Eigen(evals, evecs)
 end
 
-function transferfunction_fmri(ω, derivatives, params, params_idx)
-    ∂f = derivatives(params[params_idx[:dspars]])
-    idx_ds = deleteat!([1:size(∂f, 1);], sort(vcat(params_idx[:bold], params_idx[:u])))
-    ∂f∂x = ∂f[idx_ds, idx_ds]
-    ∂f∂u = ∂f[idx_ds, params_idx[:u]]
-    ∂g∂x = ∂f[params_idx[:bold], idx_ds]
+function transferfunction_fmri(ω, derivatives, params, indices)
+    ∂f = derivatives(params[indices[:dspars]])
+    ∂f∂x = ∂f[indices[:sts], indices[:sts]]
+    ∂f∂u = ∂f[indices[:sts], indices[:u]]
+    ∂g∂x = ∂f[indices[:bold], indices[:sts]]
 
     F = eigen(∂f∂x)
     Λ = F.values
@@ -144,14 +143,14 @@ end
     Gn in the code corresponds to Ge in the paper, i.e. the observation noise. In the code global and local components are defined, no such distinction
     is discussed in the paper. In fact the parameter γ, corresponding to local component is not present in the paper.
 """
-function csd_approx(ω, derivatives, params, params_idx)
+function csd_approx(ω, derivatives, params, indices)
     # priors of spectral parameters
     # ln(α) and ln(β), region specific fluctuations: ln(γ)
     nω = length(ω)
-    nd = length(params_idx[:lnγ])
-    α = params[params_idx[:lnα]]
-    β = params[params_idx[:lnβ]]
-    γ = params[params_idx[:lnγ]]
+    nd = length(indices[:lnγ])
+    α = params[indices[:lnα]]
+    β = params[indices[:lnβ]]
+    γ = params[indices[:lnγ]]
     
     # define function that implements spectra given in equation (2) of the paper "A DCM for resting state fMRI".
 
@@ -177,7 +176,7 @@ function csd_approx(ω, derivatives, params, params_idx)
             Gn[:,j,i] = Gn[:,i,j]
         end
     end
-    S = transferfunction_fmri(ω, derivatives, params, params_idx)   # This is K(ω) in the equations of the spectral DCM paper.
+    S = transferfunction_fmri(ω, derivatives, params, indices)   # This is K(ω) in the equations of the spectral DCM paper.
 
     # predicted cross-spectral density
     G = zeros(eltype(S), nω, nd, nd);
@@ -188,8 +187,8 @@ function csd_approx(ω, derivatives, params, params_idx)
     return G + Gn
 end
 
-@views function csd_fmri_mtf(freqs, p, derivatives, params, params_idx)   # alongside the above realtes to spm_csd_fmri_mtf.m
-    G = csd_approx(freqs, derivatives, params, params_idx)
+@views function csd_fmri_mtf(freqs, p, derivatives, params, indices)   # alongside the above realtes to spm_csd_fmri_mtf.m
+    G = csd_approx(freqs, derivatives, params, indices)
     dt = 1/(2*freqs[end])
     # the following two steps are very opaque. They are taken from the SPM code but it is unclear what the purpose of this transformation and back-transformation is
     # in particular it is also unclear why the order of the MAR is reduced by 1. My best guess is that this procedure smoothens the results.
@@ -283,7 +282,7 @@ end
 
 
 """
-    function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, params_idx)
+    function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, indices)
 
     Interface function to performs variational inference to fit model parameters to empirical cross spectral density.
     The current implementation provides a Variational Laplace fit (see function above `variationalbayes`).
@@ -303,9 +302,9 @@ end
     - `hyperpriors` : dataframe of parameters with the following columns:
     -- `Πλ_pr`      : prior precision matrix for λ hyperparameter(s)
     -- `μλ_pr`      : prior mean(s) for λ hyperparameter(s)
-    - `params_idx`  : indices to separate model parameters from other parameters. Needed for the computation of AD gradient.
+    - `indices`  : indices to separate model parameters from other parameters. Needed for the computation of AD gradient.
 """
-function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params_idx)
+function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices)
     # compute cross-spectral density
     dt = csdsetup[:dt];              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
     ω = csdsetup[:freq];             # frequencies at which the CSD is evaluated
@@ -325,7 +324,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, params
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
 
-    f = params -> csd_fmri_mtf(ω, p, derivatives, params, params_idx)
+    f = params -> csd_fmri_mtf(ω, p, derivatives, params, indices)
 
     np = length(μθ_pr)     # number of parameters
     ny = length(y_csd)     # total number of response variables

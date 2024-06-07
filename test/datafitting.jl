@@ -3,24 +3,27 @@ using MAT
 
 ### Load data ###
 vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
-data = DataFrame(vars["data"], :auto)   # turn data into DataFrame
-x = vars["x"]                           # initial conditions
+data = DataFrame(vars["data"], :auto)    # turn data into DataFrame
+x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
 max_iter = 128
 ########## assemble the model ##########
 
 g = MetaDiGraph()
 regions = Dict()
-@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true]     # define brain-wide decay parameter for hemodynamics
+@parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=1/16 [tunable = false]
 for ii = 1:nrr
     region = LinearNeuralMass(;name=Symbol("r$(ii)₊lm"))
     add_blox!(g, region)
-    regions[ii] = 2ii - 1    # store index of neural mass model
+    regions[ii] = nv(g)    # store index of neural mass model
+    taskinput = ExternalInput(;name=Symbol("r$(ii)₊ei"), I=1.0)
+    add_blox!(g, taskinput)
+    add_edge!(g, nv(g), nv(g) - 1, Dict(:weight => C))
     # add hemodynamic observer
     observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
     add_blox!(g, observer)
     # connect observer with neuronal signal
-    add_edge!(g, 2ii - 1, 2ii, Dict(:weight => 1.0))
+    add_edge!(g, nv(g) - 2, nv(g), Dict(:weight => 1.0))
 end
 
 # add symbolic weights
@@ -38,14 +41,15 @@ end
 neuronmodel = structural_simplify(neuronmodel; split=false)
 
 # attribute initial conditions to states
-ds_states, idx_u, idx_bold = get_dynamic_states(neuronmodel)
-initcond = OrderedDict(ds_states .=> 0.0)
-
+sts, idx_sts = get_dynamic_states(neuronmodel)
+idx_u = get_idx_tagged_vars(neuronmodel, "ext_input")         # get index of external input state
+idx_bold = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+initcond = OrderedDict(sts .=> 0.0)
 rnames = []
-map(x->push!(rnames, split(string(x), "₊")[1]), ds_states);
+map(x->push!(rnames, split(string(x), "₊")[1]), sts);
 rnames = unique(rnames);
 for (i, r) in enumerate(rnames)
-    for (j, s) in enumerate(ds_states[r .== map(x -> x[1], split.(string.(ds_states), "₊"))])
+    for (j, s) in enumerate(sts[r .== map(x -> x[1], split.(string.(sts), "₊"))])
         initcond[s] = x[i, j]
     end
 end
@@ -55,26 +59,26 @@ for par in tunable_parameters(neuronmodel)
     modelparam[par] = Symbolics.getdefaultval(par)
 end
 np = length(modelparam)
-params_idx = Dict(:dspars => collect(1:np))
+indices = Dict(:dspars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
 n = length(modelparam[:lnα]);
-params_idx[:lnα] = collect(np+1:np+n);
+indices[:lnα] = collect(np+1:np+n);
 np += n;
 modelparam[:lnβ] = [0.0, 0.0];           # global observation noise, ln(β) as above
 n = length(modelparam[:lnβ]);
-params_idx[:lnβ] = collect(np+1:np+n);
+indices[:lnβ] = collect(np+1:np+n);
 np += n;
 modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
-params_idx[:lnγ] = collect(np+1:np+nrr);
+indices[:lnγ] = collect(np+1:np+nrr);
 np += nrr
-params_idx[:u] = idx_u
-params_idx[:bold] = idx_bold
-
+indices[:u] = idx_u
+indices[:bold] = idx_bold
+indices[:sts] = idx_sts
 # define prior variances
 paramvariance = copy(modelparam)
 paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
-paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0; 
+paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0;
 paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
 for (k, v) in paramvariance
     if occursin("A[", string(k))
@@ -95,8 +99,8 @@ hyperpriors = (Πλ_pr = vars["ihC"]*ones(1, 1),   # prior metaparameter precisi
 
 csdsetup = (p = 8, freq = vec(vars["Hz"]), dt = vars["dt"]);
 
-(state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, params_idx);
-for iter in 1:128
+(state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices);
+for iter in 1:max_iter
     state.iter = iter
     run_sDCM_iteration!(state, setup)
     print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
