@@ -303,6 +303,7 @@ function get_idx_tagged_vars(sys, tag)
         end
     end
     return idx
+    return idx
 end
 
 """
