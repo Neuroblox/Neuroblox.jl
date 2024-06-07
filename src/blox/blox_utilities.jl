@@ -264,7 +264,7 @@ end
 function get_dynamic_states(sys)
     sts = []
     idx = []
-    for (i, s) in enumerate(states(sys))
+    for (i, s) in enumerate(unknowns(sys))
         if !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
             push!(sts, s)
             push!(idx, i)
@@ -277,7 +277,7 @@ function get_eqidx_tagged_vars(sys, tag)
     idx = Int[]
     vars = []
     eqs = equations(sys)
-    for s in states(sys)
+    for s in unknowns(sys)
         if getdescription(s) == tag
             push!(vars, s)
         end
@@ -297,7 +297,7 @@ end
 
 function get_idx_tagged_vars(sys, tag)
     idx = Int[]
-    for (i, s) in enumerate(states(sys))
+    for (i, s) in enumerate(unknowns(sys))
         if (getdescription(s) == tag)
             push!(idx, i)
         end
