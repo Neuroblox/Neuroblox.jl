@@ -417,15 +417,15 @@ struct Generic2dOscillator <: NeuralMassBlox
                         α=1.0,
                         β=1.0,
                         γ=6e-2,
-                        bn=5e-4,
+                        bn=0.02,
     )
         p = paramscoping(τ=τ, a=a,b=b,c=c,d=d,e=e,f=f,g=g,α=α,β=β,γ=γ)
         τ,a,b,c,d,e,f,g,α,β,γ = p
         
         sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t)=0.0 [input=true]
-        @brownian w
+        @brownian w v
         eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
-                D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * w]
+                D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * v]
         sys = System(eqs, t, sts, p; name=name)
         new(p, sts[1], sts[3], sys, namespace)
     end
