@@ -533,8 +533,8 @@ end
     @named lif2 = LIFNeuron(I_in=2.1)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [lif1, lif2])
-    add_edge!(g, 1, 2, Dict(:weight => 1.0, :connection_rule => "psp"))
-    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
+    adj = [0 1; 1 0]
+    create_adjacency_edges!(g, adj)
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
