@@ -157,11 +157,11 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     return ODESystem(eqs, systems=sys, name=name)
 end
 
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}) where {T}
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}; connection_rule="basic") where {T}
     for i = 1:size(adj_matrix, 1)
         for j = 1:size(adj_matrix, 2)
             if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j]))
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :connection_rule => connection_rule))
             end
         end
     end
