@@ -3,7 +3,7 @@ using MAT
 
 ### Load data ###
 vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
-data = DataFrame(vars["data"], :auto)    # turn data into DataFrame
+data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
 x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
 max_iter = 128
@@ -43,7 +43,9 @@ neuronmodel = structural_simplify(neuronmodel; split=false)
 # attribute initial conditions to states
 sts, idx_sts = get_dynamic_states(neuronmodel)
 idx_u = get_idx_tagged_vars(neuronmodel, "ext_input")         # get index of external input state
-idx_bold = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+idx_bold, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+rename!(data, Symbol.(obsvars))
+
 initcond = OrderedDict(sts .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), sts);
@@ -73,7 +75,7 @@ modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
 indices[:lnγ] = collect(np+1:np+nrr);
 np += nrr
 indices[:u] = idx_u
-indices[:bold] = idx_bold
+indices[:m] = idx_bold
 indices[:sts] = idx_sts
 # define prior variances
 paramvariance = copy(modelparam)
