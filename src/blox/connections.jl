@@ -200,20 +200,50 @@ function (bc::BloxConnector)(
         accumulate_equation!(bc, eq3) 
     end
 
-    nmda_rec = get_nmda(kwargs, nameof(HH_out), nameof(HH_in))
-    if nmda_rec
+    nmda_r = get_nmda(kwargs, nameof(HH_out), nameof(HH_in))
+    if nmda_r
         w_nmda = generate_nmda_weight_param(HH_out, HH_in; kwargs...)
         push!(bc.weights, w_nmda)
         nmda = NMDA_receptor(name=Symbol(nameof(HH_out), :₊, nameof(HH_in), :₊, :NMDA_rec))
         nmda_sys = get_namespaced_sys(nmda)
-        eq4 = nmda.V ~ sys_in.V
-        accumulate_equation!(bc, eq4) 
-        eq5 = nmda.Glu ~ sys_out.Glu
-        accumulate_equation!(bc, eq5)
-        eq6 = sys_in.I_syn ~ -w_nmda*nmda.O_AA*(sys_in.V - sys_out.E_syn)
+        bc(sys_out, nmda; kwargs...)
+        bc(nmda,sys_in; kwargs...)
+       # eq4 = nmda.V ~ sys_in.  V
+       # accumulate_equation!(bc, eq4) 
+       # eq5 = nmda.Glu ~ sys_out.Glu
+       # accumulate_equation!(bc, eq5)
+        eq6 = sys_in.I_syn ~ -w_nmda*nmda_sys.O_AA*(sys_in.V - sys_out.E_syn)
         accumulate_equation!(bc, eq6)
     end
 
+end
+
+function (bc::BloxConnector)(
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox},
+    nmda_rec::NMDA_receptor;
+    kwargs...
+)
+    sys_out = get_namespaced_sys(HH_out)
+    nmda_sys = get_namespaced_sys(nmda_rec)
+    nmda_r = get_nmda(kwargs, nameof(HH_out), nameof(nmda_rec))
+    if nmda_r
+        eq = nmda_sys.Glu ~ sys_out.Glu
+        accumulate_equation!(bc, eq)
+    end
+end
+
+function (bc::BloxConnector)(
+    nmda_rec::NMDA_receptor,
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox};
+    kwargs...
+)
+    sys_in = get_namespaced_sys(HH_in)
+    nmda_sys = get_namespaced_sys(nmda_rec)
+    nmda_r = get_nmda(kwargs, nameof(nmda_rec), nameof(HH_in))
+    if nmda_r
+        eq = nmda_sys.V ~ sys_in.V
+        accumulate_equation!(bc, eq)
+    end
 end
 
 function (bc::BloxConnector)(
