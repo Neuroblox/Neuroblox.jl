@@ -108,7 +108,7 @@ function transferfunction_fmri(ω, derivatives, params, indices)
     ∂f = derivatives(params[indices[:dspars]])
     ∂f∂x = ∂f[indices[:sts], indices[:sts]]
     ∂f∂u = ∂f[indices[:sts], indices[:u]]
-    ∂g∂x = ∂f[indices[:bold], indices[:sts]]
+    ∂g∂x = ∂f[indices[:m], indices[:sts]]
 
     F = eigen(∂f∂x)
     Λ = F.values
@@ -309,7 +309,9 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     dt = csdsetup[:dt];              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
     ω = csdsetup[:freq];             # frequencies at which the CSD is evaluated
     p = csdsetup[:p];                # order of MAR
-    mar = mar_ml(Matrix(data), p);   # compute MAR from time series y and model order p
+    _, vars = get_eqidx_tagged_vars(model, "measurement")
+    data = Matrix(data[:, vars])     # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
+    mar = mar_ml(data, p);   # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, ω, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
@@ -331,27 +333,28 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
 
     # variational laplace state variables
     vlstate = VLState(
-        0,             # iter
-        -4,            # log ascent rate
-        [-Inf],        # free energy
-        Float64[],            # delta free energy
-        8*ones(nh),    # metaparameter, initial condition. TODO: why are we not just using the prior mean?
-        zeros(np),     # parameter estimation error ϵ_θ
-        [zeros(np), 8*ones(nh)],      # memorize reset state
-        μθ_pr,         # parameter posterior mean
-        Σθ_pr,         # parameter posterior covariance
+        0,                                   # iter
+        -4,                                  # log ascent rate
+        [-Inf],                              # free energy
+        Float64[],                           # delta free energy
+        hyperpriors[:μλ_pr],                 # metaparameter, initial condition. TODO: why are we not just using the prior mean?
+        zeros(np),                           # parameter estimation error ϵ_θ
+        [zeros(np), hyperpriors[:μλ_pr]],    # memorize reset state
+        μθ_pr,                               # parameter posterior mean
+        Σθ_pr,                               # parameter posterior covariance
         zeros(np),
         zeros(np, np)
     )
+
     # variational laplace setup
     vlsetup = VLSetup(
-        f,                    # function that computes the cross-spectral density at fixed point 'initcond'
-        y_csd,                # empirical cross-spectral density
-        1e-1,                 # tolerance
-        [np, ny, nq, nh],     # number of parameters, number of data points, number of Qs, number of hyperparameters
-        [μθ_pr, hyperpriors[:μλ_pr]],          # parameter and hyperparameter prior mean
-        [inv(Σθ_pr), hyperpriors[:Πλ_pr]],     # parameter and hyperparameter prior precision matrices
-        Q                                      # components of data precision matrix
+        f,                                    # function that computes the cross-spectral density at fixed point 'initcond'
+        y_csd,                                # empirical cross-spectral density
+        1e-1,                                 # tolerance
+        [np, ny, nq, nh],                     # number of parameters, number of data points, number of Qs, number of hyperparameters
+        [μθ_pr, hyperpriors[:μλ_pr]],         # parameter and hyperparameter prior mean
+        [inv(Σθ_pr), hyperpriors[:Πλ_pr]],    # parameter and hyperparameter prior precision matrices
+        Q                                     # components of data precision matrix
     )
     return (vlstate, vlsetup)
 end

@@ -288,11 +288,11 @@ function get_eqidx_tagged_vars(sys, tag)
             for s in Symbolics.get_variables(e)
                 if string(s) == string(v)
                     push!(idx, i)
-                end 
+                end
             end
         end
     end
-    return idx
+    return idx, vars
 end
 
 function get_idx_tagged_vars(sys, tag)
