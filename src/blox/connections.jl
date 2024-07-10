@@ -95,6 +95,21 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
     return gw
 end
 
+function generate_nmda_weight_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    nmda_weight = get_nmda_weight(kwargs, name_out, name_in)
+    nw_name = Symbol("n_w_$(name_out)_$(name_in)")
+    if typeof(nmda_weight) == Num   # Symbol
+        nw = nmda_weight
+    else
+        nw = only(@parameters $(nw_name)=nmda_weight)
+    end    
+
+    return nw
+end
+
 function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
     density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_in) * length(neurons_out)
@@ -147,8 +162,8 @@ function params(bc::BloxConnector)
 end
 
 function (bc::BloxConnector)(
-    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
-    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}, 
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}; 
     kwargs...
 )
     sys_out = get_namespaced_sys(HH_out)
@@ -183,6 +198,20 @@ function (bc::BloxConnector)(
         accumulate_equation!(bc, eq2) 
         eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
         accumulate_equation!(bc, eq3) 
+    end
+
+    nmda_rec = get_nmda(kwargs, nameof(HH_out), nameof(HH_in))
+    if nmda_rec
+        w_nmda = generate_nmda_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_nmda)
+        nmda = NMDA_receptor(name=Symbol(nameof(HH_out), :₊, nameof(HH_in), :₊, :NMDA_rec))
+        nmda_sys = get_namespaced_sys(nmda)
+        eq4 = nmda.V ~ sys_in.V
+        accumulate_equation!(bc, eq4) 
+        eq5 = nmda.Glu ~ sys_out.Glu
+        accumulate_equation!(bc, eq5)
+        eq6 = sys_in.I_syn ~ -w_nmda*nmda.O_AA*(sys_in.V - sys_out.E_syn)
+        accumulate_equation!(bc, eq6)
     end
 
 end
@@ -269,6 +298,50 @@ function (bc::BloxConnector)(
 )
     neurons_in = get_exci_neurons(cb_in)
     neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Pyramidal_Assembly_Adam},
+    cb_in::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam},
+    cb_in::Union{Cortical_Pyramidal_Assembly_Adam};
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam},
+    cb_in::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Pyramidal_Assembly_Adam},
+    cb_in::Union{Cortical_Pyramidal_Assembly_Adam};
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
 
     indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
 end

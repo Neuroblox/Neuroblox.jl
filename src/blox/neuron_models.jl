@@ -1,6 +1,7 @@
 abstract type AbstractInhNeuronBlox <: AbstractNeuronBlox end
 abstract type AbstractExciNeuronBlox <: AbstractNeuronBlox end
 
+#These HH neuron models were used in Pathak et al 2023 model of corticostriatal circuit
 struct HHNeuronExciBlox <: AbstractExciNeuronBlox
     odesystem
     output
@@ -504,6 +505,166 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 	end
 end	
 
+# The following are general HH neurons used to model pyramidal and interneurons in Adam et al 2024 model for Ketamine affect on cortex
+struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
+    odesystem
+    namespace
+
+	function HHNeuronExci_pyr_Adam_Blox(;
+        name, 
+        namespace=nothing,
+        E_syn=0.0, 
+        I_bg=-0.25,
+        freq=0,
+        phase=0,
+        τ=1.5,
+		τ_glu=1.2,
+        Cₘ=1.0,
+		σ=20.0,
+		a=5,
+		b=4
+    )
+		sts = @variables begin 
+			V(t)=-67.00 
+			n(t)=0.032 
+			m(t)=0.05 
+			h(t)=0.059 
+			I_syn(t)=0.0 
+			[input=true] 
+            I_in(t)=0.0
+            [input=true]
+			I_asc(t)=0.0
+			[input=true]
+			G(t)=0.0 
+			[output = true] 
+			Glu(t)=0.0
+			[output = true] 
+		end
+
+		ps = @parameters begin 
+			E_syn=E_syn 
+			G_Na = 100 
+			G_K  = 80 
+			G_L = 0.05 
+			E_Na = 50 
+			E_K = -100 
+			E_L = -67 
+			I_bg=I_bg
+			freq = freq 
+			phase = phase
+           	Cₘ = Cₘ
+			σ = σ
+			a = a
+			b = b
+		end
+        
+        @brownian χ
+
+		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
+	    βₙ(v) = 0.5*exp(-(v+57)/40)
+	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
+	    βₘ(v) = 0.28*(v+27)/(exp((v+27)/5)-1)
+		αₕ(v) = 0.128*exp(-(v+50)/18)
+	    βₕ(v) = 4/(1+exp(-(v+27)/5))
+		
+		G_asymp(v,a,b) = a*(1+tanh(v/b))
+		
+		eqs = [ 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
+			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
+			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
+			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
+			   D(Glu)~(-1/τ_glu)*Glu + G_asymp(V-20,2.35,0.01) #this approximates the glutamate dynamics in the model where every spike instantaneously raises glutamate to 1mM
+			  
+		]
+        
+		sys = System(
+            eqs, t, sts, ps; 
+			name = Symbol(name)
+			)
+
+		new(sys, namespace)
+	end
+end	
+
+struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
+    odesystem
+    namespace
+
+	function HHNeuronInh_inter_Adam_Blox(;
+        name, 
+        namespace=nothing,
+        E_syn=-80.0, 
+        I_bg=0.1,
+        freq=0,
+        phase=0,
+        τ=6,
+        Cₘ=1.0,
+		σ=20.0,
+		a=2,
+		b=4
+    )
+		sts = @variables begin 
+			V(t)=-67.00 
+			n(t)=0.032 
+			m(t)=0.05 
+			h(t)=0.059 
+			I_syn(t)=0.0 
+			[input=true] 
+            I_in(t)=0.0
+            [input=true]
+			I_asc(t)=0.0
+			[input=true]
+			G(t)=0.0 
+			[output = true] 
+		end
+
+		ps = @parameters begin 
+			E_syn=E_syn 
+			G_Na = 100 
+			G_K  = 80 
+			G_L = 0.1 
+			E_Na = 50 
+			E_K = -100 
+			E_L = -67 
+			I_bg=I_bg
+			freq = freq 
+			phase = phase
+           	Cₘ = Cₘ
+			σ = σ
+			a = a
+			b = b
+		end
+        
+        @brownian χ
+
+		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
+	    βₙ(v) = 0.5*exp(-(v+57)/40)
+	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
+	    βₘ(v) = 0.28*(v+27)/(exp((v+27)/5)-1)
+		αₕ(v) = 0.128*exp(-(v+50)/18)
+	    βₕ(v) = 4/(1+exp(-(v+27)/5))
+		
+		G_asymp(v,a,b) = a*(1+tanh(v/b))
+		
+		eqs = [ 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
+			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
+			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
+			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
+			  
+		]
+        
+		sys = System(
+            eqs, t, sts, ps; 
+			name = Symbol(name)
+			)
+
+		new(sys, namespace)
+	end
+end	
 
 
 """

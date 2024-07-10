@@ -1,6 +1,6 @@
 """
     Subcortical blox
-    all subcprtical blox used in cortico-striatal model are defined here
+    all subcprtical blox used in cortico-striatal model in Pathak et al, 2023 
 
 """
 struct Striatum <: CompositeBlox
