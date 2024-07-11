@@ -51,6 +51,13 @@ get_exci_neurons(n) = []
 get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
 
+function get_receptor(b::AbstractNeuronBlox)
+    mapreduce(x -> get_receptor(x), vcat, b.parts)
+end
+
+get_receptor(n::ReceptorBlox) = n
+get_receptor(n) = []
+
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
 

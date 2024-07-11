@@ -509,6 +509,8 @@ end
 struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
     odesystem
     namespace
+	parts
+	current_receptor::Int
 
 	function HHNeuronExci_pyr_Adam_Blox(;
         name, 
@@ -522,7 +524,8 @@ struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
         Cₘ=1.0,
 		σ=20.0,
 		a=5,
-		b=4
+		b=4,
+		N_nmda=20
     )
 		sts = @variables begin 
 			V(t)=-67.00 
@@ -583,14 +586,23 @@ struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
             eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
-
-		new(sys, namespace)
+		nmda_rec = map(Base.OneTo(N_nmda)) do i
+			NMDA_receptor(;
+				name=Symbol("nmda$i"), 
+				namespace=namespaced_name(namespace, name)					
+			)
+			end
+		nmda_sys = get_sys.(nmda_rec)
+		sys_rec = compose(sys,nmda_sys)
+		new(sys_rec, namespace, vcat(nmda_rec),1)
 	end
 end	
 
 struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
     odesystem
     namespace
+	parts
+	current_receptor::Int
 
 	function HHNeuronInh_inter_Adam_Blox(;
         name, 
@@ -603,7 +615,8 @@ struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
         Cₘ=1.0,
 		σ=20.0,
 		a=2,
-		b=4
+		b=4,
+		N_nmda=20
     )
 		sts = @variables begin 
 			V(t)=-67.00 
@@ -662,7 +675,16 @@ struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
 			name = Symbol(name)
 			)
 
-		new(sys, namespace)
+		nmda_rec = map(Base.OneTo(N_nmda)) do i
+			NMDA_receptor(;
+				name=Symbol("nmda$i"), 
+				namespace=namespaced_name(namespace, name)					
+			)
+			end
+		nmda_sys = get_sys.(nmda_rec)
+		sys_rec = compose(sys,nmda_sys)
+	
+		new(sys_rec, namespace, vcat(nmda_rec),1)
 	end
 end	
 

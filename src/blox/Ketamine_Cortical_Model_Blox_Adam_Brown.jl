@@ -168,7 +168,8 @@ struct Cortical_Interneuron_Assembly_Tonic_Adam <: CompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ=σ,
+                    N_nmda=1
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -208,7 +209,7 @@ struct NMDA_receptor <: ReceptorBlox
         sts = @variables begin 
             Glu(t)=0.0
             [input=true] 
-            V(t)=0.0
+            V(t)=-67.0
             [input=true] 
             C(t)=0.5
             C_A(t)=0.0
