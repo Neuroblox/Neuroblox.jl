@@ -204,8 +204,8 @@ function (bc::BloxConnector)(
     if nmda_r
         w_nmda = generate_nmda_weight_param(HH_out, HH_in; kwargs...)
         push!(bc.weights, w_nmda)
-        nmda_set = get_receptor(HH_in)
-        nmda_rec=nmda_set[HH_in.current_receptor]
+        nmda_set = get_receptor(HH_in) #collects all nmda receptors
+        nmda_rec=nmda_set[HH_in.current_receptor] #picks the next unused receptor
         nmda_sys=get_namespaced_sys(nmda_rec)
         eq4 = nmda_sys.V ~ sys_in.V
         accumulate_equation!(bc, eq4)
