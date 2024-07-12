@@ -66,8 +66,8 @@ function generate_callbacks_for_parameter_lhs(bc)
 end
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
-    name_out = namespaced_nameof(blox_out)
-    name_in = namespaced_nameof(blox_in)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
 
     weight = get_weight(kwargs, name_out, name_in)
     w_name = Symbol("w_$(name_out)_$(name_in)")
@@ -81,8 +81,8 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
 end
 
 function generate_gap_weight_param(blox_out, blox_in; kwargs...)
-    name_out = namespaced_nameof(blox_out)
-    name_in = namespaced_nameof(blox_in)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
 
     gap_weight = get_gap_weight(kwargs, name_out, name_in)
     gw_name = Symbol("g_w_$(name_out)_$(name_in)")
@@ -96,8 +96,8 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
 end
 
 function generate_nmda_weight_param(blox_out, blox_in; kwargs...)
-    name_out = namespaced_nameof(blox_out)
-    name_in = namespaced_nameof(blox_in)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
 
     nmda_weight = get_nmda_weight(kwargs, name_out, name_in)
     nw_name = Symbol("n_w_$(name_out)_$(name_in)")
@@ -385,7 +385,7 @@ function (bc::BloxConnector)(
     sysparts_out = get_blox_parts(bloxout)
     sysparts_in = get_blox_parts(bloxin)
 
-    wm = get_weightmatrix(kwargs, namespaced_nameof(bloxin), namespaced_nameof(bloxout))
+    wm = get_weightmatrix(kwargs, inner_namespaced_nameof(bloxin), inner_namespaced_nameof(bloxout))
 
     idxs = findall(!iszero, wm)
     for idx in idxs
@@ -554,9 +554,9 @@ function (bc::BloxConnector)(
     dist = Bernoulli(density)
 
     for neuron_postsyn in neurons_in
-        name_postsyn = namespaced_nameof(neuron_postsyn)
+        name_postsyn = inner_namespaced_nameof(neuron_postsyn)
         for neuron_presyn in neurons_out
-            name_presyn = namespaced_nameof(neuron_presyn)
+            name_presyn = inner_namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
             if (name_postsyn != name_presyn) && rand(dist)
                 bc(neuron_presyn, neuron_postsyn; kwargs...)
@@ -629,7 +629,7 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
-    w = get_weight(kwargs, namespaced_nameof(cb), namespaced_nameof(str))
+    w = get_weight(kwargs, inner_namespaced_nameof(cb), inner_namespaced_nameof(str))
 
     dist = Uniform(0,1)
     wt_ar = 2*w*rand(dist, length(neurons_out)) # generate a uniform distribution of weights with average value w 
