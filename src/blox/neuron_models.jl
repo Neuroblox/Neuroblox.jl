@@ -506,10 +506,10 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 end	
 
 # The following are general HH neurons used to model pyramidal and interneurons in Adam et al 2024 model for Ketamine affect on cortex
-struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
-    odesystem
-    namespace
-	parts
+mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
+    const odesystem
+    const namespace
+	const parts
 	current_receptor::Int
 
 	function HHNeuronExci_pyr_Adam_Blox(;
@@ -585,23 +585,25 @@ struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 		sys = System(
             eqs, t, sts, ps; 
 			name = Symbol(name)
-			)
+		)
 		nmda_rec = map(Base.OneTo(N_nmda)) do i
 			NMDA_receptor(;
 				name=Symbol("nmda$i"), 
 				namespace=namespaced_name(namespace, name)					
 			)
-			end
-		nmda_sys = get_sys.(nmda_rec)
-		sys_rec = compose(sys,nmda_sys)
-		new(sys_rec, namespace, vcat(nmda_rec),1)
+		end
+        parts = vcat(sys, nmda_rec)
+        nmda_sys = get_sys.(nmda_rec)
+        sys_rec = compose(sys,nmda_sys)
+
+		new(sys_rec, namespace, parts, 1)
 	end
 end	
 
-struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
-    namespace
-	parts
+mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractCompositeBlox
+    const odesystem
+    const namespace
+	const parts
 	current_receptor::Int
 
 	function HHNeuronInh_inter_Adam_Blox(;
