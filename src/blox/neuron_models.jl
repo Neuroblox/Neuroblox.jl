@@ -600,7 +600,7 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 	end
 end	
 
-mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractCompositeBlox
+mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
     const odesystem
     const namespace
 	const parts
@@ -683,10 +683,11 @@ mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractCompositeBlox
 				namespace=namespaced_name(namespace, name)					
 			)
 			end
+		parts = vcat(sys, nmda_rec)
 		nmda_sys = get_sys.(nmda_rec)
 		sys_rec = compose(sys,nmda_sys)
 	
-		new(sys_rec, namespace, vcat(nmda_rec),1)
+		new(sys_rec, namespace, parts, 1)
 	end
 end	
 

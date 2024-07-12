@@ -348,6 +348,32 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    HH_in::Union{HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(Glu_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    
+    nmda_r = get_nmda(kwargs, nameof(Glu_out), nameof(HH_in))
+    if nmda_r
+        w_nmda = generate_nmda_weight_param(Glu_out, HH_in; kwargs...)
+        push!(bc.weights, w_nmda)
+        nmda_set = get_receptor(HH_in) #collects all nmda receptors
+        nmda_rec=nmda_set[HH_in.current_receptor] #picks the next unused receptor
+        nmda_sys=get_namespaced_sys(nmda_rec)
+        eq4 = nmda_sys.V ~ sys_in.V
+        accumulate_equation!(bc, eq4)
+        eq5 = nmda_sys.Glu ~ sys_out.Glu
+        accumulate_equation!(bc, eq5)
+        eq6 = sys_in.I_syn ~ -w_nmda*nmda_sys.O_AA*(sys_in.V - sys_out.E_syn)
+        accumulate_equation!(bc, eq6)
+        HH_in.current_receptor += 1
+    end
+end
+
+function (bc::BloxConnector)(
     asc_out::NextGenerationEIBlox, 
     HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
     kwargs...
