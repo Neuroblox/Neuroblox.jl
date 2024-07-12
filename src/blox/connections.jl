@@ -349,6 +349,32 @@ end
 
 function (bc::BloxConnector)(
     Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    cb_in::Union{Cortical_Interneuron_Assembly_Tonic_Adam, Cortical_Interneuron_Assembly_Phasic_Adam}; 
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+
+    for neuron_postsyn in neurons_in
+        bc(Glu_out, neuron_postsyn; kwargs...)
+    end
+    
+end
+
+function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    cb_in::Cortical_Pyramidal_Assembly_Adam; 
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+
+    for neuron_postsyn in neurons_in
+        bc(Glu_out, neuron_postsyn; kwargs...)
+    end
+    
+end
+
+function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
     HH_in::Union{HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}; 
     kwargs...
 )

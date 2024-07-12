@@ -4,8 +4,8 @@ using Graphs
 using MetaGraphs
 using Plots
 
-@named n1=HHNeuronExci_pyr_Adam_Blox(σ=3;namespace=:g)
-@named n2=HHNeuronExci_pyr_Adam_Blox(σ=3;namespace=:g)
+@named n1=HHNeuronExci_pyr_Adam_Blox(σ=3;N_nmda=1,namespace=:g)
+@named n2=HHNeuronExci_pyr_Adam_Blox(σ=3;N_nmda=1,namespace=:g)
 
 assembly = [n1,n2]
 g = MetaDiGraph()
