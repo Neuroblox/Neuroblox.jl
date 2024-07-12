@@ -3,7 +3,7 @@
     all subcprtical blox used in cortico-striatal model in Pathak et al, 2023 
 
 """
-struct Striatum <: CompositeBlox
+struct Striatum <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -81,7 +81,7 @@ function get_matrisome(str::Striatum)
     return str.parts[idx]
 end
 
-struct GPi <: CompositeBlox
+struct GPi <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -138,7 +138,7 @@ struct GPi <: CompositeBlox
 end    
 
 
-struct GPe <: CompositeBlox
+struct GPe <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -196,7 +196,7 @@ struct GPe <: CompositeBlox
 end    
 
 
-struct Thalamus <: CompositeBlox
+struct Thalamus <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -253,7 +253,7 @@ struct Thalamus <: CompositeBlox
 end   
 
 
-struct STN <: CompositeBlox
+struct STN <: AbstractCompositeBlox
     namespace
     parts
     odesystem

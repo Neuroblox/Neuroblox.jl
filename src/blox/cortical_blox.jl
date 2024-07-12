@@ -1,4 +1,4 @@
-struct CorticalBlox <: CompositeBlox
+struct CorticalBlox <: AbstractCompositeBlox
     namespace
     parts
     odesystem

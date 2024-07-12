@@ -2,7 +2,7 @@
 Subcortical Blox used for DBS model in Adam et al,2021 
 """
 
-struct Striatum_MSN_Adam <: CompositeBlox
+struct Striatum_MSN_Adam <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -69,7 +69,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
 
 end    
 
-struct Striatum_FSI_Adam  <: CompositeBlox
+struct Striatum_FSI_Adam  <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -165,7 +165,7 @@ struct Striatum_FSI_Adam  <: CompositeBlox
 
 end    
 
-struct GPe_Adam <: CompositeBlox
+struct GPe_Adam <: AbstractCompositeBlox
     namespace
     parts
     odesystem
@@ -232,7 +232,7 @@ struct GPe_Adam <: CompositeBlox
 
 end    
 
-struct STN_Adam <: CompositeBlox
+struct STN_Adam <: AbstractCompositeBlox
     namespace
     parts
     odesystem
