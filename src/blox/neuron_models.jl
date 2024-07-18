@@ -221,8 +221,6 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			T = T
 		end
         
-        @brownian χ
-
 		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
 	    βₙ(v) = 0.5*exp(-(v+57)/40)
 	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
@@ -237,7 +235,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)-G_M*mM*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)-G_M*mM*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -245,9 +243,17 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
 			  
 		]
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+        ]
         
-		sys = System(
-            eqs, t, sts, ps; 
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
 
@@ -312,8 +318,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			b = b
 			T = T
 		end
-        
-        @brownian χ
 
 		n_inf(v) = 1/(1+exp(-(v+12.4)/6.8))
 	    τₙ(v) = (0.087+11.4/(1+exp((v+14.6)/8.6)))*(0.087+11.4/(1+exp(-(v-1.3)/18.7)))
@@ -327,7 +331,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_gap+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_gap+I_asc+I_in), 
 			   D(n)~(n_inf(V)-n)/τₙ(V), 
 			   D(h)~(h_inf(V)-h)/τₕ(V),
 			   D(mD)~(mD_inf(V)-mD)/τₘD(V),
@@ -336,9 +340,18 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			   D(Gₛ)~(-1/τₛ)*Gₛ + G_asymp(V,a,b)*(1-Gₛ)
 			  
 		]
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+            0
+        ]
         
-		sys = System(
-            eqs, t, sts, ps; 
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
 
@@ -395,8 +408,6 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			b = b
 		end
         
-        @brownian χ
-
 		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
 	    βₙ(v) = 0.5*exp(-(v+57)/40)
 	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
@@ -407,16 +418,25 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
-			  
 		]
+
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+            0
+        ]
         
-		sys = System(
-            eqs, t, sts, ps; 
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
 
@@ -476,8 +496,6 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			T = T
 		end
         
-        @brownian χ
-
 		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
 	    βₙ(v) = 0.5*exp(-(v+57)/40)
 	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
@@ -489,15 +507,25 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)			  
 		]
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+            0
+        ]
         
-		sys = System(
-            eqs, t, sts, ps; 
+        
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
 
@@ -560,8 +588,6 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 			a = a
 			b = b
 		end
-        
-        @brownian χ
 
 		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
 	    βₙ(v) = 0.5*exp(-(v+57)/40)
@@ -573,7 +599,7 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -581,9 +607,18 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 			   D(Glu)~(-1/τ_glu)*Glu + G_asymp(V-20,2.35,0.01) #this approximates the glutamate dynamics in the model where every spike instantaneously raises glutamate to 1mM
 			  
 		]
-        
-		sys = System(
-            eqs, t, sts, ps; 
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+            0
+        ]
+
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 		)
 		nmda_rec = map(Base.OneTo(N_nmda)) do i
@@ -651,8 +686,6 @@ mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
 			a = a
 			b = b
 		end
-        
-        @brownian χ
 
 		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
 	    βₙ(v) = 0.5*exp(-(v+57)/40)
@@ -664,16 +697,26 @@ mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
 			  
 		]
-        
-		sys = System(
-            eqs, t, sts, ps; 
+
+        noise_eqs = [
+            σ/Cₘ
+            0
+            0
+            0
+            0
+            0
+            0
+        ]
+
+		sys = SDESystem(
+            eqs, noise_eqs, t, sts, ps; 
 			name = Symbol(name)
 			)
 

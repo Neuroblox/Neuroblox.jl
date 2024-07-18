@@ -60,8 +60,8 @@ struct TAN <: AbstractDiscrete
         @variables t 
         sts = @variables R(t)=κ 
         ps = @parameters κ=κ jcn=0.0 [input=true]
-        eqs = [
-                R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
+        eqs = Equation[
+                # R ~ min(κ, κ/(λ*jcn + sqrt(eps()))) 
               ]
         sys = ODESystem(eqs, t, sts, ps; name)
 
