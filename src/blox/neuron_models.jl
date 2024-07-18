@@ -613,14 +613,14 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   I_in=0.0)
 		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
 		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
-		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.00 G(t)=0.0 jcn(t)=0.0 [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G,
 			  ]
 
 		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[2], sts[5], sts[1], sys, namespace)
+		new(p, sts[2], sts[3], sts[1], sys, namespace)
 	end
 end
 
