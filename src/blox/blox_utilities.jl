@@ -257,9 +257,8 @@ end
     - `sys`: MTK system
 
     Returns:
-    - `sts`  : states of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
-    - `idx_u`: indices of states that represent external inputs
-    - `idx_m`: indices of states that represent measurements
+    - `sts`: states/unknowns of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
+    - `idx`: indices of these states
 """
 function get_dynamic_states(sys)
     itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
