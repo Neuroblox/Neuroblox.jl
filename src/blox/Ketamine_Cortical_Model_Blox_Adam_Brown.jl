@@ -20,7 +20,10 @@ struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
         τ_exci=1.5,
         σ=3.0,
         density=10/80,
-        weight=0.2
+        weight=0.2,
+        k_unblock=5.4,
+        nmda_weight = 8.5/(density*N_exci),
+        N_nmda=10
     )
         n_exci = [
             HHNeuronExci_pyr_Adam_Blox(
@@ -31,7 +34,9 @@ struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ=σ,
+                    k_unblock=k_unblock,
+                    N_nmda=N_nmda
             ) 
             for i in Base.OneTo(N_exci)
         ]
@@ -46,7 +51,12 @@ struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
             source_set = setdiff(idxs, i)
             source = sample(source_set, in_degree; replace=false)
             for j in source
-                add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
+                if N_nmda>0
+                    add_edge!(g, j, i, Dict(:weight=>weight/in_degree,:nmda=>true,:nmda_weight=>nmda_weight))
+                else
+                    add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
+                end    
+
             end
         end
 
@@ -89,7 +99,9 @@ struct Cortical_Interneuron_Assembly_Phasic_Adam <: AbstractCompositeBlox
         τ_inhib=6,
         σ=3.0,
         density=10/20,
-        weight=0.8
+        weight=0.8,
+        k_unblock=5.4,
+        N_nmda=10
     )
         n_inh = [
             HHNeuronInh_inter_Adam_Blox(
@@ -100,7 +112,9 @@ struct Cortical_Interneuron_Assembly_Phasic_Adam <: AbstractCompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ = σ,
+                    k_unblock = k_unblock,
+                    N_nmda=N_nmda
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -157,7 +171,8 @@ struct Cortical_Interneuron_Assembly_Tonic_Adam <: AbstractCompositeBlox
         τ_inhib=8,
         σ=3.0,
         density=0/20,
-        weight=5
+        weight=5,
+        k_unblock=5.4
     )
         n_inh = [
             HHNeuronInh_inter_Adam_Blox(
@@ -169,7 +184,8 @@ struct Cortical_Interneuron_Assembly_Tonic_Adam <: AbstractCompositeBlox
                     freq = freq[i],
                     phase = phase[i],
                     σ=σ,
-                    N_nmda=1
+                    N_nmda=1,
+                    k_unblock=k_unblock
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -204,6 +220,7 @@ struct NMDA_receptor <: AbstractReceptorBlox
     function NMDA_receptor(;
         name,
         namespace = nothing,
+        k_unblock = 5.4
     )
 
         sts = @variables begin 
@@ -229,7 +246,7 @@ struct NMDA_receptor <: AbstractReceptorBlox
             k_off=0.0055
             k_r=0.0018
             k_d=0.0084
-            k_unblock=5.4
+            k_unblock=k_unblock
             k_block=0.61
             α=0.0916
             β=0.0465
@@ -267,7 +284,7 @@ struct Steady_Glutamate <: StimulusBlox
         E_syn = 0.0      
     )
         sts = @variables Glu(t) = glu
-        ps = @parameters E_syn = E_syn, glu=glu
+        ps = @parameters E_syn = E_syn glu=glu
 
         eqs = [Glu ~ glu]
         sys = System(
@@ -290,9 +307,9 @@ struct Glutamate_puff <: StimulusBlox
         τ_glu = 1.2      
     )
         sts = @variables Glu(t) = glu
-        ps = @parameters E_syn = E_syn, glu=glu, τ_glu=τ_glu
+        ps = @parameters E_syn = E_syn glu=glu τ_glu=τ_glu
 
-        eqs = [Glu ~ -Glu/τ_glu]
+        eqs = [D(Glu) ~ -Glu/τ_glu]
         sys = System(
             eqs, t, sts, ps; 
 			name = Symbol(name)

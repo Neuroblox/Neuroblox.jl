@@ -525,7 +525,8 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 		σ=20.0,
 		a=5,
 		b=4,
-		N_nmda=20
+		N_nmda=10,
+		k_unblock=5.4
     )
 		sts = @variables begin 
 			V(t)=-67.00 
@@ -589,7 +590,8 @@ mutable struct HHNeuronExci_pyr_Adam_Blox <: AbstractExciNeuronBlox
 		nmda_rec = map(Base.OneTo(N_nmda)) do i
 			NMDA_receptor(;
 				name=Symbol("nmda$i"), 
-				namespace=namespaced_name(namespace, name)					
+				namespace=namespaced_name(namespace, name),
+				k_unblock=k_unblock					
 			)
 		end
         parts = vcat(sys, nmda_rec)
@@ -618,7 +620,8 @@ mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
 		σ=20.0,
 		a=2,
 		b=4,
-		N_nmda=20
+		N_nmda=10,
+		k_unblock=5.4
     )
 		sts = @variables begin 
 			V(t)=-67.00 
@@ -680,7 +683,8 @@ mutable struct HHNeuronInh_inter_Adam_Blox <: AbstractInhNeuronBlox
 		nmda_rec = map(Base.OneTo(N_nmda)) do i
 			NMDA_receptor(;
 				name=Symbol("nmda$i"), 
-				namespace=namespaced_name(namespace, name)					
+				namespace=namespaced_name(namespace, name),
+				k_unblock=k_unblock						
 			)
 			end
 		parts = vcat(sys, nmda_rec)
