@@ -262,14 +262,11 @@ end
     - `idx_m`: indices of states that represent measurements
 """
 function get_dynamic_states(sys)
-    sts = []
-    idx = []
-    for (i, s) in enumerate(unknowns(sys))
-        if !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
-            push!(sts, s)
-            push!(idx, i)
-        end
+    itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
+        !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
     end
+    sts = map(x -> x[2], itr)
+    idx = map(x -> x[1], itr)
     return sts, idx
 end
 

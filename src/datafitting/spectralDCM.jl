@@ -310,7 +310,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     ω = csdsetup[:freq];             # frequencies at which the CSD is evaluated
     p = csdsetup[:p];                # order of MAR
     _, vars = get_eqidx_tagged_vars(model, "measurement")
-    data = Matrix(data[:, vars])     # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
+    data = Matrix(data[:, Symbol.(vars)])     # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
     mar = mar_ml(data, p);   # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, ω, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
