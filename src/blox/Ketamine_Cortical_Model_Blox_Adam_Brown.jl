@@ -22,7 +22,7 @@ struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
         density=10/80,
         weight=0.2,
         k_unblock=5.4,
-        nmda_weight = 8.5/(density*N_exci),
+        nmda_weight = 8.5,
         N_nmda=10
     )
         n_exci = [
@@ -52,7 +52,7 @@ struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
             source = sample(source_set, in_degree; replace=false)
             for j in source
                 if N_nmda>0
-                    add_edge!(g, j, i, Dict(:weight=>weight/in_degree,:nmda=>true,:nmda_weight=>nmda_weight))
+                    add_edge!(g, j, i, Dict(:weight=>weight/in_degree,:nmda=>true,:nmda_weight=>nmda_weight/in_degree))
                 else
                     add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
                 end    
