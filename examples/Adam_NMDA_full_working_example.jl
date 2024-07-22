@@ -19,7 +19,7 @@ prj_tonic_phasic = 5
 @named cb_in_phasic = Cortical_Interneuron_Assembly_Phasic_Adam(namespace=:g,N_inhib=N_in_phasic)
 @named cb_in_tonic = Cortical_Interneuron_Assembly_Tonic_Adam(namespace=:g,N_inhib=N_in_tonic)
 @named glu= Steady_Glutamate()
-assembly = [cb_pyr,cb_in_phasic,cb_in_tonic,glu2]
+assembly = [cb_pyr,cb_in_phasic,cb_in_tonic,glu2];
 g = MetaDiGraph()
 add_blox!.(Ref(g), assembly)
 
@@ -27,6 +27,7 @@ add_edge!(g,1,2,Dict(:weight=>0.2/prj_pyr_phasic,:density=>prj_pyr_phasic/N_pyr,
 add_edge!(g,2,1,Dict(:weight=>0.8/prj_phasic_pyr,:density=>prj_phasic_pyr/N_in_phasic))
 add_edge!(g,3,1,Dict(:weight=>5/prj_tonic_pyr,:density=>prj_tonic_pyr/N_in_tonic))
 add_edge!(g,3,2,Dict(:weight=>5/prj_tonic_phasic,:density=>prj_tonic_phasic/N_in_tonic))
+add_edge!(g,4,3,Dict(:nmda=>true,:nmda_weight=>9.5))
 
 @named neuron_net = system_from_graph(g)
 sys = structural_simplify(neuron_net)
