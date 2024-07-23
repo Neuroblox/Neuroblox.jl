@@ -52,6 +52,10 @@ function outputs(::Type{T}) where T
   ["out"]
 end
 
+function param_order(::Type{T}) where T
+  return [k for k in keys(arguments(T))]
+end
+
 # methods
 
 const NUMBER = "number"
@@ -71,6 +75,10 @@ function arguments(::Type{Neuroblox.ImageStimulus})
     :t_stimulus => NCAD(700, NUMBER, 10, 10000,[],true),
     :t_pause => NCAD(300, NUMBER, 10, 10000,[],true)
   )
+end
+
+function param_order(::Type{Neuroblox.ImageStimulus})
+  [:height, :width, :N_stims, :file, :t_stimulus, :t_pause]
 end
 
 function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
