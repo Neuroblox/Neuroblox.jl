@@ -23,7 +23,7 @@ mutable struct VLState
     dF::Vector{Float64}          # predicted free energy changes (store at each iteration)
     λ::Vector{Float64}           # hyperparameter
     ϵ_θ::Vector{Float64}         # prediction error of parameters θ
-    reset_state::Vector{Any}     # store state to reset to [ϵ_θ and λ] when the free energy deteriorates
+    reset_state::Vector{Any}     # store state to reset to [ϵ_θ and λ] when the free energy gets worse rather than better
     μθ_po::Vector{Float64}       # posterior expectation value of parameters 
     Σθ_po::Matrix{Float64}       # posterior covariance matrix of parameters
     dFdθ::Vector{Float64}        # free energy gradient w.r.t. parameters
@@ -32,7 +32,7 @@ end
 
 struct VLSetup{Model, N}
     model_at_x0::Model                        # model evaluated at initial conditions
-    y_csd::Array{ComplexF64, N}                 # cross-spectral density approximated by fitting MARs to data
+    y_csd::Array{ComplexF64, N}               # cross-spectral density approximated by fitting MARs to data
     tolerance::Float64                        # convergence criterion
     systemnums::Vector{Int}                   # several integers -> np: n. parameters, ny: n. datapoints, nq: n. Q matrices, nh: n. hyperparameters
     systemvecs::Vector{Vector{Float64}}       # μθ_pr: prior expectation values of parameters and μλ_pr: prior expectation values of hyperparameters

@@ -7,8 +7,8 @@ data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column
 x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
 max_iter = 128
-########## assemble the model ##########
 
+########## assemble the model ##########
 g = MetaDiGraph()
 regions = Dict()
 @parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=1/16 [tunable = false]
