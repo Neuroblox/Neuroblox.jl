@@ -115,8 +115,6 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
             G(t)=0.0 
 			[output = true] 
 			z(t)=0.0
-            spikes_cumulative(t)=0.0
-            spikes_window(t)=0.0
 		end
 
 		ps = @parameters begin 
@@ -290,7 +288,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			G(t)=0.0 
 			[output = true] 
 			Gₛ(t)=0.0 
-			[output = true] 
+			[output = true]
 		end
 
 		ps = @parameters begin 
