@@ -250,7 +250,7 @@ Test for OUBlox generator.
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
     ousimpl = structural_simplify(ou1connected)
     prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
-    sol = solve(prob_ou,alg_hints = [:stiff])
+    sol = solve(prob_ou, alg_hints = [:stiff])
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[1,:]) > 0.0 # there should be variance
 end
