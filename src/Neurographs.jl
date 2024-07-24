@@ -63,7 +63,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     connection_eqs = get_equations_with_state_lhs(bc)
 
     cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
+    return compose(System(connection_eqs, t; name, discrete_events = cbs), blox_syss)
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
@@ -72,11 +72,11 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
 
     connection_eqs = get_equations_with_state_lhs(bc)
     cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
+    return compose(System(connection_eqs, t; name, discrete_events = cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)
-    return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
+    return compose(System(Equation[], t; name), get_sys.(parts))
 end
 
 function action_selection_from_graph(g::MetaDiGraph)

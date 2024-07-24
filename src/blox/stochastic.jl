@@ -13,25 +13,23 @@ returns:
 """
 mutable struct OUBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
-    μ::Num
-    σ::Num
-    τ::Num
     stochastic::Bool
-    connector::Num
+    output::Num
+    input::Num
     noDetail::Vector{Num}
     detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function OUBlox(;name, μ=0.0, σ=1.0, τ=1.0)
-        params = @parameters μ=μ τ=τ σ=σ
-        states = @variables x(t)=1.0 jcn(t)=0.0
+        p = paramscoping(μ=μ, τ=τ, σ=σ)
+        μ, τ, σ = p
+        sts = @variables x(t)=1.0 [output=true] jcn(t)=0.0 [input=true]
         @brownian w
 
-        eqs    = [D(x) ~ -(x-μ)/τ + jcn + sqrt(2/τ)*σ*w]
-        sys = System(eqs, t, states, params; name=name)
-        new(μ, σ, τ, true, sys.x,[sys.x],[sys.x],
-            Dict(sys.x => (-1.0,1.0)),
-            sys)
+        eqs = [D(x) ~ -(x-μ)/τ + jcn + sqrt(2/τ)*σ*w]
+        sys = System(eqs, t; name=name)
+        new(true, sts[1], sts[2], [sys.x],[sys.x],
+            Dict(sys.x => (-1.0,1.0)), sys)
     end
 end
 
@@ -54,23 +52,22 @@ returns:
 """
 mutable struct OUCouplingBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
-    μ::Num
-    σ::Num
-    τ::Num
     stochastic::Bool
-    connector::Num
+    output::Num
+    input::Num
     noDetail::Vector{Num}
     detail::Vector{Num}
     initial::Dict{Num, Tuple{Float64, Float64}}
     odesystem::ODESystem
     function OUCouplingBlox(;name, μ=0.0, σ=1.0, τ=1.0)
-        params = @parameters μ=μ τ=τ σ=σ
-        states = @variables x(t)=1.0 jcn(t)=0.0
+        p = paramscoping(μ=μ, τ=τ, σ=σ)
+        μ, τ, σ = p
+        sts = @variables x(t)=1.0 [output=true] jcn(t)=0.0 [input=true]
         @brownian w
     
         eqs    = [D(x) ~ -(x-μ)/τ + sqrt(2/τ)*σ*w]
-        sys = System(eqs, t, states, params; name=name)
-        new(μ, σ, τ, true, sys.jcn*sys.x,[sys.jcn*sys.x],[sys.jcn*sys.x],
+        sys = System(eqs, t; name=name)
+        new(true, sts[2]*sts[1], sts[2], [sts[2]*sts[1]],[sts[2]*sts[1]],
             Dict(sys.x => (-1.0,1.0)),
             sys)
     end
