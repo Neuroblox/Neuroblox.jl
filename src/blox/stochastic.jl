@@ -13,13 +13,10 @@ returns:
 """
 mutable struct OUBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
-    stochastic::Bool
-    output::Num
-    input::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
+    stochastic
+    output
+    input
+    odesystem
     function OUBlox(;name, μ=0.0, σ=1.0, τ=1.0)
         p = paramscoping(μ=μ, τ=τ, σ=σ)
         μ, τ, σ = p
@@ -52,13 +49,10 @@ returns:
 """
 mutable struct OUCouplingBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
-    stochastic::Bool
-    output::Num
-    input::Num
-    noDetail::Vector{Num}
-    detail::Vector{Num}
-    initial::Dict{Num, Tuple{Float64, Float64}}
-    odesystem::ODESystem
+    stochastic
+    output
+    input
+    odesystem
     function OUCouplingBlox(;name, μ=0.0, σ=1.0, τ=1.0)
         p = paramscoping(μ=μ, τ=τ, σ=σ)
         μ, τ, σ = p
