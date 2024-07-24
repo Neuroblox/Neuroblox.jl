@@ -61,11 +61,40 @@ end
 const NUMBER = "number"
 const STRING = "string"
 const INTEGER = "integer"
-const MENU = "menu"
+const DROPDOWN = "dropdown"
 const NODE = "node"
 const LINK = "link"
 const FILE = "file"
 
+# GUI tabs
+
+function tab_parameters()
+  OrderedDict(
+    "Nodes & Edges" => OrderedDict(),
+    "Params" => OrderedDict(),
+    "Sim" => OrderedDict(
+      :duration => NCAD(600, NUMBER, 1, 100000,[],true),
+      :reltol => NCAD(1e-3, NUMBER, 1e-1, 1e-7,[],true),
+      :abstol => NCAD(1e-6, NUMBER, 1e-1, 1e-10,[],true),
+      :solver => NCAD(1, DROPDOWN, 1, 2,["stiff","non-stiff"],true),
+      :dt => NCAD(0.1, NUMBER, 1e-3, 10,[],true),
+    ),
+    "Parameter Fitting" => OrderedDict(
+      :method => NCAD(1, DROPDOWN, 1, 2,["Laplace","MCMC"],true),
+      :experiment => NCAD(1, DROPDOWN, 1, 2,["fMRI","LFP","EEG"],true),
+      :max_iter => NCAD(100, INTEGER, 1, 10000,[],true),
+      :accuracy => NCAD(0.05, NUMBER, 1e-3, 10,[],true),
+      :ExpData => NCAD("", FILE, 0, 0,["ExpData"],true),
+    ),
+    "Reinforcement Learning" => OrderedDict(
+      :trials => NCAD(20, INTEGER, 1, 10000,[],true),
+      :t_warmup => NCAD(200, NUMBER, 0, 10000, [], true),
+    ),
+    "Data Loader" => OrderedDict(),
+  )
+end
+
+# Blox arguments and interface
 function arguments(::Type{Neuroblox.ImageStimulus})
   OrderedDict(
     :height => NCAD(15, INTEGER, 1, 100,[], false),
