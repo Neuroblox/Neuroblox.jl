@@ -149,14 +149,11 @@ delay_parameters(blox) = Num[]
 delay_parameters(blox::AbstractComponent) = blox.connector.delays
 delay_parameters(blox::CompositeBlox) = blox.connector.delays
 
-event_callbacks(blox) = []
-event_callbacks(blox::AbstractComponent) = blox.connector.events
-event_callbacks(blox::CompositeBlox) = blox.connector.events
+get_discrete_callbacks(blox) = []
+get_discrete_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
+get_discrete_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
 
-weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
-weight_learning_rules(bc::BloxConnector) = bc.learning_rules
-weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
-weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
+get_continuous_callbacks(blox) = []
 
 get_blox_parts(blox) = blox.parts
 

@@ -2,17 +2,14 @@ mutable struct BloxConnector
     eqs::Vector{Equation}
     weights::Vector{Num}
     delays::Vector{Num}
-    events
+    discrete_callbacks
     learning_rules
 
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
-        eqs = mapreduce(input_equations, vcat, bloxs) 
-        weights = mapreduce(weight_parameters, vcat, bloxs)
-        delays = mapreduce(delay_parameters, vcat, bloxs)
-        events = mapreduce(event_callbacks, vcat, bloxs)
-        learning_rules = mapreduce(weight_learning_rules, merge, bloxs)
+        discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
+        continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
 
         new(eqs, weights, delays, events, learning_rules)
     end
@@ -43,18 +40,18 @@ function get_callbacks(g, bc; t_block=missing)
         if !isempty(eqs_params) && !isempty(eqs)
             cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
             cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, cbs_spikes, bc.events)
+            return vcat(cbs_params, cbs_spikes, bc.discrete_callbacks)
         elseif isempty(eqs_params) && !isempty(eqs)
             cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            return vcat(cbs_spikes, bc.events)
+            return vcat(cbs_spikes, bc.discrete_callbacks)
         elseif !isempty(eqs_params) && isempty(eqs)
             cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, bc.events)
+            return vcat(cbs_params, bc.discrete_callbacks)
         else
-            return bc.events
+            return bc.discrete_callbacks
         end
     else
-        return bc.events
+        return bc.discrete_callbacks
     end
 end
 
@@ -649,10 +646,10 @@ function (bc::BloxConnector)(
     cb_matr_init = [0.1] => [sys_matr_in.H ~ 1]
     cb_strios_init = [0.1] => [sys_strios_in.H ~ 1]
 
-    push!(bc.events, cb_matr)
-    push!(bc.events, cb_strios)
-    push!(bc.events, cb_matr_init)
-    push!(bc.events, cb_strios_init)
+    push!(bc.discrete_callbacks, cb_matr)
+    push!(bc.discrete_callbacks, cb_strios)
+    push!(bc.discrete_callbacks, cb_matr_init)
+    push!(bc.discrete_callbacks, cb_strios_init)
 
     for neuron in neurons_in
         sys_neuron = get_namespaced_sys(neuron)
@@ -661,8 +658,8 @@ function (bc::BloxConnector)(
         cb_neuron = [t_event] => [sys_neuron.I_bg ~ ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
         # lateral inhibition current I_bg should be set to 0 at the beginning of each trial
         cb_neuron_init = [0.1] => [sys_neuron.I_bg ~ 0]
-        push!(bc.events, cb_neuron)
-        push!(bc.events, cb_neuron_init)
+        push!(bc.discrete_callbacks, cb_neuron)
+        push!(bc.discrete_callbacks, cb_neuron_init)
     end
 end
 
@@ -735,7 +732,7 @@ function (bc::BloxConnector)(
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
     cb = [t_event+sqrt(eps(t_event))] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_in.TAN_spikes], [])
-    push!(bc.events, cb)
+    push!(bc.discrete_callbacks, cb)
 
     eq = sys_in.jcn ~ w*sys_in.TAN_spikes
 
@@ -752,7 +749,7 @@ function (bc::BloxConnector)(
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
     cb = [t_event] => [sys_in.H ~ ifelse(sys_out.H*sys_out.jcn > sys_in.H*sys_in.jcn, 0, 1)]
-    push!(bc.events, cb)
+    push!(bc.discrete_callbacks, cb)
 end
 
 function (bc::BloxConnector)(
