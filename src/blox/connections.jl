@@ -853,3 +853,47 @@ function (bc::BloxConnector)(
     
     accumulate_equation!(bc, eq)
 end
+
+function (bc::BloxConnector)(
+    bloxout::LIFExciNeuron, 
+    bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
+                    w * sys_in.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+                    (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
+
+    accumulate_equation!(bc, eq)
+
+    cb = [sys_out.V ~ sys_out.θ] => [
+        sys_in.S_AMPA ~ sysin.S_AMPA + 1,
+        sys_in.S_NMDA ~ sysin.S_NMDA + 1
+    ]
+    push!(bc.continuous_callbacks, cb)
+end
+
+function (bc::BloxConnector)(
+    bloxout::LIFInhNeuron, 
+    bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_GABA * sys_in.g_GABA * (sys_in.V - sys_in.V_I) 
+                    
+    accumulate_equation!(bc, eq)
+
+    cb = [sys_out.V ~ sys_out.θ] => [sys_in.S_GABA ~ sys_in.S_GABA + 1]
+    push!(bc.continuous_callbacks, cb)
+end
+
