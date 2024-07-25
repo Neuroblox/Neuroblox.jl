@@ -9,8 +9,12 @@ mutable struct BloxConnector
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
+        eqs = mapreduce(get_input_equations, vcat, bloxs) 
+        weights = mapreduce(get_weight_parameters, vcat, bloxs)
+        delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
         continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
         new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, learning_rules)
     end
@@ -26,7 +30,7 @@ get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 
 get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
-function get_callbacks(g, bc; t_block=missing)
+function generate_discrete_callbacks(g, bc; t_block=missing)  
     if !ismissing(t_block)
         eqs_params = get_equations_with_parameter_lhs(bc)
        

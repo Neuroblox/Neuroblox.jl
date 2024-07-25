@@ -110,7 +110,7 @@ end
     which holds a `BloxConnector` object with all relevant connections 
     from lower levels and this level.
 """
-function input_equations(blox)
+function get_input_equations(blox)
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
@@ -137,17 +137,17 @@ function input_equations(blox)
     return eqs
 end
 
-input_equations(blox::AbstractComponent) = blox.connector.eqs
-input_equations(blox::CompositeBlox) = blox.connector.eqs
-input_equations(::ImageStimulus) = []
+get_input_equations(blox::AbstractComponent) = blox.connector.eqs
+get_input_equations(blox::CompositeBlox) = blox.connector.eqs
+get_input_equations(::ImageStimulus) = []
 
-weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
-weight_parameters(blox::CompositeBlox) = blox.connector.weights #I think this is the fix?
+get_weight_parameters(blox) = Num[]
+get_weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
+get_weight_parameters(blox::CompositeBlox) = blox.connector.weights #I think this is the fix?
 
-delay_parameters(blox) = Num[]
-delay_parameters(blox::AbstractComponent) = blox.connector.delays
-delay_parameters(blox::CompositeBlox) = blox.connector.delays
+get_delay_parameters(blox) = Num[]
+get_delay_parameters(blox::AbstractComponent) = blox.connector.delays
+get_delay_parameters(blox::CompositeBlox) = blox.connector.delays
 
 get_discrete_callbacks(blox) = []
 get_discrete_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
@@ -157,6 +157,10 @@ get_continuous_callbacks(blox) = []
 get_continuous_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
 get_continuous_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
 
+get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
+get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
+get_weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
+get_weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
 
 get_blox_parts(blox) = blox.parts
 
