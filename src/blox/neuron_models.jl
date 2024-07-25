@@ -624,6 +624,126 @@ struct LIFNeuron <: AbstractNeuronBlox
 	end
 end
 
+struct LIFInhNeuron <: AbstractNeuronBlox
+    odesystem
+    namespace
+
+    function LIFInhNeuron(;
+        name,
+        namespace = nothing,
+        g_L = 20, # nS
+        V_L = -70, # mV
+        V_E = 0, # mV
+        V_I = -70, # mV
+        θ = -50, # mV
+        V_reset = -55, # mV
+        C = 0.2, # nF 
+        τ_AMPA = 2, # ms
+        τ_GABA = 5, # ms
+        τ_NMDA_decay = 100, # ms
+        τ_NMDA_rise = 2, # ms
+        α = 0.5, # ms⁻¹
+        g_AMPA = 0.04, # nS
+        g_AMPA_external = 1.62, # nS
+        g_GABA = 1, # nS
+        g_NMDA = 0.13, # nS 
+        Mg = 1 # mM 
+    )
+
+        ps = @parameters begin 
+            g_L=g_L  
+            V_L=V_L 
+            V_E=V_E
+            V_I=V_I
+            C=C
+            τ_AMPA=τ_AMPA 
+            τ_GABA=τ_GABA 
+            τ_NMDA_decay=τ_NMDA_decay 
+            τ_NMDA_rise=τ_NMDA_rise 
+            g_AMPA = g_AMPA
+            g_AMPA_external = g_AMPA_external
+            g_GABA = g_GABA
+            g_NMDA = g_NMDA
+            α=α
+            Mg=Mg
+        end
+
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 jcn(t)=0 [input=true] 
+        eqs = [
+            D(V) ~ - (g_L * (V - V_L) + jcn) / C,
+            D(S_AMPA) ~ - S_AMPA / τ_AMPA,
+            D(S_GABA) ~ - S_GABA / τ_GABA,
+            D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
+            D(x) ~ - x / τ_NMDA_rise
+        ]
+
+        ev = [V ~ θ] => [V ~ V_reset]
+        sys = System(eqs, t, sts, ps; continuous_events=[ev], name=name)
+
+		new(sys, namespace)
+    end
+end
+
+struct LIFExciNeuron <: AbstractNeuronBlox
+    odesystem
+    namespace
+
+    function LIFExciNeuron(;
+        name,
+        namespace = nothing,
+        g_L = 25, # nS
+        V_L = -70, # mV
+        V_E = 0, # mV
+        V_I = -70, # mV
+        θ = -50, # mV
+        V_reset = -55, # mV
+        C = 0.5, # nF 
+        τ_AMPA = 2, # ms
+        τ_GABA = 5, # ms
+        τ_NMDA_decay = 100, # ms
+        τ_NMDA_rise = 2, # ms
+        α = 0.5, # ms⁻¹
+        g_AMPA = 0.05, # nS
+        g_AMPA_external = 2.1, # nS
+        g_GABA = 1.3, # nS
+        g_NMDA = 0.165, # nS  
+        Mg = 1 # mM
+    )
+
+        ps = @parameters begin 
+            g_L=g_L  
+            V_L=V_L 
+            V_E=V_E
+            V_I=V_I
+            C=C
+            τ_AMPA=τ_AMPA 
+            τ_GABA=τ_GABA 
+            τ_NMDA_decay=τ_NMDA_decay 
+            τ_NMDA_rise=τ_NMDA_rise 
+            g_AMPA = g_AMPA
+            g_AMPA_external = g_AMPA_external
+            g_GABA = g_GABA
+            g_NMDA = g_NMDA
+            α=α
+            Mg=Mg
+        end
+
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 jcn(t)=0 [input=true] 
+        eqs = [
+            D(V) ~ - (g_L * (V - V_L) + jcn) / C,
+            D(S_AMPA) ~ - S_AMPA / τ_AMPA,
+            D(S_GABA) ~ - S_GABA / τ_GABA,
+            D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
+            D(x) ~ - x / τ_NMDA_rise
+        ]
+
+        ev = [V ~ θ] => [V ~ V_reset]
+        sys = System(eqs, t, sts, ps; continuous_events=[ev], name=name)
+
+		new(sys, namespace)
+    end
+end
+
 # Paramater bounds for GUI
 # C = [0.1, 100] μF
 # E_syn = [1, 100] kΩ
