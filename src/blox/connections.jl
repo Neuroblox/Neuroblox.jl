@@ -3,6 +3,7 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     discrete_callbacks
+    continuous_callbacks
     learning_rules
 
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
@@ -11,7 +12,7 @@ mutable struct BloxConnector
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
         continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
 
-        new(eqs, weights, delays, events, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, learning_rules)
     end
 end
 

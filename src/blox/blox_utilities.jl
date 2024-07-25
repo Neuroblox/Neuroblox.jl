@@ -154,6 +154,9 @@ get_discrete_callbacks(blox::AbstractComponent) = blox.connector.discrete_callba
 get_discrete_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
 
 get_continuous_callbacks(blox) = []
+get_continuous_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
+get_continuous_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
+
 
 get_blox_parts(blox) = blox.parts
 
