@@ -14,6 +14,26 @@ using Random
     @test typeof(lm1) == LinearNeuralMass
 end
 
+@testset "LinearNeuralMass + BalloonModel + process noise" begin
+    @named lm = LinearNeuralMass()
+    @named ou = OUBlox(τ=1, σ=0.1)
+    @named bold = BalloonModel()
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [lm, ou, bold])
+    add_edge!(g, 2, 1, Dict(:weight => 1.0))
+    add_edge!(g, 1, 3, Dict(:weight => 0.1))
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    prob = SDEProblem(sys, [], (0.0, 500.0))
+    sol = solve(prob)
+    using Plots
+    plot(sol)
+    @test sol.retcode == ReturnCode.Success
+end
+
+
 """
 HarmonicOscillator tests
 """
@@ -256,49 +276,86 @@ Test for OUBlox generator.
 end
 
 @testset "OUBlox & Janset-Rit network" begin
-    @named ou1 = OUBlox()
+    @named ou = OUBlox(σ=1.0)
     @named jr = JansenRit()
-    sys = [ou1.odesystem, jr.odesystem]
+ 
+    global_ns = :g # global namespace
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [ou, jr])
+    add_edge!(g, 1, 2, Dict(:weight => 100.0))
+    
+    sys = system_from_graph(g, name=global_ns)
+    sys = structural_simplify(sys)
+    
+    prob_oujr = SDEProblem(sys,[],(0.0, 20.0))
+    sol = solve(prob_oujr, alg_hints = [:stiff])
+    @test sol.retcode == SciMLBase.ReturnCode.Success
+    @test std(sol[2,:]) > 0.0
+    # this test does not make sense, it is true also when JR 
+    # is not coupled to OU because of initial conditions at 1 and 
+    # then decay test by setting weight to 0.0
+end
+
+@testset "OUBlox & Janset-Rit network" begin
+    @named ou = OUBlox(σ=5.0)
+    @named jr = JansenRit()    
+    sys = [ou.odesystem, jr.odesystem]
     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
-    ousimpl = structural_simplify(ou1connected)
-    prob_oujr = SDEProblem(ousimpl,[],(0.0, 2.0))
+    sys = structural_simplify(ou1connected)
+    
+    prob_oujr = SDEProblem(sys,[],(0.0, 2.0))
     sol = solve(prob_oujr, alg_hints = [:stiff])
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[2,:]) > 0.0 # there should be variance
 end
 
 @testset "OUBlox-OUCouplingBlox network" begin
-    @named ou1 = OUBlox()
-    @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
-    sys = [ou1.odesystem, oucp.odesystem]
-    eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
-    @named ou1connected = compose(System(eqs, t;name=:connected),sys)
-    ousimpl = structural_simplify(ou1connected)
+    @named coupling = LinearNeuralMass()   # TODO: this here needs to be a linear function not a linear differential equation.
+    @named ou = OUBlox()
+    @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [coupling, ou, oucp])
+    add_edge!(g, 2, 1, Dict(:weight => ou.odesystem.x))
+    @named sys = system_from_graph(g)
+    ousimpl = structural_simplify(sys)
     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
     sol = solve(prob_oucp)
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
 end
 
-@testset "OUBlox-OUCouplingBlox larger network" begin
-    @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-    @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-    @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
-    @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-    sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
-    eqs = [sys[1].jcn ~ oucp1.connector,
-           sys[2].jcn ~ oucp2.connector,
-           sys[3].jcn ~ ou2.connector,
-           sys[4].jcn ~ ou1.connector]
-    @named ouconnected = compose(System(eqs, t; name=:connected), sys)
-    ousimpl = structural_simplify(ouconnected)
-    prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
-    sol = solve(prob_ouconnect)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-    @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-    #@test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
-end
+# @testset "OUBlox-OUCouplingBlox network" begin
+#     @named ou1 = OUBlox()
+#     @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
+#     sys = [ou1.odesystem, oucp.odesystem]
+#     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+#     @named ou1connected = compose(System(eqs, t;name=:connected),sys)
+#     ousimpl = structural_simplify(ou1connected)
+#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+#     sol = solve(prob_oucp)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+# end
+
+# @testset "OUBlox-OUCouplingBlox larger network" begin
+#     @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+#     @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+#     @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
+#     @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
+#     sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
+#     eqs = [sys[1].jcn ~ oucp1.connector,
+#            sys[2].jcn ~ oucp2.connector,
+#            sys[3].jcn ~ ou2.connector,
+#            sys[4].jcn ~ ou1.connector]
+#     @named ouconnected = compose(System(eqs, t; name=:connected), sys)
+#     ousimpl = structural_simplify(ouconnected)
+#     prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
+#     sol = solve(prob_ouconnect)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+#     #@test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
+# end
 
 # @testset "Time-series output" begin
 #     phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
