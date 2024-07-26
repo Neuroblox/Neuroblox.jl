@@ -57,11 +57,10 @@ for (i, r) in enumerate(rnames)
 end
 
 modelparam = OrderedDict()
-np = 0
-for par in tunable_parameters(neuronmodel)
+np = sum(tunable_parameters(neuronmodel); init=0) do par
     val = Symbolics.getdefaultval(par)
-    np += length(val)
     modelparam[par] = val
+    length(val)
 end
 indices = Dict(:dspars => collect(1:np))
 # Noise parameter mean
