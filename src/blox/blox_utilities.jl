@@ -137,32 +137,33 @@ function get_input_equations(blox)
     return eqs
 end
 
-get_input_equations(blox::AbstractComponent) = blox.connector.eqs
-get_input_equations(blox::CompositeBlox) = blox.connector.eqs
-get_input_equations(::ImageStimulus) = []
+get_connector(blox::Union{CompositeBlox, AbstractComponent}) = blox.connector
 
+get_input_equations(bc::BloxConnector) = bc.eqs
+get_input_equations(blox::Union{CompositeBlox, AbstractComponent}) = (get_input_equations ∘ get_connector)(blox)
+get_input_equations(blox) = []
+
+get_weight_parameters(bc::BloxConnector) = bc.weights
+get_weight_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_parameters ∘ get_connector)(blox)
 get_weight_parameters(blox) = Num[]
-get_weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
-get_weight_parameters(blox::CompositeBlox) = blox.connector.weights #I think this is the fix?
 
+get_delay_parameters(bc::BloxConnector) = bc.delays
+get_delay_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_delay_parameters ∘ get_connector)(blox)
 get_delay_parameters(blox) = Num[]
-get_delay_parameters(blox::AbstractComponent) = blox.connector.delays
-get_delay_parameters(blox::CompositeBlox) = blox.connector.delays
 
+get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
+get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
 get_discrete_callbacks(blox) = []
-get_discrete_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
-get_discrete_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
 
+get_continuous_callbacks(bc::BloxConnector) = bc.continuous_callbacks
+get_continuous_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_continuous_callbacks ∘ get_connector)(blox)
 get_continuous_callbacks(blox) = []
-get_continuous_callbacks(blox::AbstractComponent) = blox.connector.discrete_callbacks
-get_continuous_callbacks(blox::CompositeBlox) = blox.connector.discrete_callbacks
 
-get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
 get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
-get_weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
-get_weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
+get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
+get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
 
-get_blox_parts(blox) = blox.parts
+get_blox_parts(blox::Union{CompositeBlox, AbstractComponent}) = blox.parts
 
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
