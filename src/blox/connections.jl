@@ -872,8 +872,8 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 
     cb = [sys_out.V ~ sys_out.θ] => [
-        sys_in.S_AMPA ~ sysin.S_AMPA + 1,
-        sys_in.S_NMDA ~ sysin.S_NMDA + 1
+        sys_in.S_AMPA ~ sys_in.S_AMPA + 1,
+        sys_in.S_NMDA ~ sys_in.S_NMDA + 1
     ]
     push!(bc.continuous_callbacks, cb)
 end
