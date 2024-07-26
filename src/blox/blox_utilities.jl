@@ -110,7 +110,7 @@ end
     which holds a `BloxConnector` object with all relevant connections 
     from lower levels and this level.
 """
-function get_input_equations(blox::AbstractBlox)
+function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
