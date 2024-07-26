@@ -335,7 +335,7 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
         cr = kwargs[:connection_rule]
     else
         name_blox1 = nameof(bloxout)
-        name_blox1 = nameof(bloxin)
+        name_blox2 = nameof(bloxin)
         @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
         cr = "basic"
     end
