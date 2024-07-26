@@ -57,10 +57,12 @@ for (i, r) in enumerate(rnames)
 end
 
 modelparam = OrderedDict()
+np = 0
 for par in tunable_parameters(neuronmodel)
-    modelparam[par] = Symbolics.getdefaultval(par)
+    val = Symbolics.getdefaultval(par)
+    np += length(val)
+    modelparam[par] = val
 end
-np = length(modelparam)
 indices = Dict(:dspars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
@@ -83,8 +85,8 @@ paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
 paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0;
 paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
 for (k, v) in paramvariance
-    if occursin("A[", string(k))
-        paramvariance[k] = vars["pC"][1, 1]
+    if occursin("A", string(k))
+        paramvariance[k] = ones(length(v))
     elseif occursin("κ", string(k))
         paramvariance[k] = ones(length(v))./256.0;
     elseif occursin("ϵ", string(k))
@@ -121,7 +123,6 @@ with_stack(5_000_000) do  # 5MB of stack space
         end
     end
 end
-
 print("maxixmum iterations reached\n")
 
 ### COMPARE RESULTS WITH MATLAB RESULTS ###

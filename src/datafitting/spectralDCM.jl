@@ -105,7 +105,9 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
 end
 
 function transferfunction_fmri(ω, derivatives, params, indices)
-    ∂f = derivatives(params[indices[:dspars]])
+    nr = length(indices[:u])
+    pars = params[indices[:dspars]]
+    ∂f = derivatives([pars[1:nr^2], pars[nr^2+1:end]...])
     ∂f∂x = ∂f[indices[:sts], indices[:sts]]
     ∂f∂u = ∂f[indices[:sts], indices[:u]]
     ∂g∂x = ∂f[indices[:m], indices[:sts]]
