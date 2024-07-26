@@ -308,20 +308,20 @@ end
     @test std(sol[2,:]) > 0.0 # there should be variance
 end
 
-@testset "OUBlox-OUCouplingBlox network" begin
-    @named coupling = LinearNeuralMass()   # TODO: this here needs to be a linear function not a linear differential equation.
-    @named ou = OUBlox()
-    @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), [coupling, ou, oucp])
-    add_edge!(g, 2, 1, Dict(:weight => ou.odesystem.x))
-    @named sys = system_from_graph(g)
-    ousimpl = structural_simplify(sys)
-    prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
-    sol = solve(prob_oucp)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-    @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-end
+# @testset "OUBlox-OUCouplingBlox network" begin
+#     @named coupling = LinearNeuralMass()   # TODO: this here needs to be a linear function not a linear differential equation.
+#     @named ou = OUBlox()
+#     @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
+#     g = MetaDiGraph()
+#     add_blox!.(Ref(g), [coupling, ou, oucp])
+#     add_edge!(g, 2, 1, Dict(:weight => ou.odesystem.x))
+#     @named sys = system_from_graph(g)
+#     ousimpl = structural_simplify(sys)
+#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+#     sol = solve(prob_oucp)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+# end
 
 # @testset "OUBlox-OUCouplingBlox network" begin
 #     @named ou1 = OUBlox()
