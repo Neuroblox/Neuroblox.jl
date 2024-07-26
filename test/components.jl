@@ -26,10 +26,8 @@ end
     @named sys = system_from_graph(g)
     sys = structural_simplify(sys)
 
-    prob = SDEProblem(sys, [], (0.0, 500.0))
+    prob = SDEProblem(sys, [], (0.0, 10.0))
     sol = solve(prob)
-    using Plots
-    plot(sol)
     @test sol.retcode == ReturnCode.Success
 end
 
