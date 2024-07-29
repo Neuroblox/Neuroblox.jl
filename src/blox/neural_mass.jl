@@ -489,13 +489,13 @@ struct KuramotoOscillator <: NeuralMassBlox
         ω, ζ = p
         
         if include_noise
-            sts = @variables θ=0.0 [output = true] jcn(t)=0.0 [input=true]
+            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
             @brownian w 
             eqs = [D(θ) ~ ω + ζ * w + jcn]
             sys = System(eqs, t, sts, p; name=name)
             new(p, sts[1], sts[2], sys, namespace)
         else
-            sts = @variables θ=0.0 [output = true] jcn(t)=0.0 [input=true]
+            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
             eqs = [D(θ) ~ ω + jcn]
             sys = System(eqs, t, sts, p; name=name)
             new(p, sts[1], sts[2], sys, namespace)
