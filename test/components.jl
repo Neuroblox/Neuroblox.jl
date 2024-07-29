@@ -181,6 +181,11 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
+# @testset "KuramotoOscillator" begin
+#     @named K01 = KuramotoOscillator()
+#     @named K02 = KuramotoOscillator()
+# end
+
 @testset "Canonical Micro Circuit network" begin
     # connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
     global_ns = :g # global namespace

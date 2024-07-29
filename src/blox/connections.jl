@@ -376,6 +376,24 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+function (bc::BloxConnector)(
+    bloxout::KuramotoOscillator, 
+    bloxin::KuramotoOscillator; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    xₒ = namespace_expr(bloxout.output, sys_out)
+    xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
+
+    eq = sys_in.jcn ~ w*sin(xₒ - xᵢ)
+    accumulate_equation!(bc, eq)
+end
+
 # additional dispatch to connect to hemodynamic observer blox
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
