@@ -23,7 +23,7 @@ struct SermonNPool <: NeuralMassBlox
         p = paramscoping(τ_pool=τ_pool, p_pool=p_pool)
         τ_pool, p_pool = p
         
-        sts = @variables n_pool(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
+        sts = @variables n_pool(t)=1.0 [output = true] jcn(t)=0.0 [input=true]
         eqs = [D(n_pool) ~ (1-n_pool)/τ_pool - p_pool*n_pool*jcn]
         sys = System(eqs, t, sts, p; name=name)
         new(p, sts[1], sts[2], sys, namespace)
@@ -56,3 +56,21 @@ struct SermonDBS <: NeuralMassBlox
         new(p, sts[1], nothing, sys, namespace)
     end
 end
+
+function (bc::BloxConnector)(
+    bloxout::SermonDBS, 
+    bloxin::SermonNPool; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    x = namespace_expr(bloxout.output, sys_out)
+
+    eq = sys_in.jcn ~ w*x
+    accumulate_equation!(bc, eq)
+end
+
