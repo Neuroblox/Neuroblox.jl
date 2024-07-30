@@ -154,3 +154,28 @@ mutable struct ImageStimulus <: StimulusBlox
         ImageStimulus(data; name, namespace, t_stimulus, t_pause)
     end
 end
+
+struct PoissonSpikeTrain <: StimulusBlox
+    name
+    namespace
+    rate
+    dt
+    tspan
+    rng
+    
+    function PoissonSpikeTrain(; name, namespace, rate, tspan, dt=0.5/rate, rng = MersenneTwister(1234))
+        new(name, namespace, rate, dt, tspan, rng)
+    end
+end
+
+function generate_spike_times(stim::PoissonSpikeTrain)
+    # This could also change to a dispatch of Random.rand()
+    t_spikes = Float64[]
+    for t in range(stim.tspan...; step = stim.dt)
+        if rand(stim.rng) < stim.rate * stim.dt
+            push!(t_spikes, t)
+        end
+    end
+
+    return t_spikes
+end
