@@ -74,3 +74,32 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+# Redfine Kuramoto oscillator connections with arbitrary connection rule
+function (bc::BloxConnector)(
+    bloxout::KuramotoOscillator, 
+    bloxin::KuramotoOscillator; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    #technically these two lines aren't needed, but useful to have if weighting occurs here
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    if haskey(kwargs, :sermon_rule)
+        xₒ = namespace_expr(bloxout.output, sys_out)
+        xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
+        
+        # Custom values for the connection rule
+        f₀ = -0.780
+        f₁ = 0.198
+        f₂ = 0.302
+        f₃ = 0.851
+        f₄ = 0.998
+        x = xₒ - xᵢ
+        eq = sys_in.jcn ~ f₀ + f₁*cos(x) + f₂*sin(x) + f₃*cos(2*x) + f₄*sin(2*x)
+        accumulate_equation!(bc, eq)
+    end
+end
+
