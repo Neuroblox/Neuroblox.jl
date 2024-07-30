@@ -3,9 +3,6 @@ using IfElse
 
 # TODO: List of missing components needed for this tutorial
 # 1. SuperBlox of Kuramoto oscillators to collect dynamics
-# 2. DBS stimulator block as implemented in the paper
-# 4. BloxConnector functionality for neurotransmitter pools
-# 5. BloxConnector functionality for DBS stimulator
 
 # Create neurotransmitter pools 
 struct SermonNPool <: NeuralMassBlox
@@ -29,7 +26,6 @@ struct SermonNPool <: NeuralMassBlox
         new(p, sts[1], sts[2], sys, namespace)
     end
 end
-
 
 # Create a new DBS stimulator block
 # Largely based on MTK Standard Library smooth_square function in src/Blocks/sources.jl
@@ -103,3 +99,20 @@ function (bc::BloxConnector)(
     end
 end
 
+function (bc::BloxConnector)(
+    bloxout::SermonDBS, 
+    bloxin::KuramotoOscillator; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    xₒ = namespace_expr(bloxout.output, sys_out)
+    xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
+
+    eq = sys_in.jcn ~ w*xₒ*sin(xᵢ)
+    accumulate_equation!(bc, eq)
+end
