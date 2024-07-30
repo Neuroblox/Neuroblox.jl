@@ -93,6 +93,7 @@ include("utilities/learning_tools.jl")
 include("utilities/bold_methods.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
+include("measurementmodels/lfp.jl")
 include("datafitting/spectralDCM.jl")
 include("blox/neural_mass.jl")
 include("blox/cortical_blox.jl")
@@ -210,6 +211,6 @@ export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
-export BalloonModel, boldsignal_endo_balloon
+export BalloonModel,LeadField, boldsignal_endo_balloon
 
 end
