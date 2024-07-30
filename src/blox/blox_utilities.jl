@@ -53,6 +53,7 @@ get_inh_neurons(n) = []
 
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
+get_sys(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
