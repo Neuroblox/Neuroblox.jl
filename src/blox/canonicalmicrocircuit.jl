@@ -39,7 +39,7 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
 
         add_edge!(g, 1, 1, :weight, -800.0)
         add_edge!(g, 2, 1, :weight, -800.0)
-        add_edge!(g, 3, 1, :weight, -800.0)
+        add_edge!(g, 3, 1, :weight, -1600.0)
         add_edge!(g, 1, 2, :weight,  800.0)
         add_edge!(g, 2, 2, :weight, -800.0)
         add_edge!(g, 1, 3, :weight,  800.0)

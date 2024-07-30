@@ -3,12 +3,12 @@ using MAT
 
 ### Load data ###
 vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
-data = DataFrame(vars["data"], :auto)    # turn data into DataFrame
+data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
 x = vars["x"]                            # initial conditions
 nrr = ncol(data)                         # number of recorded regions
 max_iter = 128
-########## assemble the model ##########
 
+########## assemble the model ##########
 g = MetaDiGraph()
 regions = Dict()
 @parameters lnκ=0.0 [tunable = true] lnϵ=0.0 [tunable=true] C=1/16 [tunable = false]
@@ -43,7 +43,9 @@ neuronmodel = structural_simplify(neuronmodel; split=false)
 # attribute initial conditions to states
 sts, idx_sts = get_dynamic_states(neuronmodel)
 idx_u = get_idx_tagged_vars(neuronmodel, "ext_input")         # get index of external input state
-idx_bold = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+idx_bold, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+rename!(data, Symbol.(obsvars))
+
 initcond = OrderedDict(sts .=> 0.0)
 rnames = []
 map(x->push!(rnames, split(string(x), "₊")[1]), sts);
@@ -55,10 +57,11 @@ for (i, r) in enumerate(rnames)
 end
 
 modelparam = OrderedDict()
-for par in tunable_parameters(neuronmodel)
-    modelparam[par] = Symbolics.getdefaultval(par)
+np = sum(tunable_parameters(neuronmodel); init=0) do par
+    val = Symbolics.getdefaultval(par)
+    modelparam[par] = val
+    length(val)
 end
-np = length(modelparam)
 indices = Dict(:dspars => collect(1:np))
 # Noise parameter mean
 modelparam[:lnα] = [0.0, 0.0];           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
@@ -73,7 +76,7 @@ modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
 indices[:lnγ] = collect(np+1:np+nrr);
 np += nrr
 indices[:u] = idx_u
-indices[:bold] = idx_bold
+indices[:m] = idx_bold
 indices[:sts] = idx_sts
 # define prior variances
 paramvariance = copy(modelparam)
@@ -81,8 +84,8 @@ paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
 paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0;
 paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
 for (k, v) in paramvariance
-    if occursin("A[", string(k))
-        paramvariance[k] = vars["pC"][1, 1]
+    if occursin("A", string(k))
+        paramvariance[k] = ones(length(v))
     elseif occursin("κ", string(k))
         paramvariance[k] = ones(length(v))./256.0;
     elseif occursin("ϵ", string(k))
@@ -100,15 +103,22 @@ hyperpriors = (Πλ_pr = vars["ihC"]*ones(1, 1),   # prior metaparameter precisi
 csdsetup = (p = 8, freq = vec(vars["Hz"]), dt = vars["dt"]);
 
 (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices);
-for iter in 1:max_iter
-    state.iter = iter
-    run_sDCM_iteration!(state, setup)
-    print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
-    if iter >= 4
-        criterion = state.dF[end-3:end] .< setup.tolerance
-        if all(criterion)
-            print("convergence\n")
-            break
+
+# HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
+# this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
+with_stack(f, n) = fetch(schedule(Task(f,n)))
+
+with_stack(5_000_000) do  # 5MB of stack space
+    for iter in 1:max_iter
+        state.iter = iter
+        run_sDCM_iteration!(state, setup)
+        print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
+        if iter >= 4
+            criterion = state.dF[end-3:end] .< setup.tolerance
+            if all(criterion)
+                print("convergence\n")
+                break
+            end
         end
     end
 end

@@ -79,7 +79,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
 end
 
 function system_from_parts(parts::AbstractVector; name)
-    return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
+    return compose(System(Equation[], t; name), get_sys.(parts))
 end
 
 function action_selection_from_graph(g::MetaDiGraph)
