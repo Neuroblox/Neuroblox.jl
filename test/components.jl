@@ -697,19 +697,25 @@ end
 
 @testset "PoissonSpikeTrain - LIFExciBlox network" begin
     global_ns = :g # global namespace
-    tspan = (0, 200)
-    @named n1 = LIFExciNeuron(; namespace = global_ns)
-    @named s = PoissonSpikeTrain(; namespace = global_ns, rate=5, tspan)
 
-    neurons = [s, n1]
+    tspan = (0, 200)
+
+    @named s = PoissonSpikeTrain(; namespace = global_ns, rate=5, tspan)
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+    @named n2 = LIFExciNeuron(; namespace = global_ns)
+
+    neurons = [s, n1, n2]
     g = MetaDiGraph()
     add_blox!.(Ref(g), neurons)
 
     add_edge!(g, 1, 2, Dict(:weight => 1))
+    add_edge!(g, 1, 3, Dict(:weight => 1))
+    add_edge!(g, 2, 3, Dict(:weight => 1))
+    add_edge!(g, 3, 2, Dict(:weight => 1))
 
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], tspan)
-    sol = solve(prob, Tsit5())
+    sol = solve(prob, Vern7(), reltol=1e-9,abstol=1e-9)
     @test sol.retcode == ReturnCode.Success
 end
