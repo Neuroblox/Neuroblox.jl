@@ -65,7 +65,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
     continuous_cbs = identity.(get_continuous_callbacks(bc))
 
-    return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
+    return compose(System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
@@ -75,7 +75,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
     continuous_cbs = identity.(get_continuous_callbacks(bc))
 
-    return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
+    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)
