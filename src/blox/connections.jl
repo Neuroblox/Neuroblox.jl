@@ -897,3 +897,23 @@ function (bc::BloxConnector)(
     push!(bc.continuous_callbacks, cb)
 end
 
+function (bc::BloxConnector)(
+    stim::PoissonSpikeTrain, 
+    neuron::Union{LIFExciNeuron, LIFInhNeuron};
+    kwargs...
+)
+    sys_in = get_namespaced_sys(neuron)
+
+    w = generate_weight_param(stim, neuron; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA_external * (sys_in.V - sys_in.V_E) 
+                    
+    accumulate_equation!(bc, eq)
+
+    t_spikes = generate_spike_times(stim)
+
+    cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    push!(bc.discrete_callbacks, cb)
+end
+
