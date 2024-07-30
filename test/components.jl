@@ -603,3 +603,22 @@ end
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
+
+@testset "PoissonSpikeTrain - LIFExciBlox network" begin
+    global_ns = :g # global namespace
+    tspan = (0, 200)
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+    @named s = PoissonSpikeTrain(; namespace = global_ns, rate=5, tspan)
+
+    neurons = [s, n1]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
