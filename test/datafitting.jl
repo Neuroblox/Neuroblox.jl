@@ -142,9 +142,12 @@ end
     ### Load data ###
     vars = matread(joinpath(@__DIR__, "spm12_cmc.mat"));
     data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
-    x = vars["x"]                            # initial conditions
-    nd = ncol(data);
-    max_iter = 128                           # maximum number of iterations
+    x = vars["x"]                            # point around which expansion is computed
+    nrr = ncol(data)                         # number of recorded regions
+    ns  = nrow(data)                         # number of samples
+    max_iter = 128
+    dt = 2.0                                 # time bin in seconds
+    freq = range(1.0, 64.0)  # define frequencies at which to evaluate the CSD
 
     ########## assemble the model ##########
     g = MetaDiGraph()
@@ -154,7 +157,7 @@ end
     @parameters lnr = 0.0
     @parameters lnτ_ss=0 lnτ_sp=0 lnτ_ii=0 lnτ_dp=0
     @parameters C=512.0 [tunable = false]    # TODO: SPM12 has this seemingly arbitrary 512 pre-factor in spm_fx_cmc.m. Can we understand why?
-    for ii = 1:nd
+    for ii = 1:nrr
         region = CanonicalMicroCircuitBlox(;namespace=global_ns, name=Symbol("r$(ii)₊cmc"), 
                                             τ_ss=exp(lnτ_ss)*0.002, τ_sp=exp(lnτ_sp)*0.002, τ_ii=exp(lnτ_ii)*0.016, τ_dp=exp(lnτ_dp)*0.028, 
                                             r_ss=exp(lnr)*2.0/3, r_sp=exp(lnr)*2.0/3, r_ii=exp(lnr)*2.0/3, r_dp=exp(lnr)*2.0/3)
@@ -171,15 +174,15 @@ end
         add_edge!(g, nv(g) - 2, nv(g), Dict(:weight => 1.0))
     end
 
-    nl = Int((nd^2-nd)/2)   # number of links unidirectional
+    nl = Int((nrr^2-nrr)/2)   # number of links unidirectional
     @parameters a_sp_ss[1:nl] = repeat([0.0], nl) # forward connection parameter sp -> ss
     @parameters a_sp_dp[1:nl] = repeat([0.0], nl) # forward connection parameter sp -> dp
     @parameters a_dp_sp[1:nl] = repeat([0.0], nl) # backward connection parameter dp -> sp
     @parameters a_dp_ii[1:nl] = repeat([0.0], nl) # backward connection parameters dp -> ii
 
     k = 0
-    for i in 1:nd
-        for j in (i+1):nd
+    for i in 1:nrr
+        for j in (i+1):nrr
             k += 1
             # forward connection matrix
             add_edge!(g, regions[i], regions[j], :weightmatrix,
@@ -223,7 +226,7 @@ end
     end
     indices = Dict(:dspars => collect(1:np))
     # Noise parameter mean
-    modelparam[:lnα] = zeros(Float64, 2, nd);           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
+    modelparam[:lnα] = zeros(Float64, 2, nrr);           # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
     n = length(modelparam[:lnα]);
     indices[:lnα] = collect(np+1:np+n);
     np += n;
@@ -232,8 +235,8 @@ end
     indices[:lnβ] = collect(np+1:np+n);
     np += n;
     modelparam[:lnγ] = [-16.0, -16.0];   # region specific observation noise
-    indices[:lnγ] = collect(np+1:np+nd);
-    np += nd
+    indices[:lnγ] = collect(np+1:np+nrr);
+    np += nrr
     indices[:u] = idx_u
     indices[:m] = idx_measurement
     indices[:sts] = idx_sts
@@ -241,8 +244,8 @@ end
     # define prior variances
     paramvariance = copy(modelparam)
     paramvariance[:lnα] = ones(Float64, size(modelparam[:lnα]))./128.0; 
-    paramvariance[:lnβ] = ones(Float64, nd)./128.0;
-    paramvariance[:lnγ] = ones(Float64, nd)./128.0;
+    paramvariance[:lnβ] = ones(Float64, nrr)./128.0;
+    paramvariance[:lnγ] = ones(Float64, nrr)./128.0;
     for (k, v) in paramvariance
         if occursin("a_", string(k))
             paramvariance[k] = 1/16.0
@@ -257,12 +260,12 @@ end
 
     priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
     hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
-    hyperpriors = Dict(:Πλ_pr => hype["ihC"],            # prior metaparameter precision, needs to be a matrix
+    hyperpriors = Dict(:Πλ_pr => hype["ihC"],               # prior metaparameter precision, needs to be a matrix
                     :μλ_pr => vec(hype["hE"]),              # prior metaparameter mean, needs to be a vector
                     :Q => hype["Q"]
                     );
 
-    csdsetup = Dict(:p => 8, :freq => vec(vars["Hz"]), :dt => vars["dt"]);
+    csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
     (state, setup) = setup_sDCM(data, fullmodel, initcond, csdsetup, priors, hyperpriors, indices, "LFP");
     # HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
