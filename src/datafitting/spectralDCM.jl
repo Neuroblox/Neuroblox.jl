@@ -37,13 +37,13 @@ struct VLSetup#{Model, N}
     systemnums::Vector{Int}                   # several integers -> np: n. parameters, ny: n. datapoints, nq: n. Q matrices, nh: n. hyperparameters
     systemvecs::Vector{Vector{Float64}}       # μθ_pr: prior expectation values of parameters and μλ_pr: prior expectation values of hyperparameters
     systemmatrices::Vector{Matrix{Float64}}   # Πθ_pr: prior precision matrix of parameters, Πλ_pr: prior precision matrix of hyperparameters
-    # Q::Matrix{ComplexF64}                     # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
-    Q::Array{Complex}                         # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
+    # Q::Matrix{ComplexF64}                   # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
+    Q::Array{ComplexF64}                      # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
 end
 
 """
     function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
-    
+
     Dispatch of LinearAlgebra.eigen for dual matrices with complex numbers. Make the eigenvalue decomposition 
     amenable to automatic differentiation. To do so compute the analytical derivative of eigenvalues
     and eigenvectors. 
@@ -53,7 +53,6 @@ end
 
     Returns:
     - `Eigen(evals, evecs)`: eigenvalue decomposition returned as type LinearAlgebra.Eigen
-
 """
 function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     nd = size(M, 1)
@@ -105,7 +104,7 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
     return Eigen(evals, evecs)
 end
 
-function transferfunction(ω, derivatives, params, indices)
+function transferfunction(freq, derivatives, params, indices)
     # nr = length(indices[:u])
     # pars = params[indices[:dspars]]
     # ∂f = derivatives([pars[1:nr^2], pars[nr^2+1:end]...])
@@ -121,16 +120,16 @@ function transferfunction(ω, derivatives, params, indices)
     ∂g∂v = ∂g∂x*V
     ∂v∂u = V\∂f∂u              # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
-    nω = size(ω, 1)            # number of frequencies
+    nfreq = size(freq, 1)            # number of frequencies
     ng = size(∂g∂x, 1)         # number of outputs
     nu = size(∂v∂u, 2)         # number of inputs
     nk = size(V, 2)            # number of modes
-    S = zeros(Complex{real(eltype(∂v∂u))}, nω, ng, nu)
+    S = zeros(Complex{real(eltype(∂v∂u))}, nfreq, ng, nu)
     for j = 1:nu
         for i = 1:ng
             for k = 1:nk
                 # transfer functions (FFT of kernel)
-                S[:,i,j] .+= (∂g∂v[i,k]*∂v∂u[k,j]) .* ((1im*2*pi) .* ω .- Λ[k]).^-1 
+                S[:,i,j] .+= (∂g∂v[i,k]*∂v∂u[k,j]) .* ((1im*2*pi) .* freq .- Λ[k]).^-1 
             end
         end
     end
@@ -147,11 +146,11 @@ end
     Gn in the code corresponds to Ge in the paper, i.e. the observation noise. In the code global and local components are defined, no such distinction
     is discussed in the paper. In fact the parameter γ, corresponding to local component is not present in the paper.
 """
-function csd_approx(ω, derivatives, params, indices)
+function csd_approx(freq, derivatives, params, indices)
     # priors of spectral parameters
     # ln(α) and ln(β), region specific fluctuations: ln(γ)
-    nω = length(ω)
-    nd = length(indices[:lnγ])
+    nfreq = length(freq)
+    nrr = length(indices[:lnγ])
     α = params[indices[:lnα]]
     β = params[indices[:lnβ]]
     γ = params[indices[:lnγ]]
@@ -159,69 +158,69 @@ function csd_approx(ω, derivatives, params, indices)
     # define function that implements spectra given in equation (2) of the paper "A DCM for resting state fMRI".
 
     # neuronal fluctuations, intrinsic noise (Gu) (1/f or AR(1) form)
-    G = ω.^(-exp(α[2]))    # spectrum of hidden dynamics
+    G = freq.^(-exp(α[2]))    # spectrum of hidden dynamics
     G /= sum(G)
-    Gu = zeros(eltype(G), nω, nd, nd)
-    Gn = zeros(eltype(G), nω, nd, nd)
-    for i = 1:nd
+    Gu = zeros(eltype(G), nfreq, nrr, nrr)
+    Gn = zeros(eltype(G), nfreq, nrr, nrr)
+    for i = 1:nrr
         Gu[:, i, i] .+= exp(α[1]) .* G
     end
     # region specific observation noise (1/f or AR(1) form)
-    G = ω.^(-exp(β[2])/2)
+    G = freq.^(-exp(β[2])/2)
     G /= sum(G)
-    for i = 1:nd
+    for i = 1:nrr
         Gn[:,i,i] .+= exp(γ[i])*G
     end
 
     # global components
-    for i = 1:nd
-        for j = i:nd
+    for i = 1:nrr
+        for j = i:nrr
             Gn[:,i,j] .+= exp(β[1])*G
             Gn[:,j,i] = Gn[:,i,j]
         end
     end
-    S = transferfunction(ω, derivatives, params, indices)   # This is K(ω) in the equations of the spectral DCM paper.
+    S = transferfunction(freq, derivatives, params, indices)   # This is K(freq) in the equations of the spectral DCM paper.
 
     # predicted cross-spectral density
-    G = zeros(eltype(S), nω, nd, nd);
-    for i = 1:nω
+    G = zeros(eltype(S), nfreq, nrr, nrr);
+    for i = 1:nfreq
         G[i,:,:] = S[i,:,:]*Gu[i,:,:]*S[i,:,:]'
     end
 
     return G + Gn
 end
 
-function csd_approx_lfp(ω, derivatives, params, params_idx)
+function csd_approx_lfp(freq, derivatives, params, params_idx)
     # priors of spectral parameters
     # ln(α) and ln(β), region specific fluctuations: ln(γ)
-    nω = length(ω)
-    nd = length(params_idx[:lnγ])
-    α = reshape(params[params_idx[:lnα]], nd, nd)
+    nfreq = length(freq)
+    nrr = length(params_idx[:lnγ])
+    α = reshape(params[params_idx[:lnα]], nrr, nrr)
     β = params[params_idx[:lnβ]]
     γ = params[params_idx[:lnγ]]
 
     # define function that implements spectra given in equation (2) of the paper "A DCM for resting state fMRI".
-    Gu = zeros(eltype(α), nω, nd)   # spectrum of neuronal innovations or intrinsic noise or system noise
-    Gn = zeros(eltype(β), nω)   # global spectrum of channel noise or observation noise or external noise
-    Gs = zeros(eltype(γ), nω)   # region specific spectrum of channel noise or observation noise or external noise
-    for i = 1:nd
-        Gu[:, i] .+= exp(α[1, i]) .* ω.^(-exp(α[2, i]))
+    Gu = zeros(eltype(α), nfreq, nrr)   # spectrum of neuronal innovations or intrinsic noise or system noise
+    Gn = zeros(eltype(β), nfreq)   # global spectrum of channel noise or observation noise or external noise
+    Gs = zeros(eltype(γ), nfreq)   # region specific spectrum of channel noise or observation noise or external noise
+    for i = 1:nrr
+        Gu[:, i] .+= exp(α[1, i]) .* freq.^(-exp(α[2, i]))
     end
     # global components and region specific observation noise (1/f or AR(1) form)
-    Gn = exp(β[1] - 2) * ω.^(-exp(β[2]))
-    Gs = exp(γ[1] - 2) * ω.^(-exp(γ[2]))  # this is really oddly implemented in SPM12. Completely unclear how this should be region specific
+    Gn = exp(β[1] - 2) * freq.^(-exp(β[2]))
+    Gs = exp(γ[1] - 2) * freq.^(-exp(γ[2]))  # this is really oddly implemented in SPM12. Completely unclear how this should be region specific
 
-    S = transferfunction(ω, derivatives, params, params_idx)   # This is K(ω) in the equations of the spectral DCM paper.
+    S = transferfunction(freq, derivatives, params, params_idx)   # This is K(freq) in the equations of the spectral DCM paper.
 
     # predicted cross-spectral density
-    G = zeros(eltype(S), nω, nd, nd);
-    for i = 1:nω
+    G = zeros(eltype(S), nfreq, nrr, nrr);
+    for i = 1:nfreq
         G[i,:,:] = S[i,:,:]*diagm(Gu[i,:])*S[i,:,:]'
     end
 
-    for i = 1:nd
+    for i = 1:nrr
         G[:,i,i] += Gs
-        for j = 1:nd
+        for j = 1:nrr
             G[:,i,j] += Gn
         end
     end
@@ -229,19 +228,18 @@ function csd_approx_lfp(ω, derivatives, params, params_idx)
     return G
 end
 
-@views function csd_mtf(freqs, p, derivatives, params, params_idx, modality)   # alongside the above realtes to spm_csd_fmri_mtf.m
+@views function csd_mtf(freq, p, derivatives, params, params_idx, modality)   # alongside the above realtes to spm_csd_fmri_mtf.m
     if modality == "fMRI"
-        G = csd_approx(freqs, derivatives, params, params_idx)
-
-        dt = 1/(2*freqs[end])
+        G = csd_approx(freq, derivatives, params, params_idx)
+        dt = 1/(2*freq[end])
         # the following two steps are very opaque. They are taken from the SPM code but it is unclear what the purpose of this transformation and back-transformation is
         # in particular it is also unclear why the order of the MAR is reduced by 1. My best guess is that this procedure smoothens the results.
         # But this does not correspond to any equation in the papers nor is it commented in the SPM12 code. NB: Friston conferms that likely it is
         # to make y well behaved.
-        mar = csd2mar(G, freqs, dt, p-1)
-        y = mar2csd(mar, freqs)    
+        mar = csd2mar(G, freq, dt, p-1)
+        y = mar2csd(mar, freq)    
     elseif modality == "LFP"
-        y = csd_approx_lfp(freqs, derivatives, params, params_idx)
+        y = csd_approx_lfp(freq, derivatives, params, params_idx)
     end
     if real(eltype(y)) <: Dual
         y_vals = Complex.((p->p.value).(real(y)), (p->p.value).(imag(y)))
@@ -353,13 +351,13 @@ end
 """
 function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modality)
     # compute cross-spectral density
-    dt = csdsetup[:dt];              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
-    ω = csdsetup[:freq];             # frequencies at which the CSD is evaluated
-    p = csdsetup[:p];                # order of MAR
+    dt = csdsetup.dt;              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
+    freq = csdsetup.freq;                # frequencies at which the CSD is evaluated
+    mar_order = csdsetup.mar_order;        # order of MAR
     _, vars = get_eqidx_tagged_vars(model, "measurement")
-    data = Matrix(data[:, Symbol.(vars)])     # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
-    mar = mar_ml(data, p);   # compute MAR from time series y and model order p
-    y_csd = mar2csd(mar, ω, dt^-1);  # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
+    data = Matrix(data[:, Symbol.(vars)])  # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
+    mar = mar_ml(data, mar_order);         # compute MAR from time series y and model order p
+    y_csd = mar2csd(mar, freq, dt^-1);        # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
@@ -377,7 +375,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
 
-    f = params -> csd_mtf(ω, p, derivatives, params, indices, modality)
+    f = params -> csd_mtf(freq, mar_order, derivatives, params, indices, modality)
 
     np = length(μθ_pr)     # number of parameters
     ny = length(y_csd)     # total number of response variables
