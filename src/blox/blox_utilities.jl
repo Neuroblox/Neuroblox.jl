@@ -263,19 +263,15 @@ end
     - `sys`: MTK system
 
     Returns:
-    - `sts`  : states of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
-    - `idx_u`: indices of states that represent external inputs
-    - `idx_m`: indices of states that represent measurements
+    - `sts`: states/unknowns of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
+    - `idx`: indices of these states
 """
 function get_dynamic_states(sys)
-    sts = []
-    idx = []
-    for (i, s) in enumerate(unknowns(sys))
-        if !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
-            push!(sts, s)
-            push!(idx, i)
-        end
+    itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
+        !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
     end
+    sts = map(x -> x[2], itr)
+    idx = map(x -> x[1], itr)
     return sts, idx
 end
 
@@ -294,11 +290,11 @@ function get_eqidx_tagged_vars(sys, tag)
             for s in Symbolics.get_variables(e)
                 if string(s) == string(v)
                     push!(idx, i)
-                end 
+                end
             end
         end
     end
-    return idx
+    return idx, vars
 end
 
 function get_idx_tagged_vars(sys, tag)
@@ -308,7 +304,6 @@ function get_idx_tagged_vars(sys, tag)
             push!(idx, i)
         end
     end
-    return idx
     return idx
 end
 
@@ -346,7 +341,7 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
         cr = kwargs[:connection_rule]
     else
         name_blox1 = nameof(bloxout)
-        name_blox1 = nameof(bloxin)
+        name_blox2 = nameof(bloxin)
         @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
         cr = "basic"
     end

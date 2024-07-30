@@ -430,3 +430,75 @@ struct Generic2dOscillator <: NeuralMassBlox
         new(p, sts[1], sts[3], sys, namespace)
     end
 end
+
+"""
+    KuramotoOscillator(name, namespace, ...)
+
+    Simple implementation of the Kuramoto oscillator as described in the original paper [1].
+    Useful for general models of synchronization and oscillatory behavior.
+    The general form of the Kuramoto oscillator is given by:
+    Equations:
+
+    ```math
+            \\begin{equation}
+            \\dot{\\theta_i} = \\omega_i + \\frac{1}{N}\\sum_{j=1}^N{K_{i, j}\\text{sin}(\\theta_j - \\theta_i)}
+            \\end{equation}
+    ```
+
+    Where this describes the connection between regions \$i\$ and \$j\$. An alternative form
+    which includes a noise term for each region is also provided, taking the form:
+    
+    ```math
+            \\begin{equation}
+            \\dot{\\theta_i} = \\omega_i + \\zeta dW_i \\frac{1}{N}\\sum_{j=1}^N{K_{i, j}\\text{sin}(\\theta_j - \\theta_i)}
+            \\end{equation}
+    ```
+    
+    where \$W_i\$ is a Wiener process and \$\\zeta_i\$ is the noise strength.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+                    Default parameter values are taken from [2].
+
+Citations:
+1. Kuramoto, Y. (1975). Self-entrainment of a population of coupled non-linear oscillators. 
+   In: Araki, H. (eds) International Symposium on Mathematical Problems in Theoretical Physics. 
+   Lecture Notes in Physics, vol 39. Springer, Berlin, Heidelberg. https://doi.org/10.1007/BFb0013365
+
+2. Sermon JJ, Wiest C, Tan H, Denison T, Duchet B. Evoked resonant neural activity long-term 
+   dynamics can be reproduced by a computational model with vesicle depletion. Neurobiol Dis. 
+   2024 Jun 14;199:106565. doi: 10.1016/j.nbd.2024.106565. Epub ahead of print. PMID: 38880431.
+
+"""
+struct KuramotoOscillator <: NeuralMassBlox
+    params
+    output
+    jcn
+    odesystem
+    namespace
+    function KuramotoOscillator(;
+                        name,
+                        namespace=nothing,
+                        ω=249.0,
+                        ζ=5.92,
+                        include_noise=false
+            )
+        p = paramscoping(ω=ω, ζ=ζ)
+        ω, ζ = p
+        
+        if include_noise
+            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
+            @brownian w 
+            eqs = [D(θ) ~ ω + ζ * w + jcn]
+            sys = System(eqs, t, sts, p; name=name)
+            new(p, sts[1], sts[2], sys, namespace)
+        else
+            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
+            eqs = [D(θ) ~ ω + jcn]
+            sys = System(eqs, t, sts, p; name=name)
+            new(p, sts[1], sts[2], sys, namespace)
+        end
+    end
+end
