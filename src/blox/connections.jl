@@ -319,6 +319,27 @@ function (bc::BloxConnector)(
     end
 end
 
+function (bc::BloxConnector)(
+    bloxout::StimulusBlox,
+    bloxin::CanonicalMicroCircuitBlox;
+    kwargs...
+)
+
+    sysparts_in = get_blox_parts(bloxin)
+
+    bc(bloxout, sysparts_in[1]; kwargs...)
+end
+
+function (bc::BloxConnector)(
+    bloxout::CanonicalMicroCircuitBlox,
+    bloxin::ObserverBlox;
+    kwargs...
+)
+    sysparts_out = get_blox_parts(bloxout)
+
+    bc(sysparts_out[2], bloxin; kwargs...)
+end
+
 # define a sigmoid function
 sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
 
