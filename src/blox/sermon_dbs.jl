@@ -1,4 +1,3 @@
-using ModelingToolkitStandardLibrary.Blocks: smooth_square, smooth_step
 using IfElse
 
 # TODO: List of missing components needed for this tutorial
