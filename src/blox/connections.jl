@@ -932,6 +932,12 @@ function (bc::BloxConnector)(
     t_spikes = generate_spike_times(stim)
 
     cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    # TO DO : Consider generating spikes during simulation
+    # to make PoissonSpikeTrain independent of `t_span` of the simulation.
+    # something like : 
+    # discrete_event = t > -Inf => (generate_spike, [sys_in.S_AMPA], [stim.relevant_params...], [], nothing) 
+    # This way we need to resolve the case of multiple spikes potentially being generated within a single integrator step.
+
     push!(bc.discrete_callbacks, cb)
 end
 
