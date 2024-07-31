@@ -75,7 +75,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
     odesystem
     connector
 
-    function LIFExciCircuitBlox(
+    function LIFExciCircuitBlox(;
         name, 
         N_neurons,
         namespace=nothing,
