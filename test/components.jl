@@ -695,6 +695,15 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
+@testset "LIFExciCircuitBlox" begin
+    @named n = LIFExciCircuitBlox(; N_neurons = 10, weight=1)
+
+    sys_simpl = structural_simplify(n.odesystem)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob, Vern7())
+    @test sol.retcode == ReturnCode.Success 
+end
+
 @testset "PoissonSpikeTrain - LIFExciBlox network" begin
     global_ns = :g # global namespace
 
