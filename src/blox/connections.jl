@@ -891,7 +891,7 @@ function (bc::BloxConnector)(
 
     cb = [sys_out.V ~ sys_out.θ] => [
         sys_in.S_AMPA ~ sys_in.S_AMPA + 1,
-        sys_in.S_NMDA ~ sys_in.S_NMDA + 1
+        sys_in.x ~ sys_in.x + 1
     ]
     push!(bc.continuous_callbacks, cb)
 end
