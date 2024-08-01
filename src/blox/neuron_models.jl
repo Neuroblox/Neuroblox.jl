@@ -624,7 +624,7 @@ struct LIFNeuron <: AbstractNeuronBlox
 	end
 end
 
-struct LIFInhNeuron <: AbstractNeuronBlox
+struct LIFInhNeuron <: AbstractInhNeuronBlox
     odesystem
     namespace
 
@@ -647,7 +647,7 @@ struct LIFInhNeuron <: AbstractNeuronBlox
         g_AMPA_external = 1.62 * 1e-3, # mS
         g_GABA = 1 * 1e-3, # mS
         g_NMDA = 0.13 * 1e-3, # mS 
-        Mg = 1 # mM 
+        Mg = 1e-3 # mM 
     )
 
         ps = @parameters begin 
@@ -685,7 +685,7 @@ struct LIFInhNeuron <: AbstractNeuronBlox
     end
 end
 
-struct LIFExciNeuron <: AbstractNeuronBlox
+struct LIFExciNeuron <: AbstractExciNeuronBlox
     odesystem
     namespace
 
@@ -708,7 +708,7 @@ struct LIFExciNeuron <: AbstractNeuronBlox
         g_AMPA_external = 2.1 * 1e-3, # mS
         g_GABA = 1.3 * 1e-3, # mS
         g_NMDA = 0.165 * 1e-3, # mS  
-        Mg = 1 # mM
+        Mg = 1e-3 # mM
     )
 
         ps = @parameters begin 
@@ -716,6 +716,7 @@ struct LIFExciNeuron <: AbstractNeuronBlox
             V_L=V_L 
             V_E=V_E
             V_I=V_I
+			V_reset=V_reset
             θ=θ
             C=C
             τ_AMPA=τ_AMPA 
