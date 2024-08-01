@@ -941,3 +941,14 @@ function (bc::BloxConnector)(
     push!(bc.discrete_callbacks, cb)
 end
 
+function (bc::BloxConnector)(
+    stim::PoissonSpikeTrain, 
+    cb::Union{LIFExciCircuitBlox, LIFInhCircuitBlox};
+    kwargs...
+)
+    neurons_in = get_neurons(cb)
+
+    for neuron in neurons_in
+        bc(stim, neuron; kwargs...)
+    end
+end
