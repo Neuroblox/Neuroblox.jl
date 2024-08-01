@@ -17,39 +17,29 @@ function paramscoping(;kwargs...)
     return paramlist
 end
 
+get_exci_neurons(n::AbstractExciNeuronBlox) = n
+get_exci_neurons(n) = []
+
 function get_exci_neurons(g::MetaDiGraph)
     mapreduce(x -> get_exci_neurons(x), vcat, get_blox(g))
 end
 
-function get_exci_neurons(b::AbstractComponent)
+function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
 end
-
-function get_inh_neurons(b::AbstractComponent)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::AbstractComponent)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
-function get_exci_neurons(b::CompositeBlox)
-    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
-end
-
-function get_inh_neurons(b::CompositeBlox)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::CompositeBlox)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
-get_exci_neurons(n::AbstractExciNeuronBlox) = n
-get_exci_neurons(n) = []
 
 get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
+
+function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
+end
+
+get_neurons(b::Union{AbstractComponent, CompositeBlox}) = vcat(get_exci_neurons(b), get_inh_neurons(b))
+
+function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
+end
 
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
