@@ -21,7 +21,7 @@ get_exci_neurons(n::AbstractExciNeuronBlox) = n
 get_exci_neurons(n) = []
 
 function get_exci_neurons(g::MetaDiGraph)
-    mapreduce(x -> get_exci_neurons(x), vcat, get_blox(g))
+    mapreduce(x -> get_exci_neurons(x), vcat, get_bloxs(g))
 end
 
 function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
