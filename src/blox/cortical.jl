@@ -90,6 +90,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
         τ_NMDA_rise = 2, # ms
+        t_refract = 2, # ms
         α = 0.5, # ms⁻¹
         g_AMPA = 0.05 * 1e-3, # mS
         g_AMPA_external = 2.1 * 1e-3, # mS
@@ -114,6 +115,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
                 τ_GABA,
                 τ_NMDA_decay,
                 τ_NMDA_rise,
+                t_refract,
                 α,
                 g_AMPA,
                 g_AMPA_external,
