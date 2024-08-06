@@ -12,7 +12,7 @@ function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
 end
 
-function get_blox(g::MetaDiGraph)
+function get_bloxs(g::MetaDiGraph)
     bs = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
@@ -24,10 +24,10 @@ function get_blox(g::MetaDiGraph)
     return bs
 end
 
-get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
+get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
 
 function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_blox(g)
+    bloxs = get_bloxs(g)
     link = BloxConnector(bloxs)
 
     for v in vertices(g)
