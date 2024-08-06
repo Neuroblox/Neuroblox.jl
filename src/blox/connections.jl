@@ -4,9 +4,10 @@ mutable struct BloxConnector
     delays::Vector{Num}
     discrete_callbacks
     continuous_callbacks
+    spike_affect_states::Dict{Symbol, Num}
     learning_rules
 
-    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
+    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Symbol, Num}(), Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
         eqs = mapreduce(get_input_equations, vcat, bloxs) 
@@ -14,6 +15,7 @@ mutable struct BloxConnector
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
         continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        spike_affect_states = mapreduce(get_spike_affect_states, vcat, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
         new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, learning_rules)
@@ -860,8 +862,9 @@ function LIF_spike_affect!(integ, u, p, ctx)
 
     SciMLBase.add_tstop!(integ, t_refract_end)
     
-    integ.u[u[2]] += 1
-    integ.u[u[3]] += 1
+    for ui in u[2:end]
+        integ.u[ui] += 1
+    end
 end
 
 
