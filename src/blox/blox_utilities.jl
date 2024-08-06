@@ -152,7 +152,7 @@ get_continuous_callbacks(blox) = []
 
 get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
 get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
-get_spike_affect_states(blox) = Dict{Symbol, Num}()
+get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
 
 get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)

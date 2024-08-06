@@ -624,6 +624,21 @@ struct LIFNeuron <: AbstractNeuronBlox
 	end
 end
 
+function LIF_spike_affect!(integ, u, p, ctx)
+    integ.u[u[1]] = integ.p[p[1]]
+
+    t_refract_end = integ.t + integ.p[p[2]]
+    integ.p[p[3]] = t_refract_end
+
+    integ.p[p[4]] = 1
+
+    SciMLBase.add_tstop!(integ, t_refract_end)
+    
+    for i in eachindex(u)[2:end]
+        integ.u[u[i]] += 1
+    end
+end
+
 struct LIFInhNeuron <: AbstractInhNeuronBlox
     odesystem
     namespace
@@ -744,7 +759,6 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             D(x) ~ - x / τ_NMDA_rise
         ]
 
-        
         refract_end = (t == t_refract_end) => [is_refractory ~ 0]
 
         sys = System(eqs, t, sts, ps;  discrete_events = [refract_end], name=name)

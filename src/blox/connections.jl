@@ -4,10 +4,10 @@ mutable struct BloxConnector
     delays::Vector{Num}
     discrete_callbacks
     continuous_callbacks
-    spike_affect_states::Dict{Symbol, Num}
+    spike_affect_states::Dict{Symbol, Vector{Num}}
     learning_rules
 
-    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Symbol, Num}(), Dict{Num, AbstractLearningRule}())
+    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Symbol, Vector{Num}}(), Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
         eqs = mapreduce(get_input_equations, vcat, bloxs) 
@@ -15,10 +15,10 @@ mutable struct BloxConnector
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
         continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
-        spike_affect_states = mapreduce(get_spike_affect_states, vcat, bloxs)
+        spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, spike_affect_states, learning_rules)
     end
 end
 
@@ -28,17 +28,11 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
-function accumulate_continuous_callback!(bc::BloxConnector, cb_new)
-    eqs_new = equations(cb_new)
-    cbs = get_continuous_callbacks(bc)
-
-    for (i,c) in enumerate(cbs)
-        eqs = eqs(c)
-
-        is_all_eqs_equal = reduce(&, [any(neq .== eqs) for neq in eqs_new])
-        if is_all_eqs_equal
-            bc.continuous_callbacks[i] = eqs => 0
-        end
+function accumulate_spike_affect_states!(bc::BloxConnector, name_blox_src, states_dst)
+    if haskey(bc.spike_affect_states, name_blox_src)
+        append!(bc.spike_affect_states[name_blox_src], states_dst)
+    else
+        bc.spike_affect_states[name_blox_src] = states_dst
     end
 end
 
@@ -851,23 +845,6 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
-
-function LIF_spike_affect!(integ, u, p, ctx)
-    integ.u[u[1]] = integ.p[p[1]]
-
-    t_refract_end = integ.t + integ.p[p[2]]
-    integ.p[p[3]] = t_refract_end
-
-    integ.p[p[4]] = 1
-
-    SciMLBase.add_tstop!(integ, t_refract_end)
-    
-    for ui in u[2:end]
-        integ.u[ui] += 1
-    end
-end
-
-
 function (bc::BloxConnector)(
     bloxout::LIFExciNeuron, 
     bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
@@ -884,14 +861,9 @@ function (bc::BloxConnector)(
                     (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
 
     accumulate_equation!(bc, eq)
-
-    #=
-    cb = [sys_out.V ~ sys_out.θ] => [
-        sys_in.S_AMPA ~ sys_in.S_AMPA + 1,
-        sys_in.x ~ sys_in.x + 1
-    ]
-    =#
     
+    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
+
     cb = [sys_out.V ~ sys_out.θ] => (
         LIF_spike_affect!, 
         [sys_out.V, sys_in.S_AMPA, sys_in.x], 

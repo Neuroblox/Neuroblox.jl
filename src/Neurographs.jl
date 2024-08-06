@@ -26,6 +26,11 @@ end
 
 get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
 
+get_dynamics_bloxs(blox::AbstractBlox) = blox
+get_dynamics_bloxs(blox::Union{CompositeBlox, AbstractComponent}) = get_blox_parts(blox)
+
+flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
+
 function connector_from_graph(g::MetaDiGraph)
     bloxs = get_bloxs(g)
     link = BloxConnector(bloxs)
@@ -77,6 +82,38 @@ function generate_discrete_callbacks(g, bc::BloxConnector; t_block=missing)
     end
 end
 
+generate_continuous_callbacks(blox, states_dst) = []
+
+function generate_continuous_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, states_dst)
+    sys = get_namespaced_sys(blox)
+
+    cb = [sys.V ~ sys.θ] => (
+        LIF_spike_affect!, 
+        vcat(sys.V, states_dst), 
+        [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
+        [], 
+        nothing
+    )
+
+    return cb
+end
+
+function generate_continuous_callbacks(g, bc::BloxConnector)
+    bloxs = flatten_graph(g)
+    spike_affect_states = get_spike_affect_states(bc)
+
+    cbs = []
+    for blox in bloxs
+        name_blox = namespaced_nameof(blox)
+        
+        if haskey(spike_affect_states, name_blox)
+            push!(cbs, generate_continuous_callbacks(blox, spike_affect_states[name_blox]))
+        end
+    end
+    
+    return reduce(vcat, identity.(cbs))
+end
+
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc; name, t_block)
@@ -93,7 +130,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
-    continuous_cbs = identity.(get_continuous_callbacks(bc))
+    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
 
     return compose(System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
