@@ -703,12 +703,13 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
         τ_NMDA_rise = 2, # ms
+        t_refract = 2, # ms
         α = 0.5, # ms⁻¹
         g_AMPA = 0.05 * 1e-3, # mS
         g_AMPA_external = 2.1 * 1e-3, # mS
         g_GABA = 1.3 * 1e-3, # mS
         g_NMDA = 0.165 * 1e-3, # mS  
-        Mg = 1e-3 # mM
+        Mg = 1 # mM
     )
 
         ps = @parameters begin 
@@ -723,25 +724,30 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             τ_GABA=τ_GABA 
             τ_NMDA_decay=τ_NMDA_decay 
             τ_NMDA_rise=τ_NMDA_rise 
+            t_refract_duration=t_refract
+            t_refract_end=-Inf
             g_AMPA = g_AMPA
             g_AMPA_external = g_AMPA_external
             g_GABA = g_GABA
             g_NMDA = g_NMDA
             α=α
             Mg=Mg
+            is_refractory=0
         end
 
         sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 jcn(t)=0 [input=true] 
         eqs = [
-            D(V) ~ - (g_L * (V - V_L) + jcn) / C,
+            D(V) ~ - (1 - is_refractory) * (g_L * (V - V_L) + jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
             D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
             D(x) ~ - x / τ_NMDA_rise
         ]
 
-        ev = [V ~ θ] => [V ~ V_reset]
-        sys = System(eqs, t, sts, ps; continuous_events=[ev], name=name)
+        
+        refract_end = (t == t_refract_end) => [is_refractory ~ 0]
+
+        sys = System(eqs, t, sts, ps;  discrete_events = [refract_end], name=name)
 
 		new(sys, namespace)
     end
