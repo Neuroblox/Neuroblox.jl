@@ -849,6 +849,22 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+
+function LIF_spike_affect!(integ, u, p, ctx)
+    integ.u[u[1]] = integ.p[p[1]]
+
+    t_refract_end = integ.t + integ.p[p[2]]
+    integ.p[p[3]] = t_refract_end
+
+    integ.p[p[4]] = 1
+
+    SciMLBase.add_tstop!(integ, t_refract_end)
+    
+    integ.u[u[2]] += 1
+    integ.u[u[3]] += 1
+end
+
+
 function (bc::BloxConnector)(
     bloxout::LIFExciNeuron, 
     bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
@@ -866,10 +882,21 @@ function (bc::BloxConnector)(
 
     accumulate_equation!(bc, eq)
 
+    #=
     cb = [sys_out.V ~ sys_out.θ] => [
         sys_in.S_AMPA ~ sys_in.S_AMPA + 1,
         sys_in.x ~ sys_in.x + 1
     ]
+    =#
+    
+    cb = [sys_out.V ~ sys_out.θ] => (
+        LIF_spike_affect!, 
+        [sys_out.V, sys_in.S_AMPA, sys_in.x], 
+        [sys_out.V_reset, sys_out.t_refract_duration, sys_out.t_refract_end, sys_out.is_refractory], 
+        [], 
+        nothing
+    )
+    
     push!(bc.continuous_callbacks, cb)
 end
 
