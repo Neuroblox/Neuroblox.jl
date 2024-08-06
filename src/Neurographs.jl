@@ -47,6 +47,36 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
+function generate_discrete_callbacks(g, bc::BloxConnector; t_block=missing)  
+    if !ismissing(t_block)
+        eqs_params = get_equations_with_parameter_lhs(bc)
+       
+        neurons_exci = get_exci_neurons(g)
+        eqs = Equation[]
+      
+        for neurons in neurons_exci
+           nn = get_namespaced_sys(neurons)  
+           push!(eqs,nn.spikes_window ~ 0)
+           
+        end
+        if !isempty(eqs_params) && !isempty(eqs)
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+            return vcat(cbs_params, cbs_spikes, bc.discrete_callbacks)
+        elseif isempty(eqs_params) && !isempty(eqs)
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
+            return vcat(cbs_spikes, bc.discrete_callbacks)
+        elseif !isempty(eqs_params) && isempty(eqs)
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+            return vcat(cbs_params, bc.discrete_callbacks)
+        else
+            return bc.discrete_callbacks
+        end
+    else
+        return bc.discrete_callbacks
+    end
+end
+
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc; name, t_block)

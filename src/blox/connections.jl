@@ -26,46 +26,23 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
-get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
+function accumulate_continuous_callback!(bc::BloxConnector, cb_new)
+    eqs_new = equations(cb_new)
+    cbs = get_continuous_callbacks(bc)
 
-get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
+    for (i,c) in enumerate(cbs)
+        eqs = eqs(c)
 
-function generate_discrete_callbacks(g, bc; t_block=missing)  
-    if !ismissing(t_block)
-        eqs_params = get_equations_with_parameter_lhs(bc)
-       
-        neurons_exci = get_exci_neurons(g)
-        eqs = Equation[]
-      
-        for neurons in neurons_exci
-           nn = get_namespaced_sys(neurons)  
-           push!(eqs,nn.spikes_window ~ 0)
-           
+        is_all_eqs_equal = reduce(&, [any(neq .== eqs) for neq in eqs_new])
+        if is_all_eqs_equal
+            bc.continuous_callbacks[i] = eqs => 0
         end
-        if !isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, cbs_spikes, bc.discrete_callbacks)
-        elseif isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            return vcat(cbs_spikes, bc.discrete_callbacks)
-        elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, bc.discrete_callbacks)
-        else
-            return bc.discrete_callbacks
-        end
-    else
-        return bc.discrete_callbacks
     end
 end
 
-function generate_callbacks_for_parameter_lhs(bc)
-    eqs = get_equations_with_parameter_lhs(bc)
-    cbs = [bc.param_update_times[eq.lhs] => eq for eq in eqs]
+get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 
-    return cbs
-end
+get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
