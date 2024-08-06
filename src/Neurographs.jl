@@ -111,7 +111,7 @@ function generate_continuous_callbacks(g, bc::BloxConnector)
         end
     end
     
-    return reduce(vcat, identity.(cbs))
+    return reduce(vcat, cbs; init=[])
 end
 
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
@@ -140,7 +140,7 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
-    continuous_cbs = identity.(get_continuous_callbacks(bc))
+    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
 
     return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
