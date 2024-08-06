@@ -8,7 +8,6 @@ struct Matrisome <: AbstractDiscrete
 
     function Matrisome(; name, namespace=nothing, t_event=180.0)
         #HACK : this t_event has to be informed from the t_event in Action Selection block
-        @variables t 
         # HACK: H_learning is a state version of the H parameter. 
         # It will be simplified away, but we need to access its value in the solution object 
         # to calculate the weight_gradient for reinforcement learning after the simulation.
@@ -35,7 +34,6 @@ struct Striosome <: AbstractDiscrete
     namespace
 
     function Striosome(; name, namespace=nothing)
-        @variables t 
         # HACK: H_learning is a state version of the H parameter. 
         # It will be simplified away, but we need to access its value in the solution object 
         # to calculate the weight_gradient for reinforcement learning after the simulation.
@@ -57,9 +55,8 @@ struct TAN <: AbstractDiscrete
     namespace
 
     function TAN(; name, namespace=nothing, κ=100, λ=1)
-        @variables t 
         sts = @variables R(t)=κ 
-        ps = @parameters κ=κ jcn=0.0 [input=true]
+        ps = @parameters κ=κ λ=λ jcn=0.0 [input=true]
         eqs = [
                 R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
               ]
@@ -76,8 +73,7 @@ struct SNc <: AbstractModulator
     DA_reward
     namespace
 
-    function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0)
-        @variables t 
+    function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0) 
         sts = @variables R(t)=κ_DA R_(t)=κ_DA 
         ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [

@@ -514,7 +514,7 @@ function (bc::BloxConnector)(
 )
     neurons_in = get_exci_neurons(wta_in)
     neurons_out = get_exci_neurons(wta_out)
-
+    rng = get(kwargs, :rng, Random.default_rng())
     density = get_density(kwargs, nameof(wta_out), nameof(wta_in))
     dist = Bernoulli(density)
 
@@ -523,7 +523,7 @@ function (bc::BloxConnector)(
         for neuron_presyn in neurons_out
             name_presyn = namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
-            if (name_postsyn != name_presyn) && rand(dist)
+            if (name_postsyn != name_presyn) && rand(rng, dist)
                 bc(neuron_presyn, neuron_postsyn; kwargs...)
             end
         end
