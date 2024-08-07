@@ -37,7 +37,7 @@ struct SermonDBS <: NeuralMassBlox
     function SermonDBS(;
                         name,
                         namespace=nothing,
-                        f_stim=130,
+                        f_stim=130.0,
                         amplitude=1.0,
                         pulse_width=0.0001,
                         start_time=0.0      
@@ -83,6 +83,16 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     if haskey(kwargs, :sermon_rule)
+        if haskey(kwargs, :extra_bloxs) && haskey(kwargs, :extra_params)
+            RRP, RP, RtP = kwargs[:extra_bloxs]
+            out_RRP = namespace_expr(RRP.output, get_namespaced_sys(RRP))
+            out_RP = namespace_expr(RP.output, get_namespaced_sys(RP))
+            out_RtP = namespace_expr(RtP.output, get_namespaced_sys(RtP))
+
+            M_RRP, M_RP, M_RtP, k_μ = kwargs[:extra_params]
+        else
+            error("Extra states and parameters need to be specified to use the Sermon rule")
+        end
         xₒ = namespace_expr(bloxout.output, sys_out)
         xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
         
@@ -93,7 +103,7 @@ function (bc::BloxConnector)(
         f₃ = 0.851
         f₄ = 0.998
         x = xₒ - xᵢ
-        eq = sys_in.jcn ~ f₀ + f₁*cos(x) + f₂*sin(x) + f₃*cos(2*x) + f₄*sin(2*x)
+        eq = sys_in.jcn ~ w * max(M_RRP * out_RRP, M_RP * out_RP, M_RtP * out_RtP)*(f₀ + f₁*cos(x) + f₂*sin(x) + f₃*cos(2*x) + f₄*sin(2*x))
         accumulate_equation!(bc, eq)
     end
 end
