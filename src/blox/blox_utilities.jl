@@ -355,3 +355,6 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
 
     return rhs
 end
+
+to_vector(v::AbstractVector) = v
+to_vector(v) = [v]
