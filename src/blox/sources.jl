@@ -159,21 +159,33 @@ struct PoissonSpikeTrain <: StimulusBlox
     name
     namespace
     rate
-    dt
     tspan
+    prob_dt
     rng
     
-    function PoissonSpikeTrain(; name, namespace, rate, tspan, dt=0.5/rate, rng = MersenneTwister(1234))
-        new(name, namespace, rate, dt, tspan, rng)
+    function PoissonSpikeTrain(; name, namespace, rate, tspan, prob_dt = 0.01, rng = MersenneTwister(1234))
+        rate = to_vector(rate)
+        tspan = to_vector(tspan)
+
+        @assert length(rate) == length(tspan) "The number of Poisson rates need to match the number of tspan intervals."
+
+        new(name, namespace, rate, tspan, prob_dt, rng)
     end
 end
 
 function generate_spike_times(stim::PoissonSpikeTrain)
     # This could also change to a dispatch of Random.rand()
     t_spikes = Float64[]
-    for t in range(stim.tspan...; step = stim.dt)
-        if rand(stim.rng) < stim.rate * stim.dt
-            push!(t_spikes, t)
+    for (rate, tspan) in zip(stim.rate, stim.tspan)
+        # The dt step is determined by the CDF of the Exponential distribution.
+        # The Exponential is the distribution of the inter-event times for Poisson-distributed events.
+        # `prob_dt` determines the probability so that `P_CDF_Exponential(dt) = prob_dt` , and then we solve for dt.
+        # This way we make sure that with probability `1 - prob_dt` there won't be any events within a single dt step.
+        dt = - log(1 - stim.prob_dt) / (1 / rate)
+        for t in range(tspan...; step = dt)
+            if rand(stim.rng) < rate * dt
+                push!(t_spikes, t)
+            end
         end
     end
 
