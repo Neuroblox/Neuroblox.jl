@@ -921,6 +921,21 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    bloxout::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}, 
+    bloxin::Union{LIFExciCircuitBlox, LIFInhCircuitBlox};
+    kwargs...
+)   
+    neurons_out = get_neurons(bloxout)
+    neurons_in = get_neurons(bloxin)
+
+    for neuron_out in neurons_out
+        for neuron_in in neurons_in
+            bc(neuron_out, neuron_in; kwargs...)
+        end
+    end
+end
+
+function (bc::BloxConnector)(
     stim::PoissonSpikeTrain, 
     cb::Union{LIFExciCircuitBlox, LIFInhCircuitBlox};
     kwargs...
