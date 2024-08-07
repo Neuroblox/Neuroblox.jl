@@ -1,9 +1,7 @@
 using IfElse
 
-# TODO: List of missing components needed for this tutorial
-# 1. SuperBlox of Kuramoto oscillators to collect dynamics
-
-# Create neurotransmitter pools 
+# Neurotransmitter pool block 
+# Implements Equation 4
 struct SermonNPool <: NeuralMassBlox
     params
     output
@@ -27,7 +25,8 @@ struct SermonNPool <: NeuralMassBlox
 end
 
 # Create a new DBS stimulator block
-# Largely based on MTK Standard Library smooth_square function in src/Blocks/sources.jl
+# Largely based on MTK Standard Library pulse block from the digital electronics
+# Implements unnumbered equation below equation 2 for the pulse train, with default parameters from the paper
 struct SermonDBS <: NeuralMassBlox
     params
     output
@@ -52,6 +51,7 @@ struct SermonDBS <: NeuralMassBlox
     end
 end
 
+# Connects the DBS stimulator to the neurotransmitter pool
 function (bc::BloxConnector)(
     bloxout::SermonDBS, 
     bloxin::SermonNPool; 
@@ -89,7 +89,7 @@ function (bc::BloxConnector)(
             out_RP = namespace_expr(RP.output, get_namespaced_sys(RP))
             out_RtP = namespace_expr(RtP.output, get_namespaced_sys(RtP))
 
-            M_RRP, M_RP, M_RtP, k_μ = kwargs[:extra_params]
+            M_RRP, M_RP, M_RtP, k_μ, I = kwargs[:extra_params]
         else
             error("Extra states and parameters need to be specified to use the Sermon rule")
         end
@@ -97,17 +97,20 @@ function (bc::BloxConnector)(
         xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
         
         # Custom values for the connection rule
+        # Values from supplementary material Table A
         f₀ = -0.780
         f₁ = 0.198
         f₂ = 0.302
         f₃ = 0.851
         f₄ = 0.998
         x = xₒ - xᵢ
+        # Equation 6 from the paper
         eq = sys_in.jcn ~ w * max(M_RRP * out_RRP, M_RP * out_RP, M_RtP * out_RtP)*(f₀ + f₁*cos(x) + f₂*sin(x) + f₃*cos(2*x) + f₄*sin(2*x))
         accumulate_equation!(bc, eq)
     end
 end
 
+# Connects the DBS stimulator to the Kuramoto oscillators (Iₜ term in equation 1)
 function (bc::BloxConnector)(
     bloxout::SermonDBS, 
     bloxin::KuramotoOscillator; 
@@ -124,4 +127,34 @@ function (bc::BloxConnector)(
 
     eq = sys_in.jcn ~ w*xₒ*sin(xᵢ)
     accumulate_equation!(bc, eq)
+end
+
+# Debugging purposes only
+# Connects the Kuramoto oscillators without neurotransmitter modulation
+function (bc::BloxConnector)(
+    bloxout::KuramotoOscillator, 
+    bloxin::KuramotoOscillator; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    #technically these two lines aren't needed, but useful to have if weighting occurs here
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    if haskey(kwargs, :sermon_rule_no_neurotransmitters)
+        xₒ = namespace_expr(bloxout.output, sys_out)
+        xᵢ = namespace_expr(bloxin.output, sys_in) #needed because this is also the θ term of the block receiving the connection
+        
+        # Custom values for the connection rule
+        f₀ = -0.780
+        f₁ = 0.198
+        f₂ = 0.302
+        f₃ = 0.851
+        f₄ = 0.998
+        x = xₒ - xᵢ
+        eq = sys_in.jcn ~ w *(f₀ + f₁*cos(x) + f₂*sin(x) + f₃*cos(2*x) + f₄*sin(2*x))
+        accumulate_equation!(bc, eq)
+    end
 end
