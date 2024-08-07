@@ -17,42 +17,33 @@ function paramscoping(;kwargs...)
     return paramlist
 end
 
-function get_exci_neurons(g::MetaDiGraph)
-    mapreduce(x -> get_exci_neurons(x), vcat, get_blox(g))
-end
-
-function get_exci_neurons(b::AbstractComponent)
-    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
-end
-
-function get_inh_neurons(b::AbstractComponent)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::AbstractComponent)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
-function get_exci_neurons(b::CompositeBlox)
-    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
-end
-
-function get_inh_neurons(b::CompositeBlox)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::CompositeBlox)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
 get_exci_neurons(n::AbstractExciNeuronBlox) = n
 get_exci_neurons(n) = []
+
+function get_exci_neurons(g::MetaDiGraph)
+    mapreduce(x -> get_exci_neurons(x), vcat, get_bloxs(g))
+end
+
+function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
+end
 
 get_inh_neurons(n::AbstractInhNeuronBlox) = n
 get_inh_neurons(n) = []
 
+function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
+end
+
+get_neurons(b::Union{AbstractComponent, CompositeBlox}) = vcat(get_exci_neurons(b), get_inh_neurons(b))
+
+function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
+end
+
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
+get_sys(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
@@ -110,7 +101,7 @@ end
     which holds a `BloxConnector` object with all relevant connections 
     from lower levels and this level.
 """
-function input_equations(blox)
+function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
@@ -137,28 +128,37 @@ function input_equations(blox)
     return eqs
 end
 
-input_equations(blox::AbstractComponent) = blox.connector.eqs
-input_equations(blox::CompositeBlox) = blox.connector.eqs
-input_equations(::ImageStimulus) = []
+get_connector(blox::Union{CompositeBlox, AbstractComponent}) = blox.connector
 
-weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
-weight_parameters(blox::CompositeBlox) = blox.connector.weights #I think this is the fix?
+get_input_equations(bc::BloxConnector) = bc.eqs
+get_input_equations(blox::Union{CompositeBlox, AbstractComponent}) = (get_input_equations ∘ get_connector)(blox)
+get_input_equations(blox) = []
 
-delay_parameters(blox) = Num[]
-delay_parameters(blox::AbstractComponent) = blox.connector.delays
-delay_parameters(blox::CompositeBlox) = blox.connector.delays
+get_weight_parameters(bc::BloxConnector) = bc.weights
+get_weight_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_parameters ∘ get_connector)(blox)
+get_weight_parameters(blox) = Num[]
 
-event_callbacks(blox) = []
-event_callbacks(blox::AbstractComponent) = blox.connector.events
-event_callbacks(blox::CompositeBlox) = blox.connector.events
+get_delay_parameters(bc::BloxConnector) = bc.delays
+get_delay_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_delay_parameters ∘ get_connector)(blox)
+get_delay_parameters(blox) = Num[]
 
-weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
-weight_learning_rules(bc::BloxConnector) = bc.learning_rules
-weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
-weight_learning_rules(blox::CompositeBlox) = weight_learning_rules(blox.connector)
+get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
+get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
+get_discrete_callbacks(blox) = []
 
-get_blox_parts(blox) = blox.parts
+get_continuous_callbacks(bc::BloxConnector) = bc.continuous_callbacks
+get_continuous_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_continuous_callbacks ∘ get_connector)(blox)
+get_continuous_callbacks(blox) = []
+
+get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
+get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
+get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
+
+get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
+get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
+get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
+
+get_blox_parts(blox::Union{CompositeBlox, AbstractComponent}) = blox.parts
 
 function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
@@ -355,3 +355,6 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
 
     return rhs
 end
+
+to_vector(v::AbstractVector) = v
+to_vector(v) = [v]

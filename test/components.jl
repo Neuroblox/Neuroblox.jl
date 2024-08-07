@@ -671,3 +671,82 @@ end
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
+
+@testset "LIFExciBlox - LIFInhBlox network" begin
+    global_ns = :g # global namespace
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+    @named n2 = LIFExciNeuron(; namespace = global_ns)
+    @named n3 = LIFInhNeuron(; namespace = global_ns)
+
+    neurons = [n1, n2, n3]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    for i in eachindex(neurons)
+        for j in eachindex(neurons)
+            add_edge!(g, i, j, Dict(:weight => 1))
+        end
+    end
+
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "LIFExciCircuitBlox" begin
+    @named n = LIFExciCircuitBlox(; N_neurons = 10, weight=1)
+
+    sys_simpl = structural_simplify(n.odesystem)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob, Vern7())
+    @test sol.retcode == ReturnCode.Success 
+end
+
+@testset "PoissonSpikeTrain - LIFExciBlox network" begin
+    global_ns = :g # global namespace
+
+    tspan = (0, 200) # ms
+    spike_rate = 10* 1e-3 # spikes / ms
+
+    @named s = PoissonSpikeTrain(; namespace = global_ns, rate=spike_rate, tspan)
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+
+    neurons = [s, n1]
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+    
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+
+@testset "PoissonSpikeTrain - LIFExciCircuitBlox" begin    
+    global_ns = :g # global namespace
+
+    tspan = (0, 1000) # ms
+    spike_rate = 10* 1e-3 # spikes / ms
+
+    @named s = PoissonSpikeTrain(; namespace = global_ns, rate=spike_rate, tspan)
+    @named n = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = 10, weight=1)
+
+    neurons = [s, n]
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end

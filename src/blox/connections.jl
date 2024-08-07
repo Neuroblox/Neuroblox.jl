@@ -2,19 +2,23 @@ mutable struct BloxConnector
     eqs::Vector{Equation}
     weights::Vector{Num}
     delays::Vector{Num}
-    events
+    discrete_callbacks
+    continuous_callbacks
+    spike_affect_states::Dict{Symbol, Vector{Num}}
     learning_rules
 
-    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Num, AbstractLearningRule}())
+    BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Symbol, Vector{Num}}(), Dict{Num, AbstractLearningRule}())
 
     function BloxConnector(bloxs)
-        eqs = mapreduce(input_equations, vcat, bloxs) 
-        weights = mapreduce(weight_parameters, vcat, bloxs)
-        delays = mapreduce(delay_parameters, vcat, bloxs)
-        events = mapreduce(event_callbacks, vcat, bloxs)
-        learning_rules = mapreduce(weight_learning_rules, merge, bloxs)
+        eqs = mapreduce(get_input_equations, vcat, bloxs) 
+        weights = mapreduce(get_weight_parameters, vcat, bloxs)
+        delays = mapreduce(get_delay_parameters, vcat, bloxs)
+        discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
+        continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
+        learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
-        new(eqs, weights, delays, events, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, spike_affect_states, learning_rules)
     end
 end
 
@@ -24,46 +28,17 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
-get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
-
-get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
-
-function get_callbacks(g, bc; t_block=missing)
-    if !ismissing(t_block)
-        eqs_params = get_equations_with_parameter_lhs(bc)
-       
-        neurons_exci = get_exci_neurons(g)
-        eqs = Equation[]
-      
-        for neurons in neurons_exci
-           nn = get_namespaced_sys(neurons)  
-           push!(eqs,nn.spikes_window ~ 0)
-           
-        end
-        if !isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, cbs_spikes, bc.events)
-        elseif isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            return vcat(cbs_spikes, bc.events)
-        elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, bc.events)
-        else
-            return bc.events
-        end
+function accumulate_spike_affect_states!(bc::BloxConnector, name_blox_src, states_dst)
+    if haskey(bc.spike_affect_states, name_blox_src)
+        append!(bc.spike_affect_states[name_blox_src], states_dst)
     else
-        return bc.events
+        bc.spike_affect_states[name_blox_src] = states_dst
     end
 end
 
-function generate_callbacks_for_parameter_lhs(bc)
-    eqs = get_equations_with_parameter_lhs(bc)
-    cbs = [bc.param_update_times[eq.lhs] => eq for eq in eqs]
+get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 
-    return cbs
-end
+get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
@@ -688,10 +663,10 @@ function (bc::BloxConnector)(
     cb_matr_init = [0.1] => [sys_matr_in.H ~ 1]
     cb_strios_init = [0.1] => [sys_strios_in.H ~ 1]
 
-    push!(bc.events, cb_matr)
-    push!(bc.events, cb_strios)
-    push!(bc.events, cb_matr_init)
-    push!(bc.events, cb_strios_init)
+    push!(bc.discrete_callbacks, cb_matr)
+    push!(bc.discrete_callbacks, cb_strios)
+    push!(bc.discrete_callbacks, cb_matr_init)
+    push!(bc.discrete_callbacks, cb_strios_init)
 
     for neuron in neurons_in
         sys_neuron = get_namespaced_sys(neuron)
@@ -700,8 +675,8 @@ function (bc::BloxConnector)(
         cb_neuron = [t_event] => [sys_neuron.I_bg ~ ifelse(sys_matr_out.H*sys_matr_out.jcn > sys_matr_in.H*sys_matr_in.jcn, -2, 0)]
         # lateral inhibition current I_bg should be set to 0 at the beginning of each trial
         cb_neuron_init = [0.1] => [sys_neuron.I_bg ~ 0]
-        push!(bc.events, cb_neuron)
-        push!(bc.events, cb_neuron_init)
+        push!(bc.discrete_callbacks, cb_neuron)
+        push!(bc.discrete_callbacks, cb_neuron_init)
     end
 end
 
@@ -774,7 +749,7 @@ function (bc::BloxConnector)(
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
     cb = [t_event+sqrt(eps(t_event))] => (sample_affect!, [], [sys_out.κ, sys_out.jcn, sys_in.TAN_spikes], [])
-    push!(bc.events, cb)
+    push!(bc.discrete_callbacks, cb)
 
     eq = sys_in.jcn ~ w*sys_in.TAN_spikes
 
@@ -791,7 +766,7 @@ function (bc::BloxConnector)(
 
     t_event = get_event_time(kwargs, nameof(discr_out), nameof(discr_in))
     cb = [t_event] => [sys_in.H ~ ifelse(sys_out.H*sys_out.jcn > sys_in.H*sys_in.jcn, 0, 1)]
-    push!(bc.events, cb)
+    push!(bc.discrete_callbacks, cb)
 end
 
 function (bc::BloxConnector)(
@@ -889,4 +864,106 @@ function (bc::BloxConnector)(
     end
     
     accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::LIFExciNeuron, 
+    bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
+                    w * sys_in.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+                    (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
+
+    accumulate_equation!(bc, eq)
+    
+    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
+
+    cb = [sys_out.V ~ sys_out.θ] => (
+        LIF_spike_affect!, 
+        [sys_out.V, sys_in.S_AMPA, sys_in.x], 
+        [sys_out.V_reset, sys_out.t_refract_duration, sys_out.t_refract_end, sys_out.is_refractory], 
+        [], 
+        nothing
+    )
+    
+    push!(bc.continuous_callbacks, cb)
+end
+
+function (bc::BloxConnector)(
+    bloxout::LIFInhNeuron, 
+    bloxin::Union{LIFExciNeuron, LIFInhNeuron}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_GABA * sys_in.g_GABA * (sys_in.V - sys_in.V_I) 
+                    
+    accumulate_equation!(bc, eq)
+
+    cb = [sys_out.V ~ sys_out.θ] => [sys_in.S_GABA ~ sys_in.S_GABA + 1]
+    push!(bc.continuous_callbacks, cb)
+end
+
+function (bc::BloxConnector)(
+    stim::PoissonSpikeTrain, 
+    neuron::Union{LIFExciNeuron, LIFInhNeuron};
+    kwargs...
+)
+    sys_in = get_namespaced_sys(neuron)
+
+    w = generate_weight_param(stim, neuron; kwargs...)
+    push!(bc.weights, w)
+
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA_external * (sys_in.V - sys_in.V_E) 
+                    
+    accumulate_equation!(bc, eq)
+
+    t_spikes = generate_spike_times(stim)
+
+    cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    # TO DO : Consider generating spikes during simulation
+    # to make PoissonSpikeTrain independent of `t_span` of the simulation.
+    # something like : 
+    # discrete_event = t > -Inf => (generate_spike, [sys_in.S_AMPA], [stim.relevant_params...], [], nothing) 
+    # This way we need to resolve the case of multiple spikes potentially being generated within a single integrator step.
+
+    push!(bc.discrete_callbacks, cb)
+end
+
+function (bc::BloxConnector)(
+    bloxout::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}, 
+    bloxin::Union{LIFExciCircuitBlox, LIFInhCircuitBlox};
+    kwargs...
+)   
+    neurons_out = get_neurons(bloxout)
+    neurons_in = get_neurons(bloxin)
+
+    for neuron_out in neurons_out
+        for neuron_in in neurons_in
+            bc(neuron_out, neuron_in; kwargs...)
+        end
+    end
+end
+
+function (bc::BloxConnector)(
+    stim::PoissonSpikeTrain, 
+    cb::Union{LIFExciCircuitBlox, LIFInhCircuitBlox};
+    kwargs...
+)
+    neurons_in = get_neurons(cb)
+
+    for neuron in neurons_in
+        bc(stim, neuron; kwargs...)
+    end
 end

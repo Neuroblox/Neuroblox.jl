@@ -12,7 +12,7 @@ function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
 end
 
-function get_blox(g::MetaDiGraph)
+function get_bloxs(g::MetaDiGraph)
     bs = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
@@ -24,10 +24,15 @@ function get_blox(g::MetaDiGraph)
     return bs
 end
 
-get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
+get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
+
+get_dynamics_bloxs(blox) = [blox]
+get_dynamics_bloxs(blox::Union{CompositeBlox, AbstractComponent}) = get_blox_parts(blox)
+
+flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
 function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_blox(g)
+    bloxs = get_bloxs(g)
     link = BloxConnector(bloxs)
 
     for v in vertices(g)
@@ -47,6 +52,68 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
+function generate_discrete_callbacks(g, bc::BloxConnector; t_block=missing)  
+    if !ismissing(t_block)
+        eqs_params = get_equations_with_parameter_lhs(bc)
+       
+        neurons_exci = get_exci_neurons(g)
+        eqs = Equation[]
+      
+        for neurons in neurons_exci
+           nn = get_namespaced_sys(neurons)  
+           push!(eqs,nn.spikes_window ~ 0)
+           
+        end
+        if !isempty(eqs_params) && !isempty(eqs)
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+            return vcat(cbs_params, cbs_spikes, bc.discrete_callbacks)
+        elseif isempty(eqs_params) && !isempty(eqs)
+            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
+            return vcat(cbs_spikes, bc.discrete_callbacks)
+        elseif !isempty(eqs_params) && isempty(eqs)
+            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+            return vcat(cbs_params, bc.discrete_callbacks)
+        else
+            return bc.discrete_callbacks
+        end
+    else
+        return bc.discrete_callbacks
+    end
+end
+
+generate_continuous_callbacks(blox, states_dst) = []
+
+function generate_continuous_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, states_dst)
+    sys = get_namespaced_sys(blox)
+
+    cb = [sys.V ~ sys.θ] => (
+        LIF_spike_affect!, 
+        vcat(sys.V, states_dst), 
+        [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
+        [], 
+        nothing
+    )
+
+    return cb
+end
+
+function generate_continuous_callbacks(g, bc::BloxConnector)
+    bloxs = flatten_graph(g)
+    spike_affect_states = get_spike_affect_states(bc)
+
+    cbs = []
+    for blox in bloxs
+        name_blox = namespaced_nameof(blox)
+        
+        if haskey(spike_affect_states, name_blox)
+            push!(cbs, generate_continuous_callbacks(blox, spike_affect_states[name_blox]))
+        end
+    end
+    
+    return reduce(vcat, cbs; init=[])
+end
+
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc; name, t_block)
@@ -62,17 +129,20 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     blox_syss = get_sys(g)
     connection_eqs = get_equations_with_state_lhs(bc)
 
-    cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(System(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
+    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
+
+    return compose(System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
-
     blox_syss = get_sys(g)
-
     connection_eqs = get_equations_with_state_lhs(bc)
-    cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
+
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
+    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
+
+    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)
