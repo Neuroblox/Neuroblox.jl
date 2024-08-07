@@ -207,7 +207,7 @@ struct LIFInhCircuitBlox <: CompositeBlox
 
         bc = connector_from_graph(g)
         
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(vcat(wtas, n_ff_inh); name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
 
         new(namespace, neurons, sys, bc)
     end
