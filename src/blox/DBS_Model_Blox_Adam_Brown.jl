@@ -44,9 +44,9 @@ function adam_connection_matrix_gap(density, g_density, N, weight, g_weight)
         for j in only_gap
             connection_matrix[j, i] = (;weight = 0.0, g_weight=g_weight/gap_degree)
         end
-        # for j in syn_gap
-        #     connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=g_weight/gap_degree)
-        # end
+        for j in syn_gap
+            connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=g_weight/gap_degree)
+        end
     end
     connection_matrix
 end
