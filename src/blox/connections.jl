@@ -133,12 +133,6 @@ function (bc::BloxConnector)(
     w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)
 
-    # if HH_out isa HHNeuronInhibBlox #&& HH_dst isa HHNeuronInhibBlox
-    #     name_out = namespaced_nameof(HH_out)
-    #     name_in = namespaced_nameof(HH_in)
-    #     @show name_out, name_in
-    # end
-
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
         maybe_set_state_pre!(lr, sys_out.spikes_cumulative)
