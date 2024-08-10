@@ -39,13 +39,13 @@ function adam_connection_matrix_gap(density, g_density, N, weight, g_weight)
         only_gap=setdiff(gap_nbr,syn_source)
         syn_gap=intersect(syn_source,gap_nbr)
         for j in only_syn
-            connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=0.0)
+            connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=0)
         end
         for j in only_gap
-            connection_matrix[j, i] = (;weight = 0.0, g_weight=g_weight/gap_degree)
+            connection_matrix[j, i] = (;weight = 0, g_weight=g_weight/gap_degree)
         end
         for j in syn_gap
-            connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=g_weight/gap_degree)
+           connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=g_weight/gap_degree)
         end
     end
     connection_matrix
@@ -114,7 +114,6 @@ struct Striatum_MSN_Adam <: CompositeBlox
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
-
         new(namespace, parts, sys, bc, m, connection_matrix)
     end
 
@@ -170,12 +169,16 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         for i ∈ axes(connection_matrix, 1)
             for j ∈ axes(connection_matrix, 2)
                 cij = connection_matrix[i, j]
-                if iszero(cij.g_weight)
+                cji = connection_matrix[j, i]
+
+                if iszero(cij.weight) && iszero(cij.g_weight) 
+                    nothing
+                elseif iszero(cij.g_weight) 
                     add_edge!(g, i, i, Dict(:weight=>cij.weight))
-                elseif iszero(cij.weight)
-                    add_edge!(g, i, i, Dict(:weight=>0, :gap => true, :gap_weight => cij.g_weight))
-                elseif !iszero(cij.weight) && !iszero(cij.g_weight)
-                   add_edge!(g, i, j, Dict(:weight=>cij.weight, :gap => true, :gap_weight => cij.g_weight)) 
+                else
+                    add_edge!(g, i, j, Dict(:weight=>cij.weight,
+                                            :gap => true,
+                                            :gap_weight => cij.g_weight)) 
                 end
             end
         end
