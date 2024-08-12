@@ -158,10 +158,6 @@ get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
 get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
 get_discrete_callbacks(blox) = []
 
-get_continuous_callbacks(bc::BloxConnector) = bc.continuous_callbacks
-get_continuous_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_continuous_callbacks ∘ get_connector)(blox)
-get_continuous_callbacks(blox) = []
-
 get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
 get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
 get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
