@@ -81,7 +81,6 @@ using ModelingToolkit: getp
 
     reset!(agent)
     @test all(init_params_all .== params_at(:))
-    @show setdiff(init_params_all, params_at(:))
     reset!(env)
     @test env.current_trial == 1
 end

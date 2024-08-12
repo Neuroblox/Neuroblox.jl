@@ -646,23 +646,25 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
     function LIFInhNeuron(;
         name,
         namespace = nothing,
-        g_L = 20 * 1e-3, # mS
+        g_L = 20 * 1e-6, # mS
         V_L = -70, # mV
         V_E = 0, # mV
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.2 * 1e-3, # mF 
+        C = 0.2 * 1e-6, # mF 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
         τ_NMDA_rise = 2, # ms
+        t_refract = 1, # ms
         α = 0.5, # ms⁻¹
-        g_AMPA = 0.04 * 1e-3, # mS
-        g_AMPA_external = 1.62 * 1e-3, # mS
-        g_GABA = 1 * 1e-3, # mS
-        g_NMDA = 0.13 * 1e-3, # mS 
-        Mg = 1e-3 # mM 
+        g_AMPA = 0.04 * 1e-6, # mS
+        g_AMPA_external = 1.62 * 1e-6, # mS
+        g_GABA = 1 * 1e-6, # mS
+        g_NMDA = 0.13 * 1e-6, # mS 
+        Mg = 1, # mM
+        scaling_factor = 1 
     )
 
         ps = @parameters begin 
@@ -670,31 +672,36 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
             V_L=V_L 
             V_E=V_E
             V_I=V_I
+            V_reset=V_reset
             θ=θ
             C=C
             τ_AMPA=τ_AMPA 
             τ_GABA=τ_GABA 
             τ_NMDA_decay=τ_NMDA_decay 
-            τ_NMDA_rise=τ_NMDA_rise 
-            g_AMPA = g_AMPA
+            τ_NMDA_rise=τ_NMDA_rise
+            t_refract_duration=t_refract 
+            t_refract_end=-Inf
+            g_AMPA = g_AMPA * scaling_factor
             g_AMPA_external = g_AMPA_external
-            g_GABA = g_GABA
-            g_NMDA = g_NMDA
+            g_GABA = g_GABA * scaling_factor
+            g_NMDA = g_NMDA * scaling_factor
             α=α
             Mg=Mg
+            is_refractory=0
         end
 
         sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 jcn(t)=0 [input=true] 
         eqs = [
-            D(V) ~ - (g_L * (V - V_L) + jcn) / C,
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
             D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
             D(x) ~ - x / τ_NMDA_rise
         ]
 
-        ev = [V ~ θ] => [V ~ V_reset]
-        sys = System(eqs, t, sts, ps; continuous_events=[ev], name=name)
+        refract_end = (t == t_refract_end) => [is_refractory ~ 0]
+
+        sys = System(eqs, t, sts, ps; name=name, discrete_events = [refract_end])
 
 		new(sys, namespace)
     end
@@ -707,24 +714,25 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
     function LIFExciNeuron(;
         name,
         namespace = nothing,
-        g_L = 25 * 1e-3, # mS
+        g_L = 25 * 1e-6, # mS
         V_L = -70, # mV
         V_E = 0, # mV
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.5 * 1e-3, # mF 
+        C = 0.5 * 1e-6, # mF 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
         τ_NMDA_rise = 2, # ms
         t_refract = 2, # ms
         α = 0.5, # ms⁻¹
-        g_AMPA = 0.05 * 1e-3, # mS
-        g_AMPA_external = 2.1 * 1e-3, # mS
-        g_GABA = 1.3 * 1e-3, # mS
-        g_NMDA = 0.165 * 1e-3, # mS  
-        Mg = 1 # mM
+        g_AMPA = 0.05 * 1e-6, # mS
+        g_AMPA_external = 2.1 * 1e-6, # mS
+        g_GABA = 1.3 * 1e-6, # mS
+        g_NMDA = 0.165 * 1e-6, # mS  
+        Mg = 1, # mM
+        scaling_factor = 1
     )
 
         ps = @parameters begin 
@@ -741,10 +749,10 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             τ_NMDA_rise=τ_NMDA_rise 
             t_refract_duration=t_refract
             t_refract_end=-Inf
-            g_AMPA = g_AMPA
+            g_AMPA = g_AMPA * scaling_factor
             g_AMPA_external = g_AMPA_external
-            g_GABA = g_GABA
-            g_NMDA = g_NMDA
+            g_GABA = g_GABA * scaling_factor
+            g_NMDA = g_NMDA * scaling_factor
             α=α
             Mg=Mg
             is_refractory=0
@@ -752,7 +760,7 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
 
         sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 jcn(t)=0 [input=true] 
         eqs = [
-            D(V) ~ - (1 - is_refractory) * (g_L * (V - V_L) + jcn) / C,
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
             D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),

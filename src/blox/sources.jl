@@ -155,39 +155,74 @@ mutable struct ImageStimulus <: StimulusBlox
     end
 end
 
-struct PoissonSpikeTrain <: StimulusBlox
+struct PoissonSpikeTrain{N} <: StimulusBlox
     name
     namespace
-    rate
+    N_trains
+    rate::N
     tspan
     prob_dt
     rng
+end
+
+function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
+    rate = to_vector(rate)
+    tspan = to_vector(tspan)
+
+    @assert length(rate) == length(tspan) "The number of Poisson rates need to match the number of tspan intervals."
+
+    PoissonSpikeTrain(name, namespace, N_trains, rate, tspan, prob_dt, rng)
+end
+
+function PoissonSpikeTrain(rate_sampling::Pair{D, T}, tspan::Tuple; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {T <: Number, D <: UnivariateDistribution}    
     
-    function PoissonSpikeTrain(; name, namespace, rate, tspan, prob_dt = 0.01, rng = MersenneTwister(1234))
-        rate = to_vector(rate)
-        tspan = to_vector(tspan)
+    PoissonSpikeTrain(name, namespace, N_trains, rate_sampling, tspan, prob_dt, rng)
+end
 
-        @assert length(rate) == length(tspan) "The number of Poisson rates need to match the number of tspan intervals."
+function generate_spike_times!(t_spikes, rate::Number, tspan, prob_dt, rng)
+    # The dt step is determined by the CDF of the Exponential distribution.
+    # The Exponential is the distribution of the inter-event times for Poisson-distributed events.
+    # `prob_dt` determines the probability so that `P_CDF_Exponential(dt) = prob_dt` , and then we solve for dt.
+    # This way we make sure that with probability `1 - prob_dt` there won't be any events within a single dt step.
+    dt = map(rate) do r
+        - log(1 - prob_dt) / r
+    end
 
-        new(name, namespace, rate, tspan, prob_dt, rng)
+    for t in range(tspan...; step = dt)
+        if rand(rng) < rate * dt
+            push!(t_spikes, t)
+        end
     end
 end
 
-function generate_spike_times(stim::PoissonSpikeTrain)
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: AbstractVector}
     # This could also change to a dispatch of Random.rand()
     t_spikes = Float64[]
-    for (rate, tspan) in zip(stim.rate, stim.tspan)
-        # The dt step is determined by the CDF of the Exponential distribution.
-        # The Exponential is the distribution of the inter-event times for Poisson-distributed events.
-        # `prob_dt` determines the probability so that `P_CDF_Exponential(dt) = prob_dt` , and then we solve for dt.
-        # This way we make sure that with probability `1 - prob_dt` there won't be any events within a single dt step.
-        dt = - log(1 - stim.prob_dt) / (1 / rate)
-        for t in range(tspan...; step = dt)
-            if rand(stim.rng) < rate * dt
-                push!(t_spikes, t)
-            end
+    for _ in Base.OneTo(stim.N_trains)
+        for i in eachindex(stim.rate)        
+            generate_spike_times!(t_spikes, stim.rate[i], stim.tspan[i], stim.prob_dt, stim.rng)
         end
     end
 
+    return t_spikes
+end
+
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: Pair{<: UnivariateDistribution}}
+    # This could also change to a dispatch of Random.rand()
+    dist_rate, dt = stim.rate
+    rng = stim.rng
+    tspan = stim.tspan
+    prob_dt = stim.prob_dt
+
+    t_spikes = Float64[]
+    for _ in Base.OneTo(stim.N_trains)
+        for t in range(tspan...; step = dt)
+            rate = rand(rng, dist_rate)
+            tspan_sample = (t, t + dt)
+
+            generate_spike_times!(t_spikes, rate, tspan_sample, prob_dt, rng)
+        end
+    end
+    
     return t_spikes
 end
