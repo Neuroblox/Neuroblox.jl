@@ -56,7 +56,7 @@ function generate_discrete_callbacks(g, bc::BloxConnector; t_block=missing)
     if !ismissing(t_block)
         eqs_params = get_equations_with_parameter_lhs(bc)
        
-        neurons_exci = get_exci_neurons(g)
+        neurons_exci = get_HH_exci_neurons(g)
         eqs = Equation[]
       
         for neurons in neurons_exci
@@ -86,7 +86,7 @@ generate_continuous_callbacks(blox, states_dst) = []
 
 function generate_continuous_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, states_dst)
     sys = get_namespaced_sys(blox)
-
+    
     cb = [sys.V ~ sys.θ] => (
         LIF_spike_affect!, 
         vcat(sys.V, states_dst), 

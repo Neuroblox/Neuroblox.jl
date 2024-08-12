@@ -17,7 +17,19 @@ function paramscoping(;kwargs...)
     return paramlist
 end
 
-get_exci_neurons(n::AbstractExciNeuronBlox) = n
+get_HH_exci_neurons(n::HHNeuronExciBlox) = [n]
+get_HH_exci_neurons(n) = []
+
+function get_HH_exci_neurons(g::MetaDiGraph)
+    mapreduce(x -> get_HH_exci_neurons(x), vcat, get_bloxs(g))
+end
+
+function get_HH_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_HH_exci_neurons(x), vcat, b.parts)
+end
+
+
+get_exci_neurons(n::AbstractExciNeuronBlox) = [n]
 get_exci_neurons(n) = []
 
 function get_exci_neurons(g::MetaDiGraph)
@@ -28,7 +40,7 @@ function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
 end
 
-get_inh_neurons(n::AbstractInhNeuronBlox) = n
+get_inh_neurons(n::AbstractInhNeuronBlox) = [n]
 get_inh_neurons(n) = []
 
 function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
