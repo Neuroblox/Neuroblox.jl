@@ -3,7 +3,6 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     discrete_callbacks
-    continuous_callbacks
     spike_affect_states::Dict{Symbol, Vector{Num}}
     learning_rules
 
@@ -14,11 +13,15 @@ mutable struct BloxConnector
         weights = mapreduce(get_weight_parameters, vcat, bloxs)
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
-        continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        # spike_affect_states holds a Dictionary that maps 
+        # the name of a source Blox to the states of a destination Blox 
+        # that are affected by a continuous callback of the source Blox.
+        # Typically this is used when a source Blox spikes, so its Voltage state crosses a threshold,
+        # and this spike affects synaptic parameters of every destination Blox that it connects to.
         spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, spike_affect_states, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules)
     end
 end
 
