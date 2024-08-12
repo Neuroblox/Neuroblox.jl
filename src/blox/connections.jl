@@ -95,14 +95,31 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     end
 end
 
-function indegree_constrained_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
-    density = get_density(kwargs, name_out, name_in)
-    in_degree =  Int(ceil(density * length(neurons_out)))
+function indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
     rng = get(kwargs, :rng, Random.default_rng())
-    for neuron_postsyn in neurons_in
-        idx = sample(rng, collect(1:length(neurons_out)), in_degree; replace=false)
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; kwargs...)
+    in_degree =  Int(ceil(density * N_src))
+    conn_mat = falses(N_src, N_dst)
+    for j ∈ 1:N_dst
+        idx = sample(rng, 1:N_src, in_degree; replace=false)
+        for i ∈ idx
+            conn_mat[i, j] = true
+        end
+    end
+    conn_mat
+end
+
+function indegree_constrained_connections!(bc, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    N_src = length(neurons_src)
+    N_dst = length(neurons_dst)
+    conn_mat = get(kwargs, :connection_matrix) do
+        density = get_density(kwargs, name_src, name_dst)
+        indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
+    end
+    for j ∈ 1:N_dst
+        for i ∈ 1:N_src
+            if conn_mat[i, j]
+                bc(neurons_src[i], neurons_dst[j]; kwargs...)
+            end
         end
     end
 end
@@ -177,9 +194,8 @@ function (bc::BloxConnector)(
     w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)    
 
-        
     eq = sys_in.I_syn ~ -w * sys_out.Gₛ * (sys_in.V - sys_out.E_syn)
-    
+
     accumulate_equation!(bc, eq)
 
     GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
