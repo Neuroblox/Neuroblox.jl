@@ -86,5 +86,3 @@ using ModelingToolkit: getp
     @test env.current_trial == 1
 end
 
-# using FileIO
-# hmm = load("/Users/achesebro/Downloads/sim0001.jld2")
