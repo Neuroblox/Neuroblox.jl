@@ -93,11 +93,12 @@ struct LIFExciCircuitBlox <: CompositeBlox
         t_refract = 2, # ms
         α = 0.5, # ms⁻¹
         g_AMPA = 0.05 * 1e-6, # mS
-        g_AMPA_external = 2.1 * 1e-6, # mS
+        g_AMPA_ext = 2.1 * 1e-6, # mS
         g_GABA = 1.3 * 1e-6, # mS
         g_NMDA = 0.165 * 1e-6, # mS  
         Mg = 1, # mM
-        scaling_factor = 1,
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1,
         kwargs...
         )
 
@@ -119,11 +120,12 @@ struct LIFExciCircuitBlox <: CompositeBlox
                 t_refract,
                 α,
                 g_AMPA,
-                g_AMPA_external,
+                g_AMPA_ext,
                 g_GABA,
                 g_NMDA,
                 Mg,
-                scaling_factor
+                exci_scaling_factor,
+                inh_scaling_factor
             )
         end
 
@@ -163,16 +165,15 @@ struct LIFInhCircuitBlox <: CompositeBlox
         C = 0.2 * 1e-6, # mF 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
-        τ_NMDA_decay = 100, # ms
-        τ_NMDA_rise = 2, # ms
         t_refract = 1, # ms
         α = 0.5, # ms⁻¹
         g_AMPA = 0.04 * 1e-6, # mS
-        g_AMPA_external = 1.62 * 1e-6, # mS
+        g_AMPA_ext = 1.62 * 1e-6, # mS
         g_GABA = 1 * 1e-6, # mS
         g_NMDA = 0.13 * 1e-6, # mS 
         Mg = 1, # mM 
-        scaling_factor = 1,
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1,
         kwargs...
         )
 
@@ -189,16 +190,15 @@ struct LIFInhCircuitBlox <: CompositeBlox
                 C,
                 τ_AMPA,
                 τ_GABA,
-                τ_NMDA_decay,
-                τ_NMDA_rise,
                 t_refract,
                 α,
                 g_AMPA,
-                g_AMPA_external,
+                g_AMPA_ext,
                 g_GABA,
                 g_NMDA,
                 Mg,
-                scaling_factor
+                exci_scaling_factor,
+                inh_scaling_factor
             )
         end
 
