@@ -923,13 +923,13 @@ function (bc::BloxConnector)(
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA_external * (sys_in.V - sys_in.V_E) 
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA_ext * sys_in.g_AMPA_ext * (sys_in.V - sys_in.V_E) 
                     
     accumulate_equation!(bc, eq)
 
     t_spikes = generate_spike_times(stim)
 
-    cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    cb = t_spikes => [sys_in.S_AMPA_ext ~ sys_in.S_AMPA_ext + 1]
     # TO DO : Consider generating spikes during simulation
     # to make PoissonSpikeTrain independent of `t_span` of the simulation.
     # something like : 
