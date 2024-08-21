@@ -863,18 +863,19 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 	end
 end
 
-
-##
-# =============================================================================
-# My additions
-# =============================================================================
-
-
 struct MetabolicHHNeuron <: AbstractNeuronBlox
 	"""
 	
-	Hodgkin-Huxley model expanded with dynamic ion concentrations and ATPase kinetic rate.
-	Based on: https://www.nature.com/articles/s41467-023-40437-0
+	Hodgkin-Huxley model expanded with
+	-dynamic ion concentrations
+	-ATPase kinetic rate
+	-dynamic oxygen concentration
+	-astrocytic buffering
+	
+	Based on Dutta et al:
+	Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion."
+	Nature Communications 14.1 (2023): 4792.
+	https://www.nature.com/articles/s41467-023-40437-0
 
 	"""
 	odesystem

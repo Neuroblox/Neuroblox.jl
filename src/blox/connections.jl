@@ -966,12 +966,6 @@ function (bc::BloxConnector)(
     end
 end
 
-##
-# =============================================================================
-# My additions
-# =============================================================================
-
-
 function (bc::BloxConnector)(
     HH_out::Union{MetabolicHHNeuron},
     HH_in::Union{MetabolicHHNeuron};
