@@ -881,16 +881,16 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 	odesystem
     output
     namespace
-	neurontype::String
+	neurontype::Symbol
 
 	function MetabolicHHNeuron(
 		;name,
 		namespace=nothing,
-		neurontype="excitatory",
+		neurontype=:excitatory,
 		Naᵢᵧ = 18.0,  # Intracellular Naconcentration, in mM
 		ρₘₐₓ = 1.25,  # Maximum pump rate, in mM/s
 		α = 5.3,  # Conversion factor from pump current to O2 consumption rate, in g/mol
-		λ = 1.,  # Relative cell density [!]
+		λ = 1.,  # *Relative cell density
 		ϵ₀ = 0.17,  # O2 diffusion rate, in s^-1
 		O₂ᵦ = 32.,  # O2 buffer concentration, in mg/L #TODO: potentially unrealistic value (found values are ~0.5)
 		γ = 0.0445,  # conversion factor from current to concentration, in (mM/s)/(uA/cm2)
@@ -914,7 +914,8 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		G_inh = 0.374,  # Conductance of inhibitory synapses, in mS/cm^2
 		E_syn_exc = 0., # Excitatory synaptic reversal potential, in mV
 		E_syn_inh = -80.,  # Inhibitory synaptic reversal potential, in mV
-		τ = 4.,  # Time constant for synapse, in ms [!]
+		τ = 4.,  # *Time constant for synapse, in ms
+		#*: significantly varies between excitatory and inhibitory neurons
 	)
 
 		# Parameters
@@ -964,7 +965,6 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			χ(t)=0.0
 			[output = true] 
 		end
-		
 	
 		# Pump currents
 		ρ = ρₘₐₓ / (1.0 + exp((20.0 - O₂)/3.0))
