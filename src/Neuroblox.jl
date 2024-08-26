@@ -44,6 +44,7 @@ using Symbolics: @register_symbolic, getdefaultval
 using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
+using JLD2
 
 using Peaks: argmaxima, peakproms!, peakheights!
 
