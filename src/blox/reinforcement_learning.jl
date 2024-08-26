@@ -385,7 +385,7 @@ end
 
 function save_voltages(sol, filepath, numtrial)
     df = DataFrame(sol)
-    fname = "sim"*lpad(numtrial, 4, "0")*".jld2"
+    fname = "sim"*lpad(numtrial, 4, "0")*".csv"
     fullpath = joinpath(filepath, fname)
-    jldsave(fullpath; df)
+    CSV.write(fullpath, df)
 end
