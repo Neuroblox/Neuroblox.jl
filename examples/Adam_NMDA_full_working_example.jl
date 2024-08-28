@@ -5,9 +5,9 @@ using MetaGraphs
 using Plots
 
 #Number of neurons in each block
-N_pyr=80
+N_pyr=30
 N_in_phasic=20
-N_in_tonic=80
+N_in_tonic=10
 
 #number of connections between each block pair
 prj_pyr_phasic = 10
@@ -19,7 +19,7 @@ prj_tonic_phasic = 5
 @named cb_in_phasic = Cortical_Interneuron_Assembly_Phasic_Adam(namespace=:g,N_inhib=N_in_phasic)
 @named cb_in_tonic = Cortical_Interneuron_Assembly_Tonic_Adam(namespace=:g,N_inhib=N_in_tonic)
 @named glu= Steady_Glutamate()
-assembly = [cb_pyr,cb_in_phasic,cb_in_tonic,glu2];
+assembly = [cb_pyr,cb_in_phasic,cb_in_tonic,glu];
 g = MetaDiGraph()
 add_blox!.(Ref(g), assembly)
 
@@ -32,7 +32,8 @@ add_edge!(g,4,3,Dict(:nmda=>true,:nmda_weight=>9.5))
 @named neuron_net = system_from_graph(g)
 sys = structural_simplify(neuron_net)
 prob = SDEProblem(sys, [], (0.0, 2000), [])
-sol = solve(prob, ImplicitEM(),saveat = 0.01)
+sol = solve(prob,saveat = 0.01)
+#sol = solve(prob, ImplicitEM(),saveat = 0.01)
 ss=convert(Array,sol)
 st=unknowns(sys)
 vlist=Int64[]
