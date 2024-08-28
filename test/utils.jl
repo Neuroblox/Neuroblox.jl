@@ -16,7 +16,7 @@ using DifferentialEquations
     @test all(sol[ss.n.V] .== Neuroblox.voltage_timeseries(sol, n))
 end
 
-@testset "Voltage timeseries [LIFExciCircuitBloxz]" begin
+@testset "Voltage timeseries + Composite average [LIFExciCircuitBloxz]" begin
     global_ns = :g 
     tspan = (0, 200)
     V_reset = -55
@@ -40,4 +40,11 @@ end
     V[V .== V_reset] .= NaN
 
     @test all(isequal(V, Neuroblox.voltage_timeseries(sol, n)))
+
+    V_filtered = map(eachrow(V)) do V_t
+        v = filter(!isnan, V_t)
+        mean(v)
+    end
+    
+    @test all(isequal(V_filtered, Neuroblox.average_voltage_timeseries(sol, n)))
 end
