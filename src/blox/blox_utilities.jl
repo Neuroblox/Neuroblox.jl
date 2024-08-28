@@ -406,5 +406,5 @@ end
 function average_voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
     V = voltage_timeseries(sol, cb)
 
-    return mapslices(nanmean, V; dims = 2)
+    return vec(mapslices(nanmean, V; dims = 2))
 end
