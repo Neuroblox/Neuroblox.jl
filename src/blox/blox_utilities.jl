@@ -390,7 +390,8 @@ function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::Union{LIFExci
     get_reset = getp(sol, p)
     reset_value = get_reset(sol)
     V = sol[s] 
-    V[V .== reset_value] .== missing
+    
+    V[V .== reset_value] .= NaN
 
     return V
 end
