@@ -1,5 +1,6 @@
 using SafeTestsets
 
+@time @safetestset "Utilities" begin include("utils.jl") end
 @time @safetestset "Components Tests" begin include("components.jl") end
 @time @safetestset "Neurograph Tests" begin include("graphs.jl") end
 

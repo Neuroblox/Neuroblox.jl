@@ -7,6 +7,7 @@ const D = ModelingToolkit.D_nounits
 export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
 @reexport using Graphs: add_edge!
+@reexport using MetaGraphs: MetaDiGraph
 
 using Graphs
 using MetaGraphs
@@ -34,9 +35,11 @@ using DelayDiffEq
 using StatsBase: sample
 using Distributions
 
+using SciMLBase: AbstractSolution
+
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
-                    AbstractODESystem, VariableTunable
+                    AbstractODESystem, VariableTunable, getp
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
@@ -49,6 +52,8 @@ using JLD2
 using Peaks: argmaxima, peakproms!, peakheights!
 
 using LogExpFunctions: logistic
+
+using MakieCore
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -114,6 +119,7 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
+include("./plot_recipes/composite_recipes.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)

@@ -28,7 +28,6 @@ function get_HH_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_HH_exci_neurons(x), vcat, b.parts)
 end
 
-
 get_exci_neurons(n::AbstractExciNeuronBlox) = [n]
 get_exci_neurons(n) = []
 
@@ -172,7 +171,8 @@ function get_weight(kwargs, name_blox1, name_blox2)
     if haskey(kwargs, :weight)
         return kwargs[:weight]
     else
-        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+        @warn "Connection weight from $name_blox1 to $name_blox2 is not specified. Assuming weight=1" 
+        return 1
     end
 end
 
@@ -366,3 +366,45 @@ end
 
 to_vector(v::AbstractVector) = v
 to_vector(v) = [v]
+
+nanmean(x) = mean(filter(!isnan,x))
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuronBlox)
+    namespaced_name = string(namespaceof(blox), nameof(blox))
+    state_name = Symbol(namespaced_name, "₊V")
+
+    s = only(@variables $(state_name)(t))
+
+    return sol[s]
+end
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::Union{LIFExciNeuron, LIFInhNeuron})
+    namespaced_name = namespaced_nameof(blox)
+    state_name = Symbol(namespaced_name, "₊V")
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+
+    
+    s = only(@variables $(state_name)(t))
+    p = only(@parameters $(reset_param_name))
+    
+    get_reset = getp(sol, p)
+    reset_value = get_reset(sol)
+    V = sol[s] 
+    
+    V[V .== reset_value] .= NaN
+
+    return V
+end
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        voltage_timeseries(sol, neuron)
+    end
+end
+
+function average_voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+    V = voltage_timeseries(sol, cb)
+
+    return vec(mapslices(nanmean, V; dims = 2))
+end
