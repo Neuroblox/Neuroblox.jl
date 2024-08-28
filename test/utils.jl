@@ -1,5 +1,6 @@
 using Neuroblox
 using DifferentialEquations
+using Statistics
 
 @testset "Voltage timeseries [LIFExciNeuron]" begin
     global_ns = :g 
