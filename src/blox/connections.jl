@@ -978,9 +978,11 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     eq = if HH_out.neurontype == :excitatory
-        sys_in.I_syn ~ -w * sys_in.G_exc * (sys_in.V - sys_in.E_syn_exc) * sys_out.S * exp(-sys_out.χ/5)
+        sys_in.I_syn ~ -w * sys_in.G_exc * (sys_in.V - sys_in.E_syn_exc) *
+            sys_out.S * exp(-sys_out.χ/5)
     elseif HH_out.neurontype == :inhibitory
-        sys_in.I_syn ~ -w * sys_in.G_inh * (sys_in.V - sys_in.E_syn_inh) * sys_out.S * exp(-sys_out.χ/5)
+        sys_in.I_syn ~ -w * sys_in.G_inh * (sys_in.V - sys_in.E_syn_inh) *
+            sys_out.S * exp(-sys_out.χ/5)
     else
         warning("Unknown neuron type. Assuming excitatory neuron type.")
     end

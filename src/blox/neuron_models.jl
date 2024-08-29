@@ -876,6 +876,7 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 	Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion."
 	Nature Communications 14.1 (2023): 4792.
 	https://www.nature.com/articles/s41467-023-40437-0
+	https://zenodo.org/records/8013692
 
 	"""
 	odesystem
@@ -946,7 +947,6 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			E_syn_exc=E_syn_exc
 			E_syn_inh=E_syn_inh
 			τ=τ
-			I_in_act=0.0
 		end
 
 		# State variables
@@ -961,9 +961,9 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			I_syn(t)=0.0 
 			[input=true] 
 			S(t)=0.1
-			[output = true] 
+			[output=true] 
 			χ(t)=0.0
-			[output = true] 
+			[output=true] 
 		end
 	
 		# Pump currents
@@ -998,15 +998,6 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		
 		# Depolarization factor, as continuous variable
 		η = 0.4/(1.0 + exp(-10.0*(V + 30.0)))/(1.0 + exp(10.0*(V + 10.0)))
-		
-		# Depolarization factor, as event
-		# ev1 = [(V > -30) && (V < -10)] => [η ~ 0.4]
-		# ev2 = [(V <= -30) || (V >= -10)] => [η ~ 0.0]
-		# add as arg to sys: continuous_events=[ev1, ev2]
-
-		# Input current based on time: TODO: this needs to be a callback:
-		# example 1 here: https://docs.sciml.ai/DiffEqDocs/stable/features/callback_functions/
-		ev = (t == 20.0) => [I_in_act~I_in]
 	
 		# Differential equations
 		eqs = [
@@ -1016,13 +1007,13 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			D(m) ~ aₘ * (1.0 - m) - bₘ*m,
 			D(h) ~ aₕ * (1.0 - h) - bₕ*h,
 			D(n) ~ aₙ * (1.0 - n) - bₙ*n,
-			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in_act)/C_m,
+			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in)/C_m,
 			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
 			D(χ) ~ η*(V + 50.0) - 0.4*χ
 			]
 
 		# Define the ODE system
-		sys = ODESystem(eqs, t, sts, ps; discrete_events=ev, name=name)
+		sys = ODESystem(eqs, t, sts, ps; name=name)
 
 		# Construct the neuron
 		new(sys, sts[1], namespace, neurontype)
