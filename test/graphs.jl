@@ -2,7 +2,7 @@ using Neuroblox
 using Test
 using SparseArrays
 using Graphs
-MetaGraphs
+using MetaGraphs
 
 @testset "Graph to adjacency matrix" begin
     # testing whether creating a simple graph results in the correct adjacency matrix
