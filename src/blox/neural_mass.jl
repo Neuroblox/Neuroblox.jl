@@ -513,7 +513,7 @@ struct PYR_Izh <: NeuralMassBlox
     function PYR_Izh(;
                 name,
                 namespace=nothing,
-                Δ,
+                Δ=0.02,
                 α=0.6215,
                 gₛ=1.2308,
                 η̄=0.12,
