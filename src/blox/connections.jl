@@ -965,3 +965,21 @@ function (bc::BloxConnector)(
         bc(stim, neuron; kwargs...)
     end
 end
+
+function (bc::BloxConnector)(
+    bloxout::PYR_Izh, 
+    bloxin::PYR_Izh; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    s_presyn = namespace_expr(bloxout.output, sys_out)
+    v_postsyn = namespace_expr(bloxin.voltage, sys_in)
+    eq = sys_in.jcn ~ (1-sys_in.κ)*sys_out.gₛ*s_presyn*(sys_in.eᵣ-v_postsyn)
+    
+    accumulate_equation!(bc, eq)
+end
