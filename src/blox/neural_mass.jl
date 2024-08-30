@@ -522,7 +522,7 @@ struct PYR_Izh <: NeuralMassBlox
                 b=-0.0062,
                 wⱼ=0.0189,
                 sⱼ=1.2308,
-                τₛ2.6,
+                τₛ=2.6,
                 κ=1.0)
             p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
             Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
