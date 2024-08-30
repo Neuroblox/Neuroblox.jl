@@ -502,3 +502,37 @@ struct KuramotoOscillator <: NeuralMassBlox
         end
     end
 end
+
+struct PYR_Izh <: NeuralMassBlox
+    params
+    output
+    jcn
+    odesystem
+    namespace
+    function PYR_Izh(;
+                name,
+                namespace=nothing,
+                Δ,
+                α=0.6215,
+                gₛ=1.2308,
+                η̄=0.12,
+                I_ext=0.0,
+                eᵣ=1.0,
+                a=0.0077,
+                b=-0.0062,
+                wⱼ=0.0189,
+                sⱼ=1.2308,
+                τₛ2.6,
+                κ=1.0)
+            p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
+            Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+            sts = @variables r(t)=0.0 v(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+            eqs = [ D(r) ~ Δ/π + 2*r*v - (α+gₛ*s)*r,
+                    D(v) ~ v^2 - α*v - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - v) + jcn - (π*r)^2,
+                    D(w) ~ a*(b*v - w) + wⱼ*r,
+                    D(s) ~ -s/τₛ + sⱼ*r
+                ]
+            sys = System(eqs, t, sts, p; name=name)
+            new(p, sts[4], sts[5], sys, namespace)
+    end
+end
