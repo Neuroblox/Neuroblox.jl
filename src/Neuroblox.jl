@@ -6,7 +6,7 @@ const t = ModelingToolkit.t_nounits
 const D = ModelingToolkit.D_nounits
 export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
-@reexport using Graphs: add_edge!
+@reexport import Graphs: add_edge!
 @reexport using MetaGraphs: MetaDiGraph
 
 using Graphs
