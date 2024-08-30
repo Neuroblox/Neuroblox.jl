@@ -506,6 +506,7 @@ end
 struct PYR_Izh <: NeuralMassBlox
     params
     output
+    voltage
     jcn
     odesystem
     namespace
@@ -533,6 +534,6 @@ struct PYR_Izh <: NeuralMassBlox
                     D(s) ~ -s/τₛ + sⱼ*r
                 ]
             sys = System(eqs, t, sts, p; name=name)
-            new(p, sts[4], sts[5], sys, namespace)
+            new(p, sts[4], sts[2], sts[5], sys, namespace)
     end
 end
