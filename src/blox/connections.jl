@@ -979,7 +979,7 @@ function (bc::BloxConnector)(
 
     s_presyn = namespace_expr(bloxout.output, sys_out)
     v_postsyn = namespace_expr(bloxin.voltage, sys_in)
-    eq = sys_in.jcn ~ (1-sys_in.κ)*sys_out.gₛ*s_presyn*(sys_in.eᵣ-v_postsyn)
+    eq = sys_in.jcn ~ w*(1-sys_in.κ)*sys_out.gₛ*s_presyn*(sys_in.eᵣ-v_postsyn)
     
     accumulate_equation!(bc, eq)
 end
