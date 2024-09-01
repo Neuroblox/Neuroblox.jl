@@ -548,7 +548,7 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
     namespace
     function QIF_PING_NGNMM(;
                             name,
-                            namespace=noathing
+                            namespace=nothing,
                             Δ=1.0,
                             τₘ=20.0,
                             H=1.3,
