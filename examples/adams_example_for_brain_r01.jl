@@ -10,6 +10,29 @@ using MetaGraphs
 using Random
 
 # PING QIF theta-nested gamma oscillations
+@named exci_PING = QIF_PING_NGNMM(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
+@named inhi_PING = QIF_PING_NGNMM(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
+
+g = MetaDiGraph()
+add_blox!.(Ref(g), [exci_PING, inhi_PING])
+add_edge!(g, exci_PING => inhi_PING; weight=10.0)
+add_edge!(g, inhi_PING => exci_PING; weight=10.0)
+
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+
+sim_dur = 1000.0
+prob = SDEProblem(sys, [], (0.0, sim_dur))
+sol = solve(prob, RKMil(), saveat=0.1)
+
+using Plots, DSP, CSV
+plot(sol, idxs=[1, 3])
+plot(sol, idxs=[2, 4])
+
+data = Array(sol)
+#data = data .+ rand(Normal(0, 10), size(data))
+wp = welch_pgram(data[2, :]; fs=2000)
+plot(wp.freq, pow2db.(wp.power), xlim=(0, 50), xlabel="Frequency (Hz)" , ylabel="Power (dB)", title="Power Spectrum of Excitatory Population")
 
 
 
