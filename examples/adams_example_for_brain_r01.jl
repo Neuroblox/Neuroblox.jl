@@ -9,6 +9,11 @@ using Graphs
 using MetaGraphs
 using Random
 
+# PING QIF theta-nested gamma oscillations
+
+
+
+# Chen/Campbell populations - limited utility for now
 @named popP = PYR_Izh(η̄=0.08, κ=0.8)
 @named popQ = PYR_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
 
@@ -29,7 +34,6 @@ using Plots
 plot(sol, idxs=[1, 5])
 plot(sol, idxs=[2, 6])
 plot(sol, idxs=[3, 7])
-
 
 
 

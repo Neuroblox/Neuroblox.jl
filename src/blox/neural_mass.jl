@@ -549,18 +549,18 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
     function QIF_PING_NGNMM(;
                             name,
                             namespace=noathing
-                            Δ=0.02,
-                            τₘ,
-                            H,
-                            I_ext,
-                            J_internal,
-                            A)
-        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal, A=A)
-        Δ, τₘ, H, I_ext, J_internal, A = p
+                            Δ=1.0,
+                            τₘ=20.0,
+                            H=1.3,
+                            I_ext=0.0,
+                            ω=0.0,
+                            J_internal=8.0)
+        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+        Δ, τₘ, H, I_ext, J_internal = p
         sts = @variables r(t)=0.0 [output=true] v(t)=0.0 jcn(t)=0.0 [input=true]
-        @brownian ξ
+        #@brownian ξ
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
-               D(v) ~ (v^2 + H + I_ext)/τₘ - τₘ*(π*r)^2 + J_internal*r + A*ξ + jcn]
+               D(v) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
         sys = System(eqs, t, sts, p; name=name)
         new(p, sts[1], sts[2], sts[3], sys, namespace)
     end
