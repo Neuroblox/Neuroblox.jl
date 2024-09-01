@@ -977,3 +977,4 @@ function (bc::BloxConnector)(
     
     accumulate_equation!(bc, eq)
 end
+
