@@ -3,7 +3,6 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     discrete_callbacks
-    continuous_callbacks
     spike_affect_states::Dict{Symbol, Vector{Num}}
     learning_rules
 
@@ -14,11 +13,15 @@ mutable struct BloxConnector
         weights = mapreduce(get_weight_parameters, vcat, bloxs)
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
-        continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        # spike_affect_states holds a Dictionary that maps 
+        # the name of a source Blox to the states of a destination Blox 
+        # that are affected by a continuous callback of the source Blox.
+        # Typically this is used when a source Blox spikes, so its Voltage state crosses a threshold,
+        # and this spike affects synaptic parameters of every destination Blox that it connects to.
         spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, spike_affect_states, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules)
     end
 end
 
@@ -872,22 +875,18 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
-                    w * sys_in.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+                    w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
                     (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
 
     accumulate_equation!(bc, eq)
     
-    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
-
-    cb = [sys_out.V ~ sys_out.θ] => (
-        LIF_spike_affect!, 
-        [sys_out.V, sys_in.S_AMPA, sys_in.x], 
-        [sys_out.V_reset, sys_out.t_refract_duration, sys_out.t_refract_end, sys_out.is_refractory], 
-        [], 
-        nothing
-    )
-    
-    push!(bc.continuous_callbacks, cb)
+    # Compare the unique namespaced names of both systems
+    if nameof(sys_out) == nameof(sys_in)
+        # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
+        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
+    else
+        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA])
+    end
 end
 
 function (bc::BloxConnector)(
@@ -905,8 +904,7 @@ function (bc::BloxConnector)(
                     
     accumulate_equation!(bc, eq)
 
-    cb = [sys_out.V ~ sys_out.θ] => [sys_in.S_GABA ~ sys_in.S_GABA + 1]
-    push!(bc.continuous_callbacks, cb)
+    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_GABA])
 end
 
 function (bc::BloxConnector)(
@@ -919,13 +917,13 @@ function (bc::BloxConnector)(
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA_external * (sys_in.V - sys_in.V_E) 
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA_ext * sys_in.g_AMPA_ext * (sys_in.V - sys_in.V_E) 
                     
     accumulate_equation!(bc, eq)
 
     t_spikes = generate_spike_times(stim)
 
-    cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    cb = t_spikes => [sys_in.S_AMPA_ext ~ sys_in.S_AMPA_ext + 1]
     # TO DO : Consider generating spikes during simulation
     # to make PoissonSpikeTrain independent of `t_span` of the simulation.
     # something like : 
