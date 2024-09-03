@@ -98,13 +98,31 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     end
 end
 
-function indegree_constrained_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
-    density = get_density(kwargs, name_out, name_in)
-    in_degree =  Int(ceil(density * length(neurons_out)))
-    for neuron_postsyn in neurons_in
-        idx = sample(collect(1:length(neurons_out)), in_degree; replace=false)
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; kwargs...)
+function indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
+    rng = get(kwargs, :rng, Random.default_rng())
+    in_degree =  Int(ceil(density * N_src))
+    conn_mat = falses(N_src, N_dst)
+    for j ∈ 1:N_dst
+        idx = sample(rng, 1:N_src, in_degree; replace=false)
+        for i ∈ idx
+            conn_mat[i, j] = true
+        end
+    end
+    conn_mat
+end
+
+function indegree_constrained_connections!(bc, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    N_src = length(neurons_src)
+    N_dst = length(neurons_dst)
+    conn_mat = get(kwargs, :connection_matrix) do
+        density = get_density(kwargs, name_src, name_dst)
+        indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
+    end
+    for j ∈ 1:N_dst
+        for i ∈ 1:N_src
+            if conn_mat[i, j]
+                bc(neurons_src[i], neurons_dst[j]; kwargs...)
+            end
         end
     end
 end
@@ -133,7 +151,7 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(HH_out, HH_in; kwargs...)
-    push!(bc.weights, w)    
+    push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
@@ -143,8 +161,6 @@ function (bc::BloxConnector)(
     end
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
-
-    
     eq = if STA
         sys_in.I_syn ~ -w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
@@ -152,17 +168,6 @@ function (bc::BloxConnector)(
     end
 
     accumulate_equation!(bc, eq)
-    
-    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
-    if GAP
-        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
-        push!(bc.weights, w_gap)
-        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
-        accumulate_equation!(bc, eq2) 
-        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
-        accumulate_equation!(bc, eq3) 
-    end
-
 end
 
 function (bc::BloxConnector)(
@@ -174,21 +179,11 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(HH_out, HH_in; kwargs...)
-    push!(bc.weights, w)    
+    push!(bc.weights, w)
 
     eq = sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     
     accumulate_equation!(bc, eq)
-
-    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
-    if GAP
-        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
-        push!(bc.weights, w_gap)
-        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
-        accumulate_equation!(bc, eq2) 
-        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
-        accumulate_equation!(bc, eq3) 
-    end
 end
 
 function (bc::BloxConnector)(
@@ -202,9 +197,8 @@ function (bc::BloxConnector)(
     w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)    
 
-        
     eq = sys_in.I_syn ~ -w * sys_out.Gₛ * (sys_in.V - sys_out.E_syn)
-    
+
     accumulate_equation!(bc, eq)
 
     GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
@@ -488,20 +482,20 @@ end
 function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
     wta_in::WinnerTakeAllBlox; 
-    kwargs...
-)
-    neurons_in = get_exci_neurons(wta_in)
+    kwargs...)
     neurons_out = get_exci_neurons(wta_out)
-    rng = get(kwargs, :rng, Random.default_rng())
-    density = get_density(kwargs, nameof(wta_out), nameof(wta_in))
-    dist = Bernoulli(density)
-
-    for neuron_postsyn in neurons_in
+    neurons_in = get_exci_neurons(wta_in)
+    # users can supply a :connection_matrix to the graph edge, where
+    # connection_matrix[i, j] determines if neurons_out[i] is connected to neurons_out[j] 
+    connection_matrix = get_connection_matrix(kwargs,
+                                              namespaced_nameof(wta_out), namespaced_nameof(wta_in),
+                                              length(neurons_out), length(neurons_in))
+    for (j, neuron_postsyn) in enumerate(neurons_in)
         name_postsyn = namespaced_nameof(neuron_postsyn)
-        for neuron_presyn in neurons_out
+        for (i, neuron_presyn) in enumerate(neurons_out)
             name_presyn = namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
-            if (name_postsyn != name_presyn) && rand(rng, dist)
+            if (name_postsyn != name_presyn) && connection_matrix[i, j]
                 bc(neuron_presyn, neuron_postsyn; kwargs...)
             end
         end
