@@ -5,7 +5,7 @@ abstract type AbstractModulator <: AbstractDiscrete end
 struct Matrisome <: AbstractDiscrete
     odesystem
     namespace
-
+    t_event
     function Matrisome(; name, namespace=nothing, t_event=180.0)
         #HACK : this t_event has to be informed from the t_event in Action Selection block
         # HACK: H_learning is a state version of the H parameter. 
@@ -13,7 +13,7 @@ struct Matrisome <: AbstractDiscrete
         # to calculate the weight_gradient for reinforcement learning after the simulation.
         sts = @variables ρ(t)=1.0 ρ_(t)=1.0 H_learning(t)=1.0
         #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
-        ps = @parameters H=1 TAN_spikes=0.0 jcn=0.0 [input=true] jcn_=0.0 H_=1 
+        ps = @parameters H=1 TAN_spikes=0.0 jcn=0.0 [input=true] jcn_=0.0 H_=1
         eqs = [
             ρ ~ H*jcn,
             ρ_ ~ H_*jcn_,
@@ -25,9 +25,12 @@ struct Matrisome <: AbstractDiscrete
         Rho_cb = [[t_event + sqrt(eps(t_event))] => cb_eqs]   
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = Rho_cb)
 
-        new(sys, namespace)
+        new(sys, namespace, t_event)
     end
 end
+
+
+
 
 struct Striosome <: AbstractDiscrete
     odesystem
@@ -72,6 +75,7 @@ struct SNc <: AbstractModulator
     κ_DA
     DA_reward
     namespace
+    t_event
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0) 
         sts = @variables R(t)=κ_DA R_(t)=κ_DA 
@@ -85,7 +89,7 @@ struct SNc <: AbstractModulator
 
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = R_cb)
 
-        new(sys, N_time_blocks, κ_DA, DA_reward, namespace)
+        new(sys, N_time_blocks, κ_DA, DA_reward, namespace, t_event)
     end
 end
 
