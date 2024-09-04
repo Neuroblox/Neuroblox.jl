@@ -406,3 +406,29 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
+
+function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    threshold_param_name = Symbol(namespaced_name, "₊θ")
+
+    reset = only(@parameters $(reset_param_name))
+    thrs = only(@parameters $(threshold_param_name))
+
+    get_reset = getp(sol, reset)
+    reset_value = get_reset(sol)
+
+    get_thrs = getp(sol, thrs)
+    thrs_value = get_thrs(sol)
+
+    V = voltage_timeseries(blox, sol)
+    
+    spike_idxs = Int[]
+    for (i, vi) in enumerate(V[1:end-1])
+        if (abs(vi - thrs_value) <= 1e-3) && (abs(V[i+1] - reset_value) <= 1e-3)
+            push!(spike_idxs, i)
+        end
+    end
+
+    return spike_idxs
+end
