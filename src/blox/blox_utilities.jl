@@ -369,8 +369,23 @@ to_vector(v) = [v]
 
 nanmean(x) = mean(filter(!isnan,x))
 
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuronBlox)
+function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
     namespaced_name = string(namespaceof(blox), nameof(blox))
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    p = only(@parameters $(reset_param_name))
+
+    get_reset = getp(sol, p)
+    reset_value = get_reset(sol)
+
+    V[V .== reset_value] .= NaN
+
+    return V
+end
+
+replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
+
+function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; nan_refractory=false)
+    namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊V")
 
     s = only(@variables $(state_name)(t))
@@ -378,33 +393,16 @@ function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuro
     return sol[s]
 end
 
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::Union{LIFExciNeuron, LIFInhNeuron})
-    namespaced_name = namespaced_nameof(blox)
-    state_name = Symbol(namespaced_name, "₊V")
-    reset_param_name = Symbol(namespaced_name, "₊V_reset")
-
-    
-    s = only(@variables $(state_name)(t))
-    p = only(@parameters $(reset_param_name))
-    
-    get_reset = getp(sol, p)
-    reset_value = get_reset(sol)
-    V = sol[s] 
-    
-    V[V .== reset_value] .= NaN
-
-    return V
-end
-
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(sol, neuron)
+        voltage_timeseries(neuron, sol)
     end
 end
 
-function average_voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
-    V = voltage_timeseries(sol, cb)
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    V = voltage_timeseries(cb, sol)
+    replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
