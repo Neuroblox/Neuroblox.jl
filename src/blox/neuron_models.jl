@@ -310,6 +310,8 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			a = a
 			b = b
 			T = T
+            τ = τ
+            τₛ = τₛ
 		end
         
         @brownian χ
@@ -333,7 +335,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			   D(hD)~(hD_inf(V)-hD)/τₕD(V),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
 			   D(Gₛ)~(-1/τₛ)*Gₛ + G_asymp(V,a,b)*(1-Gₛ)
-			  
 		]
         
 		sys = System(

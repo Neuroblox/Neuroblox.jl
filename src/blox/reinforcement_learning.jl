@@ -311,3 +311,81 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights::Dict{
        # u0 = sol[1:end,end]
     end
 end
+
+function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String, t_warmup=200.0; kwargs...)
+    N_trials = env.N_trials
+    t_trial = env.t_trial
+    tspan = (0, t_trial)
+    sys = get_sys(agent)
+    prob = agent.problem
+
+    if t_warmup > 0
+        prob = remake(prob; tspan=(0,t_warmup))
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg]; kwargs...)
+        else
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+        end
+        u0 = sol[1:end,end] # last value of state vector
+        prob = remake(prob; tspan=tspan, u0=u0)
+    else
+        prob = remake(prob; tspan)
+        u0 = []
+    end
+
+    action_selection = agent.action_selection
+    learning_rules = agent.learning_rules
+    
+    defs = ModelingToolkit.get_defaults(sys)
+    weights = Dict{Num, Float64}()
+    for w in keys(learning_rules)
+        weights[w] = defs[w]
+    end
+
+    for trial_num in Base.OneTo(N_trials)
+
+        stim_params = get_trial_stimulus(env)
+
+        to_update = merge(weights, stim_params)
+        new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
+
+        prob = remake(prob; p = new_params, u0=u0)
+        if haskey(kwargs, :alg)
+            sol = solve(prob, kwargs[:alg]; kwargs...)
+        else
+            sol = solve(prob; alg_hints = [:stiff], kwargs...)
+        end
+
+        # u0 = sol[1:end,end] # next run should continue where the last one ended   
+        # In the paper we assume sufficient time interval before net stimulus so that
+        # system reaches back to steady state, so we don't continue from previous trial's endpoint
+
+        if isnothing(action_selection)
+            feedback = 1
+        else
+            action = action_selection(sol)
+            feedback = env(action)
+        end
+
+        for (w, rule) in learning_rules
+            w_val = weights[w]
+            Δw = weight_gradient(rule, sol, w_val, feedback)
+            weights[w] += Δw
+        end
+        increment_trial!(env)
+
+        if !isnothing(save_path)
+            save_voltages(sol, save_path, trial_num)
+        end
+
+    end
+
+    agent.problem = prob
+end
+
+function save_voltages(sol, filepath, numtrial)
+    df = DataFrame(sol)
+    fname = "sim"*lpad(numtrial, 4, "0")*".csv"
+    fullpath = joinpath(filepath, fname)
+    CSV.write(fullpath, df)
+end

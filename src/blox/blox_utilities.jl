@@ -28,7 +28,6 @@ function get_HH_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_HH_exci_neurons(x), vcat, b.parts)
 end
 
-
 get_exci_neurons(n::AbstractExciNeuronBlox) = [n]
 get_exci_neurons(n) = []
 
@@ -169,60 +168,69 @@ get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
 get_blox_parts(blox::Union{CompositeBlox, AbstractComponent}) = blox.parts
 
 function get_weight(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :weight)
-        return kwargs[:weight]
-    else
-        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    get(kwargs, :weight) do
+        @warn "Connection weight from $name_blox1 to $name_blox2 is not specified. Assuming weight=1" 
+        return 1.0
     end
 end
 
 function get_gap_weight(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :gap_weight)
-        return kwargs[:gap_weight]
-    else
+    get(kwargs, :gap_weight) do
         error("Gap junction weight from $name_blox1 to $name_blox2 is not specified.")
     end
 end
 
 function get_weightmatrix(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :weightmatrix)
-        return kwargs[:weightmatrix]
-    else
+    get(kwargs, :weightmatrix) do
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
     end
 end
 
 function get_delay(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :delay)
-        return kwargs[:delay]
-    else
-#        @warn "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
+    get(kwargs, :delay) do 
+#        @debug "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
         return 0
     end
 end
 
 function get_density(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :density)
-        return kwargs[:density]
-    else 
+    get(kwargs, :density) do 
         error("Connection density from $name_blox1 to $name_blox2 is not specified.")
     end
 end
 
 function get_sta(kwargs, name_blox1, name_blox2)
-    haskey(kwargs, :sta) ? kwargs[:sta] : false    
+    get(kwargs, :sta, false)
 end
 
 function get_gap(kwargs, name_blox1, name_blox2)
-    haskey(kwargs, :gap) ? kwargs[:gap] : false    
+    get(kwargs, :gap, false)    
 end
 
 function get_event_time(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :t_event)
-        return kwargs[:t_event]
-    else 
+    get(kwargs, :t_event) do
         error("Time for the event that affects the connection from $name_blox1 to $name_blox2 is not specified.")
     end
+end
+
+function get_connection_matrix(kwargs, name_out, name_in, N_out, N_in)
+    sz = (N_out, N_in)
+    connection_matrix = get(kwargs, :connection_matrix) do
+        density = get_density(kwargs, name_out, name_in)
+        dist = Bernoulli(density)
+        rng = get(kwargs, :rng, Random.default_rng())
+        rand(rng, dist, sz...)
+    end
+    if size(connection_matrix) != sz
+        error(ArgumentError("The supplied connection matrix between $(name_out) and $(name_in) is an "
+                            * "incorrect size. Got $(size(connection_matrix)), whereas $(name_out) has "
+                            * "$N_out excitatory neurons, and $name_in has $N_in excitatory neurons."))
+    end
+    if eltype(connection_matrix) != Bool
+        error(ArgumentError("The supplied connection matrix between $(name_out) and $(name_in) must "
+                            * "be an array of Bool, got $(eltype(connection_matrix)) instead."))
+    end
+    connection_matrix
 end
 
 function get_weights(agent::Agent, blox_out, blox_in)
@@ -339,9 +347,7 @@ function addnontunableparams(paramlist, sys)
 end
 
 function get_connection_rule(kwargs, bloxout, bloxin, w)
-    if haskey(kwargs, :connection_rule)
-        cr = kwargs[:connection_rule]
-    else
+    cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
         name_blox2 = nameof(bloxin)
         @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
@@ -366,3 +372,45 @@ end
 
 to_vector(v::AbstractVector) = v
 to_vector(v) = [v]
+
+nanmean(x) = mean(filter(!isnan,x))
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuronBlox)
+    namespaced_name = string(namespaceof(blox), nameof(blox))
+    state_name = Symbol(namespaced_name, "₊V")
+
+    s = only(@variables $(state_name)(t))
+
+    return sol[s]
+end
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::Union{LIFExciNeuron, LIFInhNeuron})
+    namespaced_name = namespaced_nameof(blox)
+    state_name = Symbol(namespaced_name, "₊V")
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+
+    
+    s = only(@variables $(state_name)(t))
+    p = only(@parameters $(reset_param_name))
+    
+    get_reset = getp(sol, p)
+    reset_value = get_reset(sol)
+    V = sol[s] 
+    
+    V[V .== reset_value] .= NaN
+
+    return V
+end
+
+function voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        voltage_timeseries(sol, neuron)
+    end
+end
+
+function average_voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+    V = voltage_timeseries(sol, cb)
+
+    return vec(mapslices(nanmean, V; dims = 2))
+end
