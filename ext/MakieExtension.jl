@@ -8,12 +8,6 @@ using SciMLBase: AbstractSolution
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!
 
-function Makie.convert_arguments(::Makie.PointBased, cb::CompositeBlox, sol::AbstractSolution)
-    V = meanfield_timeseries(cb, sol)
-    
-    return (sol.t, vec(V))
-end
-
 @recipe(MeanField, blox, sol) do scene
     Theme()
 end
