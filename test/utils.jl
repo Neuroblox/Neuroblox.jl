@@ -14,7 +14,7 @@ using Statistics
     prob = ODEProblem(ss, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
-    @test all(sol[ss.n.V] .== Neuroblox.voltage_timeseries(sol, n))
+    @test all(sol[ss.n.V] .== Neuroblox.voltage_timeseries(n, sol))
 end
 
 @testset "Voltage timeseries + Composite average [LIFExciCircuitBloxz]" begin
@@ -40,12 +40,12 @@ end
     V = hcat(sol[ss.n.neuron1.V], sol[ss.n.neuron2.V], sol[ss.n.neuron3.V])
     V[V .== V_reset] .= NaN
 
-    @test all(isequal(V, Neuroblox.voltage_timeseries(sol, n)))
+    @test all(isequal(V, Neuroblox.voltage_timeseries(n, sol)))
 
     V_filtered = map(eachrow(V)) do V_t
         v = filter(!isnan, V_t)
         mean(v)
     end
     
-    @test all(isequal(V_filtered, Neuroblox.average_voltage_timeseries(sol, n)))
+    @test all(isequal(V_filtered, Neuroblox.meanfield_timeseries(n, sol)))
 end
