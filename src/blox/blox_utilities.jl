@@ -382,6 +382,14 @@ function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::S
     return V
 end
 
+function replace_refractory!(V, blox::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    neurons = get_neurons(blox)
+
+    for (i, n) in enumerate(neurons)
+        V[:, i] = replace_refractory!(V[:,i], n, sol)
+    end
+end
+
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
 function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; nan_refractory=false)
