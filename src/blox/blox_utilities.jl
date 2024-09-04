@@ -370,7 +370,7 @@ to_vector(v) = [v]
 nanmean(x) = mean(filter(!isnan,x))
 
 function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
-    namespaced_name = string(namespaceof(blox), nameof(blox))
+    namespaced_name = namespaced_nameof(blox)
     reset_param_name = Symbol(namespaced_name, "₊V_reset")
     p = only(@parameters $(reset_param_name))
 
