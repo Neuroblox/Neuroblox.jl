@@ -965,6 +965,16 @@ function (bc::BloxConnector)(
     HH_in::Union{MetabolicHHNeuron};
     kwargs...
 )
+    """
+    Connection rule specific to the metabolic HH neurons based on Dutta et al:
+		
+		Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts
+		during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+		
+		https://www.nature.com/articles/s41467-023-40437-0
+		https://zenodo.org/records/8013692
+        
+    """
     sys_out = get_namespaced_sys(HH_out)
     sys_in = get_namespaced_sys(HH_in)
 
