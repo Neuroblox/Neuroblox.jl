@@ -310,8 +310,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			a = a
 			b = b
 			T = T
-            τ = τ
-            τₛ = τₛ
 		end
         
         @brownian χ
@@ -335,6 +333,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			   D(hD)~(hD_inf(V)-hD)/τₕD(V),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
 			   D(Gₛ)~(-1/τₛ)*Gₛ + G_asymp(V,a,b)*(1-Gₛ)
+			  
 		]
         
 		sys = System(
@@ -865,21 +864,26 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 end
 
 struct MetabolicHHNeuron <: AbstractNeuronBlox
-	"""
-	
-	Hodgkin-Huxley model expanded with
-	-dynamic ion concentrations
-	-ATPase kinetic rate
-	-dynamic oxygen concentration
-	-astrocytic buffering
-	
-	Based on Dutta et al:
-	Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion."
-	Nature Communications 14.1 (2023): 4792.
-	https://www.nature.com/articles/s41467-023-40437-0
-	https://zenodo.org/records/8013692
 
 	"""
+	
+	A Hodgkin-Huxley model expanded with:
+
+	- dynamic ion concentrations
+	- ATPase kinetic rate
+	- dynamic oxygen concentration
+	- astrocytic potassium buffering
+	
+	Based on Dutta et al:
+		
+		Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts
+		during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+		
+		https://www.nature.com/articles/s41467-023-40437-0
+		https://zenodo.org/records/8013692
+
+	"""
+
 	odesystem
     output
     namespace
