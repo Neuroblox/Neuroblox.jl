@@ -251,9 +251,9 @@ function get_weights(agent::Agent, blox_out, blox_in)
 end
 
 function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
-    spikes, _ = argmaxima(x)
-    peakproms!(spikes, x; minprom, maxheight)
-    peakheights!(spikes, xx[spikes]; minheight, maxheight)
+    spikes = argmaxima(x)
+    peakproms!(spikes, x; minprom, maxprom)
+    peakheights!(spikes, x[spikes]; minheight, maxheight)
 
     return spikes
 end
@@ -262,6 +262,27 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
     
     return length(spikes)
+end
+
+function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; tolerance = 1e-3)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    threshold_param_name = Symbol(namespaced_name, "₊θ")
+
+    reset = only(@parameters $(reset_param_name))
+    thrs = only(@parameters $(threshold_param_name))
+
+    get_reset = getp(sol, reset)
+    reset_value = get_reset(sol)
+
+    get_thrs = getp(sol, thrs)
+    thrs_value = get_thrs(sol)
+
+    V = voltage_timeseries(blox, sol)
+    
+    spikes = find_spikes(V; minheight = thrs_value - tolerance)
+
+    return spikes
 end
 
 """
