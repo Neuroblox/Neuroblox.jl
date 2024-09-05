@@ -419,7 +419,7 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; nan_refractory=false)
+function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊V")
 
