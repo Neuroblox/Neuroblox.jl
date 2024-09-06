@@ -251,9 +251,9 @@ function get_weights(agent::Agent, blox_out, blox_in)
 end
 
 function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
-    spikes, _ = argmaxima(x)
-    peakproms!(spikes, x; minprom, maxheight)
-    peakheights!(spikes, xx[spikes]; minheight, maxheight)
+    spikes = argmaxima(x)
+    peakproms!(spikes, x; minprom, maxprom)
+    peakheights!(spikes, x[spikes]; minheight, maxheight)
 
     return spikes
 end
@@ -262,6 +262,27 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
     
     return length(spikes)
+end
+
+function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; tolerance = 1e-3)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    threshold_param_name = Symbol(namespaced_name, "₊θ")
+
+    reset = only(@parameters $(reset_param_name))
+    thrs = only(@parameters $(threshold_param_name))
+
+    get_reset = getp(sol, reset)
+    reset_value = get_reset(sol)
+
+    get_thrs = getp(sol, thrs)
+    thrs_value = get_thrs(sol)
+
+    V = voltage_timeseries(blox, sol)
+    
+    spikes = find_spikes(V; minheight = thrs_value - tolerance)
+
+    return spikes
 end
 
 """
@@ -375,8 +396,31 @@ to_vector(v) = [v]
 
 nanmean(x) = mean(filter(!isnan,x))
 
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuronBlox)
-    namespaced_name = string(namespaceof(blox), nameof(blox))
+function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    p = only(@parameters $(reset_param_name))
+
+    get_reset = getp(sol, p)
+    reset_value = get_reset(sol)
+
+    V[V .== reset_value] .= NaN
+
+    return V
+end
+
+function replace_refractory!(V, blox::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    neurons = get_neurons(blox)
+
+    for (i, n) in enumerate(neurons)
+        V[:, i] = replace_refractory!(V[:,i], n, sol)
+    end
+end
+
+replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
+
+function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
+    namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊V")
 
     s = only(@variables $(state_name)(t))
@@ -384,33 +428,16 @@ function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::AbstractNeuro
     return sol[s]
 end
 
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, blox::Union{LIFExciNeuron, LIFInhNeuron})
-    namespaced_name = namespaced_nameof(blox)
-    state_name = Symbol(namespaced_name, "₊V")
-    reset_param_name = Symbol(namespaced_name, "₊V_reset")
-
-    
-    s = only(@variables $(state_name)(t))
-    p = only(@parameters $(reset_param_name))
-    
-    get_reset = getp(sol, p)
-    reset_value = get_reset(sol)
-    V = sol[s] 
-    
-    V[V .== reset_value] .= NaN
-
-    return V
-end
-
-function voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
+function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(sol, neuron)
+        voltage_timeseries(neuron, sol)
     end
 end
 
-function average_voltage_timeseries(sol::SciMLBase.AbstractSolution, cb::CompositeBlox)
-    V = voltage_timeseries(sol, cb)
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    V = voltage_timeseries(cb, sol)
+    replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
