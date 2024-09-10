@@ -11,9 +11,9 @@ struct Matrisome <: AbstractDiscrete
         # HACK: H_learning is a state version of the H parameter. 
         # It will be simplified away, but we need to access its value in the solution object 
         # to calculate the weight_gradient for reinforcement learning after the simulation.
-        sts = @variables ρ(t)=1.0 ρ_(t)=1.0 H_learning(t)=1.0
+        sts = @variables ρ(t) ρ_(t) H_learning(t)
         #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
-        ps = @parameters H=1 TAN_spikes=0.0 jcn [input=true] jcn_=0.0 H_=1
+        ps = @parameters H=1 TAN_spikes=0.0 jcn=0 [input=true] jcn_=0.0 H_=1
         eqs = [
             ρ ~ H*jcn,
             ρ_ ~ H_*jcn_,
@@ -40,8 +40,8 @@ struct Striosome <: AbstractDiscrete
         # HACK: H_learning is a state version of the H parameter. 
         # It will be simplified away, but we need to access its value in the solution object 
         # to calculate the weight_gradient for reinforcement learning after the simulation.
-        sts = @variables ρ(t)=0.0 H_learning(t)=1.0
-        ps = @parameters H=1 jcn [input=true]
+        sts = @variables ρ(t) H_learning(t)
+        ps = @parameters H=1 jcn=0 [input=true]
         eqs = [
                 ρ ~ H*jcn,
                 H_learning ~ H
