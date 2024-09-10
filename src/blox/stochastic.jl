@@ -21,7 +21,7 @@ mutable struct OUBlox <: NeuralMassBlox
     function OUBlox(;name, namespace=nothing, μ=0.0, σ=1.0, τ=1.0)
         p = paramscoping(μ=μ, τ=τ, σ=σ)
         μ, τ, σ = p
-        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+        sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
         @brownian w
 
         eqs = [D(x) ~ -(x-μ)/τ + jcn + sqrt(2/τ)*σ*w]
@@ -57,7 +57,7 @@ end
 #     function OUCouplingBlox(;name, namespace, μ=0.0, σ=1.0, τ=1.0)
 #         p = paramscoping(μ=μ, τ=τ, σ=σ)
 #         μ, τ, σ = p
-#         sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+#         sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
 #         @brownian w
 
 #         eqs    = [D(x) ~ -(x-μ)/τ + sqrt(2/τ)*σ*w]

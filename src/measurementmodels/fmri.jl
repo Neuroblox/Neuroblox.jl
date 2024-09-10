@@ -75,7 +75,7 @@ struct BalloonModel <: ObserverBlox
         p = paramscoping(lnκ=lnκ, lnτ=lnτ, lnϵ=lnϵ)     # finally compile all parameters
         lnκ, lnτ, lnϵ = p                               # assign the modified parameters
 
-        sts = @variables s(t)=1.0 lnu(t)=0.0 lnν(t)=0.0 lnq(t)=0.0 bold(t)=0.0 [irreducible=true, output=true, description="measurement"] jcn(t)=0.0 [input=true]
+        sts = @variables s(t)=1.0 lnu(t)=0.0 lnν(t)=0.0 lnq(t)=0.0 bold(t)=0.0 [irreducible=true, output=true, description="measurement"] jcn(t) [input=true]
 
         eqs = [
             D(s)   ~ jcn - H[1]*exp(lnκ)*s - H[2]*(exp(lnu) - 1),
