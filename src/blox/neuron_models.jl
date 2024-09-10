@@ -21,11 +21,11 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			z(t)=0.0
@@ -106,11 +106,11 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
-			I_in(t)=0.0
+			I_in(t)
 			[input=true]
             G(t)=0.0 
 			[output = true] 
@@ -191,11 +191,11 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			m(t)=0.027
 			h(t)=0.99
 			mM(t)=0.022
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -279,13 +279,13 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			h(t)=0.059 
 			mD(t)=0.05
 			hD(t)=0.059
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_gap(t)=0.0
+			I_gap(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -368,11 +368,11 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -447,11 +447,11 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
