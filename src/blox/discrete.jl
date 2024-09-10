@@ -59,7 +59,7 @@ struct TAN <: AbstractDiscrete
 
     function TAN(; name, namespace=nothing, κ=100, λ=1)
         sts = @variables R(t)=κ 
-        ps = @parameters κ=κ λ=λ jcn [input=true]
+        ps = @parameters κ=κ λ=λ jcn=0 [input=true]
         eqs = [
                 R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
               ]
