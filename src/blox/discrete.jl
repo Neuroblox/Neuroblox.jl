@@ -13,7 +13,7 @@ struct Matrisome <: AbstractDiscrete
         # to calculate the weight_gradient for reinforcement learning after the simulation.
         sts = @variables ρ(t)=1.0 ρ_(t)=1.0 H_learning(t)=1.0
         #HACK : jcn_ and H_ store the value of jcn and H at time t_event that can be accessed after the simulation
-        ps = @parameters H=1 TAN_spikes=0.0 jcn=0.0 [input=true] jcn_=0.0 H_=1
+        ps = @parameters H=1 TAN_spikes=0.0 jcn [input=true] jcn_=0.0 H_=1
         eqs = [
             ρ ~ H*jcn,
             ρ_ ~ H_*jcn_,
@@ -41,7 +41,7 @@ struct Striosome <: AbstractDiscrete
         # It will be simplified away, but we need to access its value in the solution object 
         # to calculate the weight_gradient for reinforcement learning after the simulation.
         sts = @variables ρ(t)=0.0 H_learning(t)=1.0
-        ps = @parameters H=1 jcn=0.0 [input=true]
+        ps = @parameters H=1 jcn [input=true]
         eqs = [
                 ρ ~ H*jcn,
                 H_learning ~ H
@@ -59,7 +59,7 @@ struct TAN <: AbstractDiscrete
 
     function TAN(; name, namespace=nothing, κ=100, λ=1)
         sts = @variables R(t)=κ 
-        ps = @parameters κ=κ λ=λ jcn=0.0 [input=true]
+        ps = @parameters κ=κ λ=λ jcn [input=true]
         eqs = [
                 R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
               ]
@@ -79,7 +79,7 @@ struct SNc <: AbstractModulator
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0) 
         sts = @variables R(t)=κ_DA R_(t)=κ_DA 
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0.0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [
                 R ~ min(κ_DA, κ_DA/(λ_DA*jcn + sqrt(eps()))),
                 R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
