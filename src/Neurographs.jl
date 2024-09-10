@@ -57,7 +57,8 @@ generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
 function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
     spike_affect_states = get_spike_affect_states(bc)
     name_blox = namespaced_nameof(blox)
-    states_dest = spike_affect_states[name_blox]
+
+    states_dest = get(spike_affect_states, name_blox, Num[])
 
     sys = get_namespaced_sys(blox)
     
