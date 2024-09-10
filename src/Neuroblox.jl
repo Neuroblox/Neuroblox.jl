@@ -26,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -226,7 +224,7 @@ export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
 export add_blox!
-export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
+export powerspectrum, hanning, hamming, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
 export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!
 export simulate, random_initials
