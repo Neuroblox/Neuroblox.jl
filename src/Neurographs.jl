@@ -8,6 +8,36 @@ function adjmatrixfromdigraph(g::MetaDiGraph)
     return myadj
 end
 
+function find_blox(g::MetaDiGraph, blox)
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        b == blox && return v
+    end
+
+    return nothing
+end
+
+has_blox(g::MetaDiGraph, blox) = isnothing(find_blox(g, blox)) ? false : true
+
+function add_edge!(g::MetaDiGraph, p::Pair; kwargs...)
+    src, dest = p
+    
+    src_idx = find_blox(g, src)
+    dest_idx = find_blox(g, dest)
+    
+    if isnothing(src_idx)
+        add_blox!(g, src)
+        src_idx = nv(g)
+    end
+    
+    if isnothing(dest_idx)
+        add_blox!(g, dest)
+        dest_idx = nv(g)
+    end
+    
+    add_edge!(g, src_idx, dest_idx, Dict(kwargs))
+end
+
 function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
 end

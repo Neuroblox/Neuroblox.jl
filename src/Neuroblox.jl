@@ -1,12 +1,17 @@
 module Neuroblox
 
+if !isdefined(Base, :get_extension)
+    using Requires
+end 
+
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
 const D = ModelingToolkit.D_nounits
 export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
-@reexport using Graphs: add_edge!
+@reexport import Graphs: add_edge!
+@reexport using MetaGraphs: MetaDiGraph
 
 using Graphs
 using MetaGraphs
@@ -34,9 +39,11 @@ using DelayDiffEq
 using StatsBase: sample
 using Distributions
 
+using SciMLBase: AbstractSolution
+
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
-                    AbstractODESystem, VariableTunable
+                    AbstractODESystem, VariableTunable, getp
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
@@ -44,6 +51,7 @@ using Symbolics: @register_symbolic, getdefaultval
 using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
+using JLD2
 
 using Peaks: argmaxima, peakproms!, peakheights!
 
@@ -179,10 +187,27 @@ https://github.com/Neuroblox/NeurobloxIssues.
 """)
 end
 
+function meanfield end
+function meanfield! end
+
+function rasterplot end
+function rasterplot! end
+
+function stackplot end
+function stackplot! end
+
+function voltage_stack end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
     #end
+
+    @static if !isdefined(Base, :get_extension)
+        @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+            include("../ext/MakieExtension.jl")
+        end
+    end
 end
 
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
@@ -212,5 +237,6 @@ export run_experiment!, run_trial!
 export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack
 
 end

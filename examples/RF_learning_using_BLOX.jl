@@ -210,12 +210,18 @@ end
 
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
+	# sys = Neuroblox.get_sys(agent)
+	# learning_rules = agent.learning_rules
+	# weights = Dict{Num, Float64}()
+	# for w in keys(learning_rules)
+	# 	weights[w] = defs[w]
+	# end
 
-		
     for ii = 1:N_trials
         prob3 = agent.problem
         stim_params = Neuroblox.get_trial_stimulus(env)
-        prob3 = remake(prob3; p = merge(weights, stim_params), u0 = u0,tspan=(0,1600))
+		new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
+        prob3 = remake(prob3; p = new_params, u0=u0, tspan=(0,env.t_trial))
         @info env.current_trial
         sol2 = solve(prob3, Vern7())
         agent.problem = prob3
