@@ -79,7 +79,7 @@ struct SNc <: AbstractModulator
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0) 
         sts = @variables R(t)=κ_DA R_(t)=κ_DA 
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
+        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [
                 R ~ min(κ_DA, κ_DA/(λ_DA*jcn + sqrt(eps()))),
                 R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
