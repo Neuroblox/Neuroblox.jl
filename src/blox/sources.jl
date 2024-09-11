@@ -1,5 +1,3 @@
-@parameters t
-
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
