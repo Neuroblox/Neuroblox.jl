@@ -89,6 +89,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
     parts
     odesystem
     connector
+    kwargs
 
     function LIFExciCircuitBlox(;
         name, 
@@ -157,7 +158,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
         
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
 
-        new(namespace, neurons, sys, bc)
+        new(namespace, neurons, sys, bc, kwargs)
     end
 end
 
@@ -166,6 +167,7 @@ struct LIFInhCircuitBlox <: CompositeBlox
     parts
     odesystem
     connector
+    kwargs
 
     function LIFInhCircuitBlox(;
         name, 
@@ -230,6 +232,6 @@ struct LIFInhCircuitBlox <: CompositeBlox
         
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
 
-        new(namespace, neurons, sys, bc)
+        new(namespace, neurons, sys, bc, kwargs)
     end
 end
