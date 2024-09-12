@@ -12,38 +12,125 @@ This utility file contains the methods utilized for spectral data analysis.
 """
 
 """
-powerspectrum computes the power spectrum of a given time series signal. 
-Data in matrix format is converted to vector format.
-It has the following inputs:
-    'data'   : time series data which assumes time is in the first column of the data matrix
-    'T'      : time series signal duration (in seconds)
-    'fs'     : sampling frequency (in Hz)
-    'method' : select from periodogram or pwelch (default=periodogram)
-    'window' : select from none, hanning, or hamming (default=hanning)
-The following outputs:
-    'f'      : frequency vector with sampling df (frequency resolution) 
-    'pxx'    : real part of the power spectrum estimate
-"""
+    powerspectrum(data, duration, sampling_freq, method="periodogram", window=hanning)
 
-function powerspectrum(data, T, fs, method="periodogram", window=hanning)
-    if typeof(data) == Matrix{Float64}
-        data = vec(data)
-    end
+Compute the power spectrum of a given time series signal.
+
+# Arguments
+- `data`: Time series data as a vector
+- `duration`: Time series signal duration in seconds
+- `sampling_freq`: Sampling frequency in Hz
+- `method`: Computation method, either "periodogram" or "pwelch" (default: "periodogram")
+- `window`: Window function to use, e.g., hanning, hamming (default: hanning)
+
+# Returns
+- `frequencies`: Vector of frequencies
+- `power`: Vector of power spectral density estimates
+"""
+function powerspectrum(data::AbstractVector{T},
+                       duration,
+                       sampling_freq,
+                       method="periodogram",
+                       window=hanning) where T<:Number
 
     if method == "periodogram"
-        periodogram_estimation = periodogram(data, fs=fs, window=window)
-        pxx = periodogram_estimation.power
-        f = periodogram_estimation.freq
+        spectrum = periodogram(data_vector, fs=sampling_freq, window=window)
+        frequencies = spectrum.freq
+        power = spectrum.power
     elseif method == "pwelch"
-        pwelch_periodogram_estimation = welch_pgram(data, fs=fs, window=window)
-        pxx = pwelch_periodogram_estimation.power
-        f = pwelch_periodogram_estimation.freq
+        spectrum = welch_pgram(data_vector, fs=sampling_freq, window=window)
+        frequencies = spectrum.freq
+        power = spectrum.power
     else
-        error("Invalid method. Use 'periodogram' or 'pwelch'.")
+        throw(ArgumentError("Invalid method. Use 'periodogram' or 'pwelch'."))
     end
     
-    return f, pxx
+    return frequencies, power
 end
+
+"""
+    get_powerspectrum(sol, states_names, target_states_names, target_population_type;
+                      trim=0.0, sampling_rate=0.0, method="periodogram", window=hanning)
+
+Compute the power spectrum for specific states in a SciML solution.
+
+# Arguments
+- `sol`: A SciML solution object
+- `states_names`: Vector of state names as strings
+- `target_states_names`: String specifying the target states
+- `target_population_type`: String specifying the target population type
+- `trim`: Time to trim from the beginning of the time series (in ms, default: 0.0)
+- `sampling_rate`: Sampling rate for resampling if needed (in ms)
+- `method`: Spectrum computation method ("periodogram" or "pwelch", default: "periodogram")
+- `window`: Window function to use in spectrum computation (default: hanning)
+
+# Returns
+- `frequencies`: Vector of frequencies
+- `power`: Vector of power spectral density estimates
+
+# Example
+```julia
+@named WC1 = WilsonCowan()
+@named WC2 = WilsonCowan()
+@named JR = JansenRit()
+g = MetaDiGraph()
+add_blox!.(Ref(g), [WC1, WC2, JR])
+adj = [-1 6 1; 6 -1 1]
+create_adjacency_edges!(g, adj)
+@named sys = system_from_graph(g)
+sys = structural_simplify(sys)
+prob = ODEProblem(sys, [], (0.0, 500), [])
+sol = solve(prob, Rodas4())
+states_names = string.(unknowns(sys))
+target_states_names = "E(t)"
+target_population_type = "WC"
+f, pxx = get_powerspectrum(sol,
+                           states_names,
+                           target_states_names,
+                           target_population_type;
+                           trim=200,
+                           sampling_rate=0.1)
+```
+"""
+function get_powerspectrum(sol::SciMLBase.AbstractSolution,
+                           states_names::Vector{String},
+                           target_states_names::String,
+                           target_population_type::String;
+                           trim=0.0,
+                           sampling_rate=0.0,
+                           method="periodogram",
+                           window=hanning)
+
+    inds_target = get_inds(states_names, target_states_names)
+    ind_population = get_inds(states_names, target_population_type)
+    inds = intersect(inds_target, ind_population)
+
+    t_raw = unique(sol.t)
+
+    if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
+        sampling_rate == 0.0 && throw(ArgumentError("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds."))
+        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+    else
+        t_sampled = t_raw
+        sampling_rate = t_sampled[2] - t_sampled[1]
+    end
+
+    target = sol(t_sampled, idxs = inds)
+    start = Int(round(trim/sampling_rate)) + 1
+    target = Array(target)[:, start:end]
+    target_mean = vec(mean(target, dims=1))
+
+    sampling_freq = 1000/sampling_rate  # Convert to Hz
+    duration = length(target_mean) / sampling_freq
+
+    frequencies, power = powerspectrum(target_mean, duration, sampling_freq, method, window)
+    return frequencies, power
+end
+
+get_inds(x::Vector{String}, name) = findall(x -> contains(x, name), x)
+
+get_inds(x::Vector{SymbolicUtils.BasicSymbolic{Real}} , name) = findall(x -> contains(string(x), name), x)
+
 
 mutable struct PowerSpectrumBlox <: SpectralUtilities
     T::Float64
