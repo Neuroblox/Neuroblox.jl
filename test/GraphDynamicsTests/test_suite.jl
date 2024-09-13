@@ -9,11 +9,10 @@ using
     Neuroblox,
     Graphs,
     MetaGraphs,
-    SymbolicIndexingInterface,
     Random,
     LinearAlgebra
 
-using OhMyThreads:
+using GraphDynamics.OhMyThreads:
     OhMyThreads,
     SerialScheduler,
     StaticScheduler,
@@ -21,6 +20,7 @@ using OhMyThreads:
 
 using Neuroblox: NeuralMassBlox, AbstractNeuronBlox
 using Base.Iterators: map as imap
+using GraphDynamics.SymbolicIndexingInterface
 
 function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
                                   rtol,

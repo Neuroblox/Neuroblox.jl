@@ -854,7 +854,6 @@ function GraphDynamics.apply_discrete_event!(integrator,
     (;κ,) = tan_src
     (;H, jcn_, H_) = mat_dst
     R = min(κ/(jcn_src + sqrt(eps())), κ)
-    #TAN_spikes = rand(Poisson(R))
     params = vparams_dst[]
     vparams_dst[] = @set params.TAN_spikes = float(rand(Poisson(R)))
     nothing
@@ -998,7 +997,7 @@ struct Striatum_Striatum_Composite_Event_Init{i_matr, i_stri, i_neuron}
     j_neurons_dst::Vector{Int}
 end
 GraphDynamics.event_times(ev::Striatum_Striatum_Composite_Event_Init) = 0.1
-GraphDynamics.discrete_event_condition(_,  _, _, ev::Striatum_Striatum_Composite_Event_Init, t) = t == ev.event_time
+GraphDynamics.discrete_event_condition(_,  _, _, ev::Striatum_Striatum_Composite_Event_Init, t) = t == 0.1
 
 function GraphDynamics.apply_discrete_event!(integrator, states::NTuple{Len, Any},
                                             params::NTuple{Len, Any},
