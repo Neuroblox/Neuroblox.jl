@@ -121,6 +121,8 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
+include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
+using .GraphDynamicsInterop: graphsystem_from_graph
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -238,5 +240,6 @@ export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack
+export graphsystem_from_graph
 
 end

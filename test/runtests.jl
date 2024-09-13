@@ -25,3 +25,4 @@ using SafeTestsets
 # Extra tests illustrating use - could be removed once examples are written
 #@time @safetestset "New Jansen-Rit Tests" begin include("jansen_rit_component_tests.jl") end
 #@time @safetestset "New Larter-Breakspear Tests" begin include("new_LB_blox.jl") end
+@time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl")
