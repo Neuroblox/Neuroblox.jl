@@ -71,8 +71,8 @@ f
 
 g = MetaDiGraph()
 add_blox!.(Ref(g), [popP, popQ])
-add_edge!(g, popP => popQ; weight=1.0) #weight is acutaally meaningless here
-add_edge!(g, popQ => popP; weight=1.0) #weight is acutaally meaningless here
+add_edge!(g, popP => popQ; weight=1.0) #weight is acutally meaningless here
+add_edge!(g, popQ => popP; weight=1.0) #weight is acutally meaningless here
 
 @named sys = system_from_graph(g)
 sys = structural_simplify(sys)
