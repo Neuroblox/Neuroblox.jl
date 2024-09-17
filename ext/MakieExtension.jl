@@ -8,7 +8,23 @@ using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_ne
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+
+
+@recipe(FreeEnergy, spDCMresults) do scene
+    Theme()
+end
+
+argument_names(::Type{<: FreeEnergy}) = (:spDCMresults)
+
+function Makie.plot!(p::FreeEnergy)
+    F = p.spDCMresults[].F
+    deleteat!(F, 1)   # remove the first value since that's always -Inf
+    
+    lines!(p, 1:length(F), F)
+    scatter!(p, 1:length(F), F)
+    return p
+end
 
 @recipe(EffectiveConnectivity, spDCMresults, spDCMsetup, groundtruth) do scene
     Theme()
