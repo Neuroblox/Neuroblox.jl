@@ -198,6 +198,11 @@ function stackplot! end
 
 function voltage_stack end
 
+function ecbarplot end
+function effectiveconnectivity end
+function effectiveconnectivity! end
+
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
@@ -237,6 +242,6 @@ export run_experiment!, run_trial!
 export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
-export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot
 
 end

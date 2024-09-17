@@ -110,7 +110,7 @@ using MAT
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
-    (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, "fMRI");
+    (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, modelparam, "fMRI");
 
     # HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
     # this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
