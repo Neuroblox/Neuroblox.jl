@@ -143,4 +143,46 @@ function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10,
     display(fig)
 end
 
+@recipe(PowerSpectrum, pergram) do scene
+    Theme()
+end
+
+argument_names(::Type{<: PowerSpectrum}) = (:pergram)
+
+function Makie.plot!(p::PowerSpectrum)
+
+    powspec = p.pergram[]
+    
+    lines!(p, powspec.freq[2:end], powspec.power[2:end])
+
+    return p
+end
+
+function power_composite(blox::CompositeBlox, sol::AbstractSolution)
+    pergram = meanfield_powerspectrum(blox, sol)
+
+    fig = Figure()
+    ax = Axis(fig[1,1],
+             xlabel="f in Hz",
+             ylabel="Power Spectrum",
+             xticks = [8,12,20,30, 40, 50,60,70,80,90])
+
+    xlims!(ax, 8, 100)
+    ylims!(ax, 0, 0.2)
+    powerspectrum!(ax, pergram)
+
+    poly!(ax, Point2f[(8, 0), (8, 1), (12, 1), (12, 0)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+	
+	poly!(ax, Point2f[(12, 0), (12, 1), (35, 1), (35, 0)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+	
+	poly!(ax, Point2f[(35, 0), (35, 1), (200, 1), (200, 0)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+	
+	text!(ax, 8.5, 0.17; text=L"\alpha", fontsize=24)
+	text!(ax, 22, 0.17; text=L"\beta", fontsize=24)
+	text!(ax, 60, 0.17; text=L"\gamma", fontsize=24)
+	
+	axislegend(ax, position=:rt)
+    display(fig)
+end
+
 end
