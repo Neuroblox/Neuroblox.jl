@@ -108,7 +108,7 @@ function define_neurons()
                 Base.@propagate_inbounds function GraphDynamics.apply_subsystem_noise!(v, (; $(p_and_s_syms...),)::Subsystem{$T}, $t)
                     $(Expr(:block, neq_gen...))
                 end
-            end 
+            end
         end
         
         if hasproperty(sys, :output)
@@ -135,7 +135,7 @@ function define_neurons()
             end
         end
     end
-end 
+end
 define_neurons() # it's useful when developing this module to have these in a function
 
 #Maybe should just encorporate this into define_neurons()

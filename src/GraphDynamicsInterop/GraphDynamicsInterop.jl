@@ -358,7 +358,7 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
     end
     NST = length(subsystem_types)
     NCT = length(connection_types)
-    ev_times = Float64[]
+    tstops = Float64[]
 
     #todo maybe take advantage of the index_map here
     subsystems_and_names = let i = 1, j = 1
@@ -367,7 +367,7 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
                 if subsystem isa T
                     for t ∈ event_times(subsystem)
                         @debug "event at" t
-                        push!(ev_times, t)
+                        push!(tstops, t)
                     end
                     true
                 else
@@ -382,7 +382,7 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
         sys == subsystems[i][j] || error("Internal Error: subsystems list and the index_map don't agree, this shouldn't be possible")
     end
     
-    connections_partitioned = (ConnectionMatrices ∘ Tuple ∘ map)(connection_types) do CT
+    connection_matrices = (ConnectionMatrices ∘ Tuple ∘ map)(connection_types) do CT
         (ConnectionMatrix ∘ Tuple ∘ map)(subsystem_types) do T
             vis = [vi for vi ∈ vertices(g) if subsystems_flat[vi] isa T]
             (Tuple ∘ map)(subsystem_types) do U
@@ -401,7 +401,7 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
                                 
                                 for t ∈ event_times(conn)
                                     @debug "event at" event_times(conn)
-                                    push!(ev_times, t)
+                                    push!(tstops, t)
                                 end
                             end
                         end
@@ -422,27 +422,29 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
         end
     end
     states_partitioned           = map(v -> map(get_states, v), subsystems)
-    subsystem_params_partitioned = map(v -> map(get_params, v), subsystems)
-
-    state_namemap = Dict{Symbol, StateIndex}()
-    for i ∈ 1:NST
-        for j ∈ eachindex(subsystems_and_names[i])
-            for (k, name) ∈ enumerate(propertynames(states_partitioned[i][j]))
-                propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
-                state_namemap[propname] = StateIndex(i, j, k)
-            end
-        end
-    end
-    param_namemap = Dict{Symbol, ParamIndex}()
-    for i ∈ 1:NST
-        for j ∈ eachindex(subsystems_and_names[i])
-            for name ∈ propertynames(subsystem_params_partitioned[i][j])
-                propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
-                #TODO: this'll require some generalization to support weight params
-                param_namemap[propname] = ParamIndex(i, j, name)
-            end
-        end
-    end
+    params_partitioned = map(v -> map(get_params, v), subsystems)
+    names_partitioned            = map(v -> map(last, v), subsystems_and_names)
+    
+    # state_namemap = Dict{Symbol, StateIndex}()
+    # subsystem_names = 
+    # for i ∈ 1:NST
+    #     for j ∈ eachindex(subsystems_and_names[i])
+    #         for (k, name) ∈ enumerate(propertynames(states_partitioned[i][j]))
+    #             propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
+    #             state_namemap[propname] = StateIndex(i, j, name)
+    #         end
+    #     end
+    # end
+    # param_namemap = Dict{Symbol, ParamIndex}()
+    # for i ∈ 1:NST
+    #     for j ∈ eachindex(subsystems_and_names[i])
+    #         for name ∈ propertynames(params_partitioned[i][j])
+    #             propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
+    #             #TODO: this'll require some generalization to support weight params
+    #             param_namemap[propname] = ParamIndex(i, j, name)
+    #         end
+    #     end
+    # end
 
     composite_continuous_events_partitioned = let
         if isempty(g.composite_continuous_events_builder)
@@ -461,7 +463,7 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
                 filter(events_flat) do ev
                     if ev isa ET
                         for t ∈ event_times(ev)
-                            push!(ev_times, t)
+                            push!(tstops, t)
                         end
                         true
                     else
@@ -471,17 +473,20 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
             end
         end
     end
-    params = (;subsystem_params_partitioned,
-              ev_times,
-              composite_discrete_events_partitioned,
-              composite_continuous_events_partitioned,
-              #= other params will go here later, like weights, learning rules, etc. =#)
-    
-    gsys_args = (g, connections_partitioned, states_partitioned, params, state_namemap, param_namemap)
+    gsys_args = (;connection_matrices,
+                 states_partitioned,
+                 params_partitioned,
+                 tstops,
+                 composite_discrete_events_partitioned,
+                 composite_continuous_events_partitioned,
+                 names_partitioned
+                 # state_namemap,
+                 # param_namemap
+                 )
     if any(v -> any(isstochastic, v), subsystems)
-        SDEGraphSystem(gsys_args...)
+        SDEGraphSystem(;gsys_args...)
     else
-        ODEGraphSystem(gsys_args...)
+        ODEGraphSystem(;gsys_args...)
     end
 end
 
