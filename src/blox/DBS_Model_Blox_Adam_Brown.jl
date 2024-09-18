@@ -119,7 +119,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
 
 end    
 
-struct Striatum_FSI_Adam  <: AbstractCompositeBlox
+struct Striatum_FSI_Adam  <: CompositeBlox
     namespace
     parts
     odesystem
@@ -202,7 +202,7 @@ struct Striatum_FSI_Adam  <: AbstractCompositeBlox
 
 end
 
-struct GPe_Adam <: AbstractCompositeBlox
+struct GPe_Adam <: CompositeBlox
     namespace
     parts
     odesystem
