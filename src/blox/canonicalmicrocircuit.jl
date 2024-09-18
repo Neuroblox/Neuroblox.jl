@@ -22,7 +22,7 @@ mutable struct JansenRitSPM12 <: NeuralMassBlox
     end
 end
 
-mutable struct CanonicalMicroCircuitBlox <: AbstractCompositeBlox
+mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
     namespace
     parts
     odesystem
