@@ -419,14 +419,47 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
+function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String)
     namespaced_name = namespaced_nameof(blox)
-    state_name = Symbol(namespaced_name, "₊V")
+    state_name = Symbol(namespaced_name, "₊$(state)")
 
     s = only(@variables $(state_name)(t))
 
     return sol[s]
 end
+
+function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        state_timeseries(neuron, sol, state)
+    end
+end
+
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
+    s = state_timeseries(cb, sol, state)
+#    replace_refractory!(V, cb, sol)
+
+    return vec(mapslices(nanmean, s; dims = 2))
+end
+
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
+    s = meanfield_timeseries(cb, sol, state)
+#   replace_refractory!(V, cb, sol)
+
+    return periodogram(s, fs=fs)
+end
+
+function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
+    namespaced_name = namespaced_nameof(blox)
+    state_name = Symbol(namespaced_name, "₊$(state)")
+
+    s = only(@variables $(state_name)(t))
+
+    return periodogram(sol[s], fs = fs)
+end
+
+voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution) = 
+    state_timeseries(blox, sol, "V")
 
 function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
 
@@ -440,4 +473,11 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
+end
+
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; fs=1)
+    V = voltage_timeseries(cb, sol)
+    replace_refractory!(V, cb, sol)
+
+    return periodogram(vec(mapslices(nanmean, V; dims = 2)), fs = fs)
 end
