@@ -7,7 +7,7 @@ using DataFrames
 using CSV
 using ModelingToolkit: getp
 
-@testset "RL test" begin
+@testset "RL test with save" begin
     t_trial = 2 # ms
     time_block_dur = 0.01 # ms
     N_trials = 3
@@ -69,7 +69,7 @@ using ModelingToolkit: getp
     init_params_idxs_other_params = params_at(idxs_other_params)
     
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-    run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
+    run_experiment!(agent, env, "./"; alg=Vern7(), reltol=1e-9,abstol=1e-9)
     
     final_params = reduce(vcat, agent.problem.p)
     # At least some weights need to be different.
@@ -81,6 +81,8 @@ using ModelingToolkit: getp
 
     reset!(agent)
     @test all(init_params_all .== params_at(:))
+    @show setdiff(init_params_all, params_at(:))
     reset!(env)
     @test env.current_trial == 1
 end
+

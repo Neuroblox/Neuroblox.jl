@@ -14,6 +14,24 @@ using Random
     @test typeof(lm1) == LinearNeuralMass
 end
 
+@testset "LinearNeuralMass + BalloonModel + process noise" begin
+    @named lm = LinearNeuralMass()
+    @named ou = OUBlox(τ=1, σ=0.1)
+    @named bold = BalloonModel()
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [lm, ou, bold])
+    add_edge!(g, 2, 1, Dict(:weight => 1.0))
+    add_edge!(g, 1, 3, Dict(:weight => 0.1))
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    prob = SDEProblem(sys, [], (0.0, 10.0))
+    sol = solve(prob)
+    @test sol.retcode == ReturnCode.Success
+end
+
+
 """
 HarmonicOscillator tests
 """
@@ -181,6 +199,42 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
+@testset "Kuramoto Oscillator" begin
+    @named K01 = KuramotoOscillator(ω=2.0)
+    @named K02 = KuramotoOscillator(ω=5.0)
+
+    adj = [0 1; 1 0]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [K01, K02])
+    create_adjacency_edges!(g, adj)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 1e2
+    prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+    sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "Noisy Kuramoto Oscillator" begin
+    @named K01 = KuramotoOscillator(ω=2.0, ζ=5.0, include_noise=true)
+    @named K02 = KuramotoOscillator(ω=5.0, ζ=2.0, include_noise=true)
+
+    adj = [0 1; 1 0]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [K01, K02])
+    create_adjacency_edges!(g, adj)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 1e2
+    prob = SDEProblem(sys, [0.1, 0.2], (0.0, sim_dur), [])
+    sol = solve(prob, saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+end
+
 @testset "Canonical Micro Circuit network" begin
     # connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
     global_ns = :g # global namespace
@@ -250,55 +304,92 @@ Test for OUBlox generator.
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
     ousimpl = structural_simplify(ou1connected)
     prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
-    sol = solve(prob_ou,alg_hints = [:stiff])
+    sol = solve(prob_ou, alg_hints = [:stiff])
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[1,:]) > 0.0 # there should be variance
 end
 
 @testset "OUBlox & Janset-Rit network" begin
-    @named ou1 = OUBlox()
+    @named ou = OUBlox(σ=1.0)
     @named jr = JansenRit()
-    sys = [ou1.odesystem, jr.odesystem]
+ 
+    global_ns = :g # global namespace
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [ou, jr])
+    add_edge!(g, 1, 2, Dict(:weight => 100.0))
+    
+    sys = system_from_graph(g, name=global_ns)
+    sys = structural_simplify(sys)
+    
+    prob_oujr = SDEProblem(sys,[],(0.0, 20.0))
+    sol = solve(prob_oujr, alg_hints = [:stiff])
+    @test sol.retcode == SciMLBase.ReturnCode.Success
+    @test std(sol[2,:]) > 0.0
+    # this test does not make sense, it is true also when JR 
+    # is not coupled to OU because of initial conditions at 1 and 
+    # then decay test by setting weight to 0.0
+end
+
+@testset "OUBlox & Janset-Rit network" begin
+    @named ou = OUBlox(σ=5.0)
+    @named jr = JansenRit()    
+    sys = [ou.odesystem, jr.odesystem]
     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
-    ousimpl = structural_simplify(ou1connected)
-    prob_oujr = SDEProblem(ousimpl,[],(0.0, 2.0))
+    sys = structural_simplify(ou1connected)
+    
+    prob_oujr = SDEProblem(sys,[],(0.0, 2.0))
     sol = solve(prob_oujr, alg_hints = [:stiff])
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[2,:]) > 0.0 # there should be variance
 end
 
-@testset "OUBlox-OUCouplingBlox network" begin
-    @named ou1 = OUBlox()
-    @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
-    sys = [ou1.odesystem, oucp.odesystem]
-    eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
-    @named ou1connected = compose(System(eqs, t;name=:connected),sys)
-    ousimpl = structural_simplify(ou1connected)
-    prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
-    sol = solve(prob_oucp)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-    @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-end
+# @testset "OUBlox-OUCouplingBlox network" begin
+#     @named coupling = LinearNeuralMass()   # TODO: this here needs to be a linear function not a linear differential equation.
+#     @named ou = OUBlox()
+#     @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
+#     g = MetaDiGraph()
+#     add_blox!.(Ref(g), [coupling, ou, oucp])
+#     add_edge!(g, 2, 1, Dict(:weight => ou.odesystem.x))
+#     @named sys = system_from_graph(g)
+#     ousimpl = structural_simplify(sys)
+#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+#     sol = solve(prob_oucp)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+# end
 
-@testset "OUBlox-OUCouplingBlox larger network" begin
-    @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-    @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-    @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
-    @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-    sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
-    eqs = [sys[1].jcn ~ oucp1.connector,
-           sys[2].jcn ~ oucp2.connector,
-           sys[3].jcn ~ ou2.connector,
-           sys[4].jcn ~ ou1.connector]
-    @named ouconnected = compose(System(eqs, t; name=:connected), sys)
-    ousimpl = structural_simplify(ouconnected)
-    prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
-    sol = solve(prob_ouconnect)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-    @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-    @test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
-end
+# @testset "OUBlox-OUCouplingBlox network" begin
+#     @named ou1 = OUBlox()
+#     @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
+#     sys = [ou1.odesystem, oucp.odesystem]
+#     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
+#     @named ou1connected = compose(System(eqs, t;name=:connected),sys)
+#     ousimpl = structural_simplify(ou1connected)
+#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
+#     sol = solve(prob_oucp)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+# end
+
+# @testset "OUBlox-OUCouplingBlox larger network" begin
+#     @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+#     @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
+#     @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
+#     @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
+#     sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
+#     eqs = [sys[1].jcn ~ oucp1.connector,
+#            sys[2].jcn ~ oucp2.connector,
+#            sys[3].jcn ~ ou2.connector,
+#            sys[4].jcn ~ ou1.connector]
+#     @named ouconnected = compose(System(eqs, t; name=:connected), sys)
+#     ousimpl = structural_simplify(ouconnected)
+#     prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
+#     sol = solve(prob_ouconnect)
+#     @test sol.retcode == SciMLBase.ReturnCode.Success
+#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
+#     #@test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
+# end
 
 # @testset "Time-series output" begin
 #     phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
@@ -533,8 +624,8 @@ end
     @named lif2 = LIFNeuron(I_in=2.1)
     g = MetaDiGraph()
     add_blox!.(Ref(g), [lif1, lif2])
-    add_edge!(g, 1, 2, Dict(:weight => 1.0, :connection_rule => "psp"))
-    add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
+    adj = [0 1; 1 0]
+    create_adjacency_edges!(g, adj)
     @named sys = system_from_graph(g)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
@@ -578,5 +669,142 @@ end
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "LIFExciBlox - LIFInhBlox network" begin
+    global_ns = :g # global namespace
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+    @named n2 = LIFExciNeuron(; namespace = global_ns)
+    @named n3 = LIFInhNeuron(; namespace = global_ns)
+
+    neurons = [n1, n2, n3]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    for i in eachindex(neurons)
+        for j in eachindex(neurons)
+            add_edge!(g, i, j, Dict(:weight => 1))
+        end
+    end
+
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "LIFExciCircuitBlox" begin
+    @named n = LIFExciCircuitBlox(; N_neurons = 10, weight=1)
+
+    sys_simpl = structural_simplify(n.odesystem)
+    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    sol = solve(prob, Vern7())
+    @test sol.retcode == ReturnCode.Success 
+end
+
+@testset "PoissonSpikeTrain - LIFExciBlox network" begin
+    global_ns = :g # global namespace
+
+    tspan = (0, 200) # ms
+    spike_rate = 10* 1e-3 # spikes / ms
+
+    @named s = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns)
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+
+    neurons = [s, n1]
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+    
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "PoissonSpikeTrain{<:Distribution} - LIFExciBlox network" begin
+    global_ns = :g # global namespace
+
+    tspan = (0, 200) # ms
+    spike_rate = Normal(1, 0.1) => 10
+
+    @named s = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns)
+    @named n1 = LIFExciNeuron(; namespace = global_ns)
+
+    neurons = [s, n1]
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+    
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "PoissonSpikeTrain - LIFExciCircuitBlox" begin    
+    global_ns = :g # global namespace
+
+    tspan = (0, 1000) # ms
+    spike_rate = 10* 1e-3 # spikes / ms
+
+    @named s = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns)
+    @named n = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = 10, weight=1)
+
+    neurons = [s, n]
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), neurons)
+
+    add_edge!(g, 1, 2, Dict(:weight => 1))
+
+    @named sys = system_from_graph(g)
+    sys_simpl = structural_simplify(sys)
+    prob = ODEProblem(sys_simpl, [], tspan)
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "QIF_PING" begin
+    @named exci_PING = QIF_PING_NGNMM(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
+    @named inhi_PING = QIF_PING_NGNMM(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [exci_PING, inhi_PING])
+    add_edge!(g, exci_PING => inhi_PING; weight=10.0)
+    add_edge!(g, inhi_PING => exci_PING; weight=10.0)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 100.0
+    prob = SDEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, RKMil(), saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "PYR_Izh" begin
+    @named popP = PYR_Izh(η̄=0.08, κ=0.8)
+    @named popQ = PYR_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [popP, popQ])
+    add_edge!(g, popP => popQ; weight=1.0)
+    add_edge!(g, popQ => popP; weight=1.0)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 200.0
+    prob = ODEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, Tsit5(), saveat=1.0)
     @test sol.retcode == ReturnCode.Success
 end

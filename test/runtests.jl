@@ -1,10 +1,11 @@
 using SafeTestsets
 
+@time @safetestset "Utilities" begin include("utils.jl") end
 @time @safetestset "Components Tests" begin include("components.jl") end
 @time @safetestset "Neurograph Tests" begin include("graphs.jl") end
 
 # Commenting out because we no longer use ODEfromGraph for neural masses
-#@time @safetestset "ODE from Graph Tests" begin include("ode_from_graph.jl") end
+# @time @safetestset "ODE from Graph Tests" begin include("ode_from_graph.jl") end
 
 # @time @safetestset "Neural Signal Measurement Models Tests" begin include("measurementmodels.jl") end
 # @time @safetestset "Spectral Utilities Tests" begin include("spectraltools.jl") end

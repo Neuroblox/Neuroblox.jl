@@ -13,7 +13,7 @@ mutable struct JansenRitSPM12 <: NeuralMassBlox
         p = paramscoping(τ=τ, r=r)
         τ, r = p
 
-        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
+        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + jcn/τ]
 
@@ -39,7 +39,7 @@ mutable struct CanonicalMicroCircuitBlox <: AbstractCompositeBlox
 
         add_edge!(g, 1, 1, :weight, -800.0)
         add_edge!(g, 2, 1, :weight, -800.0)
-        add_edge!(g, 3, 1, :weight, -800.0)
+        add_edge!(g, 3, 1, :weight, -1600.0)
         add_edge!(g, 1, 2, :weight,  800.0)
         add_edge!(g, 2, 2, :weight, -800.0)
         add_edge!(g, 1, 3, :weight,  800.0)

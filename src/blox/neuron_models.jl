@@ -22,11 +22,11 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			z(t)=0.0
@@ -107,11 +107,11 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
-			I_in(t)=0.0
+			I_in(t)
 			[input=true]
             G(t)=0.0 
 			[output = true] 
@@ -192,11 +192,11 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			m(t)=0.027
 			h(t)=0.99
 			mM(t)=0.022
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -280,13 +280,13 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			h(t)=0.059 
 			mD(t)=0.05
 			hD(t)=0.059
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_gap(t)=0.0
+			I_gap(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -311,6 +311,8 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			a = a
 			b = b
 			T = T
+            τ = τ
+            τₛ = τₛ
 		end
         
         @brownian χ
@@ -334,7 +336,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			   D(hD)~(hD_inf(V)-hD)/τₕD(V),
 			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
 			   D(Gₛ)~(-1/τₛ)*Gₛ + G_asymp(V,a,b)*(1-Gₛ)
-			  
 		]
         
 		sys = System(
@@ -368,11 +369,11 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -447,11 +448,11 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -740,7 +741,7 @@ struct IFNeuron <: AbstractNeuronBlox
 					   I_in=0)
 		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
 		C, θ, Eₘ, I_in = p
-		sts = @variables V(t) = -70.00 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.00 jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
 		ev = [V~θ] => [V~Eₘ]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
@@ -803,15 +804,164 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   I_in=0.0)
 		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
 		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
-		sts = @variables V(t) = -70.00 G(t)=0.0 z(t)=0.0 Cₜ(t) = 0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.00 G(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G,
 			  ]
 
 		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[2], sts[5], sts[1], sys, namespace)
+		new(p, sts[2], sts[3], sts[1], sys, namespace)
 	end
+end
+
+function LIF_spike_affect!(integ, u, p, ctx)
+    integ.u[u[1]] = integ.p[p[1]]
+
+    t_refract_end = integ.t + integ.p[p[2]]
+    integ.p[p[3]] = t_refract_end
+
+    integ.p[p[4]] = 1
+
+    SciMLBase.add_tstop!(integ, t_refract_end)
+    
+    for i in eachindex(u)[2:end]
+        integ.u[u[i]] += 1
+    end
+end
+
+struct LIFInhNeuron <: AbstractInhNeuronBlox
+    odesystem
+    namespace
+
+    function LIFInhNeuron(;
+        name,
+        namespace = nothing,
+        g_L = 20 * 1e-6, # mS
+        V_L = -70, # mV
+        V_E = 0, # mV
+        V_I = -70, # mV
+        θ = -50, # mV
+        V_reset = -55, # mV
+        C = 0.2 * 1e-6, # mF 
+        τ_AMPA = 2, # ms
+        τ_GABA = 5, # ms
+        t_refract = 1, # ms
+        α = 0.5, # ms⁻¹
+        g_AMPA = 0.04 * 1e-6, # mS
+        g_AMPA_ext = 1.62 * 1e-6, # mS
+        g_GABA = 1 * 1e-6, # mS
+        g_NMDA = 0.13 * 1e-6, # mS 
+        Mg = 1, # mM
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1 
+    )
+
+        ps = @parameters begin 
+            g_L=g_L  
+            V_L=V_L 
+            V_E=V_E
+            V_I=V_I
+            V_reset=V_reset
+            θ=θ
+            C=C
+            τ_AMPA=τ_AMPA 
+            τ_GABA=τ_GABA 
+            t_refract_duration=t_refract 
+            t_refract_end=-Inf
+            g_AMPA = g_AMPA * exci_scaling_factor
+            g_AMPA_ext = g_AMPA_ext
+            g_GABA = g_GABA * inh_scaling_factor
+            g_NMDA = g_NMDA * exci_scaling_factor
+            α=α
+            Mg=Mg
+            is_refractory=0
+        end
+
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
+        eqs = [
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
+            D(S_AMPA) ~ - S_AMPA / τ_AMPA,
+            D(S_GABA) ~ - S_GABA / τ_GABA,
+            D(S_AMPA_ext) ~ - S_AMPA_ext / τ_AMPA
+        ]
+
+        refract_end = (t == t_refract_end) => [is_refractory ~ 0]
+
+        sys = System(eqs, t, sts, ps; name=name, discrete_events = [refract_end])
+
+		new(sys, namespace)
+    end
+end
+
+struct LIFExciNeuron <: AbstractExciNeuronBlox
+    odesystem
+    namespace
+
+    function LIFExciNeuron(;
+        name,
+        namespace = nothing,
+        g_L = 25 * 1e-6, # mS
+        V_L = -70, # mV
+        V_E = 0, # mV
+        V_I = -70, # mV
+        θ = -50, # mV
+        V_reset = -55, # mV
+        C = 0.5 * 1e-6, # mF 
+        τ_AMPA = 2, # ms
+        τ_GABA = 5, # ms
+        τ_NMDA_decay = 100, # ms
+        τ_NMDA_rise = 2, # ms
+        t_refract = 2, # ms
+        α = 0.5, # ms⁻¹
+        g_AMPA = 0.05 * 1e-6, # mS
+        g_AMPA_ext = 2.1 * 1e-6, # mS
+        g_GABA = 1.3 * 1e-6, # mS
+        g_NMDA = 0.165 * 1e-6, # mS  
+        Mg = 1, # mM
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1 
+    )
+
+        ps = @parameters begin 
+            g_L=g_L  
+            V_L=V_L 
+            V_E=V_E
+            V_I=V_I
+			V_reset=V_reset
+            θ=θ
+            C=C
+            τ_AMPA=τ_AMPA 
+            τ_GABA=τ_GABA 
+            τ_NMDA_decay=τ_NMDA_decay 
+            τ_NMDA_rise=τ_NMDA_rise 
+            t_refract_duration=t_refract
+            t_refract_end=-Inf
+            g_AMPA = g_AMPA * exci_scaling_factor
+            g_AMPA_ext = g_AMPA_ext
+            g_GABA = g_GABA * inh_scaling_factor
+            g_NMDA = g_NMDA * exci_scaling_factor
+            α=α
+            Mg=Mg
+            is_refractory=0
+        end
+
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
+        eqs = [
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
+            D(S_AMPA) ~ - S_AMPA / τ_AMPA,
+            D(S_GABA) ~ - S_GABA / τ_GABA,
+            D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
+            D(x) ~ - x / τ_NMDA_rise,
+            D(S_AMPA_ext) ~ - S_AMPA_ext / τ_AMPA
+        ]
+
+        refract_end = (t == t_refract_end) => [is_refractory ~ 0]
+
+        sys = System(eqs, t, sts, ps;  discrete_events = [refract_end], name=name)
+
+		new(sys, namespace)
+    end
 end
 
 # Paramater bounds for GUI
@@ -846,7 +996,7 @@ struct QIFNeuron <: AbstractNeuronBlox
 						θ=25.0)
 		p = paramscoping(C=C, Rₘ=Rₘ, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
 		C, Rₘ, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
-		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ ((V-Eₘ)^2/(Rₘ^2)+I_in+jcn)/C,
 		 		D(G)~(-1/τ₂)*G + z,
 	        	D(z)~(-1/τ₁)*z
@@ -892,7 +1042,7 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 							   τ=2.6)
 		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
 		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
 				D(w) ~ a*(b*V - w),
 				D(G) ~ (-1/τ)*G + z,

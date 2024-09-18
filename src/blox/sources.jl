@@ -1,5 +1,3 @@
-@parameters t
-
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
@@ -38,7 +36,7 @@ mutable struct CosineBlox
     odesystem::ODESystem
     function CosineBlox(;name, amplitude=1, frequency=20, phase=0)
 
-        sts    = @variables jcn(t)=0.0 u(t)=0.0
+        sts    = @variables jcn(t) u(t)=0.0
         params = @parameters amplitude=amplitude frequency=frequency phase=phase
 
         eqs = [u ~ amplitude * cos(2 * pi * frequency * (t) + phase)]
@@ -56,7 +54,7 @@ mutable struct NoisyCosineBlox
     odesystem::ODESystem
     function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
 
-        sts    = @variables  u(t)=0.0 jcn(t)=0.0
+        sts    = @variables  u(t)=0.0 jcn(t)
         params = @parameters amplitude=amplitude frequency=frequency
 
         eqs    = [u   ~ amplitude * cos(2 * pi * frequency * (t) + jcn)]
@@ -76,7 +74,7 @@ mutable struct PhaseBlox
         range       = convert(Vector{Float64}, phase_range)
         phase_input = CubicSpline(data, range)
 
-        sts         = @variables  u(t)=0.0 jcn(t)=0.0
+        sts         = @variables  u(t)=0.0 jcn(t)
 
         eqs         = [u ~ phase_input(t)]
         odesys      = ODESystem(eqs, t, sts, []; name=name)
@@ -153,4 +151,76 @@ mutable struct ImageStimulus <: StimulusBlox
         data = read(file, DataFrame)
         ImageStimulus(data; name, namespace, t_stimulus, t_pause)
     end
+end
+
+struct PoissonSpikeTrain{N} <: StimulusBlox
+    name
+    namespace
+    N_trains
+    rate::N
+    tspan
+    prob_dt
+    rng
+end
+
+function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
+    rate = to_vector(rate)
+    tspan = to_vector(tspan)
+
+    @assert length(rate) == length(tspan) "The number of Poisson rates need to match the number of tspan intervals."
+
+    PoissonSpikeTrain(name, namespace, N_trains, rate, tspan, prob_dt, rng)
+end
+
+function PoissonSpikeTrain(rate_sampling::Pair{D, T}, tspan::Tuple; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {T <: Number, D <: UnivariateDistribution}    
+    
+    PoissonSpikeTrain(name, namespace, N_trains, rate_sampling, tspan, prob_dt, rng)
+end
+
+function generate_spike_times!(t_spikes, rate::Number, tspan, prob_dt, rng)
+    # The dt step is determined by the CDF of the Exponential distribution.
+    # The Exponential is the distribution of the inter-event times for Poisson-distributed events.
+    # `prob_dt` determines the probability so that `P_CDF_Exponential(dt) = prob_dt` , and then we solve for dt.
+    # This way we make sure that with probability `1 - prob_dt` there won't be any events within a single dt step.
+    dt = map(rate) do r
+        - log(1 - prob_dt) / r
+    end
+
+    for t in range(tspan...; step = dt)
+        if rand(rng) < rate * dt
+            push!(t_spikes, t)
+        end
+    end
+end
+
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: AbstractVector}
+    # This could also change to a dispatch of Random.rand()
+    t_spikes = Float64[]
+    for _ in Base.OneTo(stim.N_trains)
+        for i in eachindex(stim.rate)        
+            generate_spike_times!(t_spikes, stim.rate[i], stim.tspan[i], stim.prob_dt, stim.rng)
+        end
+    end
+
+    return t_spikes
+end
+
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: Pair{<: UnivariateDistribution}}
+    # This could also change to a dispatch of Random.rand()
+    dist_rate, dt = stim.rate
+    rng = stim.rng
+    tspan = stim.tspan
+    prob_dt = stim.prob_dt
+
+    t_spikes = Float64[]
+    for _ in Base.OneTo(stim.N_trains)
+        for t in range(tspan...; step = dt)
+            rate = rand(rng, dist_rate)
+            tspan_sample = (t, t + dt)
+
+            generate_spike_times!(t_spikes, rate, tspan_sample, prob_dt, rng)
+        end
+    end
+    
+    return t_spikes
 end

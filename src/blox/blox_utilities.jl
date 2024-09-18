@@ -17,49 +17,44 @@ function paramscoping(;kwargs...)
     return paramlist
 end
 
-function get_exci_neurons(g::MetaDiGraph)
-    mapreduce(x -> get_exci_neurons(x), vcat, get_blox(g))
+get_HH_exci_neurons(n::HHNeuronExciBlox) = [n]
+get_HH_exci_neurons(n) = []
+
+function get_HH_exci_neurons(g::MetaDiGraph)
+    mapreduce(x -> get_HH_exci_neurons(x), vcat, get_bloxs(g))
 end
 
-function get_exci_neurons(b::AbstractComponent)
-    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
+function get_HH_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_HH_exci_neurons(x), vcat, b.parts)
 end
 
-function get_inh_neurons(b::AbstractComponent)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::AbstractComponent)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
-function get_exci_neurons(b::AbstractCompositeBlox)
-    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
-end
-
-function get_inh_neurons(b::AbstractCompositeBlox)
-    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
-end
-
-function get_discrete_parts(b::AbstractCompositeBlox)
-    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
-end
-
-get_exci_neurons(n::AbstractExciNeuronBlox) = n
+get_exci_neurons(n::AbstractExciNeuronBlox) = [n]
 get_exci_neurons(n) = []
 
-get_inh_neurons(n::AbstractInhNeuronBlox) = n
-get_inh_neurons(n) = []
-
-function get_receptor(b::AbstractNeuronBlox)
-    mapreduce(x -> get_receptor(x), vcat, b.parts)
+function get_exci_neurons(g::MetaDiGraph)
+    mapreduce(x -> get_exci_neurons(x), vcat, get_bloxs(g))
 end
 
-get_receptor(n::AbstractReceptorBlox) = n
-get_receptor(n) = []
+function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_exci_neurons(x), vcat, b.parts)
+end
+
+get_inh_neurons(n::AbstractInhNeuronBlox) = [n]
+get_inh_neurons(n) = []
+
+function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
+end
+
+get_neurons(b::Union{AbstractComponent, CompositeBlox}) = vcat(get_exci_neurons(b), get_inh_neurons(b))
+
+function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
+end
 
 get_sys(blox) = blox.odesystem
 get_sys(sys::AbstractODESystem) = sys
+get_sys(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
 function get_namespaced_sys(blox)
     sys = get_sys(blox)
@@ -119,7 +114,7 @@ end
     which holds a `BloxConnector` object with all relevant connections 
     from lower levels and this level.
 """
-function input_equations(blox)
+function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     sys = get_sys(blox)
     inps = inputs(sys)
     sys_eqs = equations(sys)
@@ -146,41 +141,43 @@ function input_equations(blox)
     return eqs
 end
 
-input_equations(blox::AbstractComponent) = blox.connector.eqs
-input_equations(blox::AbstractCompositeBlox) = blox.connector.eqs
-input_equations(::ImageStimulus) = []
+get_connector(blox::Union{CompositeBlox, AbstractComponent}) = blox.connector
 
-weight_parameters(blox) = Num[]
-weight_parameters(blox::AbstractComponent) = blox.connector.weights #I think this is the fix?
-weight_parameters(blox::AbstractCompositeBlox) = blox.connector.weights #I think this is the fix?
+get_input_equations(bc::BloxConnector) = bc.eqs
+get_input_equations(blox::Union{CompositeBlox, AbstractComponent}) = (get_input_equations ∘ get_connector)(blox)
+get_input_equations(blox) = []
 
-delay_parameters(blox) = Num[]
-delay_parameters(blox::AbstractComponent) = blox.connector.delays
-delay_parameters(blox::AbstractCompositeBlox) = blox.connector.delays
+get_weight_parameters(bc::BloxConnector) = bc.weights
+get_weight_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_parameters ∘ get_connector)(blox)
+get_weight_parameters(blox) = Num[]
 
-event_callbacks(blox) = []
-event_callbacks(blox::AbstractComponent) = blox.connector.events
-event_callbacks(blox::AbstractCompositeBlox) = blox.connector.events
+get_delay_parameters(bc::BloxConnector) = bc.delays
+get_delay_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_delay_parameters ∘ get_connector)(blox)
+get_delay_parameters(blox) = Num[]
 
-weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
-weight_learning_rules(bc::BloxConnector) = bc.learning_rules
-weight_learning_rules(blox::AbstractComponent) = weight_learning_rules(blox.connector)
-weight_learning_rules(blox::AbstractCompositeBlox) = weight_learning_rules(blox.connector)
+get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
+get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
+get_discrete_callbacks(blox) = []
 
-get_blox_parts(blox) = blox.parts
+get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
+get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
+get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
+
+get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
+get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
+get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
+
+get_blox_parts(blox::Union{CompositeBlox, AbstractComponent}) = blox.parts
 
 function get_weight(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :weight)
-        return kwargs[:weight]
-    else
-        error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    get(kwargs, :weight) do
+        @warn "Connection weight from $name_blox1 to $name_blox2 is not specified. Assuming weight=1" 
+        return 1.0
     end
 end
 
 function get_gap_weight(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :gap_weight)
-        return kwargs[:gap_weight]
-    else
+    get(kwargs, :gap_weight) do
         error("Gap junction weight from $name_blox1 to $name_blox2 is not specified.")
     end
 end
@@ -194,36 +191,30 @@ function get_nmda_weight(kwargs, name_blox1, name_blox2)
 end
 
 function get_weightmatrix(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :weightmatrix)
-        return kwargs[:weightmatrix]
-    else
+    get(kwargs, :weightmatrix) do
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
     end
 end
 
 function get_delay(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :delay)
-        return kwargs[:delay]
-    else
-#        @warn "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
+    get(kwargs, :delay) do 
+#        @debug "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
         return 0
     end
 end
 
 function get_density(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :density)
-        return kwargs[:density]
-    else 
+    get(kwargs, :density) do 
         error("Connection density from $name_blox1 to $name_blox2 is not specified.")
     end
 end
 
 function get_sta(kwargs, name_blox1, name_blox2)
-    haskey(kwargs, :sta) ? kwargs[:sta] : false    
+    get(kwargs, :sta, false)
 end
 
 function get_gap(kwargs, name_blox1, name_blox2)
-    haskey(kwargs, :gap) ? kwargs[:gap] : false    
+    get(kwargs, :gap, false)    
 end
 
 function get_nmda(kwargs, name_blox1, name_blox2)
@@ -231,11 +222,29 @@ function get_nmda(kwargs, name_blox1, name_blox2)
 end
 
 function get_event_time(kwargs, name_blox1, name_blox2)
-    if haskey(kwargs, :t_event)
-        return kwargs[:t_event]
-    else 
+    get(kwargs, :t_event) do
         error("Time for the event that affects the connection from $name_blox1 to $name_blox2 is not specified.")
     end
+end
+
+function get_connection_matrix(kwargs, name_out, name_in, N_out, N_in)
+    sz = (N_out, N_in)
+    connection_matrix = get(kwargs, :connection_matrix) do
+        density = get_density(kwargs, name_out, name_in)
+        dist = Bernoulli(density)
+        rng = get(kwargs, :rng, Random.default_rng())
+        rand(rng, dist, sz...)
+    end
+    if size(connection_matrix) != sz
+        error(ArgumentError("The supplied connection matrix between $(name_out) and $(name_in) is an "
+                            * "incorrect size. Got $(size(connection_matrix)), whereas $(name_out) has "
+                            * "$N_out excitatory neurons, and $name_in has $N_in excitatory neurons."))
+    end
+    if eltype(connection_matrix) != Bool
+        error(ArgumentError("The supplied connection matrix between $(name_out) and $(name_in) must "
+                            * "be an array of Bool, got $(eltype(connection_matrix)) instead."))
+    end
+    connection_matrix
 end
 
 function get_weights(agent::Agent, blox_out, blox_in)
@@ -256,9 +265,9 @@ function get_weights(agent::Agent, blox_out, blox_in)
 end
 
 function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
-    spikes, _ = argmaxima(x)
-    peakproms!(spikes, x; minprom, maxheight)
-    peakheights!(spikes, xx[spikes]; minheight, maxheight)
+    spikes = argmaxima(x)
+    peakproms!(spikes, x; minprom, maxprom)
+    peakheights!(spikes, x[spikes]; minheight, maxheight)
 
     return spikes
 end
@@ -267,6 +276,27 @@ function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, mi
     spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
     
     return length(spikes)
+end
+
+function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; tolerance = 1e-3)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    threshold_param_name = Symbol(namespaced_name, "₊θ")
+
+    reset = only(@parameters $(reset_param_name))
+    thrs = only(@parameters $(threshold_param_name))
+
+    get_reset = getp(sol, reset)
+    reset_value = get_reset(sol)
+
+    get_thrs = getp(sol, thrs)
+    thrs_value = get_thrs(sol)
+
+    V = voltage_timeseries(blox, sol)
+    
+    spikes = find_spikes(V; minheight = thrs_value - tolerance)
+
+    return spikes
 end
 
 """
@@ -278,19 +308,15 @@ end
     - `sys`: MTK system
 
     Returns:
-    - `sts`  : states of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
-    - `idx_u`: indices of states that represent external inputs
-    - `idx_m`: indices of states that represent measurements
+    - `sts`: states/unknowns of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
+    - `idx`: indices of these states
 """
 function get_dynamic_states(sys)
-    sts = []
-    idx = []
-    for (i, s) in enumerate(unknowns(sys))
-        if !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
-            push!(sts, s)
-            push!(idx, i)
-        end
+    itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
+        !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
     end
+    sts = map(x -> x[2], itr)
+    idx = map(x -> x[1], itr)
     return sts, idx
 end
 
@@ -309,11 +335,11 @@ function get_eqidx_tagged_vars(sys, tag)
             for s in Symbolics.get_variables(e)
                 if string(s) == string(v)
                     push!(idx, i)
-                end 
+                end
             end
         end
     end
-    return idx
+    return idx, vars
 end
 
 function get_idx_tagged_vars(sys, tag)
@@ -323,7 +349,6 @@ function get_idx_tagged_vars(sys, tag)
             push!(idx, i)
         end
     end
-    return idx
     return idx
 end
 
@@ -357,11 +382,9 @@ function addnontunableparams(paramlist, sys)
 end
 
 function get_connection_rule(kwargs, bloxout, bloxin, w)
-    if haskey(kwargs, :connection_rule)
-        cr = kwargs[:connection_rule]
-    else
+    cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
-        name_blox1 = nameof(bloxin)
+        name_blox2 = nameof(bloxin)
         @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
         cr = "basic"
     end
@@ -380,4 +403,55 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
     end
 
     return rhs
+end
+
+to_vector(v::AbstractVector) = v
+to_vector(v) = [v]
+
+nanmean(x) = mean(filter(!isnan,x))
+
+function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
+    namespaced_name = namespaced_nameof(blox)
+    reset_param_name = Symbol(namespaced_name, "₊V_reset")
+    p = only(@parameters $(reset_param_name))
+
+    get_reset = getp(sol, p)
+    reset_value = get_reset(sol)
+
+    V[V .== reset_value] .= NaN
+
+    return V
+end
+
+function replace_refractory!(V, blox::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    neurons = get_neurons(blox)
+
+    for (i, n) in enumerate(neurons)
+        V[:, i] = replace_refractory!(V[:,i], n, sol)
+    end
+end
+
+replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
+
+function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
+    namespaced_name = namespaced_nameof(blox)
+    state_name = Symbol(namespaced_name, "₊V")
+
+    s = only(@variables $(state_name)(t))
+
+    return sol[s]
+end
+
+function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        voltage_timeseries(neuron, sol)
+    end
+end
+
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
+    V = voltage_timeseries(cb, sol)
+    replace_refractory!(V, cb, sol)
+
+    return vec(mapslices(nanmean, V; dims = 2))
 end

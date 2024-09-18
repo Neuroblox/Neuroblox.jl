@@ -8,11 +8,41 @@ function adjmatrixfromdigraph(g::MetaDiGraph)
     return myadj
 end
 
+function find_blox(g::MetaDiGraph, blox)
+    for v in vertices(g)
+        b = get_prop(g, v, :blox)
+        b == blox && return v
+    end
+
+    return nothing
+end
+
+has_blox(g::MetaDiGraph, blox) = isnothing(find_blox(g, blox)) ? false : true
+
+function add_edge!(g::MetaDiGraph, p::Pair; kwargs...)
+    src, dest = p
+    
+    src_idx = find_blox(g, src)
+    dest_idx = find_blox(g, dest)
+    
+    if isnothing(src_idx)
+        add_blox!(g, src)
+        src_idx = nv(g)
+    end
+    
+    if isnothing(dest_idx)
+        add_blox!(g, dest)
+        dest_idx = nv(g)
+    end
+    
+    add_edge!(g, src_idx, dest_idx, Dict(kwargs))
+end
+
 function add_blox!(g::MetaDiGraph,blox)
     add_vertex!(g, :blox, blox)
 end
 
-function get_blox(g::MetaDiGraph)
+function get_bloxs(g::MetaDiGraph)
     bs = []
     for v in vertices(g)
         b = get_prop(g, v, :blox)
@@ -24,10 +54,15 @@ function get_blox(g::MetaDiGraph)
     return bs
 end
 
-get_sys(g::MetaDiGraph) = get_sys.(get_blox(g))
+get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
+
+get_dynamics_bloxs(blox) = [blox]
+get_dynamics_bloxs(blox::Union{CompositeBlox, AbstractComponent}) = get_blox_parts(blox)
+
+flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
 function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_blox(g)
+    bloxs = get_bloxs(g)
     link = BloxConnector(bloxs)
 
     for v in vertices(g)
@@ -47,6 +82,62 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
+generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
+
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
+    spike_affect_states = get_spike_affect_states(bc)
+    name_blox = namespaced_nameof(blox)
+
+    states_dest = get(spike_affect_states, name_blox, Num[])
+
+    sys = get_namespaced_sys(blox)
+    
+    cb = (sys.V >= sys.θ) => (
+        LIF_spike_affect!, 
+        vcat(sys.V, states_dest), 
+        [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
+        [], 
+        nothing
+    )
+
+    return cb
+end
+
+function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_block = missing)
+    if !ismissing(t_block)
+        nn = get_namespaced_sys(blox)
+        eq = nn.spikes_window ~ 0
+        cb_spike_reset = (t_block + sqrt(eps(float(t_block)))) => [eq]
+        
+        return cb_spike_reset
+    else
+        return []
+    end
+end
+
+function generate_discrete_callbacks(bc::BloxConnector; t_block = missing)
+    eqs_params = get_equations_with_parameter_lhs(bc)
+
+    if !ismissing(t_block) && !isempty(eqs_params)
+        cb_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+        return vcat(cb_params, bc.discrete_callbacks)
+    else
+        return bc.discrete_callbacks
+    end 
+end
+
+function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block = missing)
+    bloxs = flatten_graph(g)
+
+    cbs = mapreduce(vcat, bloxs) do blox
+        generate_discrete_callbacks(blox, bc; t_block)
+    end
+    
+    cbs_params = generate_discrete_callbacks(bc; t_block)
+
+    return vcat(cbs, cbs_params)
+end
+
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc; name, t_block)
@@ -62,21 +153,25 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     blox_syss = get_sys(g)
     connection_eqs = get_equations_with_state_lhs(bc)
 
-    cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(ODESystem(connection_eqs, t, [], params(bc); name, discrete_events = cbs), blox_syss)
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
+
+    return compose(
+        System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs), 
+        blox_syss
+    )
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
-
     blox_syss = get_sys(g)
-
     connection_eqs = get_equations_with_state_lhs(bc)
-    cbs = identity.(get_callbacks(g, bc; t_block))
-    return compose(ODESystem(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = cbs), blox_syss)
+
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
+
+    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)
-    return compose(ODESystem(Equation[], t, [], []; name), get_sys.(parts))
+    return compose(System(Equation[], t; name), get_sys.(parts))
 end
 
 function action_selection_from_graph(g::MetaDiGraph)
@@ -157,11 +252,11 @@ function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
     return ODESystem(eqs, systems=sys, name=name)
 end
 
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}) where {T}
+function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}; connection_rule="basic") where {T}
     for i = 1:size(adj_matrix, 1)
         for j = 1:size(adj_matrix, 2)
             if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j]))
+                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :connection_rule => connection_rule))
             end
         end
     end
