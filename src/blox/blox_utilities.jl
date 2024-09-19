@@ -442,10 +442,15 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
     s = meanfield_timeseries(cb, sol, state)
 
-    return periodogram(s, fs=fs)
+    # check if the solution was saved at regular time steps
+    t_raw = unique(sol.t)
+    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
+    sampling_freq = 1000/(t_raw[2] - t_raw[1])  # in Hz
+
+    return periodogram(s, fs=sampling_freq)
 end
 
 function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
@@ -454,7 +459,12 @@ function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSo
 
     s = only(@variables $(state_name)(t))
 
-    return periodogram(sol[s], fs = fs)
+    # check if the solution was saved at regular time steps
+    t_raw = unique(sol.t)
+    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
+    sampling_freq = 1000/(t_raw[2] - t_raw[1]) # in Hz
+
+    return periodogram(sol[s], fs = sampling_freq)
 end
 
 voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution) = 
@@ -474,9 +484,14 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; fs=1)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
     V = voltage_timeseries(cb, sol)
     replace_refractory!(V, cb, sol)
 
-    return periodogram(vec(mapslices(nanmean, V; dims = 2)), fs = fs)
+    # check if the solution was saved at regular time steps
+    t_raw = unique(sol.t)
+    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
+    sampling_freq = 1000/(t_raw[2] - t_raw[1])  # in Hz
+    
+    return periodogram(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq)
 end

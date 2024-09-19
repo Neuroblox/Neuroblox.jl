@@ -154,14 +154,15 @@ function Makie.plot!(p::BandPowerSpectrum)
 
     powspec = p.pergram[]
     powerfirst = powspec.power[2]
-    lines!(p, powspec.freq[2:end]*1000, powspec.power[2:end]/powerfirst)
+
+    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
     poly!(p, Point2f[(8, 1e-7), (8, 10), (12, 10), (12, 1e-7)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
 	poly!(p, Point2f[(12, 1e-7), (12, 10), (35, 10), (35, 1e-7)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
 	poly!(p, Point2f[(35, 1e-7), (35, 10), (200, 10), (200, 1e-7)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
 	
-	text!(p, 8.5, 0.6; text=L"\alpha", fontsize=24)
-	text!(p, 22, 0.6; text=L"\beta", fontsize=24)
-	text!(p, 60, 0.6; text=L"\gamma", fontsize=24)
+	text!(p, 8.5, 5.0; text=L"\alpha", fontsize=24)
+	text!(p, 22, 5.0; text=L"\beta", fontsize=24)
+	text!(p, 60, 5.0; text=L"\gamma", fontsize=24)
     return p
 end
 
@@ -170,13 +171,13 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution)
 
     fig = Figure(fontsize=20)
     ax = Axis(fig[1,1],
-             xlabel="f in Hz",
+             xlabel="Frequency (Hz)",
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90],
              yscale=log10)
 
     xlims!(ax,8,100)
-    ylims!(ax,1e-3,1)
+    ylims!(ax,1e-3,10)
 
     bandpowerspectrum!(ax, pergram)
     fig
@@ -187,7 +188,7 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state)
 
     fig = Figure()
     ax = Axis(fig[1,1],
-             xlabel="f in Hz",
+             xlabel="Frequency (Hz)",
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90],
              yscale=log10)
@@ -201,7 +202,7 @@ function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state)
 
     fig = Figure()
     ax = Axis(fig[1,1],
-             xlabel="f in Hz",
+             xlabel="Frequency (Hz)",
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90],
              yscale=log10)
