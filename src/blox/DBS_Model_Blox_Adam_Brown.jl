@@ -271,7 +271,7 @@ struct GPe_Adam <: CompositeBlox
 
 end    
 
-struct STN_Adam <: AbstractCompositeBlox
+struct STN_Adam <: CompositeBlox
     namespace
     parts
     odesystem

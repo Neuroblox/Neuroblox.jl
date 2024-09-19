@@ -2,7 +2,7 @@
 cortical neuronal assembly used in ketamine model in Adam et al,2024 
 """
 
-struct Cortical_Pyramidal_Assembly_Adam <: AbstractCompositeBlox
+struct Cortical_Pyramidal_Assembly_Adam <: CompositeBlox
     namespace
     parts
     odesystem
@@ -81,7 +81,7 @@ end
 
 
 
-struct Cortical_Interneuron_Assembly_Phasic_Adam <: AbstractCompositeBlox
+struct Cortical_Interneuron_Assembly_Phasic_Adam <: CompositeBlox
     namespace
     parts
     odesystem
@@ -153,7 +153,7 @@ struct Cortical_Interneuron_Assembly_Phasic_Adam <: AbstractCompositeBlox
 end    
 
 
-struct Cortical_Interneuron_Assembly_Tonic_Adam <: AbstractCompositeBlox
+struct Cortical_Interneuron_Assembly_Tonic_Adam <: CompositeBlox
     namespace
     parts
     odesystem
