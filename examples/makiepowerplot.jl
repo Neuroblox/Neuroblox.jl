@@ -14,4 +14,4 @@ neuron_net = system_from_graph(g; name=global_ns)
 prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 600), [])
 sol = solve(prob, Vern7())
 
-band_power_meanfield(cb, sol)
+fss = band_power_meanfield(cb, sol)
