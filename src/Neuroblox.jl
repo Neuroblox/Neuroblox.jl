@@ -2,7 +2,7 @@ module Neuroblox
 
 if !isdefined(Base, :get_extension)
     using Requires
-end 
+end
 
 using Reexport
 @reexport using ModelingToolkit
@@ -132,7 +132,7 @@ end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(blox.odesystem, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
+    sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
     statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
@@ -200,6 +200,13 @@ function stackplot! end
 
 function voltage_stack end
 
+function ecbarplot end
+function effectiveconnectivity end
+function effectiveconnectivity! end
+
+function freeenergy end
+function freeenergy! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
@@ -241,5 +248,6 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack
 export graphsystem_from_graph
+export PYR_Izh, QIF_PING_NGNMM
 
 end

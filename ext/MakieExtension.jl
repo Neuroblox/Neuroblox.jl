@@ -3,11 +3,64 @@ module MakieExtension
 isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
-using Neuroblox: AbstractNeuronBlox, CompositeBlox
+using Neuroblox: AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
 using SciMLBase: AbstractSolution
+using LinearAlgebra: diag
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+
+
+@recipe(FreeEnergy, spDCMresults) do scene
+    Theme()
+end
+
+argument_names(::Type{<: FreeEnergy}) = (:spDCMresults)
+
+function Makie.plot!(p::FreeEnergy)
+    F = p.spDCMresults[].F
+    deleteat!(F, 1)   # remove the first value since that's always -Inf
+    
+    lines!(p, 1:length(F), F)
+    scatter!(p, 1:length(F), F)
+    return p
+end
+
+@recipe(EffectiveConnectivity, spDCMresults, spDCMsetup, groundtruth) do scene
+    Theme()
+end
+
+argument_names(::Type{<: EffectiveConnectivity}) = (:spDCMresults, :spDCMsetup, :groundtruth)
+
+function Makie.plot!(p::EffectiveConnectivity)
+    nr = p.spDCMsetup[].systemnums[1]  # number of regions
+    diagidx = 1:(nr+1):nr^2
+    gt = vec(p.groundtruth[])   # get ground truth values
+    deleteat!(gt, diagidx)
+    state = p.spDCMresults[]
+    μA = state.μθ_po[1:nr^2]    # get estimated means of effective connectivity
+    deleteat!(μA, diagidx)
+    var_A = diag(state.Σθ_po[1:nr^2, 1:nr^2])  # get variance of effective connectivity
+    deleteat!(var_A, diagidx)
+    x = 1:(nr^2-nr)
+    barplot!(p, x, μA)
+    errorbars!(p, x, μA, sqrt.(var_A), color = :red)
+    scatter!(p, x, gt)
+    return p
+end
+
+function ecbarplot(spDCMresults::VLState, spDCMsetup::VLSetup, groundtruth)
+    nr = spDCMsetup.systemnums[1]  # number of regions
+    modelparam = spDCMsetup.modelparam
+    fig = Figure()
+    idx = collect(1:nr^2)
+    deleteat!(idx, 1:(nr+1):nr^2)
+    xlabels = string.(collect(keys(modelparam))[idx])
+    ax = Axis(fig[1,1], xticks = (1:(nr^2-nr), xlabels))
+
+    effectiveconnectivity!(ax, spDCMresults, spDCMsetup, groundtruth)
+    display(fig)
+end
 
 @recipe(MeanField, blox, sol) do scene
     Theme()

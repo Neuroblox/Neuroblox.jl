@@ -502,3 +502,67 @@ struct KuramotoOscillator <: NeuralMassBlox
         end
     end
 end
+
+struct PYR_Izh <: NeuralMassBlox
+    params
+    output
+    voltage
+    jcn
+    odesystem
+    namespace
+    function PYR_Izh(;
+                name,
+                namespace=nothing,
+                Δ=0.02,
+                α=0.6215,
+                gₛ=1.2308,
+                η̄=0.12,
+                I_ext=0.0,
+                eᵣ=1.0,
+                a=0.0077,
+                b=-0.0062,
+                wⱼ=0.0189,
+                sⱼ=1.2308,
+                τₛ=2.6,
+                κ=1.0,
+                ω=0.0)
+            p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
+            Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+            sts = @variables r(t)=0.0 v(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+            eqs = [ D(r) ~ Δ/π + 2*r*v - (α+gₛ*s)*r,
+                    D(v) ~ v^2 - α*v - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - v) + jcn - (π*r)^2,
+                    D(w) ~ a*(b*v - w) + wⱼ*r,
+                    D(s) ~ -s/τₛ + sⱼ*r
+                ]
+            sys = System(eqs, t, sts, p; name=name)
+            new(p, sts[4], sts[2], sts[5], sys, namespace)
+    end
+end
+
+struct QIF_PING_NGNMM <: NeuralMassBlox
+    params
+    output
+    voltage
+    jcn
+    odesystem
+    namespace
+    function QIF_PING_NGNMM(;
+                            name,
+                            namespace=nothing,
+                            Δ=1.0,
+                            τₘ=20.0,
+                            H=1.3,
+                            I_ext=0.0,
+                            ω=0.0,
+                            J_internal=8.0,
+                            A=0.0)
+        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+        Δ, τₘ, H, I_ext, J_internal = p
+        sts = @variables r(t)=0.0 [output=true] v(t)=0.0 jcn(t)=0.0 [input=true]
+        @brownian ξ
+        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
+               D(v) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sts[1], sts[2], sts[3], sys, namespace)
+    end
+end
