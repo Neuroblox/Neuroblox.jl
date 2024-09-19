@@ -444,7 +444,6 @@ end
 
 function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
     s = meanfield_timeseries(cb, sol, state)
-#   replace_refractory!(V, cb, sol)
 
     return periodogram(s, fs=fs)
 end

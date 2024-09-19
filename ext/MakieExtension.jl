@@ -5,11 +5,12 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 using Neuroblox
 using Neuroblox: AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
+using Neuroblox: meanfield_powerspectrum, state_powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-
+import Neuroblox: bandpowerspectrum, bandpowerspectrum!, band_power_meanfield, band_power_state
 
 @recipe(FreeEnergy, spDCMresults) do scene
     Theme()
@@ -143,23 +144,49 @@ function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10,
     display(fig)
 end
 
-@recipe(PowerSpectrum, pergram) do scene
+@recipe(BandPowerSpectrum, pergram) do scene
     Theme()
 end
 
-argument_names(::Type{<: PowerSpectrum}) = (:pergram)
+argument_names(::Type{<: BandPowerSpectrum}) = (:pergram)
 
-function Makie.plot!(p::PowerSpectrum)
+function Makie.plot!(p::BandPowerSpectrum)
 
     powspec = p.pergram[]
-    
-    lines!(p, powspec.freq[2:end], powspec.power[2:end])
+    powermax = maximum(powspec.power[2:end])
+    powermin = minimum(powspec.power[2:end])
+    powerfirst = powspec.power[2]
+    lines!(p, powspec.freq[2:end]*1000, powspec.power[2:end]/powerfirst)
 
+    poly!(p, Point2f[(8, 0.01), (8, 1), (12, 1), (12, 0.01)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+	
+	poly!(p, Point2f[(12, 0), (12, 1), (35, 1), (35, 0)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+	
+	poly!(p, Point2f[(35, 0), (35, 1), (200, 1), (200, 0)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+	
+	text!(p, 8.5, 0.17; text=L"\alpha", fontsize=24)
+	text!(p, 22, 0.17; text=L"\beta", fontsize=24)
+	text!(p, 60, 0.17; text=L"\gamma", fontsize=24)
     return p
 end
 
-function power_composite(blox::CompositeBlox, sol::AbstractSolution)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution)
     pergram = meanfield_powerspectrum(blox, sol)
+
+    fig = Figure()
+    ax = Axis(fig[1,1],
+             xlabel="f in Hz",
+             ylabel="Power Spectrum",
+             xticks = [8,12,20,30, 40, 50,60,70,80,90],
+             yscale = log10)
+
+    bandpowerspectrum!(ax, pergram)
+    xlims!(ax,8,100)
+    display(fig)
+end
+
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state)
+    pergram = meanfield_powerspectrum(blox, sol, state)
 
     fig = Figure()
     ax = Axis(fig[1,1],
@@ -167,21 +194,20 @@ function power_composite(blox::CompositeBlox, sol::AbstractSolution)
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90])
 
-    xlims!(ax, 8, 100)
-    ylims!(ax, 0, 0.2)
-    powerspectrum!(ax, pergram)
+    bandpowerspectrum!(ax, pergram)
+    display(fig)
+end
 
-    poly!(ax, Point2f[(8, 0), (8, 1), (12, 1), (12, 0)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
-	
-	poly!(ax, Point2f[(12, 0), (12, 1), (35, 1), (35, 0)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
-	
-	poly!(ax, Point2f[(35, 0), (35, 1), (200, 1), (200, 0)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
-	
-	text!(ax, 8.5, 0.17; text=L"\alpha", fontsize=24)
-	text!(ax, 22, 0.17; text=L"\beta", fontsize=24)
-	text!(ax, 60, 0.17; text=L"\gamma", fontsize=24)
-	
-	axislegend(ax, position=:rt)
+function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state)
+    pergram = state_powerspectrum(blox, sol, state)
+
+    fig = Figure()
+    ax = Axis(fig[1,1],
+             xlabel="f in Hz",
+             ylabel="Power Spectrum",
+             xticks = [8,12,20,30, 40, 50,60,70,80,90])
+
+    bandpowerspectrum!(ax, pergram)
     display(fig)
 end
 
