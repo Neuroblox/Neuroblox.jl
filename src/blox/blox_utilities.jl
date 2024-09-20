@@ -419,41 +419,55 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String)
+function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-
     s = only(@variables $(state_name)(t))
 
-    return sol[s]
-end
-
-function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
-
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        state_timeseries(neuron, sol, state)
+    if isnothing(ts)
+        return sol[s]
+    else
+        return Array(sol(ts, idxs = state_name))
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
-    s = state_timeseries(cb, sol, state)
+function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        state_timeseries(neuron, sol, state, ts)
+    end
+end
+
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+    s = state_timeseries(cb, sol, state, ts)
 #    replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String)
-    s = meanfield_timeseries(cb, sol, state)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing)
 
     # check if the solution was saved at regular time steps
     t_raw = unique(sol.t)
-    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
-    sampling_freq = 1000/(t_raw[2] - t_raw[1])  # in Hz
+    if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
+        if isnothing(sampling_rate)
+            @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
+            sampling_rate = t_raw[2] - t_raw[1]
+        end
+        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+        s = meanfield_timeseries(cb, sol, state, t_sampled)
+    else
+        s = meanfield_timeseries(cb, sol, state)
+        sampling_rate = t_raw[2] - t_raw[1]
+    end
+
+    # convert to Hz
+    sampling_freq = 1000/sampling_rate
 
     return periodogram(s, fs=sampling_freq)
 end
 
-function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; fs=1)
+function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing)
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
 
@@ -461,37 +475,61 @@ function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSo
 
     # check if the solution was saved at regular time steps
     t_raw = unique(sol.t)
-    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
-    sampling_freq = 1000/(t_raw[2] - t_raw[1]) # in Hz
+    if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
+        if isnothing(sampling_rate)
+            @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
+            sampling_rate = t_raw[2] - t_raw[1]
+        end
+        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+        data = Array(sol(ts, idxs = state_name))
+    else
+        data = sol[s]
+        sampling_rate = t_raw[2] - t_raw[1]
+    end
 
-    return periodogram(sol[s], fs = sampling_freq)
+    # convert to Hz
+    sampling_freq = 1000/sampling_rate
+
+    return periodogram(data, fs = sampling_freq)
 end
 
-voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution) = 
-    state_timeseries(blox, sol, "V")
+voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, ts=nothing) = 
+    state_timeseries(blox, sol, "V", ts)
 
-function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
+function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol)
+        voltage_timeseries(neuron, sol, ts)
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
-    V = voltage_timeseries(cb, sol)
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
+    V = voltage_timeseries(cb, sol, ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
-    V = voltage_timeseries(cb, sol)
-    replace_refractory!(V, cb, sol)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
 
-    # check if the solution was saved at regular time steps
-    t_raw = unique(sol.t)
-    !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1])) && throw("The solution was not saved at a regular time steps.")
-    sampling_freq = 1000/(t_raw[2] - t_raw[1])  # in Hz
+        # check if the solution was saved at regular time steps
+        t_raw = unique(sol.t)
+        if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
+            if isnothing(sampling_rate)
+                @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
+                sampling_rate = t_raw[2] - t_raw[1]
+            end
+            t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+            V = voltage_timeseries(cb, sol, t_sampled)
+            replace_refractory!(V, cb, sol)
+        else
+            V = voltage_timeseries(cb, sol)
+            replace_refractory!(V, cb, sol)
+            sampling_rate = t_raw[2] - t_raw[1]
+        end
+    
+        # convert to Hz
+        sampling_freq = 1000/sampling_rate
     
     return periodogram(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq)
 end

@@ -166,8 +166,8 @@ function Makie.plot!(p::BandPowerSpectrum)
     return p
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution)
-    pergram = meanfield_powerspectrum(blox, sol)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; sampling_rate=nothing)
+    pergram = meanfield_powerspectrum(blox, sol; sampling_rate=sampling_rate)
 
     fig = Figure(fontsize=20)
     ax = Axis(fig[1,1],
@@ -183,8 +183,8 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution)
     fig
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state)
-    pergram = meanfield_powerspectrum(blox, sol, state)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; sampling_rate=nothing)
+    pergram = meanfield_powerspectrum(blox, sol, state; sampling_rate=sampling_rate)
 
     fig = Figure()
     ax = Axis(fig[1,1],
@@ -197,8 +197,8 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state)
     fig
 end
 
-function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state)
-    pergram = state_powerspectrum(blox, sol, state)
+function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; sampling_rate=nothing)
+    pergram = state_powerspectrum(blox, sol, state; sampling_rate=sampling_rate)
 
     fig = Figure()
     ax = Axis(fig[1,1],

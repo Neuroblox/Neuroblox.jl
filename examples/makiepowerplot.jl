@@ -11,6 +11,10 @@ add_blox!.(Ref(g), assembly)
 add_edge!(g,1,2, :weight, 44)
 neuron_net = system_from_graph(g; name=global_ns)
 prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 600), [])
-sol = solve(prob, Vern7(), saveat=0.05)
 
+sol = solve(prob, Vern7())
+fss = band_power_meanfield(cb, sol)
+fss = band_power_meanfield(cb, sol; sampling_rate=0.01)
+
+sol = solve(prob, Vern7(), saveat=0.05)
 fss = band_power_meanfield(cb, sol)
