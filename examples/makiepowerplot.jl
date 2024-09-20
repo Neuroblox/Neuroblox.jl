@@ -1,6 +1,6 @@
 using Neuroblox
 using DifferentialEquations
-using CairoMakie
+using CairoMakie # due to a bug in CairoMakie, we need to use CairoMakie@0.11
 
 global_ns = :g 
 @named LC = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
@@ -18,3 +18,13 @@ fss = band_power_meanfield(cb, sol; sampling_rate=0.01)
 
 sol = solve(prob, Vern7(), saveat=0.05)
 fss = band_power_meanfield(cb, sol)
+
+
+
+@named msn = Striatum_MSN_Adam(I_bg = 1.17*ones(100), σ = 0.11);
+sys = structural_simplify(msn.odesystem)
+prob = SDEProblem(sys, [], (0.0, 5500), [])
+sol = solve(prob, RKMil(), dt=0.05, saveat=0.05)
+
+fss = band_power_meanfield(msn, sol, "G")
+fig = band_power_meanfield(msn, sol, "G", method=Neuroblox.welch_pgram, window=Neuroblox.hanning)

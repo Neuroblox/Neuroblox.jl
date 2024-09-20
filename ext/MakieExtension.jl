@@ -8,6 +8,7 @@ using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_ne
 using Neuroblox: meanfield_powerspectrum, state_powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
+using DSP
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: bandpowerspectrum, bandpowerspectrum!, band_power_meanfield, band_power_state
@@ -166,8 +167,11 @@ function Makie.plot!(p::BandPowerSpectrum)
     return p
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; sampling_rate=nothing)
-    pergram = meanfield_powerspectrum(blox, sol; sampling_rate=sampling_rate)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution;
+                              sampling_rate=nothing, method=periodogram, window=nothing)
+                              
+    pergram = meanfield_powerspectrum(blox, sol; sampling_rate=sampling_rate, method=method,
+                                      window=window)
 
     fig = Figure(fontsize=20)
     ax = Axis(fig[1,1],
@@ -183,8 +187,11 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; sampli
     fig
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; sampling_rate=nothing)
-    pergram = meanfield_powerspectrum(blox, sol, state; sampling_rate=sampling_rate)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state;
+                              sampling_rate=nothing, method=periodogram, window=nothing)
+
+    pergram = meanfield_powerspectrum(blox, sol, state; sampling_rate=sampling_rate,
+                                      method=method, window=window)
 
     fig = Figure()
     ax = Axis(fig[1,1],
@@ -192,13 +199,19 @@ function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state;
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90],
              yscale=log10)
+
+    xlims!(ax,8,100)
+    ylims!(ax,1e-3,10)
 
     bandpowerspectrum!(ax, pergram)
     fig
 end
 
-function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; sampling_rate=nothing)
-    pergram = state_powerspectrum(blox, sol, state; sampling_rate=sampling_rate)
+function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state;
+                          sampling_rate=nothing, method=periodogram, window=nothing)
+
+    pergram = state_powerspectrum(blox, sol, state; sampling_rate=sampling_rate,
+                                  method=method, window=window)
 
     fig = Figure()
     ax = Axis(fig[1,1],
@@ -206,6 +219,9 @@ function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; sam
              ylabel="Power Spectrum",
              xticks = [8,12,20,30, 40, 50,60,70,80,90],
              yscale=log10)
+
+    xlims!(ax,8,100)
+    ylims!(ax,1e-3,10)
 
     bandpowerspectrum!(ax, pergram)
     fig
