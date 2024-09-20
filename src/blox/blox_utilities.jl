@@ -440,29 +440,13 @@ end
 
 function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
     s = state_timeseries(cb, sol, state, ts)
-#    replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
 function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing)
-
-    # check if the solution was saved at regular time steps
-    t_raw = unique(sol.t)
-    if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
-        if isnothing(sampling_rate)
-            @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
-            sampling_rate = t_raw[2] - t_raw[1]
-        end
-        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
-        s = meanfield_timeseries(cb, sol, state, t_sampled)
-    else
-        s = meanfield_timeseries(cb, sol, state)
-        sampling_rate = t_raw[2] - t_raw[1]
-    end
-
-    # convert to Hz
-    sampling_freq = 1000/sampling_rate
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    s = meanfield_timeseries(cb, sol, state, t_sampled)
 
     return periodogram(s, fs=sampling_freq)
 end
@@ -470,25 +454,10 @@ end
 function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing)
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-
     s = only(@variables $(state_name)(t))
 
-    # check if the solution was saved at regular time steps
-    t_raw = unique(sol.t)
-    if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
-        if isnothing(sampling_rate)
-            @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
-            sampling_rate = t_raw[2] - t_raw[1]
-        end
-        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
-        data = Array(sol(ts, idxs = state_name))
-    else
-        data = sol[s]
-        sampling_rate = t_raw[2] - t_raw[1]
-    end
-
-    # convert to Hz
-    sampling_freq = 1000/sampling_rate
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    data = isnothing(t_sampled) ? sol[s] : Array(sol(t_sampled, idxs = state_name))
 
     return periodogram(data, fs = sampling_freq)
 end
@@ -511,25 +480,29 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
 end
 
 function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    V = voltage_timeseries(cb, sol, t_sampled)
+    replace_refractory!(V, cb, sol)
 
-        # check if the solution was saved at regular time steps
-        t_raw = unique(sol.t)
-        if !isapprox(std(diff(t_raw)), 0, atol=1e-10*(t_raw[2]-t_raw[1]))
-            if isnothing(sampling_rate)
-                @warn("The solution was not saved at a fixed time step. Please provide a 'sampling_rate' in milliseconds.")
-                sampling_rate = t_raw[2] - t_raw[1]
-            end
-            t_sampled = t_raw[1]:sampling_rate:t_raw[end]
-            V = voltage_timeseries(cb, sol, t_sampled)
-            replace_refractory!(V, cb, sol)
-        else
-            V = voltage_timeseries(cb, sol)
-            replace_refractory!(V, cb, sol)
-            sampling_rate = t_raw[2] - t_raw[1]
-        end
-    
-        # convert to Hz
-        sampling_freq = 1000/sampling_rate
-    
     return periodogram(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq)
+end
+
+function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
+    t_raw = unique(sol.t)
+    dt = diff(t_raw)
+    dt_std = std(dt)
+    first_diff = dt[1]
+
+    # check if the solution was saved at regular time steps
+    if !isapprox(dt_std, 0, atol=1e-10 * first_diff)
+        if isnothing(sampling_rate)
+            @warn("Solution not saved at fixed time steps. Provide 'sampling_rate' in milliseconds.")
+            sampling_rate = first_diff
+        end
+        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+        return t_sampled, 1000 / sampling_rate
+    else
+        sampling_rate = first_diff
+        return nothing, 1000 / sampling_rate
+    end
 end
