@@ -26,5 +26,6 @@ sys = structural_simplify(msn.odesystem)
 prob = SDEProblem(sys, [], (0.0, 5500), [])
 sol = solve(prob, RKMil(), dt=0.05, saveat=0.05)
 
+fss = band_power_meanfield(msn, sol)
 fss = band_power_meanfield(msn, sol, "G")
 fig = band_power_meanfield(msn, sol, "G", method=Neuroblox.welch_pgram, window=Neuroblox.hanning)

@@ -419,7 +419,9 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
+                          state::String, ts=nothing)
+                          
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
     s = only(@variables $(state_name)(t))
@@ -438,20 +440,28 @@ function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, st
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
+                              state::String, ts=nothing)
+                              
     s = state_timeseries(cb, sol, state, ts)
 
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing, method=periodogram, window=nothing)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
+                                 state::String; sampling_rate=nothing, method=periodogram,
+                                 window=nothing)
+
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
     s = meanfield_timeseries(cb, sol, state, t_sampled)
 
     return method(s, fs=sampling_freq, window=window)
 end
 
-function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing, method=periodogram, window=nothing)
+function state_powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
+                             state::String; sampling_rate=nothing, method=periodogram,
+                             window=nothing)
+
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
     s = only(@variables $(state_name)(t))
@@ -479,7 +489,9 @@ function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; sampling_rate=nothing, method=periodogram, window=nothing)
+function meanfield_powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution;
+                                 sampling_rate=nothing, method=periodogram, window=nothing)
+
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
     V = voltage_timeseries(cb, sol, t_sampled)
     replace_refractory!(V, cb, sol)
