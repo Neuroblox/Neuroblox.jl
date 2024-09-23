@@ -26,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -234,7 +232,7 @@ export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
-export PowerSpectrumBlox, BandPassFilterBlox
+export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop

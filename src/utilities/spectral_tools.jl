@@ -2,7 +2,6 @@
 spectral_tools.jl
 
 This utility file contains the methods utilized for spectral data analysis.
-    powerspectrum    : compute power spectrum from time series via autopower, periodogram, and pwelch periodogram
     bandpassfilter   : designs a bandpass filter and applies it to time series data with some given pass band
     phaseangle       : computes the phase angle on hilbert-transformed time series data
     complexwavelet   : generate a complex morlet wavelet
@@ -10,60 +9,6 @@ This utility file contains the methods utilized for spectral data analysis.
     csd2mar          : compute multivariate auto-regressive model parameters from cross-spectral densities
     mar_ml           : maximum likelihood estimate of multivariate auto-regressive model parameters
 """
-
-"""
-powerspectrum computes the power spectrum of a given time series signal. 
-Data in matrix format is converted to vector format.
-It has the following inputs:
-    'data'   : time series data which assumes time is in the first column of the data matrix
-    'T'      : time series signal duration (in seconds)
-    'fs'     : sampling frequency (default=1000)
-    'method' : select from auto, periodogram, pwelch (default=pwelch)
-    'window' : select from none, hanning, or hamming (default=hanning)
-The following outputs:
-    'f'      : frequency vector with sampling df (frequency resolution) 
-    'pxx'    : real part of the power spectrum estimate
-With parameters:
-    'df'     : frequency resolution
-"""
-
-function powerspectrum(data, T, fs, method, window)
-    if typeof(data) == Matrix{Float64}
-        data = vec(data)
-    end
-
-    if method == "auto" 
-        df = 1/T                                           
-        f = 0:df:(fs/2)  
-        dt = 1/fs             
-        pxx = df*(2*(dt^2))*AbstractFFTs.fft(DSP.resample(data, length(f))).*conj(AbstractFFTs.fft(DSP.resample(data, length(f))))
-        pxx = real(pxx)
-    end
-
-    if method == "periodogram"
-        periodogram_estimation = periodogram(data, fs=fs, window=window)
-        pxx = periodogram_estimation.power
-        f = periodogram_estimation.freq
-    end
-
-    if method == "pwelch"
-        pwelch_periodogram_estimation = welch_pgram(data, fs=fs, window=window)
-        pxx = pwelch_periodogram_estimation.power
-        f = pwelch_periodogram_estimation.freq
-    end
-    return f, pxx
-end
-
-mutable struct PowerSpectrumBlox <: SpectralUtilities
-    T::Float64
-    fs::Float64
-    method::String
-    window::Union{Function,AbstractVector,Nothing}
-    PSDfunc::Function
-    function PowerSpectrumBlox(;name, T=20, fs=1000, method="periodogram", window="hanning")
-        new(T, fs, method, window, powerspectrum)
-    end
-end
 
 """
 bandpassfilter takes in time series data and bandpass filters it.

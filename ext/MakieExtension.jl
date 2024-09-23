@@ -5,7 +5,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 using Neuroblox
 using Neuroblox: AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
-using Neuroblox: meanfield_powerspectrum, state_powerspectrum
+using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
 using DSP
@@ -208,7 +208,7 @@ end
 
 function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = meanfield_powerspectrum(blox, sol; powerspectrum_kwargs...)
+    pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
     fig = bandpowerspectrum(pergram; kwargs...)
     display(fig)
     fig
@@ -216,7 +216,7 @@ end
 
 function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = meanfield_powerspectrum(blox, sol, state; powerspectrum_kwargs...)
+    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
     fig = bandpowerspectrum(pergram; kwargs...)
     display(fig)
     fig
@@ -224,7 +224,7 @@ end
 
 function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = state_powerspectrum(blox, sol, state; powerspectrum_kwargs...)
+    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
     fig = bandpowerspectrum(pergram; kwargs...)
     display(fig)
     fig

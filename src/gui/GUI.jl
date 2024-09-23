@@ -451,12 +451,12 @@ function arguments(::Type{Neuroblox.BandPassFilterBlox})
   )
 end
 
-function arguments(::Type{Neuroblox.PowerSpectrumBlox})
-  OrderedDict(
-    :T => NCAD(10, NUMBER, 0, 2000,[],true),
-    :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
-  )
-end
+# function arguments(::Type{Neuroblox.PowerSpectrumBlox})
+#   OrderedDict(
+#     :T => NCAD(10, NUMBER, 0, 2000,[],true),
+#     :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
+#   )
+# end
 
 function arguments(::Type{Neuroblox.PhaseAngleBlox})
   OrderedDict(
