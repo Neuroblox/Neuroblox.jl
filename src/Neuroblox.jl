@@ -203,11 +203,8 @@ function effectiveconnectivity! end
 function freeenergy end
 function freeenergy! end
 
-function bandpowerspectrum end
-function bandpowerspectrum! end
-
-function band_power_meanfield end
-function band_power_state end
+function powerspectrumplot end
+function powerspectrumplot! end
 
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
@@ -250,5 +247,5 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PYR_Izh, QIF_PING_NGNMM
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-export bandpowerspectrum, bandpowerspectrum!, band_power_meanfield, band_power_state
+export powerspectrumplot, powerspectrumplot!
 end

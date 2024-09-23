@@ -11,7 +11,7 @@ using LinearAlgebra: diag
 using DSP
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-import Neuroblox: bandpowerspectrum, bandpowerspectrum!, band_power_meanfield, band_power_state
+import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
     Theme()
@@ -145,7 +145,7 @@ function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10,
     display(fig)
 end
 
-@recipe(BandPowerSpectrum, pergram) do scene
+@recipe(PowerSpectrumPlot, pergram) do scene
     Theme(
         Axis = (
             xlabel = "Frequency (Hz)",
@@ -166,9 +166,9 @@ end
     )
 end
 
-argument_names(::Type{<: BandPowerSpectrum}) = (:pergram)
+argument_names(::Type{<: PowerSpectrumPlot}) = (:pergram)
 
-function Makie.plot!(p::BandPowerSpectrum)
+function Makie.plot!(p::PowerSpectrumPlot)
 
     powspec = p.pergram[]
     powerfirst = powspec.power[2]
@@ -206,26 +206,18 @@ function Makie.plot!(p::BandPowerSpectrum)
     return p
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
+function powerspectrumplot(blox::CompositeBlox, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
 
     pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
-    fig = bandpowerspectrum(pergram; kwargs...)
+    fig = powerspectrumplot(pergram; kwargs...)
     display(fig)
     fig
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
+function powerspectrumplot(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
     pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
-    fig = bandpowerspectrum(pergram; kwargs...)
-    display(fig)
-    fig
-end
-
-function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
-
-    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
-    fig = bandpowerspectrum(pergram; kwargs...)
+    fig = powerspectrumplot(pergram; kwargs...)
     display(fig)
     fig
 end
