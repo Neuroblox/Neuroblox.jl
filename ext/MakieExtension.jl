@@ -170,31 +170,22 @@ argument_names(::Type{<: PowerSpectrumPlot}) = (:pergram)
 
 function Makie.plot!(p::PowerSpectrumPlot)
 
+    ax = current_axis()
+    xlims!(ax, p.xlims[][1], p.xlims[][2])
+    ylims!(ax, p.ylims[][1], p.ylims[][2])
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+    ax.xticks = p.Axis.xticks[]
+    ax.yscale = p.Axis.yscale[]
+
     powspec = p.pergram[]
     powerfirst = powspec.power[2]
-
-    theme = Theme(
-        Axis = (
-            ylabel = p.Axis.ylabel[],
-            xlabel = p.Axis.xlabel[],
-            xticks = p.Axis.xticks[],
-            yscale = p.Axis.yscale[],
-            )
-    )
-    set_theme!(theme)
-
     lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
-    
-    y1 = p.ylims[][1]
-    y2 = p.ylims[][2]
-    x1 = p.xlims[][1]
-    x2 = p.xlims[][2]
-
-    ax = current_axis()
-    xlims!(ax, x1, x2)
-    ylims!(ax, y1, y2)
 
     if p.show_bands[]
+        y1 = p.ylims[][1]
+        y2 = p.ylims[][2]
+
         poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
         poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
         poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
