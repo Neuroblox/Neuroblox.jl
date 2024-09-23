@@ -26,6 +26,22 @@ sys = structural_simplify(msn.odesystem)
 prob = SDEProblem(sys, [], (0.0, 5500), [])
 sol = solve(prob, RKMil(), dt=0.05, saveat=0.05)
 
-fss = band_power_meanfield(msn, sol)
-fss = band_power_meanfield(msn, sol, "G")
-fig = band_power_meanfield(msn, sol, "G", method=Neuroblox.welch_pgram, window=Neuroblox.hanning)
+fss = band_power_meanfield(msn, sol, ylims=(1e-5, 10),
+                            alpha_label_position = (8.5, 4.0),
+                            beta_label_position = (22, 4.0),
+                            gamma_label_position = (60, 4.0))
+
+fig = band_power_meanfield(msn, sol, "G",
+                            powerspectrum_kwargs = (; method=Neuroblox.welch_pgram),
+                            ylims=(1e-5, 10), show_bands = false,
+                            axis=(xlabel="My axis name", backgroundcolor = :purple),
+                            figure = (; size=(800, 300)))
+
+
+fig = band_power_meanfield(msn, sol, "G",
+                            powerspectrum_kwargs = (;method=Neuroblox.welch_pgram, window=Neuroblox.hanning),
+                            ylims=(1e-4, 2e-1), xlims=(2, 100),
+                            alpha_start = 5,
+                            alpha_label_position = (8.5, 1.2e-1),
+                            beta_label_position = (22, 1.2e-1),
+                            gamma_label_position = (60, 1.2e-1))

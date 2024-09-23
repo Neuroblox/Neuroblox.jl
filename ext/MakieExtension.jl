@@ -146,7 +146,24 @@ function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10,
 end
 
 @recipe(BandPowerSpectrum, pergram) do scene
-    Theme()
+    Theme(
+        Axis = (
+            xlabel = "Frequency (Hz)",
+            ylabel = "Power Spectrum",
+            xticks = [8,12,20,30, 40, 50,60,70,80,90],
+            yscale = log10,
+        ),
+        xlims = (8, 100),
+        ylims = (1e-3, 10),
+        alpha_start = 8,
+        beta_start = 12,
+        gamma_start = 35,
+        gamma_end = 100,
+        alpha_label_position = (8.5, 5.0),
+        beta_label_position = (22, 5.0),
+        gamma_label_position = (60, 5.0),
+        show_bands = true
+    )
 end
 
 argument_names(::Type{<: BandPowerSpectrum}) = (:pergram)
@@ -156,68 +173,60 @@ function Makie.plot!(p::BandPowerSpectrum)
     powspec = p.pergram[]
     powerfirst = powspec.power[2]
 
+    theme = Theme(
+        Axis = (
+            ylabel = p.Axis.ylabel[],
+            xlabel = p.Axis.xlabel[],
+            xticks = p.Axis.xticks[],
+            yscale = p.Axis.yscale[],
+            )
+    )
+    set_theme!(theme)
+
     lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
-    poly!(p, Point2f[(8, 1e-7), (8, 10), (12, 10), (12, 1e-7)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
-	poly!(p, Point2f[(12, 1e-7), (12, 10), (35, 10), (35, 1e-7)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
-	poly!(p, Point2f[(35, 1e-7), (35, 10), (200, 10), (200, 1e-7)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
-	
-	text!(p, 8.5, 5.0; text=L"\alpha", fontsize=24)
-	text!(p, 22, 5.0; text=L"\beta", fontsize=24)
-	text!(p, 60, 5.0; text=L"\gamma", fontsize=24)
+    
+    y1 = p.ylims[][1]
+    y2 = p.ylims[][2]
+    x1 = p.xlims[][1]
+    x2 = p.xlims[][2]
+
+    ax = current_axis()
+    xlims!(ax, x1, x2)
+    ylims!(ax, y1, y2)
+
+    if p.show_bands[]
+        poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+        poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+        poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+        
+        text!(p, p.alpha_label_position[]...; text=L"\alpha", fontsize=24)
+        text!(p, p.beta_label_position[]...; text=L"\beta", fontsize=24)
+        text!(p, p.gamma_label_position[]...; text=L"\gamma", fontsize=24)
+    end
     return p
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; kwargs...)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = meanfield_powerspectrum(blox, sol; kwargs...)
-
-    fig = Figure(fontsize=20)
-    ax = Axis(fig[1,1],
-             xlabel="Frequency (Hz)",
-             ylabel="Power Spectrum",
-             xticks = [8,12,20,30, 40, 50,60,70,80,90],
-             yscale=log10)
-
-    xlims!(ax,8,100)
-    ylims!(ax,1e-3,10)
-
-    bandpowerspectrum!(ax, pergram)
+    pergram = meanfield_powerspectrum(blox, sol; powerspectrum_kwargs...)
+    fig = bandpowerspectrum(pergram; kwargs...)
+    display(fig)
     fig
 end
 
-function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; kwargs...)
+function band_power_meanfield(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = meanfield_powerspectrum(blox, sol, state; kwargs...)
-
-    fig = Figure()
-    ax = Axis(fig[1,1],
-             xlabel="Frequency (Hz)",
-             ylabel="Power Spectrum",
-             xticks = [8,12,20,30, 40, 50,60,70,80,90],
-             yscale=log10)
-
-    xlims!(ax,8,100)
-    ylims!(ax,1e-3,10)
-
-    bandpowerspectrum!(ax, pergram)
+    pergram = meanfield_powerspectrum(blox, sol, state; powerspectrum_kwargs...)
+    fig = bandpowerspectrum(pergram; kwargs...)
+    display(fig)
     fig
 end
 
-function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; kwargs...)
+function band_power_state(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
-    pergram = state_powerspectrum(blox, sol, state; kwargs...)
-
-    fig = Figure()
-    ax = Axis(fig[1,1],
-             xlabel="Frequency (Hz)",
-             ylabel="Power Spectrum",
-             xticks = [8,12,20,30, 40, 50,60,70,80,90],
-             yscale=log10)
-
-    xlims!(ax,8,100)
-    ylims!(ax,1e-3,10)
-
-    bandpowerspectrum!(ax, pergram)
+    pergram = state_powerspectrum(blox, sol, state; powerspectrum_kwargs...)
+    fig = bandpowerspectrum(pergram; kwargs...)
+    display(fig)
     fig
 end
 
