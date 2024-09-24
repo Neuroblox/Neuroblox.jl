@@ -34,3 +34,18 @@ for i ∈ eachindex(all_files)
     resampled_data = resample_timeseries(collapse_data, 1)
     CSV.write(resampled_path, resampled_data)
 end
+
+concat_file_path = "/Users/achesebro/Downloads/all_sims/concatenated_sims.csv"
+all_files = readdir(resampled_sim_path)
+first_data = DataFrame(CSV.File(resampled_sim_path * all_files[1]))
+all_data = first_data
+
+for i ∈ 2:lastindex(all_files)
+    next_data = DataFrame(CSV.File(resampled_sim_path * all_files[i]))
+    all_data = vcat(all_data, next_data)
+end
+
+new_t = 0:lastindex(all_data.t)-1
+all_data.t .= collect(new_t)
+
+CSV.write(concat_file_path, all_data)
