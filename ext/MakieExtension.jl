@@ -197,7 +197,7 @@ function Makie.plot!(p::PowerSpectrumPlot)
     return p
 end
 
-function powerspectrumplot(blox::CompositeBlox, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
+function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
 
     pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
     fig = powerspectrumplot(pergram; kwargs...)
@@ -205,7 +205,7 @@ function powerspectrumplot(blox::CompositeBlox, sol::AbstractSolution; powerspec
     fig
 end
 
-function powerspectrumplot(blox::CompositeBlox, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
+function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
 
     pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
     fig = powerspectrumplot(pergram; kwargs...)
