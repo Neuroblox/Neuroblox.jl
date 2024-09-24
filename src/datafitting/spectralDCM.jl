@@ -38,6 +38,7 @@ struct VLSetup{Model, T1 <: Array{ComplexF64}, T2 <: AbstractArray}
     systemvecs::Vector{Vector{Float64}}       # μθ_pr: prior expectation values of parameters and μλ_pr: prior expectation values of hyperparameters
     systemmatrices::Vector{Matrix{Float64}}   # Πθ_pr: prior precision matrix of parameters, Πλ_pr: prior precision matrix of hyperparameters
     Q::T2                                     # linear decomposition of precision matrix of parameters, typically just one matrix, the empirical correlation matrix
+    modelparam::OrderedDict
 end
 
 """
@@ -348,7 +349,7 @@ end
     -- `μλ_pr`      : prior mean(s) for λ hyperparameter(s)
     - `indices`  : indices to separate model parameters from other parameters. Needed for the computation of AD gradient.
 """
-function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modality)
+function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modelparam, modality)
     # compute cross-spectral density
     dt = csdsetup.dt;              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
     freq = csdsetup.freq;                # frequencies at which the CSD is evaluated
@@ -373,6 +374,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     end
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
+    nr = length(indices[:lnγ])        # region specific noise parameter can be used to get the number of regions
 
     f = params -> csd_mtf(freq, mar_order, derivatives, params, indices, modality)
 
@@ -393,16 +395,17 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
         zeros(np),
         zeros(np, np)
     )
-# Main.foo[] = Q, f, y_csd, [np, ny, nq, nh], [μθ_pr, hyperpriors[:μλ_pr]], [inv(Σθ_pr), hyperpriors[:Πλ_pr]]
+
     # variational laplace setup
     vlsetup = VLSetup(
         f,                                    # function that computes the cross-spectral density at fixed point 'initcond'
         y_csd,                                # empirical cross-spectral density
         1e-1,                                 # tolerance
-        [np, ny, nq, nh],                     # number of parameters, number of data points, number of Qs, number of hyperparameters
+        [nr, np, ny, nq, nh],                 # number of parameters, number of data points, number of Qs, number of hyperparameters
         [μθ_pr, hyperpriors[:μλ_pr]],         # parameter and hyperparameter prior mean
         [inv(Σθ_pr), hyperpriors[:Πλ_pr]],    # parameter and hyperparameter prior precision matrices
-        Q                                     # components of data precision matrix
+        Q,                                    # components of data precision matrix
+        modelparam
     )
     return (vlstate, vlsetup)
 end
@@ -412,7 +415,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
     f = setup.model_at_x0
     y = setup.y_csd              # cross-spectral density
-    (np, ny, nq, nh) = setup.systemnums
+    (nr, np, ny, nq, nh) = setup.systemnums
     (μθ_pr, μλ_pr) = setup.systemvecs
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
     Q = setup.Q

@@ -772,3 +772,39 @@ end
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
+
+@testset "QIF_PING" begin
+    @named exci_PING = QIF_PING_NGNMM(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
+    @named inhi_PING = QIF_PING_NGNMM(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [exci_PING, inhi_PING])
+    add_edge!(g, exci_PING => inhi_PING; weight=10.0)
+    add_edge!(g, inhi_PING => exci_PING; weight=10.0)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 100.0
+    prob = SDEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, RKMil(), saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+end
+
+@testset "PYR_Izh" begin
+    @named popP = PYR_Izh(η̄=0.08, κ=0.8)
+    @named popQ = PYR_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
+
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [popP, popQ])
+    add_edge!(g, popP => popQ; weight=1.0)
+    add_edge!(g, popQ => popP; weight=1.0)
+
+    @named sys = system_from_graph(g)
+    sys = structural_simplify(sys)
+
+    sim_dur = 200.0
+    prob = ODEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, Tsit5(), saveat=1.0)
+    @test sol.retcode == ReturnCode.Success
+end

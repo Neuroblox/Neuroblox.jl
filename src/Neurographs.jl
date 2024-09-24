@@ -82,44 +82,19 @@ function graph_delays(g::MetaDiGraph)
     return bc.delays
 end
 
-function generate_discrete_callbacks(g, bc::BloxConnector; t_block=missing)  
-    if !ismissing(t_block)
-        eqs_params = get_equations_with_parameter_lhs(bc)
-       
-        neurons_exci = get_HH_exci_neurons(g)
-        eqs = Equation[]
-      
-        for neurons in neurons_exci
-           nn = get_namespaced_sys(neurons)  
-           push!(eqs,nn.spikes_window ~ 0)
-           
-        end
-        if !isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, cbs_spikes, bc.discrete_callbacks)
-        elseif isempty(eqs_params) && !isempty(eqs)
-            cbs_spikes = (t_block + sqrt(eps(float(t_block)))) => eqs
-            return vcat(cbs_spikes, bc.discrete_callbacks)
-        elseif !isempty(eqs_params) && isempty(eqs)
-            cbs_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-            return vcat(cbs_params, bc.discrete_callbacks)
-        else
-            return bc.discrete_callbacks
-        end
-    else
-        return bc.discrete_callbacks
-    end
-end
+generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
 
-generate_continuous_callbacks(blox, states_dst) = []
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
+    spike_affect_states = get_spike_affect_states(bc)
+    name_blox = namespaced_nameof(blox)
 
-function generate_continuous_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, states_dst)
+    states_dest = get(spike_affect_states, name_blox, Num[])
+
     sys = get_namespaced_sys(blox)
     
-    cb = [sys.V ~ sys.θ] => (
+    cb = (sys.V >= sys.θ) => (
         LIF_spike_affect!, 
-        vcat(sys.V, states_dst), 
+        vcat(sys.V, states_dest), 
         [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
         [], 
         nothing
@@ -128,20 +103,39 @@ function generate_continuous_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron},
     return cb
 end
 
-function generate_continuous_callbacks(g, bc::BloxConnector)
-    bloxs = flatten_graph(g)
-    spike_affect_states = get_spike_affect_states(bc)
-
-    cbs = []
-    for blox in bloxs
-        name_blox = namespaced_nameof(blox)
+function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_block = missing)
+    if !ismissing(t_block)
+        nn = get_namespaced_sys(blox)
+        eq = nn.spikes_window ~ 0
+        cb_spike_reset = (t_block + sqrt(eps(float(t_block)))) => [eq]
         
-        if haskey(spike_affect_states, name_blox)
-            push!(cbs, generate_continuous_callbacks(blox, spike_affect_states[name_blox]))
-        end
+        return cb_spike_reset
+    else
+        return []
+    end
+end
+
+function generate_discrete_callbacks(bc::BloxConnector; t_block = missing)
+    eqs_params = get_equations_with_parameter_lhs(bc)
+
+    if !ismissing(t_block) && !isempty(eqs_params)
+        cb_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
+        return vcat(cb_params, bc.discrete_callbacks)
+    else
+        return bc.discrete_callbacks
+    end 
+end
+
+function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block = missing)
+    bloxs = flatten_graph(g)
+
+    cbs = mapreduce(vcat, bloxs) do blox
+        generate_discrete_callbacks(blox, bc; t_block)
     end
     
-    return reduce(vcat, cbs; init=[])
+    cbs_params = generate_discrete_callbacks(bc; t_block)
+
+    return vcat(cbs, cbs_params)
 end
 
 function system_from_graph(g::MetaDiGraph; name, t_block=missing)
@@ -160,9 +154,11 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=miss
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
-    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
 
-    return compose(System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
+    return compose(
+        System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs), 
+        blox_syss
+    )
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
@@ -170,9 +166,8 @@ function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; na
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
-    continuous_cbs = identity.(generate_continuous_callbacks(g, bc))
 
-    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs, continuous_events = continuous_cbs), blox_syss)
+    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
 end
 
 function system_from_parts(parts::AbstractVector; name)

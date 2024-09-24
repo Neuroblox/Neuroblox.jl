@@ -1,5 +1,3 @@
-@parameters t
-
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
@@ -38,7 +36,7 @@ mutable struct CosineBlox
     odesystem::ODESystem
     function CosineBlox(;name, amplitude=1, frequency=20, phase=0)
 
-        sts    = @variables jcn(t)=0.0 u(t)=0.0
+        sts    = @variables jcn(t) u(t)=0.0
         params = @parameters amplitude=amplitude frequency=frequency phase=phase
 
         eqs = [u ~ amplitude * cos(2 * pi * frequency * (t) + phase)]
@@ -56,7 +54,7 @@ mutable struct NoisyCosineBlox
     odesystem::ODESystem
     function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
 
-        sts    = @variables  u(t)=0.0 jcn(t)=0.0
+        sts    = @variables  u(t)=0.0 jcn(t)
         params = @parameters amplitude=amplitude frequency=frequency
 
         eqs    = [u   ~ amplitude * cos(2 * pi * frequency * (t) + jcn)]
@@ -76,7 +74,7 @@ mutable struct PhaseBlox
         range       = convert(Vector{Float64}, phase_range)
         phase_input = CubicSpline(data, range)
 
-        sts         = @variables  u(t)=0.0 jcn(t)=0.0
+        sts         = @variables  u(t)=0.0 jcn(t)
 
         eqs         = [u ~ phase_input(t)]
         odesys      = ODESystem(eqs, t, sts, []; name=name)

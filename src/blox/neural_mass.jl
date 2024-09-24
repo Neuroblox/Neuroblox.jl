@@ -104,7 +104,7 @@ struct LinearNeuralMass <: NeuralMassBlox
     odesystem
     namespace
     function LinearNeuralMass(;name, namespace=nothing)
-        sts = @variables x(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+        sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, t, name=name)
         new(sts[1], sts[2], sys, namespace)
@@ -141,7 +141,7 @@ struct HarmonicOscillator <: NeuralMassBlox
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         # p = progress_scope(ω, ζ, k, h)
         p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
-        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true]
+        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
@@ -202,7 +202,7 @@ struct JansenRit <: NeuralMassBlox
         p = paramscoping(τ=τ, H=H, λ=λ, r=r)
         τ, H, λ, r = p
         if !delayed
-            sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+            sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
             eqs = [D(x) ~ y - ((2/τ)*x),
                    D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
             sys = System(eqs, t, name=name)
@@ -210,7 +210,7 @@ struct JansenRit <: NeuralMassBlox
             #wrote inputs similarly to keep consistent
             return new(p, sts[1], sts[3], sys, namespace)
         else
-            sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t)=0.0 [input=true] 
+            sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
             eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
                    D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
             sys = System(eqs, t, name=name)
@@ -265,7 +265,7 @@ struct WilsonCowan <: NeuralMassBlox
         # p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
         p = paramscoping(τ_E=τ_E, τ_I=τ_I, a_E=a_E, a_I=a_I, c_EE=c_EE, c_IE=c_IE, c_EI=c_EI, c_II=c_II, θ_E=θ_E, θ_I=θ_I, η=η)
         τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
-        sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t)=0.0 [input=true] #P(t)=0.0
+        sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t) [input=true] #P(t)=0.0
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         sys = System(eqs, t, name=name)
@@ -334,7 +334,7 @@ struct LarterBreakspear <: NeuralMassBlox
         p = paramscoping(C=C, δ_VZ=δ_VZ, T_Ca=T_Ca, δ_Ca=δ_Ca, g_Ca=g_Ca, V_Ca=V_Ca, T_K=T_K, δ_K=δ_K, g_K=g_K, V_K=V_K, T_Na=T_Na, δ_Na=δ_Na, g_Na=g_Na, V_Na=V_Na, V_L=V_L, g_L=g_L, V_T=V_T, Z_T=Z_T, Q_Vmax=Q_Vmax, Q_Zmax=Q_Zmax, IS=IS, a_ee=a_ee, a_ei=a_ei, a_ie=a_ie, a_ne=a_ne, a_ni=a_ni, b=b, τ_K=τ_K, ϕ=ϕ, r_NMDA=r_NMDA)
         C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
         
-        sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t)=0.0 [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
+        sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t) [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
 
         eqs = [ D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
                          g_K * W * (V - V_K) - g_L * (V - V_L) -
@@ -422,7 +422,7 @@ struct Generic2dOscillator <: NeuralMassBlox
         p = paramscoping(τ=τ, a=a,b=b,c=c,d=d,e=e,f=f,g=g,α=α,β=β,γ=γ)
         τ,a,b,c,d,e,f,g,α,β,γ = p
         
-        sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t)=0.0 [input=true]
+        sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t) [input=true]
         @brownian w v
         eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
                 D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * v]
@@ -489,16 +489,80 @@ struct KuramotoOscillator <: NeuralMassBlox
         ω, ζ = p
         
         if include_noise
-            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
+            sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
             @brownian w
             eqs = [D(θ) ~ ω + ζ * w + jcn]
             sys = System(eqs, t, sts, p; name=name)
             new(p, sts[1], sts[2], sys, namespace)
         else
-            sts = @variables θ(t)=0.0 [output = true] jcn(t)=0.0 [input=true]
+            sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
             eqs = [D(θ) ~ ω + jcn]
             sys = System(eqs, t, sts, p; name=name)
             new(p, sts[1], sts[2], sys, namespace)
         end
+    end
+end
+
+struct PYR_Izh <: NeuralMassBlox
+    params
+    output
+    voltage
+    jcn
+    odesystem
+    namespace
+    function PYR_Izh(;
+                name,
+                namespace=nothing,
+                Δ=0.02,
+                α=0.6215,
+                gₛ=1.2308,
+                η̄=0.12,
+                I_ext=0.0,
+                eᵣ=1.0,
+                a=0.0077,
+                b=-0.0062,
+                wⱼ=0.0189,
+                sⱼ=1.2308,
+                τₛ=2.6,
+                κ=1.0,
+                ω=0.0)
+            p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
+            Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+            sts = @variables r(t)=0.0 v(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t)=0.0 [input=true]
+            eqs = [ D(r) ~ Δ/π + 2*r*v - (α+gₛ*s)*r,
+                    D(v) ~ v^2 - α*v - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - v) + jcn - (π*r)^2,
+                    D(w) ~ a*(b*v - w) + wⱼ*r,
+                    D(s) ~ -s/τₛ + sⱼ*r
+                ]
+            sys = System(eqs, t, sts, p; name=name)
+            new(p, sts[4], sts[2], sts[5], sys, namespace)
+    end
+end
+
+struct QIF_PING_NGNMM <: NeuralMassBlox
+    params
+    output
+    voltage
+    jcn
+    odesystem
+    namespace
+    function QIF_PING_NGNMM(;
+                            name,
+                            namespace=nothing,
+                            Δ=1.0,
+                            τₘ=20.0,
+                            H=1.3,
+                            I_ext=0.0,
+                            ω=0.0,
+                            J_internal=8.0,
+                            A=0.0)
+        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+        Δ, τₘ, H, I_ext, J_internal = p
+        sts = @variables r(t)=0.0 [output=true] v(t)=0.0 jcn(t)=0.0 [input=true]
+        @brownian ξ
+        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
+               D(v) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sts[1], sts[2], sts[3], sys, namespace)
     end
 end

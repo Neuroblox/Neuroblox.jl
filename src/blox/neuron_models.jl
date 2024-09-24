@@ -21,11 +21,11 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			z(t)=0.0
@@ -106,11 +106,11 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			n(t)=0.32 
 			m(t)=0.05 
 			h(t)=0.59 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
-			I_in(t)=0.0
+			I_in(t)
 			[input=true]
             G(t)=0.0 
 			[output = true] 
@@ -191,11 +191,11 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			m(t)=0.027
 			h(t)=0.99
 			mM(t)=0.022
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -279,13 +279,13 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			h(t)=0.059 
 			mD(t)=0.05
 			hD(t)=0.059
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-			I_gap(t)=0.0
+			I_gap(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -367,11 +367,11 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -446,11 +446,11 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
-			I_syn(t)=0.0 
+			I_syn(t)
 			[input=true] 
-            I_in(t)=0.0
+            I_in(t)
             [input=true]
-			I_asc(t)=0.0
+			I_asc(t)
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
@@ -550,7 +550,7 @@ struct IFNeuron <: AbstractNeuronBlox
 					   I_in=0)
 		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
 		C, θ, Eₘ, I_in = p
-		sts = @variables V(t) = -70.00 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.00 jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
 		ev = [V~θ] => [V~Eₘ]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
@@ -613,7 +613,7 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   I_in=0.0)
 		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
 		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
-		sts = @variables V(t) = -70.00 G(t)=0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.00 G(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G,
 			  ]
@@ -687,7 +687,7 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t)=0 [input=true] 
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
         eqs = [
             D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
@@ -755,7 +755,7 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t)=0 [input=true] 
+        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
         eqs = [
             D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
@@ -805,7 +805,7 @@ struct QIFNeuron <: AbstractNeuronBlox
 						θ=25.0)
 		p = paramscoping(C=C, Rₘ=Rₘ, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
 		C, Rₘ, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
-		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ ((V-Eₘ)^2/(Rₘ^2)+I_in+jcn)/C,
 		 		D(G)~(-1/τ₂)*G + z,
 	        	D(z)~(-1/τ₁)*z
@@ -851,7 +851,7 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 							   τ=2.6)
 		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
 		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t)=0.0 [input=true]
+		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
 				D(w) ~ a*(b*V - w),
 				D(G) ~ (-1/τ)*G + z,

@@ -1,5 +1,9 @@
 module Neuroblox
 
+if !isdefined(Base, :get_extension)
+    using Requires
+end
+
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
@@ -22,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -52,8 +54,6 @@ using JLD2
 using Peaks: argmaxima, peakproms!, peakheights!
 
 using LogExpFunctions: logistic
-
-using MakieCore
 
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
@@ -119,7 +119,6 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
-include("./plot_recipes/composite_recipes.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -129,7 +128,7 @@ end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(blox.odesystem, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
+    sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
     statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
@@ -186,24 +185,51 @@ https://github.com/Neuroblox/NeurobloxIssues.
 """)
 end
 
+function meanfield end
+function meanfield! end
+
+function rasterplot end
+function rasterplot! end
+
+function stackplot end
+function stackplot! end
+
+function voltage_stack end
+
+function ecbarplot end
+function effectiveconnectivity end
+function effectiveconnectivity! end
+
+function freeenergy end
+function freeenergy! end
+
+function powerspectrumplot end
+function powerspectrumplot! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
     #end
+
+    @static if !isdefined(Base, :get_extension)
+        @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+            include("../ext/MakieExtension.jl")
+        end
+    end
 end
 
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, van_der_pol, Generic2dOscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,
-    HHNeuronInhib_GPe_Adam_Blox, Striatum_MSN_Adam, Striatum_FSI_Adam, GPe_Adam, STN_Adam, LIFExciCircuitBlox, LIFInhCircuitBlox
+    HHNeuronInhib_GPe_Adam_Blox, Striatum_MSN_Adam, Striatum_FSI_Adam, GPe_Adam, STN_Adam, LIFExciCircuitBlox, LIFInhCircuitBlox, MetabolicHHNeuron
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, NextGenerationBlox, NextGenerationResolvedBlox, NextGenerationEIBlox, KuramotoOscillator
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
-export PowerSpectrumBlox, BandPassFilterBlox
+export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
@@ -219,6 +245,7 @@ export run_experiment!, run_trial!
 export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
-export MetabolicHHNeuron
-
+export PYR_Izh, QIF_PING_NGNMM
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 end
