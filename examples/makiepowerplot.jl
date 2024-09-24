@@ -14,7 +14,7 @@ prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 600), [])
 
 sol = solve(prob, Vern7())
 fss = powerspectrumplot(cb, sol, show_bands = false)
-fss = powerspectrumplot(cb, sol; powerspectrum_kwargs = (;sampling_rate=0.01))
+fss = powerspectrumplot(cb, sol; powerspectrum_kwargs = (; sampling_rate=0.01))
 
 sol = solve(prob, Vern7(), saveat=0.05)
 fss = powerspectrumplot(cb, sol)
@@ -34,15 +34,15 @@ fss = powerspectrumplot(msn, sol, ylims=(1e-5, 10),
                         beta_label_position = (22, 4.0),
                         gamma_label_position = (60, 4.0))
 
-fig = powerspectrumplot(msn, sol, "G",
-                        powerspectrum_kwargs = (; method=Neuroblox.welch_pgram),
+fig = powerspectrumplot(msn, sol, "G";
+                        powerspectrum_kwargs = (; method=welch_pgram),
                         ylims=(1e-5, 10), show_bands = false,
                         axis=(xlabel="My axis name", backgroundcolor = :purple),
                         figure = (; size=(800, 300)))
 
 
-fig = powerspectrumplot(msn, sol, "G",
-                        powerspectrum_kwargs = (;method=Neuroblox.welch_pgram, window=Neuroblox.hanning),
+fig = powerspectrumplot(msn, sol, "G";
+                        powerspectrum_kwargs = (; method=welch_pgram, window=hanning),
                         ylims=(1e-4, 2e-1), xlims=(2, 100),
                         alpha_start = 5,
                         alpha_label_position = (8.5, 1.2e-1),
