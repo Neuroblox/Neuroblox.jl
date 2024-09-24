@@ -183,7 +183,8 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 		σ=4.0,
 		a=2,
 		b=4,
-		T=37
+		T=37,
+		G_M=1.3
     )
 		sts = @variables begin 
 			V(t)=-63.83 
@@ -206,7 +207,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			G_Na = 100 
 			G_K  = 80 
 			G_L = 0.1 
-			G_M = 1.3
+			G_M = G_M
 			E_Na = 50 
 			E_K = -100 
 			E_L = -67 

@@ -71,6 +71,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
         σ=4.0,
         density=0.3,
         weight=0.1,
+        G_M=1.3,
         connection_matrix=nothing
     )
         n_inh = [
@@ -82,7 +83,8 @@ struct Striatum_MSN_Adam <: CompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ=σ,
+                    G_M=G_M
             ) 
             for i in Base.OneTo(N_inhib)
         ]
