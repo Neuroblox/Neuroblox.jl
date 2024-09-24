@@ -22,5 +22,15 @@ function resample_timeseries(data, dt=1)
     return new_data
 end 
 
+orig_sim_path = "/Users/achesebro/Downloads/all_sims/orig_sims/"
+resampled_sim_path = "/Users/achesebro/Downloads/all_sims/resampled_sims/"
 
-data = DataFrame(CSV.File("/Users/achesebro/Downloads/all_sims/sol_trial_1.csv"))
+all_files = readdir(orig_sim_path)
+for i ∈ eachindex(all_files)
+    orig_path = orig_sim_path * all_files[i]
+    resampled_path = resampled_sim_path * all_files[i]
+    orig_data = DataFrame(CSV.File(orig_path))
+    collapse_data = collapse_timesteps(orig_data)
+    resampled_data = resample_timeseries(collapse_data, 1)
+    CSV.write(resampled_path, resampled_data)
+end
