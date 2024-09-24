@@ -10,6 +10,15 @@ This utility file contains the methods utilized for spectral data analysis.
     mar_ml           : maximum likelihood estimate of multivariate auto-regressive model parameters
 """
 
+mutable struct PowerSpectrumBlox <: SpectralUtilities
+    fs::Float64
+    window::Union{Function,AbstractVector,Nothing}
+    PSDfunc::Function
+    function PowerSpectrumBlox(;name, fs=1000, window="hanning")
+        new(T, fs, window, periodogram)
+    end
+end
+
 """
 bandpassfilter takes in time series data and bandpass filters it.
 It has the following inputs:
@@ -206,7 +215,7 @@ function csd2mar(csd, w, dt, p)
             g[gi] = csd[gj,i,j]
             f = idft(g)
             f = idft(vcat([0.0im; g; conj(g[end:-1:1])]))
-            ccf[:,i,j] = real.(fftshift(f))*N*dw
+            ccf[:,i,j] = real.(DSP.fftshift(f))*N*dw
         end
     end
 
