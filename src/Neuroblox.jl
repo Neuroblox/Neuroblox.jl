@@ -26,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -205,6 +203,9 @@ function effectiveconnectivity! end
 function freeenergy end
 function freeenergy! end
 
+function powerspectrumplot end
+function powerspectrumplot! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
@@ -228,7 +229,7 @@ export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
-export PowerSpectrumBlox, BandPassFilterBlox
+export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
@@ -246,5 +247,5 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PYR_Izh, QIF_PING_NGNMM
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-
+export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 end

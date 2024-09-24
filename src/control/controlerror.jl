@@ -7,7 +7,9 @@ frequency band ([lb, ub]).
 """
 function ARVTarget(data, lb, ub, fs, order, control_bin)
     signal = Neuroblox.bandpassfilter(data=data, lb=lb, ub=ub, fs=fs, order=order)
-    f, pxx = Neuroblox.powerspectrum(signal, control_bin, fs, "periodogram", hanning)
+    periodogram_estimation = periodogram(vec(signal), fs=fs, window=hanning)
+    pxx = periodogram_estimation.power
+    f = periodogram_estimation.freq
     lbs = Int(ceil(lb*length(f)/500))
     ubs = Int(ceil(ub*length(f)/500))
     value = abs.(pxx)[lbs:ubs]
