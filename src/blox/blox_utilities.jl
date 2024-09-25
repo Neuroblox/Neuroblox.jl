@@ -258,6 +258,17 @@ function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, min
     return spikes
 end
 
+function find_spikes(x::AbstractMatrix{T}; threshold=-50) where {T}
+    spikes = spzeros(size(x))
+
+    for i in 1:size(x, 2)
+        pks, vals = findmaxima(x[:, i])
+        idx = findall(vals .> threshold)
+        spikes[pks[idx], i] .= 1
+    end
+    return SparseMatrixCSC(transpose(spikes))
+end
+
 function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
     spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
     
@@ -283,6 +294,48 @@ function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution
     spikes = find_spikes(V; minheight = thrs_value - tolerance)
 
     return spikes
+end
+
+function detect_spikes(blox::CompositeBlox, sol::SciMLBase.AbstractSolution;
+                       threshold = -50.0, ts=nothing)
+    namespaced_name = namespaced_nameof(blox)
+
+    if isnothing(threshold)
+        threshold_param_name = Symbol(namespaced_name, "₊θ")
+        thrs = only(@parameters $(threshold_param_name))
+        get_thrs = getp(sol, threshold_param_name)
+        thrs_value = get_thrs(sol)
+    else
+        thrs_value = threshold
+    end
+
+    V = voltage_timeseries(blox, sol, ts)
+    spikes = find_spikes(V, threshold = thrs_value)
+
+    return spikes
+end
+
+function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
+                 firing_rate_Δt = last(sol.t) - trim_transient,)
+
+    tmax = last(sol.t) - trim_transient
+    t = trim_transient:firing_rate_Δt:tmax
+    @show t
+    @show collect(t)
+    tᵤ = unique(sol.t)
+    counts = vec(sum(spikes, dims=1))
+
+    rₘ = fill(NaN64, length(t) - 1)
+    for i in 2:length(t)
+        idx = intersect(findall(tᵤ .<= t[i]), findall(tᵤ .> t[i-1]))
+        if ~isempty(idx)
+            rₘ[i-1] = sum(counts[idx])
+        end
+    end
+
+    # firing rate in spikes/s averaged over the population
+    rₘ = rₘ*1000 ./ (size(spikes,1)*firing_rate_Δt)
+    return t, rₘ
 end
 
 """

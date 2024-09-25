@@ -8,7 +8,7 @@ using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_ne
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
-using DSP
+using DSP, SparseArrays
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
@@ -83,23 +83,45 @@ end
 
 @recipe(RasterPlot, blox, sol) do scene
     Theme(
-        color = :black
+        color = :black,
+        threshold = nothing,
+        Axis = (
+            xlabel = "Time (ms)",
+            ylabel = "Neurons",
+        )
     )
 end
 
 argument_names(::Type{<: RasterPlot}) = (:blox, :sol)
 
+# function Makie.plot!(p::RasterPlot)
+#     sol = p.sol[]
+#     t = sol.t
+#     blox = p.blox[]
+#     neurons = get_neurons(blox)
+
+#     for (i, n) in enumerate(neurons)
+#         spike_idxs = detect_spikes(n, sol)
+#         scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
+#     end
+    
+#     return p
+# end
+
 function Makie.plot!(p::RasterPlot)
     sol = p.sol[]
     t = sol.t
     blox = p.blox[]
-    neurons = get_neurons(blox)
-    
-    for (i, n) in enumerate(neurons)
-        spike_idxs = detect_spikes(n, sol)
-        scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
-    end
-    
+    threshold = p.threshold[]
+
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+
+    spikes = detect_spikes(blox, sol; threshold=threshold)
+    neuron_indices, spike_times = findnz(spikes)
+    scatter!(p, spike_times, neuron_indices; color=p.color[])
+
     return p
 end
 
