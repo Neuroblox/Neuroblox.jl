@@ -24,7 +24,10 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), vcat(exci_driven, exci_other, inhib))
 
 # Extra parameters
-p = @parameters N=N_total g_II=0.2 g_IE=0.6 g_EI=0.6
+N=N_total 
+g_II=0.2 
+g_IE=0.6 
+g_EI=0.6
 
 for i = 1:NE_driven+NE_other
     for j = NE_driven+NE_other+1:N_total
