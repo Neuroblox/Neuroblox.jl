@@ -419,25 +419,100 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution)
+function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
+                          state::String, ts=nothing)
+                          
     namespaced_name = namespaced_nameof(blox)
-    state_name = Symbol(namespaced_name, "₊V")
-
+    state_name = Symbol(namespaced_name, "₊$(state)")
     s = only(@variables $(state_name)(t))
 
-    return sol[s]
-end
-
-function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
-
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol)
+    if isnothing(ts)
+        return sol[s]
+    else
+        return Array(sol(ts, idxs = state_name))
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution)
-    V = voltage_timeseries(cb, sol)
+function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        state_timeseries(neuron, sol, state, ts)
+    end
+end
+
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
+                              state::String, ts=nothing)
+                              
+    s = state_timeseries(cb, sol, state, ts)
+
+    return vec(mapslices(nanmean, s; dims = 2))
+end
+
+voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, ts=nothing) = 
+    state_timeseries(blox, sol, "V", ts)
+
+function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
+
+    return mapreduce(hcat, get_neurons(cb)) do neuron
+        voltage_timeseries(neuron, sol, ts)
+    end
+end
+
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
+    V = voltage_timeseries(cb, sol, ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
+end
+
+function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String;
+                       sampling_rate=nothing, method=periodogram, window=nothing)
+
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    s = meanfield_timeseries(cb, sol, state, t_sampled)
+
+    return method(s, fs=sampling_freq, window=window)
+end
+
+function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution;
+                       sampling_rate=nothing, method=periodogram, window=nothing)
+
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    V = voltage_timeseries(cb, sol, t_sampled)
+    replace_refractory!(V, cb, sol)
+
+    return method(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq, window=window)
+end
+
+function powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, state::String;
+                       sampling_rate=nothing, method=periodogram, window=nothing)
+
+    namespaced_name = namespaced_nameof(blox)
+    state_name = Symbol(namespaced_name, "₊$(state)")
+    s = only(@variables $(state_name)(t))
+
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    data = isnothing(t_sampled) ? sol[s] : Array(sol(t_sampled, idxs = state_name))
+
+    return method(data, fs = sampling_freq, window=window)
+end
+
+function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
+    t_raw = unique(sol.t)
+    dt = diff(t_raw)
+    dt_std = std(dt)
+    first_diff = dt[1]
+
+    # check if the solution was saved at regular time steps
+    if !isapprox(dt_std, 0, atol=1e-10 * first_diff)
+        if isnothing(sampling_rate)
+            @warn("Solution not saved at fixed time steps. Provide 'sampling_rate' in milliseconds.")
+            sampling_rate = first_diff
+        end
+        t_sampled = t_raw[1]:sampling_rate:t_raw[end]
+        return t_sampled, 1000 / sampling_rate
+    else
+        sampling_rate = first_diff
+        return nothing, 1000 / sampling_rate
+    end
 end
