@@ -1,12 +1,17 @@
 module Neuroblox
 
+if !isdefined(Base, :get_extension)
+    using Requires
+end
+
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
 const D = ModelingToolkit.D_nounits
 export t, D
 @reexport using ModelingToolkitStandardLibrary.Blocks
-@reexport using Graphs: add_edge!
+@reexport import Graphs: add_edge!
+@reexport using MetaGraphs: MetaDiGraph
 
 using Graphs
 using MetaGraphs
@@ -21,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -34,9 +37,11 @@ using DelayDiffEq
 using StatsBase: sample
 using Distributions
 
+using SciMLBase: AbstractSolution
+
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
-                    AbstractODESystem, VariableTunable
+                    AbstractODESystem, VariableTunable, getp
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
@@ -44,6 +49,7 @@ using Symbolics: @register_symbolic, getdefaultval
 using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
+using JLD2
 
 using Peaks: argmaxima, peakproms!, peakheights!
 
@@ -123,7 +129,7 @@ end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(blox.odesystem, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
+    sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
     statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
@@ -180,10 +186,37 @@ https://github.com/Neuroblox/NeurobloxIssues.
 """)
 end
 
+function meanfield end
+function meanfield! end
+
+function rasterplot end
+function rasterplot! end
+
+function stackplot end
+function stackplot! end
+
+function voltage_stack end
+
+function ecbarplot end
+function effectiveconnectivity end
+function effectiveconnectivity! end
+
+function freeenergy end
+function freeenergy! end
+
+function powerspectrumplot end
+function powerspectrumplot! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
     #end
+
+    @static if !isdefined(Base, :get_extension)
+        @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+            include("../ext/MakieExtension.jl")
+        end
+    end
 end
 
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
@@ -197,7 +230,7 @@ export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
-export PowerSpectrumBlox, BandPassFilterBlox
+export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
@@ -214,5 +247,7 @@ export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
-
+export PYR_Izh, QIF_PING_NGNMM
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 end

@@ -3,6 +3,7 @@ struct CorticalBlox <: CompositeBlox
     parts
     odesystem
     connector
+    kwargs
 
     function CorticalBlox(;
         name, 
@@ -20,24 +21,29 @@ struct CorticalBlox <: CompositeBlox
         τ_exci=5,
         τ_inhib=70,
         kwargs...
-    )
-        wtas = map(Base.OneTo(N_wta)) do i
+            )
+        
+        wtas = map(1:N_wta) do i
+            if I_bg_ar isa Array
+                I_bg = I_bg_ar[i]
+            else
+                I_bg = I_bg_ar
+            end
             WinnerTakeAllBlox(;
-                name=Symbol("wta$i"), 
+                name=Symbol("wta$i"),
                 namespace=namespaced_name(namespace, name),
                 N_exci,
                 E_syn_exci,
                 E_syn_inhib,
                 G_syn_exci,
                 G_syn_inhib,
-                I_bg = I_bg_ar,
+                I_bg = I_bg,
                 freq,
                 phase,
                 τ_exci,
                 τ_inhib    
             )
         end
-
         n_ff_inh = HHNeuronInhibBlox(
             name = "ff_inh",
             namespace = namespaced_name(namespace, name),
@@ -48,13 +54,22 @@ struct CorticalBlox <: CompositeBlox
 
         g = MetaDiGraph()
         add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
-
-        idxs = Base.OneTo(N_wta)
-        for i in idxs
-            add_edge!.(Ref(g), i, setdiff(idxs, i), Ref(Dict(kwargs)))
+        for i in 1:N_wta
+            for j in 1:N_wta
+                if j != i
+                    # users can supply a matrix of connection matrices.
+                    # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
+                    # neuron l from wta j.
+                    if haskey(kwargs, :connection_matrices)
+                        kwargs_ij = merge(kwargs, Dict(:connection_matrix => kwargs[:connection_matrices][i, j]))
+                    else
+                        kwargs_ij = Dict(kwargs)
+                    end
+                    add_edge!(g, i, j, kwargs_ij)
+                end
+            end
             add_edge!(g, N_wta+1, i, Dict(:weight => 1))
         end
-
         # Construct a BloxConnector object from the graph
         # containing all connection equations from lower levels and this level.
         bc = connector_from_graph(g)
@@ -65,7 +80,7 @@ struct CorticalBlox <: CompositeBlox
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc)
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
     end
 end
 
@@ -74,29 +89,32 @@ struct LIFExciCircuitBlox <: CompositeBlox
     parts
     odesystem
     connector
+    kwargs
 
     function LIFExciCircuitBlox(;
         name, 
         N_neurons,
         namespace=nothing,
-        g_L = 25 * 1e-3, # mS
+        g_L = 25 * 1e-6, # mS
         V_L = -70, # mV
         V_E = 0, # mV
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.5 * 1e-3, # mF 
+        C = 0.5 * 1e-6, # mF 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
         τ_NMDA_rise = 2, # ms
         t_refract = 2, # ms
         α = 0.5, # ms⁻¹
-        g_AMPA = 0.05 * 1e-3, # mS
-        g_AMPA_external = 2.1 * 1e-3, # mS
-        g_GABA = 1.3 * 1e-3, # mS
-        g_NMDA = 0.165 * 1e-3, # mS  
+        g_AMPA = 0.05 * 1e-6, # mS
+        g_AMPA_ext = 2.1 * 1e-6, # mS
+        g_GABA = 1.3 * 1e-6, # mS
+        g_NMDA = 0.165 * 1e-6, # mS  
         Mg = 1, # mM
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1,
         kwargs...
         )
 
@@ -118,10 +136,12 @@ struct LIFExciCircuitBlox <: CompositeBlox
                 t_refract,
                 α,
                 g_AMPA,
-                g_AMPA_external,
+                g_AMPA_ext,
                 g_GABA,
                 g_NMDA,
-                Mg
+                Mg,
+                exci_scaling_factor,
+                inh_scaling_factor
             )
         end
 
@@ -138,7 +158,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
         
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
 
-        new(namespace, neurons, sys, bc)
+        new(namespace, neurons, sys, bc, kwargs)
     end
 end
 
@@ -147,28 +167,30 @@ struct LIFInhCircuitBlox <: CompositeBlox
     parts
     odesystem
     connector
+    kwargs
 
     function LIFInhCircuitBlox(;
         name, 
         N_neurons,
         namespace=nothing,
-        g_L = 20 * 1e-3, # mS
+        g_L = 20 * 1e-6, # mS
         V_L = -70, # mV
         V_E = 0, # mV
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.2 * 1e-3, # mF 
+        C = 0.2 * 1e-6, # mF 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
-        τ_NMDA_decay = 100, # ms
-        τ_NMDA_rise = 2, # ms
+        t_refract = 1, # ms
         α = 0.5, # ms⁻¹
-        g_AMPA = 0.04 * 1e-3, # mS
-        g_AMPA_external = 1.62 * 1e-3, # mS
-        g_GABA = 1 * 1e-3, # mS
-        g_NMDA = 0.13 * 1e-3, # mS 
+        g_AMPA = 0.04 * 1e-6, # mS
+        g_AMPA_ext = 1.62 * 1e-6, # mS
+        g_GABA = 1 * 1e-6, # mS
+        g_NMDA = 0.13 * 1e-6, # mS 
         Mg = 1, # mM 
+        exci_scaling_factor = 1,
+        inh_scaling_factor = 1,
         kwargs...
         )
 
@@ -185,14 +207,15 @@ struct LIFInhCircuitBlox <: CompositeBlox
                 C,
                 τ_AMPA,
                 τ_GABA,
-                τ_NMDA_decay,
-                τ_NMDA_rise,
+                t_refract,
                 α,
                 g_AMPA,
-                g_AMPA_external,
+                g_AMPA_ext,
                 g_GABA,
                 g_NMDA,
-                Mg
+                Mg,
+                exci_scaling_factor,
+                inh_scaling_factor
             )
         end
 
@@ -209,6 +232,6 @@ struct LIFInhCircuitBlox <: CompositeBlox
         
         sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
 
-        new(namespace, neurons, sys, bc)
+        new(namespace, neurons, sys, bc, kwargs)
     end
 end

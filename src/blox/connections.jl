@@ -3,7 +3,6 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     discrete_callbacks
-    continuous_callbacks
     spike_affect_states::Dict{Symbol, Vector{Num}}
     learning_rules
 
@@ -14,11 +13,15 @@ mutable struct BloxConnector
         weights = mapreduce(get_weight_parameters, vcat, bloxs)
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
-        continuous_callbacks = mapreduce(get_continuous_callbacks, vcat, bloxs)
+        # spike_affect_states holds a Dictionary that maps 
+        # the name of a source Blox to the states of a destination Blox 
+        # that are affected by a continuous callback of the source Blox.
+        # Typically this is used when a source Blox spikes, so its Voltage state crosses a threshold,
+        # and this spike affects synaptic parameters of every destination Blox that it connects to.
         spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, continuous_callbacks, spike_affect_states, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules)
     end
 end
 
@@ -95,13 +98,31 @@ function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name
     end
 end
 
-function indegree_constrained_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
-    density = get_density(kwargs, name_out, name_in)
-    in_degree =  Int(ceil(density * length(neurons_out)))
-    for neuron_postsyn in neurons_in
-        idx = sample(collect(1:length(neurons_out)), in_degree; replace=false)
-        for neuron_presyn in neurons_out[idx]
-            bc(neuron_presyn, neuron_postsyn; kwargs...)
+function indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
+    rng = get(kwargs, :rng, Random.default_rng())
+    in_degree =  Int(ceil(density * N_src))
+    conn_mat = falses(N_src, N_dst)
+    for j ∈ 1:N_dst
+        idx = sample(rng, 1:N_src, in_degree; replace=false)
+        for i ∈ idx
+            conn_mat[i, j] = true
+        end
+    end
+    conn_mat
+end
+
+function indegree_constrained_connections!(bc, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    N_src = length(neurons_src)
+    N_dst = length(neurons_dst)
+    conn_mat = get(kwargs, :connection_matrix) do
+        density = get_density(kwargs, name_src, name_dst)
+        indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
+    end
+    for j ∈ 1:N_dst
+        for i ∈ 1:N_src
+            if conn_mat[i, j]
+                bc(neurons_src[i], neurons_dst[j]; kwargs...)
+            end
         end
     end
 end
@@ -130,7 +151,7 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(HH_out, HH_in; kwargs...)
-    push!(bc.weights, w)    
+    push!(bc.weights, w)
 
     if haskey(kwargs, :learning_rule)
         lr = deepcopy(kwargs[:learning_rule])
@@ -140,8 +161,6 @@ function (bc::BloxConnector)(
     end
 
     STA = get_sta(kwargs, nameof(HH_out), nameof(HH_in))
-
-    
     eq = if STA
         sys_in.I_syn ~ -w * sys_in.Gₛₜₚ * sys_out.G * (sys_in.V - sys_out.E_syn)
     else
@@ -149,17 +168,6 @@ function (bc::BloxConnector)(
     end
 
     accumulate_equation!(bc, eq)
-    
-    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
-    if GAP
-        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
-        push!(bc.weights, w_gap)
-        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
-        accumulate_equation!(bc, eq2) 
-        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
-        accumulate_equation!(bc, eq3) 
-    end
-
 end
 
 function (bc::BloxConnector)(
@@ -171,21 +179,11 @@ function (bc::BloxConnector)(
     sys_in = get_namespaced_sys(HH_in)
 
     w = generate_weight_param(HH_out, HH_in; kwargs...)
-    push!(bc.weights, w)    
+    push!(bc.weights, w)
 
     eq = sys_in.I_syn ~ -w * sys_out.G * (sys_in.V - sys_out.E_syn)
     
     accumulate_equation!(bc, eq)
-
-    GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
-    if GAP
-        w_gap = generate_gap_weight_param(HH_out, HH_in; kwargs...)
-        push!(bc.weights, w_gap)
-        eq2 = sys_in.I_gap ~ -w_gap * (sys_in.V - sys_out.V)
-        accumulate_equation!(bc, eq2) 
-        eq3 = sys_out.I_gap ~ -w_gap * (sys_out.V - sys_in.V)
-        accumulate_equation!(bc, eq3) 
-    end
 end
 
 function (bc::BloxConnector)(
@@ -199,9 +197,8 @@ function (bc::BloxConnector)(
     w = generate_weight_param(HH_out, HH_in; kwargs...)
     push!(bc.weights, w)    
 
-        
     eq = sys_in.I_syn ~ -w * sys_out.Gₛ * (sys_in.V - sys_out.E_syn)
-    
+
     accumulate_equation!(bc, eq)
 
     GAP = get_gap(kwargs, nameof(HH_out), nameof(HH_in))
@@ -485,20 +482,20 @@ end
 function (bc::BloxConnector)(
     wta_out::WinnerTakeAllBlox, 
     wta_in::WinnerTakeAllBlox; 
-    kwargs...
-)
-    neurons_in = get_exci_neurons(wta_in)
+    kwargs...)
     neurons_out = get_exci_neurons(wta_out)
-    rng = get(kwargs, :rng, Random.default_rng())
-    density = get_density(kwargs, nameof(wta_out), nameof(wta_in))
-    dist = Bernoulli(density)
-
-    for neuron_postsyn in neurons_in
+    neurons_in = get_exci_neurons(wta_in)
+    # users can supply a :connection_matrix to the graph edge, where
+    # connection_matrix[i, j] determines if neurons_out[i] is connected to neurons_out[j] 
+    connection_matrix = get_connection_matrix(kwargs,
+                                              namespaced_nameof(wta_out), namespaced_nameof(wta_in),
+                                              length(neurons_out), length(neurons_in))
+    for (j, neuron_postsyn) in enumerate(neurons_in)
         name_postsyn = namespaced_nameof(neuron_postsyn)
-        for neuron_presyn in neurons_out
+        for (i, neuron_presyn) in enumerate(neurons_out)
             name_presyn = namespaced_nameof(neuron_presyn)
             # Check names to avoid recurrent connections between the same neuron
-            if (name_postsyn != name_presyn) && rand(rng, dist)
+            if (name_postsyn != name_presyn) && connection_matrix[i, j]
                 bc(neuron_presyn, neuron_postsyn; kwargs...)
             end
         end
@@ -878,22 +875,18 @@ function (bc::BloxConnector)(
     push!(bc.weights, w)
 
     eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
-                    w * sys_in.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+                    w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
                     (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
 
     accumulate_equation!(bc, eq)
     
-    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
-
-    cb = [sys_out.V ~ sys_out.θ] => (
-        LIF_spike_affect!, 
-        [sys_out.V, sys_in.S_AMPA, sys_in.x], 
-        [sys_out.V_reset, sys_out.t_refract_duration, sys_out.t_refract_end, sys_out.is_refractory], 
-        [], 
-        nothing
-    )
-    
-    push!(bc.continuous_callbacks, cb)
+    # Compare the unique namespaced names of both systems
+    if nameof(sys_out) == nameof(sys_in)
+        # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
+        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
+    else
+        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA])
+    end
 end
 
 function (bc::BloxConnector)(
@@ -911,8 +904,7 @@ function (bc::BloxConnector)(
                     
     accumulate_equation!(bc, eq)
 
-    cb = [sys_out.V ~ sys_out.θ] => [sys_in.S_GABA ~ sys_in.S_GABA + 1]
-    push!(bc.continuous_callbacks, cb)
+    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_GABA])
 end
 
 function (bc::BloxConnector)(
@@ -925,13 +917,13 @@ function (bc::BloxConnector)(
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA_external * (sys_in.V - sys_in.V_E) 
+    eq = sys_in.jcn ~ w * sys_in.S_AMPA_ext * sys_in.g_AMPA_ext * (sys_in.V - sys_in.V_E) 
                     
     accumulate_equation!(bc, eq)
 
     t_spikes = generate_spike_times(stim)
 
-    cb = t_spikes => [sys_in.S_AMPA ~ sys_in.S_AMPA + 1]
+    cb = t_spikes => [sys_in.S_AMPA_ext ~ sys_in.S_AMPA_ext + 1]
     # TO DO : Consider generating spikes during simulation
     # to make PoissonSpikeTrain independent of `t_span` of the simulation.
     # something like : 
@@ -966,4 +958,39 @@ function (bc::BloxConnector)(
     for neuron in neurons_in
         bc(stim, neuron; kwargs...)
     end
+end
+
+function (bc::BloxConnector)(
+    bloxout::PYR_Izh, 
+    bloxin::PYR_Izh; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    s_presyn = namespace_expr(bloxout.output, sys_out)
+    v_postsyn = namespace_expr(bloxin.voltage, sys_in)
+    eq = sys_in.jcn ~ w*(1-sys_in.κ)*sys_out.gₛ*s_presyn*(sys_in.eᵣ-v_postsyn)
+    
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::QIF_PING_NGNMM, 
+    bloxin::QIF_PING_NGNMM; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+
+    x = namespace_expr(bloxout.output, sys_out)
+    eq = sys_in.jcn ~ w*x
+    
+    accumulate_equation!(bc, eq)
 end

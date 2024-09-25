@@ -245,7 +245,21 @@ begin
         end
         Neuroblox.increment_trial!(env)
 
-		
+		df = DataFrame()
+		df.t = sol2.t
+		df.VC = Neuroblox.meanfield_timeseries(VC, sol2)
+		df.PFC = Neuroblox.meanfield_timeseries(PFC, sol2)
+		df.STR1 = Neuroblox.meanfield_timeseries(STR1, sol2)
+		df.STR2 = Neuroblox.meanfield_timeseries(STR2, sol2)
+		df.gpi1 = Neuroblox.meanfield_timeseries(gpi1, sol2)
+		df.gpi2 = Neuroblox.meanfield_timeseries(gpi2, sol2)
+		df.gpe1 = Neuroblox.meanfield_timeseries(gpe1, sol2)
+		df.gpe2 = Neuroblox.meanfield_timeseries(gpe2, sol2)
+		df.STN1 = Neuroblox.meanfield_timeseries(STN1, sol2)
+		df.STN2 = Neuroblox.meanfield_timeseries(STN2, sol2)
+		df.Thal1 = Neuroblox.meanfield_timeseries(Thal1, sol2)
+		df.Thal2 = Neuroblox.meanfield_timeseries(Thal2, sol2)
+		CSV.write("sol_trial_$ii.csv", df, writeheader=true)
     end
 	
 end

@@ -31,7 +31,7 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
             E_syn = E_syn_inhib, 
             G_syn = G_syn_inhib, 
             τ = τ_inhib
-        ) 
+        )
         n_excis = [
             HHNeuronExciBlox(
                     name = Symbol("exci$i"),
