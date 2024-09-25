@@ -24,10 +24,7 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), vcat(exci_driven, exci_other, inhib))
 
 # Extra parameters
-N=N_total 
-g_II=0.2 
-g_IE=0.6 
-g_EI=0.6
+p = @parameters N=N_total g_II=0.2 g_IE=0.6 g_EI=0.6
 
 for i = 1:NE_driven+NE_other
     for j = NE_driven+NE_other+1:N_total
@@ -49,15 +46,8 @@ prob = ODEProblem(sys, [], (0.0, 20.0))
 
 using Peaks, Plots
 
-function get_voltages(sol, N_start, N_end)
-    data = Array(sol)
-    beginning = (N_start-1)*4 + 1
-    ending = N_end*4
-    return data[beginning:4:ending, :]'
-end
-
-exci_voltages = get_voltages(sol, 1, NE_driven+NE_other)
-inhib_voltages = get_voltages(sol, NE_driven+NE_other+1, N_total)
+exci_voltages = reduce(hcat, ModelingToolkit.getu(sol, vcat([Symbol("ED$i"*"₊V") for i in 1:NE_driven], [Symbol("EO$i"*"₊V") for i in 1:NE_other]))(sol))'
+inhib_voltages = reduce(hcat, ModelingToolkit.getu(sol, [Symbol("ID$i"*"₊V") for i in 1:NI_driven])(sol))'
 
 plot(exci_voltages)
 plot(inhib_voltages)
