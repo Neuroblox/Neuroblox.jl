@@ -34,7 +34,7 @@ end
 
     sys = system_from_graph(g; name=global_ns)
     ss = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(ss, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
     V = hcat(sol[ss.n1.V], sol[ss.n2.V], sol[ss.n3.V])
