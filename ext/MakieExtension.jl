@@ -3,12 +3,13 @@ module MakieExtension
 isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
-using Neuroblox: AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
+using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
 using DSP
+using Statistics: mean
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
@@ -117,9 +118,20 @@ function Makie.plot!(p::StackPlot)
 
     V = voltage_timeseries(blox, sol)
     
-    offset = 20
-    for (i,V_neuron) in enumerate(eachcol(V))
-        lines!(p, sol.t, (i-1)*offset .+ V_neuron; color=p.color[])
+    V = V .- mean(V; dims = 1)
+
+    mx = maximum(V; dims = 1)
+    mn = minimum(V; dims = 1)
+    
+    offset = 0.0
+    for (i, V_neuron) in enumerate(eachcol(V))
+        if i == 1
+            lines!(p, sol.t, V_neuron; color=p.color[])
+        else
+            offset += abs(mn[i]) * 1.2
+            lines!(p, sol.t, offset .+ V_neuron; color=p.color[])
+        end
+        offset += abs(mx[i]) * 1.2
     end
     
     return p
@@ -131,7 +143,7 @@ function Makie.convert_arguments(::Makie.PointBased, blox::AbstractNeuronBlox, s
     return (sol.t, V)
 end
 
-function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
+function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
     neurons = get_neurons(blox)
     N_ax = min(length(neurons), N_neurons)
 
