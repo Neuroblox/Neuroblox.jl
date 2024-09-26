@@ -51,7 +51,8 @@ using CSV: read
 using DataFrames
 using JLD2
 
-using Peaks: argmaxima, peakproms!, peakheights!
+using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
+using SparseArrays
 
 using LogExpFunctions: logistic
 
@@ -250,4 +251,5 @@ export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
+export detect_spikes, mean_firing_rate
 end

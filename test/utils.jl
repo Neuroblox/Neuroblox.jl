@@ -1,6 +1,7 @@
 using Neuroblox
 using DifferentialEquations
 using Statistics
+using SparseArrays
 
 @testset "Voltage timeseries [LIFExciNeuron]" begin
     global_ns = :g 
@@ -124,4 +125,33 @@ end
     ps = powerspectrum(cb, sol, "V")
     ps2 = powerspectrum(cb, sol)
     @test all(ps.power .== ps2.power)
+end
+
+@testset "Spike detection [LIFExciNeuron and LIFExciCircuitBlox]" begin
+    global_ns = :g # global namespace
+    @named s = PoissonSpikeTrain(3, (0, 200); namespace = global_ns)
+    @named n = LIFExciNeuron(; namespace = global_ns)
+    @named cb = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = 3, weight=1)
+    
+    g = MetaDiGraph()
+    
+    add_edge!(g, s => n; weight=1)
+    add_edge!(g, s => cb; weight=1)
+    
+    sys = system_from_graph(g; name=global_ns)
+    ss = structural_simplify(sys)
+    prob = ODEProblem(ss, [], (0, 200.0))
+    sol = solve(prob, Tsit5())
+    
+    spikes_n = detect_spikes(n, sol)
+    spikes_cb = detect_spikes(cb, sol)
+    
+    @test !iszero(nnz(spikes_n))
+    @test !iszero(nnz(spikes_cb))
+    
+    spikes_n = detect_spikes(n, sol; threshold = 10)
+    spikes_cb = detect_spikes(cb, sol; threshold = 10)
+    
+    @test iszero(nnz(spikes_n))
+    @test iszero(nnz(spikes_cb)) 
 end
