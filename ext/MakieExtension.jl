@@ -143,7 +143,7 @@ function Makie.convert_arguments(::Makie.PointBased, blox::AbstractNeuronBlox, s
     return (sol.t, V)
 end
 
-function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
+function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
     neurons = get_neurons(blox)
     N_ax = min(length(neurons), N_neurons)
 
