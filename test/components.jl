@@ -688,7 +688,7 @@ end
         end
     end
 
-    @named sys = system_from_graph(g)
+    sys = system_from_graph(g; name=global_ns)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob, Tsit5())
@@ -720,7 +720,7 @@ end
 
     add_edge!(g, 1, 2, Dict(:weight => 1))
     
-    @named sys = system_from_graph(g)
+    sys = system_from_graph(g; name=global_ns)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], tspan)
     sol = solve(prob, Tsit5())
@@ -743,7 +743,7 @@ end
 
     add_edge!(g, 1, 2, Dict(:weight => 1))
     
-    @named sys = system_from_graph(g)
+    sys = system_from_graph(g; name=global_ns)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], tspan)
     sol = solve(prob, Tsit5())
@@ -766,7 +766,7 @@ end
 
     add_edge!(g, 1, 2, Dict(:weight => 1))
 
-    @named sys = system_from_graph(g)
+    sys = system_from_graph(g; name=global_ns)
     sys_simpl = structural_simplify(sys)
     prob = ODEProblem(sys_simpl, [], tspan)
     sol = solve(prob, Tsit5())

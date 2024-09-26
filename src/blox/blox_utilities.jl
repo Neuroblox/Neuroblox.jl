@@ -46,7 +46,17 @@ function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
-get_neurons(b::Union{AbstractComponent, CompositeBlox}) = vcat(get_exci_neurons(b), get_inh_neurons(b))
+get_neurons(n::AbstractNeuronBlox) = [n]
+get_neurons(n) = []
+
+function get_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_neurons(x), vcat, b.parts)
+end
+
+function get_neurons(vn::AbstractVector{<:AbstractBlox})
+    mapreduce(x -> get_neurons(x), vcat, vn)
+end
+
 
 function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
@@ -504,7 +514,7 @@ end
 voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, ts=nothing) = 
     state_timeseries(blox, sol, "V", ts)
 
-function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
+function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution, ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
         voltage_timeseries(neuron, sol, ts)
