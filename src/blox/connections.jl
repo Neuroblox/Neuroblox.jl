@@ -961,6 +961,40 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    HH_out::Union{MetabolicHHNeuron},
+    HH_in::Union{MetabolicHHNeuron};
+    kwargs...
+)
+    """
+    Connection rule specific to the metabolic HH neurons based on Dutta et al:
+		
+		Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts
+		during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+		
+		https://www.nature.com/articles/s41467-023-40437-0
+		https://zenodo.org/records/8013692
+        
+    """
+    sys_out = get_namespaced_sys(HH_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    w = generate_weight_param(HH_out, HH_in; kwargs...)
+    push!(bc.weights, w)
+
+    eq = if HH_out.neurontype == :excitatory
+        sys_in.I_syn ~ -w * sys_in.G_exc * (sys_in.V - sys_in.E_syn_exc) *
+            sys_out.S * exp(-sys_out.χ/5)
+    elseif HH_out.neurontype == :inhibitory
+        sys_in.I_syn ~ -w * sys_in.G_inh * (sys_in.V - sys_in.E_syn_inh) *
+            sys_out.S * exp(-sys_out.χ/5)
+    else
+        warning("Unknown neuron type. Assuming excitatory neuron type.")
+    end
+
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
     bloxout::PYR_Izh, 
     bloxin::PYR_Izh; 
     kwargs...
