@@ -485,14 +485,14 @@ function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolut
     end
 end
 
-function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
+function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
         state_timeseries(neuron, sol, state; ts)
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution,
                               state::String; ts=nothing)
                               
     s = state_timeseries(cb, sol, state; ts)
@@ -510,14 +510,14 @@ function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBl
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; ts=nothing)
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
     V = voltage_timeseries(cb, sol; ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String;
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String;
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
@@ -526,7 +526,7 @@ function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state
     return method(s, fs=sampling_freq, window=window)
 end
 
-function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution;
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
