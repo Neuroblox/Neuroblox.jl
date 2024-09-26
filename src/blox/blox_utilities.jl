@@ -451,10 +451,10 @@ end
 function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
                  firing_rate_Δt = last(sol.t) - trim_transient,)
 
+    spikes = transpose(spikes)
     tmax = last(sol.t) - trim_transient
     t = trim_transient:firing_rate_Δt:tmax
-    @show t
-    @show collect(t)
+
     tᵤ = unique(sol.t)
     counts = vec(sum(spikes, dims=1))
 

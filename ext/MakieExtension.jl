@@ -8,7 +8,7 @@ using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_ne
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
-using DSP
+using DSP, SparseArrays
 using Statistics: mean
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
