@@ -483,7 +483,7 @@ end
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
 function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
-                          state::String, ts=nothing)
+                          state::String; ts=nothing)
                           
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
@@ -496,33 +496,33 @@ function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolut
     end
 end
 
-function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        state_timeseries(neuron, sol, state, ts)
+        state_timeseries(neuron, sol, state; ts)
     end
 end
 
 function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
-                              state::String, ts=nothing)
+                              state::String; ts=nothing)
                               
-    s = state_timeseries(cb, sol, state, ts)
+    s = state_timeseries(cb, sol, state; ts)
 
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, ts=nothing) = 
-    state_timeseries(blox, sol, "V", ts)
+voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
+    state_timeseries(blox, sol, "V"; ts)
 
-function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution, ts=nothing)
+function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol, ts)
+        voltage_timeseries(neuron, sol; ts)
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
-    V = voltage_timeseries(cb, sol, ts)
+function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution; ts=nothing)
+    V = voltage_timeseries(cb, sol; ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
@@ -532,7 +532,7 @@ function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    s = meanfield_timeseries(cb, sol, state, t_sampled)
+    s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
 
     return method(s, fs=sampling_freq, window=window)
 end
@@ -541,7 +541,7 @@ function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution;
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    V = voltage_timeseries(cb, sol, t_sampled)
+    V = voltage_timeseries(cb, sol; ts = t_sampled)
     replace_refractory!(V, cb, sol)
 
     return method(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq, window=window)
