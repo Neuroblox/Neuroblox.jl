@@ -194,7 +194,7 @@ mutable struct Agent{S,P,A,LR,PA}
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(ss, prob, policy, learning_rules, init_params, #=ss=#)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(sys, prob, policy, learning_rules, init_params, #=ss=#)
     end
 end
 
