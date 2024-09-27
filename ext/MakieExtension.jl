@@ -4,14 +4,16 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
-using DSP, SparseArrays
+using SparseArrays
+using DSP
 using Statistics: mean
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
@@ -95,20 +97,6 @@ end
 
 argument_names(::Type{<: RasterPlot}) = (:blox, :sol)
 
-# function Makie.plot!(p::RasterPlot)
-#     sol = p.sol[]
-#     t = sol.t
-#     blox = p.blox[]
-#     neurons = get_neurons(blox)
-
-#     for (i, n) in enumerate(neurons)
-#         spike_idxs = detect_spikes(n, sol)
-#         scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
-#     end
-    
-#     return p
-# end
-
 function Makie.plot!(p::RasterPlot)
     sol = p.sol[]
     t = sol.t
@@ -120,8 +108,8 @@ function Makie.plot!(p::RasterPlot)
     ax.ylabel = p.Axis.ylabel[]
 
     spikes = detect_spikes(blox, sol; threshold=threshold)
-    neuron_indices, spike_times = findnz(spikes)
-    scatter!(p, spike_times, neuron_indices; color=p.color[])
+    spike_times, neuron_indices = findnz(spikes)
+    scatter!(p, sol.t[spike_times], neuron_indices; color=p.color[])
 
     return p
 end
@@ -155,6 +143,39 @@ function Makie.plot!(p::StackPlot)
         end
         offset += abs(mx[i]) * 1.2
     end
+    
+    return p
+end
+
+@recipe(FRPlot, blox, sol) do scene
+    Theme(
+        color = :black,
+        Axis = (
+            ylabel = "Frequency (Hz)",
+            xlabel = "Time (s)"
+        ),
+        win_size = 10, # ms
+        overlap = 0,
+        transient = 0
+    )
+end
+
+argument_names(::Type{<: FRPlot}) = (:blox, :sol)
+
+function Makie.plot!(p::FRPlot)
+    sol = p.sol[]
+    blox = p.blox[]
+
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+
+    hideydecorations!(ax)
+    
+    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[])
+
+    t = range(p.transient[], stop = last(sol.t), length = length(fr))
+    lines!(p, t .* 1e-3, fr; color = p.color[])
     
     return p
 end

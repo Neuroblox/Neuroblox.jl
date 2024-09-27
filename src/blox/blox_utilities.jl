@@ -442,10 +442,27 @@ function detect_spikes(
     neurons = get_neurons(blox)
 
     S = mapreduce(sparse_hcat, neurons) do neuron
-        detect_spikes(neuron, sol; threshold)
+        detect_spikes(neuron, sol; threshold, ts)
     end
 
     return S
+end
+
+function firing_rate(
+    blox, sol::SciMLBase.AbstractSolution; 
+    win_size = last(sol.t), win_resolution = 1e-3, 
+    transient = 0, overlap = 0, threshold = nothing)
+
+    ts = sol.t
+    t_win_start = transient:(win_size - win_size*overlap):(last(ts) - win_size)
+
+    fr = map(t_win_start) do tws
+        spikes = detect_spikes(blox, sol; threshold, ts = tws:win_resolution:(tws + win_size))
+        N_neurons = size(spikes, 2)
+        1000.0 * (nnz(spikes) / N_neurons) / win_size
+    end
+
+    return fr
 end
 
 function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
