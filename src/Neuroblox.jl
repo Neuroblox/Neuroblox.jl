@@ -26,8 +26,6 @@ using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
-using AbstractFFTs
-using FFTW
 using DSP, Statistics
 using OrdinaryDiffEq
 using DifferentialEquations
@@ -53,7 +51,8 @@ using CSV: read
 using DataFrames
 using JLD2
 
-using Peaks: argmaxima, peakproms!, peakheights!
+using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
+using SparseArrays
 
 using LogExpFunctions: logistic
 
@@ -121,6 +120,7 @@ include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
 include("Neurographs.jl")
+include("blox/ping_neuron_examples.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -205,6 +205,9 @@ function effectiveconnectivity! end
 function freeenergy end
 function freeenergy! end
 
+function powerspectrumplot end
+function powerspectrumplot! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
@@ -228,7 +231,7 @@ export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
-export PowerSpectrumBlox, BandPassFilterBlox
+export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
@@ -244,7 +247,10 @@ export run_experiment!, run_trial!
 export addnontunableparams
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
+export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-
+export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
+export detect_spikes, mean_firing_rate
+export voltage_timeseries, meanfield_timeseries, state_timeseries
 end

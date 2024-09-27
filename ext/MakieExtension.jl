@@ -3,13 +3,16 @@ module MakieExtension
 isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
-using Neuroblox: AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
+using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
+using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
+using DSP, SparseArrays
+using Statistics: mean
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
-
+import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
     Theme()
@@ -81,23 +84,45 @@ end
 
 @recipe(RasterPlot, blox, sol) do scene
     Theme(
-        color = :black
+        color = :black,
+        threshold = nothing,
+        Axis = (
+            xlabel = "Time (ms)",
+            ylabel = "Neurons",
+        )
     )
 end
 
 argument_names(::Type{<: RasterPlot}) = (:blox, :sol)
 
+# function Makie.plot!(p::RasterPlot)
+#     sol = p.sol[]
+#     t = sol.t
+#     blox = p.blox[]
+#     neurons = get_neurons(blox)
+
+#     for (i, n) in enumerate(neurons)
+#         spike_idxs = detect_spikes(n, sol)
+#         scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
+#     end
+    
+#     return p
+# end
+
 function Makie.plot!(p::RasterPlot)
     sol = p.sol[]
     t = sol.t
     blox = p.blox[]
-    neurons = get_neurons(blox)
-    
-    for (i, n) in enumerate(neurons)
-        spike_idxs = detect_spikes(n, sol)
-        scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
-    end
-    
+    threshold = p.threshold[]
+
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+
+    spikes = detect_spikes(blox, sol; threshold=threshold)
+    neuron_indices, spike_times = findnz(spikes)
+    scatter!(p, spike_times, neuron_indices; color=p.color[])
+
     return p
 end
 
@@ -115,9 +140,20 @@ function Makie.plot!(p::StackPlot)
 
     V = voltage_timeseries(blox, sol)
     
-    offset = 20
-    for (i,V_neuron) in enumerate(eachcol(V))
-        lines!(p, sol.t, (i-1)*offset .+ V_neuron; color=p.color[])
+    V = V .- mean(V; dims = 1)
+
+    mx = maximum(V; dims = 1)
+    mn = minimum(V; dims = 1)
+    
+    offset = 0.0
+    for (i, V_neuron) in enumerate(eachcol(V))
+        if i == 1
+            lines!(p, sol.t, V_neuron; color=p.color[])
+        else
+            offset += abs(mn[i]) * 1.2
+            lines!(p, sol.t, offset .+ V_neuron; color=p.color[])
+        end
+        offset += abs(mx[i]) * 1.2
     end
     
     return p
@@ -129,7 +165,7 @@ function Makie.convert_arguments(::Makie.PointBased, blox::AbstractNeuronBlox, s
     return (sol.t, V)
 end
 
-function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
+function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::AbstractSolution; N_neurons=10, fontsize=8, color=:black)
     neurons = get_neurons(blox)
     N_ax = min(length(neurons), N_neurons)
 
@@ -141,6 +177,74 @@ function voltage_stack(blox::CompositeBlox, sol::AbstractSolution; N_neurons=10,
     stackplot!(ax, blox, sol)
 
     display(fig)
+end
+
+@recipe(PowerSpectrumPlot, pergram) do scene
+    Theme(
+        Axis = (
+            xlabel = "Frequency (Hz)",
+            ylabel = "Power Spectrum",
+            xticks = [8,12,20,30, 40, 50,60,70,80,90],
+            yscale = log10,
+        ),
+        xlims = (8, 100),
+        ylims = (1e-3, 10),
+        alpha_start = 8,
+        beta_start = 12,
+        gamma_start = 35,
+        gamma_end = 100,
+        alpha_label_position = (8.5, 5.0),
+        beta_label_position = (22, 5.0),
+        gamma_label_position = (60, 5.0),
+        show_bands = true
+    )
+end
+
+argument_names(::Type{<: PowerSpectrumPlot}) = (:pergram)
+
+function Makie.plot!(p::PowerSpectrumPlot)
+
+    ax = current_axis()
+    xlims!(ax, p.xlims[][1], p.xlims[][2])
+    ylims!(ax, p.ylims[][1], p.ylims[][2])
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+    ax.xticks = p.Axis.xticks[]
+    ax.yscale = p.Axis.yscale[]
+
+    powspec = p.pergram[]
+    powerfirst = powspec.power[2]
+    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
+
+    if p.show_bands[]
+        y1 = p.ylims[][1]
+        y2 = p.ylims[][2]
+
+        poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+        poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+        poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+        
+        text!(p, p.alpha_label_position[]...; text=L"\alpha", fontsize=24)
+        text!(p, p.beta_label_position[]...; text=L"\beta", fontsize=24)
+        text!(p, p.gamma_label_position[]...; text=L"\gamma", fontsize=24)
+    end
+    return p
+end
+
+function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
+
+    pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
+    fig = powerspectrumplot(pergram; kwargs...)
+    display(fig)
+    fig
+end
+
+function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
+
+    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
+    fig = powerspectrumplot(pergram; kwargs...)
+    display(fig)
+    fig
 end
 
 end

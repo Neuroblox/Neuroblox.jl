@@ -175,15 +175,16 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
         name, 
         namespace=nothing,
         E_syn=-80.0, 
-        I_bg=1.19,
+        I_bg=1.172,
         freq=0,
         phase=0,
         τ=13,
         Cₘ=1.0,
-		σ=4.0,
+		σ=0.11,
 		a=2,
 		b=4,
-		T=37
+		T=37,
+		G_M=1.3
     )
 		sts = @variables begin 
 			V(t)=-63.83 
@@ -206,7 +207,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			G_Na = 100 
 			G_K  = 80 
 			G_L = 0.1 
-			G_M = 1.3
+			G_M = G_M
 			E_Na = 50 
 			E_K = -100 
 			E_L = -67 
@@ -262,13 +263,13 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
         name, 
         namespace=nothing,
         E_syn=-80.0, 
-        I_bg=5.5,
+        I_bg=6.2,
         freq=0,
         phase=0,
         τ=11,
 		τₛ=6.5,
         Cₘ=1.0,
-		σ=60.0,
+		σ=1.2,
 		a=4,
 		b=10,
 		T=37
@@ -354,12 +355,12 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
         name, 
         namespace=nothing,
         E_syn=0.0, 
-        I_bg=1.9,
+        I_bg=1.8,
         freq=0,
         phase=0,
         τ=2,
         Cₘ=1.0,
-		σ=80.0,
+		σ=1.7,
 		a=5,
 		b=4
     )
@@ -432,12 +433,12 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
         name, 
         namespace=nothing,
         E_syn=-80.0, 
-        I_bg=3.0,
+        I_bg=3.4,
         freq=0,
         phase=0,
         τ=10,
         Cₘ=1.0,
-		σ=80.0,
+		σ=1.7,
 		a=2,
 		b=4,
 		T=37
