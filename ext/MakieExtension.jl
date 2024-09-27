@@ -4,14 +4,16 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution
 using LinearAlgebra: diag
-using DSP, SparseArrays
+using SparseArrays
+using DSP
 using Statistics: mean
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
