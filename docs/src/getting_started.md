@@ -37,7 +37,6 @@ Now we are ready to build the ModelingToolkit System.  Structural simplify creat
 
 ```@example Wilson-Cowan
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 ```
 
 To solve the system, we first create an ODEProblem and then solve it over the tspan of (0,100) using a stiff solver.  The solution is saved every 0.1ms. The unit of time in Neuroblox is 1ms.
@@ -120,12 +119,11 @@ Now we are ready to build the ModelingToolkit System and apply structural simpli
 
 ```@example Jansen-Rit
 @named final_system = system_from_graph(g)
-final_system_sys = structural_simplify(final_system)
 ```
 Our Jansen-Rit model allows delayed edges, and we therefore need to collect those delays (in our case all delays are zero).  Then we build a Delayed Differential Equations Problem (DDEProblem).
 ```@example Jansen-Rit
 sim_dur = 1000.0 # Simulate for 1 second
-prob = ODEProblem(final_system_sys,
+prob = ODEProblem(final_system,
     [],
     (0.0, sim_dur))
 ```
