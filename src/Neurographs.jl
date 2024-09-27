@@ -138,6 +138,23 @@ function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block 
     return vcat(cbs, cbs_params)
 end
 
+
+"""
+    system_from_graph(g::MetaDiGraph, p=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
+
+Take in a `MetaDiGraph` `g` describing a network of neural structures (and optionally a vector of extra parameters `p`) and construct a `System` which can be used to construct various `Problem` types (i.e. `ODEProblem`) for use with DifferentialEquations.jl solvers.
+
+If `simplify` is set to `true` (the default), then the resulting system will have `structural_simplify` called on it with any remaining keyword arguments forwared to `structural_simplify`. That is,
+```
+@named sys = system_from_graph(g; kwarg1=x, kwarg2=y)
+```
+is equivalent to
+```
+@named sys = system_from_graph(g; simplify=false)
+sys = structural_simplify(sys; kwarg1=x, kwarg2=y)
+```
+See the docstring for `structural_simplify` for information on which options it supports.
+"""
 function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
     bc = connector_from_graph(g)
     return system_from_graph(g, bc, p; name, t_block, simplify, simplify_kwargs...)
