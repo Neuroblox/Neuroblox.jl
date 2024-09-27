@@ -147,6 +147,39 @@ function Makie.plot!(p::StackPlot)
     return p
 end
 
+@recipe(FRPlot, blox, sol) do scene
+    Theme(
+        color = :black,
+        Axis = (
+            ylabel = "Frequency (Hz)",
+            xlabel = "Time (s)"
+        ),
+        win_size = 10, # ms
+        overlap = 0,
+        transient = 0
+    )
+end
+
+argument_names(::Type{<: FRPlot}) = (:blox, :sol)
+
+function Makie.plot!(p::FRPlot)
+    sol = p.sol[]
+    blox = p.blox[]
+
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+
+    hideydecorations!(ax)
+    
+    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[])
+
+    t = range(p.transient[], stop = last(sol.t), length = length(fr))
+    lines!(p, t .* 1e-3, fr; color = p.color[])
+    
+    return p
+end
+
 function Makie.convert_arguments(::Makie.PointBased, blox::AbstractNeuronBlox, sol::AbstractSolution)
     V = voltage_timeseries(blox, sol)
 
