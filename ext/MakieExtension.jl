@@ -179,7 +179,7 @@ function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}
     display(fig)
 end
 
-@recipe(PowerSpectrumPlot, pergram) do scene
+@recipe(PowerSpectrumPlot, blox, sol) do scene
     Theme(
         Axis = (
             xlabel = "Frequency (Hz)",
@@ -196,13 +196,26 @@ end
         alpha_label_position = (8.5, 5.0),
         beta_label_position = (22, 5.0),
         gamma_label_position = (60, 5.0),
-        show_bands = true
+        show_bands = true,
+        sampling_rate = nothing,
+        method = nothing,
+        window = nothing,
+        state = "V"
     )
 end
 
-argument_names(::Type{<: PowerSpectrumPlot}) = (:pergram)
+argument_names(::Type{<: PowerSpectrumPlot}) = (:blox, :sol)
 
 function Makie.plot!(p::PowerSpectrumPlot)
+
+    sol = p.sol[]
+    blox = p.blox[]
+
+    powspec_kwargs = (sampling_rate = p.sampling_rate[],
+                      method = p.method[],
+                      window = p.window[])
+          
+    powspec = powerspectrum(blox, sol, p.state[]; filter_nothing(powspec_kwargs)...)
 
     ax = current_axis()
     xlims!(ax, p.xlims[][1], p.xlims[][2])
@@ -212,7 +225,6 @@ function Makie.plot!(p::PowerSpectrumPlot)
     ax.xticks = p.Axis.xticks[]
     ax.yscale = p.Axis.yscale[]
 
-    powspec = p.pergram[]
     powerfirst = powspec.power[2]
     lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 
@@ -231,20 +243,6 @@ function Makie.plot!(p::PowerSpectrumPlot)
     return p
 end
 
-function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
-
-    pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
-    fig = powerspectrumplot(pergram; kwargs...)
-    display(fig)
-    fig
-end
-
-function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
-
-    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
-    fig = powerspectrumplot(pergram; kwargs...)
-    display(fig)
-    fig
-end
+filter_nothing(kwargs::NamedTuple) = (k => v for (k, v) in pairs(kwargs) if v !== nothing)
 
 end
