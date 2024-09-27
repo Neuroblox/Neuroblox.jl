@@ -46,7 +46,17 @@ function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
-get_neurons(b::Union{AbstractComponent, CompositeBlox}) = vcat(get_exci_neurons(b), get_inh_neurons(b))
+get_neurons(n::AbstractNeuronBlox) = [n]
+get_neurons(n) = []
+
+function get_neurons(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_neurons(x), vcat, b.parts)
+end
+
+function get_neurons(vn::AbstractVector{<:AbstractBlox})
+    mapreduce(x -> get_neurons(x), vcat, vn)
+end
+
 
 function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
@@ -250,41 +260,6 @@ function get_weights(agent::Agent, blox_out, blox_in)
     return pv[map_idxs[idxs_weight]]
 end
 
-function find_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
-    spikes = argmaxima(x)
-    peakproms!(spikes, x; minprom, maxprom)
-    peakheights!(spikes, x[spikes]; minheight, maxheight)
-
-    return spikes
-end
-
-function count_spikes(x::AbstractVector{T}; minprom=zero(T), maxprom=nothing, minheight=zero(T), maxheight=nothing) where {T}
-    spikes = find_spikes(x; minprom, maxprom, minheight, maxheight)
-    
-    return length(spikes)
-end
-
-function detect_spikes(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; tolerance = 1e-3)
-    namespaced_name = namespaced_nameof(blox)
-    reset_param_name = Symbol(namespaced_name, "₊V_reset")
-    threshold_param_name = Symbol(namespaced_name, "₊θ")
-
-    reset = only(@parameters $(reset_param_name))
-    thrs = only(@parameters $(threshold_param_name))
-
-    get_reset = getp(sol, reset)
-    reset_value = get_reset(sol)
-
-    get_thrs = getp(sol, thrs)
-    thrs_value = get_thrs(sol)
-
-    V = voltage_timeseries(blox, sol)
-    
-    spikes = find_spikes(V; minheight = thrs_value - tolerance)
-
-    return spikes
-end
-
 """
     function get_dynamic_states(sys)
     
@@ -419,8 +394,102 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
+function find_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}
+    spikes = spzeros(Bool, size(x))
+    
+    spike_idxs = argmaxima(x)
+    peakheights!(spike_idxs, x[spike_idxs]; minheight = threshold)
+
+    spikes[spike_idxs] .= 1
+
+    return spikes
+end
+
+
+function count_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}
+    spikes = find_spikes(x; threshold)
+    
+    return nnz(spikes)
+end
+
+function detect_spikes(
+    blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
+    threshold = nothing, tolerance = 1e-3, ts = nothing
+)
+    namespaced_name = namespaced_nameof(blox)
+
+    thrs_value = if isnothing(threshold)
+        threshold_param_name = Symbol(namespaced_name, "₊θ")
+
+        get_thrs = getp(sol, threshold_param_name)
+        get_thrs(sol)
+    else
+        threshold
+    end
+    
+    V = voltage_timeseries(blox, sol; ts)
+    
+    spikes = find_spikes(V; threshold = thrs_value - tolerance)
+
+    return spikes
+end
+
+function detect_spikes(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing
+)
+
+    neurons = get_neurons(blox)
+
+    S = mapreduce(sparse_hcat, neurons) do neuron
+        detect_spikes(neuron, sol; threshold, ts)
+    end
+
+    return S
+end
+
+function firing_rate(
+    blox, sol::SciMLBase.AbstractSolution; 
+    win_size = last(sol.t), win_resolution = 1e-3, 
+    transient = 0, overlap = 0, threshold = nothing)
+
+    ts = sol.t
+    t_win_start = transient:(win_size - win_size*overlap):(last(ts) - win_size)
+
+    fr = map(t_win_start) do tws
+        spikes = detect_spikes(blox, sol; threshold, ts = tws:win_resolution:(tws + win_size))
+        N_neurons = size(spikes, 2)
+        1000.0 * (nnz(spikes) / N_neurons) / win_size
+    end
+
+    return fr
+end
+
+function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
+                 firing_rate_Δt = last(sol.t) - trim_transient,)
+
+    spikes = transpose(spikes)
+    tmax = last(sol.t) - trim_transient
+    t = trim_transient:firing_rate_Δt:tmax
+
+    tᵤ = unique(sol.t)
+    counts = vec(sum(spikes, dims=1))
+
+    rₘ = fill(NaN64, length(t) - 1)
+    for i in 2:length(t)
+        idx = intersect(findall(tᵤ .<= t[i]), findall(tᵤ .> t[i-1]))
+        if ~isempty(idx)
+            rₘ[i-1] = sum(counts[idx])
+        end
+    end
+
+    # firing rate in spikes/s averaged over the population
+    rₘ = rₘ*1000 ./ (size(spikes,1)*firing_rate_Δt)
+    return t, rₘ
+end
+
 function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
-                          state::String, ts=nothing)
+                          state::String; ts=nothing)
                           
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
@@ -433,52 +502,52 @@ function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolut
     end
 end
 
-function state_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String, ts=nothing)
+function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        state_timeseries(neuron, sol, state, ts)
+        state_timeseries(neuron, sol, state; ts)
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution,
-                              state::String, ts=nothing)
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution,
+                              state::String; ts=nothing)
                               
-    s = state_timeseries(cb, sol, state, ts)
+    s = state_timeseries(cb, sol, state; ts)
 
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution, ts=nothing) = 
-    state_timeseries(blox, sol, "V", ts)
+voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
+    state_timeseries(blox, sol, "V"; ts)
 
-function voltage_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
+function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
 
     return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol, ts)
+        voltage_timeseries(neuron, sol; ts)
     end
 end
 
-function meanfield_timeseries(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, ts=nothing)
-    V = voltage_timeseries(cb, sol, ts)
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
+    V = voltage_timeseries(cb, sol; ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution, state::String;
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String;
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    s = meanfield_timeseries(cb, sol, state, t_sampled)
+    s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
 
     return method(s, fs=sampling_freq, window=window)
 end
 
-function powerspectrum(cb::CompositeBlox, sol::SciMLBase.AbstractSolution;
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
                        sampling_rate=nothing, method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    V = voltage_timeseries(cb, sol, t_sampled)
+    V = voltage_timeseries(cb, sol; ts = t_sampled)
     replace_refractory!(V, cb, sol)
 
     return method(vec(mapslices(nanmean, V; dims = 2)), fs = sampling_freq, window=window)

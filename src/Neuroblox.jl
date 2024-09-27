@@ -51,7 +51,8 @@ using CSV: read
 using DataFrames
 using JLD2
 
-using Peaks: argmaxima, peakproms!, peakheights!
+using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
+using SparseArrays
 
 using LogExpFunctions: logistic
 
@@ -197,6 +198,9 @@ function rasterplot! end
 function stackplot end
 function stackplot! end
 
+function frplot end
+function frplot! end
+
 function voltage_stack end
 
 function ecbarplot end
@@ -250,7 +254,9 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
-export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export graphsystem_from_graph
+export detect_spikes, mean_firing_rate, firing_rate
+export voltage_timeseries, meanfield_timeseries, state_timeseries
 end

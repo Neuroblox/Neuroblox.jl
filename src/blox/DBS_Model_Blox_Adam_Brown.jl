@@ -64,13 +64,14 @@ struct Striatum_MSN_Adam <: CompositeBlox
         namespace = nothing,
         N_inhib = 100,
         E_syn_inhib=-80,
-        I_bg=1.19*ones(N_inhib),
+        I_bg=1.172*ones(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=13,
-        σ=4.0,
+        σ=0.11,
         density=0.3,
         weight=0.1,
+        G_M=1.3,
         connection_matrix=nothing
     )
         n_inh = [
@@ -82,7 +83,8 @@ struct Striatum_MSN_Adam <: CompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ=σ,
+                    G_M=G_M
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -132,12 +134,12 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         namespace = nothing,
         N_inhib = 50,
         E_syn_inhib=-80,
-        I_bg=5.5*ones(N_inhib),
+        I_bg=6.2*ones(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=11,
         τ_inhib_s=6.5,
-        σ=6.0,
+        σ=1.2,
         density=0.58,
         g_density=0.33,
         weight=0.6,
@@ -215,11 +217,11 @@ struct GPe_Adam <: CompositeBlox
         namespace = nothing,
         N_inhib = 80,
         E_syn_inhib=-80,
-        I_bg=3*ones(N_inhib),
+        I_bg=3.4*ones(N_inhib),
         freq=zeros(N_inhib),
         phase=zeros(N_inhib),
         τ_inhib=10,
-        σ=8.0,
+        σ=1.7,
         density=0.0,
         weight=0.0,
         connection_matrix=nothing
@@ -284,11 +286,11 @@ struct STN_Adam <: CompositeBlox
         namespace = nothing,
         N_exci = 40,
         E_syn_exci=0.0,
-        I_bg=1.9*ones(N_exci),
+        I_bg=1.8*ones(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
         τ_exci=2,
-        σ=8.0,
+        σ=1.7,
         density=0.0,
         weight=0.0,
         connection_matrix=nothing
