@@ -44,10 +44,10 @@ using ..Neuroblox:
     LIFExciNeuron,
     LIFInhNeuron,
     LIFExciCircuitBlox,
-    LIFInhCircuitBlox# ,
-    # PINGNeuronExci,
-    # PINGNeuronInhib,
-    # AbstractPINGNeuron
+    LIFInhCircuitBlox,
+    PINGNeuronExci,
+    PINGNeuronInhib,
+    AbstractPINGNeuron
 
 using GraphDynamics:
     GraphDynamics,
@@ -62,6 +62,7 @@ using GraphDynamics:
     SubsystemStates,
     SubsystemParams,
     VectorOfSubsystemStates,
+    get_tag,
     get_states,
     get_params,
     isstochastic,
@@ -333,10 +334,16 @@ how sparse that connection matrix should be before falling back to storing a `Sp
 of connections, but only if the matrix is also longer than `sparse_length_cutoff` (this is to avoid)
 situations where tiny matrices like (e.g. 5x5) get stored as sparse arrays rather than dense arrays. 
 """
-function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_length_cutoff=100)
+function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_length_cutoff=0)
     g = flat_graph(_g)
+    
+    total_eltype = mapreduce(promote_type, vertices(g)) do i
+        eltype(get_subsystem(g, i))
+    end
+    fix_eltype(s::Subsystem{Name}) where {Name} = convert(Subsystem{Name, total_eltype}, s)
+    
     subsystems_and_names_flat = map(vertices(g)) do i
-        (subsystem = get_subsystem(g, i), name = get_name(g, i))
+        (subsystem = fix_eltype(get_subsystem(g, i)), name = get_name(g, i))
     end
     names_flat = map(last, subsystems_and_names_flat)
     subsystems_flat = map(first, subsystems_and_names_flat)
@@ -412,10 +419,10 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
                 if iszero(sparsity)
                     NotConnected()
                 elseif sparsity <= sparsity_heuristic && length(rule_matrix_sparse) > sparse_length_cutoff
-                    #println("$CT was sparse (sparsity = $sparsity, length = $(length(rule_matrix_sparse)))")
+                    #@info "$CT was sparse" sparsity length = length(rule_matrix_sparse)
                     rule_matrix_sparse
                 else
-                    #println("$CT was dense (sparsity = $sparsity, length = $(length(rule_matrix_sparse)))")
+                    #@info "$CT was dense" sparsity length = length(rule_matrix_sparse)
                     collect(rule_matrix_sparse)
                 end
             end
@@ -424,27 +431,6 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
     states_partitioned           = map(v -> map(get_states, v), subsystems)
     params_partitioned = map(v -> map(get_params, v), subsystems)
     names_partitioned            = map(v -> map(last, v), subsystems_and_names)
-    
-    # state_namemap = Dict{Symbol, StateIndex}()
-    # subsystem_names = 
-    # for i ∈ 1:NST
-    #     for j ∈ eachindex(subsystems_and_names[i])
-    #         for (k, name) ∈ enumerate(propertynames(states_partitioned[i][j]))
-    #             propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
-    #             state_namemap[propname] = StateIndex(i, j, name)
-    #         end
-    #     end
-    # end
-    # param_namemap = Dict{Symbol, ParamIndex}()
-    # for i ∈ 1:NST
-    #     for j ∈ eachindex(subsystems_and_names[i])
-    #         for name ∈ propertynames(params_partitioned[i][j])
-    #             propname = Symbol(subsystems_and_names[i][j].name, "₊", name)
-    #             #TODO: this'll require some generalization to support weight params
-    #             param_namemap[propname] = ParamIndex(i, j, name)
-    #         end
-    #     end
-    # end
 
     composite_continuous_events_partitioned = let
         if isempty(g.composite_continuous_events_builder)
@@ -480,8 +466,6 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=0.5, sparse_
                  composite_discrete_events_partitioned,
                  composite_continuous_events_partitioned,
                  names_partitioned
-                 # state_namemap,
-                 # param_namemap
                  )
     if any(v -> any(isstochastic, v), subsystems)
         SDEGraphSystem(;gsys_args...)

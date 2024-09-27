@@ -1020,36 +1020,36 @@ function GraphDynamics.apply_discrete_event!(integrator, states::NTuple{Len, Any
 end
 
 # #-------------------------
-# # PING Network
-# struct PINGConnection
-#     w::Float64
-#     V_E::Float64
-#     V_I::Float64
-# end
-# Base.zero(::Type{PINGConnection}) = PINGConnection(0.0, 0.0, 0.0)
+# PING Network
+struct PINGConnection
+    w::Float64
+    V_E::Float64
+    V_I::Float64
+end
+Base.zero(::Type{PINGConnection}) = PINGConnection(0.0, 0.0, 0.0)
 
-# function get_connection(blox_src::PINGNeuronExci, blox_dst::PINGNeuronInhib, kwargs)
-#     (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
-#     V_E = get(kwargs, :V_E, 0.0)
-#     (; conn = PINGConnection(w_val, V_E, 0.0), names=[name])
-# end
-# function get_connection(blox_src::PINGNeuronInhib, blox_dst::AbstractPINGNeuron, kwargs)
-#     (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
-#     V_I = get(kwargs, :V_I, 0.0)
-#     (; conn = PINGConnection(w_val, V_I, -80.0), names=[name])
-# end
+function get_connection(blox_src::PINGNeuronExci, blox_dst::PINGNeuronInhib, kwargs)
+    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
+    V_E = get(kwargs, :V_E, 0.0)
+    (; conn = PINGConnection(w_val, V_E, 0.0), names=[name])
+end
+function get_connection(blox_src::PINGNeuronInhib, blox_dst::AbstractPINGNeuron, kwargs)
+    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
+    V_I = get(kwargs, :V_I, 0.0)
+    (; conn = PINGConnection(w_val, V_I, -80.0), names=[name])
+end
 
-# function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronExci}, blox_dst::Subsystem{PINGNeuronInhib})
-#     (; w, V_E) = c
-#     (;s)       = blox_src
-#     (;V)    = blox_dst
-#     (; jcn = w * s * (V_E - V))
-# end
+function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronExci}, blox_dst::Subsystem{PINGNeuronInhib})
+    (; w, V_E) = c
+    (;s)       = blox_src
+    (;V)    = blox_dst
+    (; jcn = w * s * (V_E - V))
+end
 
-# function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Subsystem{<:AbstractPINGNeuron})
-#     (; w, V_I) = c
-#     (;s)       = blox_src
-#     (;V)    = blox_dst
-#     (; jcn = w * s * (V_I - V))
-# end
+function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Subsystem{<:AbstractPINGNeuron})
+    (; w, V_I) = c
+    (;s)       = blox_src
+    (;V)    = blox_dst
+    (; jcn = w * s * (V_I - V))
+end
 

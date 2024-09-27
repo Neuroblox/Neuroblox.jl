@@ -790,55 +790,52 @@ function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
 end
 
 
-# function ping_tests(;tspan=(0.0, 2.0))
+function ping_tests(;tspan=(0.0, 2.0))
     
-#     # First focus is on producing panels from Figure 1 of the PING network paper.
+    # First focus is on producing panels from Figure 1 of the PING network paper.
 
-#     # Setup parameters from the supplemental material
-#     μ_E = 1.5
-#     σ_E = 0.15
-#     μ_I = 0.8
-#     σ_I = 0.08
+    # Setup parameters from the supplemental material
+    μ_E = 1.5
+    σ_E = 0.15
+    μ_I = 0.8
+    σ_I = 0.08
 
-#     # Define the PING network neuron numbers
-#     NE_driven = 2
-#     NE_other = 14
-#     NI_driven = 4
-#     N_total = NE_driven + NE_other + NI_driven
+    # Define the PING network neuron numbers
+    NE_driven = 2
+    NE_other = 14
+    NI_driven = 4
+    N_total = NE_driven + NE_other + NI_driven
 
-#     # First, create the 20 driven excitatory neurons
-#     exci_driven = [PINGNeuronExci(name=Symbol("ED$i"), I_ext=rand(Normal(μ_I, σ_I))) for i in 1:NE_driven]
-#     exci_other  = [PINGNeuronExci(name=Symbol("EO$i")) for i in 1:NE_other]
-#     inhib       = [PINGNeuronInhib(name=Symbol("ID$i"), I_ext=rand(Normal(μ_I, σ_I))) for i in 1:NI_driven]
+    # First, create the 20 driven excitatory neurons
+    exci_driven = [PINGNeuronExci(name=Symbol("ED$i"), I_ext=rand(Normal(μ_I, σ_I))) for i in 1:NE_driven]
+    exci_other  = [PINGNeuronExci(name=Symbol("EO$i")) for i in 1:NE_other]
+    inhib       = [PINGNeuronInhib(name=Symbol("ID$i"), I_ext=rand(Normal(μ_I, σ_I))) for i in 1:NI_driven]
 
-#     # Create the network
-#     g = MetaDiGraph()
-#     add_blox!.(Ref(g), vcat(exci_driven, exci_other, inhib))
+    # Create the network
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), vcat(exci_driven, exci_other, inhib))
 
-#     # Extra parameters
-#     N=N_total
-#     g_II=0.2
-#     g_IE=0.6
-#     g_EI=0.6
+    # Extra parameters
+    N=N_total
+    g_II=0.2
+    g_IE=0.6
+    g_EI=0.6
 
-#     for i = 1:NE_driven+NE_other
-#         for j = NE_driven+NE_other+1:N_total
-#             add_edge!(g, i, j, Dict(:weight => g_EI/N))
-#             add_edge!(g, j, i, Dict(:weight => g_IE/N))
-#         end
-#     end
+    for i = 1:NE_driven+NE_other
+        for j = NE_driven+NE_other+1:N_total
+            add_edge!(g, i, j, Dict(:weight => g_EI/N))
+            add_edge!(g, j, i, Dict(:weight => g_IE/N))
+        end
+    end
 
-#     for i = NE_driven+NE_other+1:N_total
-#         for j = NE_driven+NE_other+1:N_total
-#             add_edge!(g, i, j, Dict(:weight => g_II/N))
-#         end
-#     end
+    for i = NE_driven+NE_other+1:N_total
+        for j = NE_driven+NE_other+1:N_total
+            add_edge!(g, i, j, Dict(:weight => g_II/N))
+        end
+    end
+    sys = graphsystem_from_graph(g)
+    prob = ODEProblem(sys, [], tspan)
+    sol = solve(prob, Tsit5())
 
-#     test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-10, alg=Tsit5())
-    
-#     # @named sys = system_from_graph(g)
-#     # sys = structural_simplify(sys)
-#     # prob = ODEProblem(sys, [], (0.0, 20.0))
-#     # @time sol = solve(prob, Tsit5(), saveat=0.1)
-
-# end
+    test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-10, alg=Tsit5())
+end

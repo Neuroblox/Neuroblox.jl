@@ -31,8 +31,8 @@ function define_neurons()
                      (:izh, :IzhikevichNeuron)
                      (:lif_exci, :LIFExciNeuron)
                      (:lif_inh, :LIFInhNeuron)
-                     # (:pexci, :PINGNeuronExci)
-                     # (:pinhib, :PINGNeuronInhib)
+                     (:pexci, :PINGNeuronExci)
+                     (:pinhib, :PINGNeuronInhib)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
         system = structural_simplify(sys.odesystem; fully_determined=false)
@@ -205,26 +205,6 @@ function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsyste
     vparams[] = @set params.jcn_ = jcn
     nothing
 end
-
-# # #------------------------
-# # MatrisomeComparer
-# # In the Striatum - Striatum connections, there's a lot of events that depend on comparing the ρ from one matrisome
-# # to another, so lets make that an intermediate block
-
-# struct MatrisomeComparer end
-# components(m::MatrisomeComparer) = (m,)
-# GraphDynamics.initialize_input(s::Subsystem{MatrisomeComparer}) = (; ρ_src=0.0, ρ_dst=0.0)
-
-# function GraphDynamics.subsystem_differential(s::Subsystem{MatrisomeComparer}, _, _)
-#     SubsystemStates{MatrisomeComparer, Float64, @NamedTuple{}}((;))
-# end
-# function GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{MatrisomeComparer}, args...)
-#     nothing
-# end
-# function to_subsystem(m::MatrisomeComparer)
-#     states = SubsystemStates{MatrisomeComparer, Float64, @NamedTuple{}}((;))
-#     params = SubsystemParams{MatrisomeComparer}((; ρ_src=0.0, ρ_dst=0.0))
-# end
 
 #-------------------------
 # Striosome
