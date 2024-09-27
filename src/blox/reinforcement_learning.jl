@@ -183,7 +183,7 @@ mutable struct Agent{S,P,A,LR,PA}
 
         t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
         # TODO: add another version that uses system_from_graph(g,bc,params;)
-        sys = system_from_graph(g, bc; name, t_block, allow_parameter=false, simplify=false)
+        sys = system_from_graph(g, bc; name, t_block, allow_parameter=false)
 
         u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
         p = haskey(kwargs, :p) ? kwargs[:p] : []
