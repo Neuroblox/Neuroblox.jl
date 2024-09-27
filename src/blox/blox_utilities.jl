@@ -568,3 +568,5 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
         return nothing, 1000 / sampling_rate
     end
 end
+
+get_system(blox::AbstractBlox) = blox.odesystem
