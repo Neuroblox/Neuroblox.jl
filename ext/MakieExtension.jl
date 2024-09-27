@@ -95,20 +95,6 @@ end
 
 argument_names(::Type{<: RasterPlot}) = (:blox, :sol)
 
-# function Makie.plot!(p::RasterPlot)
-#     sol = p.sol[]
-#     t = sol.t
-#     blox = p.blox[]
-#     neurons = get_neurons(blox)
-
-#     for (i, n) in enumerate(neurons)
-#         spike_idxs = detect_spikes(n, sol)
-#         scatter!(p, t[spike_idxs], fill(i, length(spike_idxs)); color=p.color[])
-#     end
-    
-#     return p
-# end
-
 function Makie.plot!(p::RasterPlot)
     sol = p.sol[]
     t = sol.t
