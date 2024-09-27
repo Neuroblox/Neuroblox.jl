@@ -120,8 +120,8 @@ function Makie.plot!(p::RasterPlot)
     ax.ylabel = p.Axis.ylabel[]
 
     spikes = detect_spikes(blox, sol; threshold=threshold)
-    neuron_indices, spike_times = findnz(spikes)
-    scatter!(p, spike_times, neuron_indices; color=p.color[])
+    spike_times, neuron_indices = findnz(spikes)
+    scatter!(p, sol.t[spike_times], neuron_indices; color=p.color[])
 
     return p
 end
