@@ -55,7 +55,7 @@ powerspectrumplot(fig[1,2], msn, sol; state = "G",
                         alpha_label_position = (8.5, 4),
                         beta_label_position = (22, 4),
                         gamma_label_position = (60, 4),
-                        axis = (; title = "Welch's method with no Hanning window"))
+                        axis = (; title = "Welch's method with Hanning window"))
 
 fig
 
@@ -70,4 +70,4 @@ powerspectrumplot(msn, ens_sol; state = "G",
                     alpha_label_position = (8.5, 4),
                     beta_label_position = (22, 4),
                     gamma_label_position = (60, 4),
-                    axis = (; title = "Welch's method with no Hanning window"))
+                    axis = (; title = "Welch's method with Hanning window"))

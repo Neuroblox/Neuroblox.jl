@@ -549,6 +549,22 @@ function powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution
     return method(data, fs = sampling_freq, window=window)
 end
 
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                       sols::SciMLBase.EnsembleSolution, state::String; sampling_rate=nothing,
+                       method=periodogram, window=nothing)::Vector{DSP.Periodograms.Periodogram}
+
+    t_sampled, sampling_freq = get_sampling_info(sols[1]; sampling_rate=sampling_rate)
+    powspecs = DSP.Periodograms.Periodogram[]
+    
+    for sol in sols
+        s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
+        powspec = method(s, fs=sampling_freq, window=window)
+        push!(powspecs, powspec)
+    end
+
+    return powspecs
+end
+
 function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
     t_raw = unique(sol.t)
     dt = diff(t_raw)

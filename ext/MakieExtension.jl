@@ -250,9 +250,9 @@ function power_spectrum_plot!(p, blox, sol::AbstractSolution, powspec_kwargs)
     lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 end
 
-function power_spectrum_plot!(p, blox, sol::EnsembleSolution, powspec_kwargs)
+function power_spectrum_plot!(p, blox, sols::EnsembleSolution, powspec_kwargs)
 
-    powspecs = [powerspectrum(blox, s, p.state[]; powspec_kwargs...) for s in sol]
+    powspecs = powerspectrum(blox, sols, p.state[]; powspec_kwargs...)
     mean_power = mean(powspec.power[2:end] for powspec in powspecs)
 
     freq = powspecs[1].freq[2:end]
@@ -266,7 +266,6 @@ function power_spectrum_plot!(p, blox, sol::EnsembleSolution, powspec_kwargs)
 
     band!(p, freq, y_lower, y_upper, color=(:purple,0.2))
     lines!(p,freq, mean_power_norm, color=:purple)
-
 end
 
 end
