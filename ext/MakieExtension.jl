@@ -6,10 +6,10 @@ using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, get_neurons
 using Neuroblox: powerspectrum
-using SciMLBase: AbstractSolution
+using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
 using DSP
-using Statistics: mean
+using Statistics: mean, std
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
@@ -207,15 +207,8 @@ end
 argument_names(::Type{<: PowerSpectrumPlot}) = (:blox, :sol)
 
 function Makie.plot!(p::PowerSpectrumPlot)
-
     sol = p.sol[]
     blox = p.blox[]
-
-    powspec_kwargs = (sampling_rate = p.sampling_rate[],
-                      method = p.method[],
-                      window = p.window[])
-          
-    powspec = powerspectrum(blox, sol, p.state[]; filter_nothing(powspec_kwargs)...)
 
     ax = current_axis()
     xlims!(ax, p.xlims[][1], p.xlims[][2])
@@ -224,9 +217,6 @@ function Makie.plot!(p::PowerSpectrumPlot)
     ax.ylabel = p.Axis.ylabel[]
     ax.xticks = p.Axis.xticks[]
     ax.yscale = p.Axis.yscale[]
-
-    powerfirst = powspec.power[2]
-    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 
     if p.show_bands[]
         y1 = p.ylims[][1]
@@ -240,9 +230,43 @@ function Makie.plot!(p::PowerSpectrumPlot)
         text!(p, p.beta_label_position[]...; text=L"\beta", fontsize=24)
         text!(p, p.gamma_label_position[]...; text=L"\gamma", fontsize=24)
     end
+
+
+    powspec_kwargs = (sampling_rate = p.sampling_rate[],
+    method = p.method[],
+    window = p.window[])
+
+    powspec_kwargs = filter_nothing(powspec_kwargs)
+    power_spectrum_plot!(p, blox, sol, powspec_kwargs)
+
     return p
 end
 
-filter_nothing(kwargs::NamedTuple) = (k => v for (k, v) in pairs(kwargs) if v !== nothing)
+filter_nothing(kwargs::NamedTuple) = NamedTuple(k => v for (k, v) in pairs(kwargs) if v !== nothing)
+
+function power_spectrum_plot!(p, blox, sol::AbstractSolution, powspec_kwargs)
+    powspec = powerspectrum(blox, sol, p.state[]; powspec_kwargs...)
+    powerfirst = powspec.power[2]
+    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
+end
+
+function power_spectrum_plot!(p, blox, sol::EnsembleSolution, powspec_kwargs)
+
+    powspecs = [powerspectrum(blox, s, p.state[]; powspec_kwargs...) for s in sol]
+    mean_power = mean(powspec.power[2:end] for powspec in powspecs)
+
+    freq = powspecs[1].freq[2:end]
+    std_power = std([powspec.power[2:end] for powspec in powspecs])
+
+    y_lower = mean_power - std_power
+    y_upper = mean_power + std_power
+    mean_power_norm = mean_power / mean_power[1]
+    y_lower = y_lower / mean_power[1]
+    y_upper = y_upper / mean_power[1]
+
+    band!(p, freq, y_lower, y_upper, color=(:purple,0.2))
+    lines!(p,freq, mean_power_norm, color=:purple)
+
+end
 
 end
