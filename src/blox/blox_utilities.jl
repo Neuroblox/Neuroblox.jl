@@ -442,7 +442,7 @@ function detect_spikes(
     neurons = get_neurons(blox)
 
     S = mapreduce(sparse_hcat, neurons) do neuron
-        detect_spikes(neuron, sol; threshold)
+        detect_spikes(neuron, sol; threshold, ts)
     end
 
     return S
