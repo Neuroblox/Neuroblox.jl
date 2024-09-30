@@ -31,7 +31,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
         gl = g
         gr = g
     end
-    @named gsys = system_from_graph(gl; GraphDynamics=true)
+    @named gsys = system_from_graph(gl; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp = let sys = gsys
         prob = ODEProblem(sys, [], tspan)
@@ -117,7 +117,7 @@ function basic_smoketest()
                     end
                 end
                 tspan = (0.0, 1.0)
-                @named sys = system_from_graph(g; GraphDynamics=true)
+                @named sys = system_from_graph(g; graphdynamics=true)
                 sol_grp = let prob = ProbType(sys, [], tspan)
                     sol = solve(prob)
                     @test sol.retcode == ReturnCode.Success
@@ -226,7 +226,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         graph_r = g
     end
     
-    @named gsys = system_from_graph(graph_l; GraphDynamics=true)
+    @named gsys = system_from_graph(graph_l; graphdynamics=true)
     state_names = variable_symbols(gsys)
     
     sol_grp_ens, du_grp, dnoise_grp = let sys = gsys
@@ -299,7 +299,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
         graph_l = graph
         graph_r = graph
     end
-    @named gsys = system_from_graph(graph_l; GraphDynamics=true)
+    @named gsys = system_from_graph(graph_l; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp, dnoise_grp = let sys = gsys
         prob = SDEProblem(sys, [], tspan, [], seed=seed)

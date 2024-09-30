@@ -155,10 +155,10 @@ sys = structural_simplify(sys; kwarg1=x, kwarg2=y)
 ```
 See the docstring for `structural_simplify` for information on which options it supports.
 
-If `GraphDynamics=true` (defaults to `false`), the output will be a `GraphSystem` from [GraphDynamics.jl](https://github.com/Neuroblox/GraphDynamics.jl), and the `kwargs` will be sent to the `GraphDynamics` constructor instead of using [ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl/). The GraphDynamics.jl backend is typically significantly faster for large neural systems than the default backend, but is experimental and does not yet support all Neuroblox.jl features. 
+If `graphdynamics=true` (defaults to `false`), the output will be a `GraphSystem` from [GraphDynamics.jl](https://github.com/Neuroblox/GraphDynamics.jl), and the `kwargs` will be sent to the `GraphDynamics` constructor instead of using [ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl/). The GraphDynamics.jl backend is typically significantly faster for large neural systems than the default backend, but is experimental and does not yet support all Neuroblox.jl features. 
 """
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, GraphDynamics=false, kwargs...)
-    if GraphDynamics
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+    if graphdynamics
         isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
         GraphDynamicsInterop.graphsystem_from_graph(g; kwargs...)
     else
