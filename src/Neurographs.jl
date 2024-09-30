@@ -138,37 +138,43 @@ function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block 
     return vcat(cbs, cbs_params)
 end
 
-function system_from_graph(g::MetaDiGraph; name, t_block=missing)
+
+"""
+    system_from_graph(g::MetaDiGraph, p=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
+
+Take in a `MetaDiGraph` `g` describing a network of neural structures (and optionally a vector of extra parameters `p`) and construct a `System` which can be used to construct various `Problem` types (i.e. `ODEProblem`) for use with DifferentialEquations.jl solvers.
+
+If `simplify` is set to `true` (the default), then the resulting system will have `structural_simplify` called on it with any remaining keyword arguments forwared to `structural_simplify`. That is,
+```
+@named sys = system_from_graph(g; kwarg1=x, kwarg2=y)
+```
+is equivalent to
+```
+@named sys = system_from_graph(g; simplify=false)
+sys = structural_simplify(sys; kwarg1=x, kwarg2=y)
+```
+See the docstring for `structural_simplify` for information on which options it supports.
+"""
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
     bc = connector_from_graph(g)
-    return system_from_graph(g, bc; name, t_block)
+    return system_from_graph(g, bc, p; name, t_block, simplify, simplify_kwargs...)
 end
 
-# Additional dispatch if extra parameters are passed for edge definitions
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}; name, t_block=missing)
-    bc = connector_from_graph(g)
-    return system_from_graph(g, bc, p; name, t_block)
-end
-
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector; name, t_block=missing)
+function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}=Num[];
+                           name, t_block=missing, simplify=true, simplify_kwargs...)
     blox_syss = get_sys(g)
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
 
-    return compose(
-        System(connection_eqs, t, [], params(bc); name, discrete_events = discrete_cbs), 
-        blox_syss
-    )
+    sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
+    if simplify
+        structural_simplify(sys; simplify_kwargs...)
+    else
+        sys
+    end
 end
 
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}; name, t_block=missing)
-    blox_syss = get_sys(g)
-    connection_eqs = get_equations_with_state_lhs(bc)
-
-    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
-
-    return compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
-end
 
 function system_from_parts(parts::AbstractVector; name)
     return compose(System(Equation[], t; name), get_sys.(parts))

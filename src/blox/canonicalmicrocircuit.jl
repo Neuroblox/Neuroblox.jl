@@ -56,7 +56,7 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
         # and propagate the BloxConnector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(sblox_parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(sblox_parts; name)
 
         new(namespace, sblox_parts, sys, bc)
     end
