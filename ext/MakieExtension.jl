@@ -237,20 +237,20 @@ function Makie.plot!(p::PowerSpectrumPlot)
     window = p.window[])
 
     powspec_kwargs = filter_nothing(powspec_kwargs)
-    power_spectrum_plot!(p, blox, sol, powspec_kwargs)
+    _powerspectrumplot(p, blox, sol, powspec_kwargs)
 
     return p
 end
 
 filter_nothing(kwargs::NamedTuple) = NamedTuple(k => v for (k, v) in pairs(kwargs) if v !== nothing)
 
-function power_spectrum_plot!(p, blox, sol::AbstractSolution, powspec_kwargs)
+function _powerspectrumplot(p, blox, sol::AbstractSolution, powspec_kwargs)
     powspec = powerspectrum(blox, sol, p.state[]; powspec_kwargs...)
     powerfirst = powspec.power[2]
     lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 end
 
-function power_spectrum_plot!(p, blox, sols::EnsembleSolution, powspec_kwargs)
+function _powerspectrumplot(p, blox, sols::EnsembleSolution, powspec_kwargs)
 
     powspecs = powerspectrum(blox, sols, p.state[]; powspec_kwargs...)
     mean_power = mean(powspec.power[2:end] for powspec in powspecs)
