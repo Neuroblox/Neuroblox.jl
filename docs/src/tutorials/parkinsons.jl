@@ -102,7 +102,7 @@ add_edge!(g,4,4,:weight, C_BG_Th_Cor)
 # Lastly, we create the `ODEProblem` for our system, select an algorithm, in this case `Tsit5()`, and simulate 1 second of brain activity.
 
 sim_dur = 1000.0 # Simulate for 1 second
-prob = ODEProblem(final_system_sys, [], (0.0, sim_dur))
+prob = ODEProblem(final_system, [], (0.0, sim_dur))
 sol = solve(prob, Tsit5(), saveat=1)
 
 
