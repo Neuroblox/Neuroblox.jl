@@ -995,6 +995,7 @@ function (bc::BloxConnector)(
     accumulate_equation!(bc, eq)
 end
 
+# May not be necessary because could be handled by abstract neuron version
 function (bc::BloxConnector)(
     bloxout::AbstractPINGNeuron, 
     bloxin::AbstractPINGNeuron; 
