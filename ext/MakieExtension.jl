@@ -6,11 +6,11 @@ using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
-using SciMLBase: AbstractSolution
+using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
 using SparseArrays
 using DSP
-using Statistics: mean
+using Statistics: mean, std
 
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
@@ -200,7 +200,7 @@ function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}
     display(fig)
 end
 
-@recipe(PowerSpectrumPlot, pergram) do scene
+@recipe(PowerSpectrumPlot, blox, sol) do scene
     Theme(
         Axis = (
             xlabel = "Frequency (Hz)",
@@ -217,13 +217,19 @@ end
         alpha_label_position = (8.5, 5.0),
         beta_label_position = (22, 5.0),
         gamma_label_position = (60, 5.0),
-        show_bands = true
+        show_bands = true,
+        sampling_rate = nothing,
+        method = nothing,
+        window = nothing,
+        state = "V"
     )
 end
 
-argument_names(::Type{<: PowerSpectrumPlot}) = (:pergram)
+argument_names(::Type{<: PowerSpectrumPlot}) = (:blox, :sol)
 
 function Makie.plot!(p::PowerSpectrumPlot)
+    sol = p.sol[]
+    blox = p.blox[]
 
     ax = current_axis()
     xlims!(ax, p.xlims[][1], p.xlims[][2])
@@ -232,10 +238,6 @@ function Makie.plot!(p::PowerSpectrumPlot)
     ax.ylabel = p.Axis.ylabel[]
     ax.xticks = p.Axis.xticks[]
     ax.yscale = p.Axis.yscale[]
-
-    powspec = p.pergram[]
-    powerfirst = powspec.power[2]
-    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 
     if p.show_bands[]
         y1 = p.ylims[][1]
@@ -249,23 +251,42 @@ function Makie.plot!(p::PowerSpectrumPlot)
         text!(p, p.beta_label_position[]...; text=L"\beta", fontsize=24)
         text!(p, p.gamma_label_position[]...; text=L"\gamma", fontsize=24)
     end
+
+
+    powspec_kwargs = (sampling_rate = p.sampling_rate[],
+    method = p.method[],
+    window = p.window[])
+
+    powspec_kwargs = filter_nothing(powspec_kwargs)
+    _powerspectrumplot(p, blox, sol, powspec_kwargs)
+
     return p
 end
 
-function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution; powerspectrum_kwargs = (;), kwargs...)
+filter_nothing(kwargs::NamedTuple) = NamedTuple(k => v for (k, v) in pairs(kwargs) if v !== nothing)
 
-    pergram = powerspectrum(blox, sol; powerspectrum_kwargs...)
-    fig = powerspectrumplot(pergram; kwargs...)
-    display(fig)
-    fig
+function _powerspectrumplot(p, blox, sol::AbstractSolution, powspec_kwargs)
+    powspec = powerspectrum(blox, sol, p.state[]; powspec_kwargs...)
+    powerfirst = powspec.power[2]
+    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
 end
 
-function powerspectrumplot(blox::Union{AbstractNeuronBlox, CompositeBlox}, sol::AbstractSolution, state; powerspectrum_kwargs = (;), kwargs...)
+function _powerspectrumplot(p, blox, sols::EnsembleSolution, powspec_kwargs)
 
-    pergram = powerspectrum(blox, sol, state; powerspectrum_kwargs...)
-    fig = powerspectrumplot(pergram; kwargs...)
-    display(fig)
-    fig
+    powspecs = powerspectrum(blox, sols, p.state[]; powspec_kwargs...)
+    mean_power = mean(powspec.power[2:end] for powspec in powspecs)
+
+    freq = powspecs[1].freq[2:end]
+    std_power = std([powspec.power[2:end] for powspec in powspecs])
+
+    y_lower = mean_power - std_power
+    y_upper = mean_power + std_power
+    mean_power_norm = mean_power / mean_power[1]
+    y_lower = y_lower / mean_power[1]
+    y_upper = y_upper / mean_power[1]
+
+    band!(p, freq, y_lower, y_upper, color=(:purple,0.2))
+    lines!(p,freq, mean_power_norm, color=:purple)
 end
 
 end
