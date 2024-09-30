@@ -69,6 +69,8 @@ abstract type NeuralMassBlox <: AbstractBlox end
 abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
 abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
+abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
+
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
