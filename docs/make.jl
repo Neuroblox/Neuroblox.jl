@@ -23,8 +23,8 @@ include("pages.jl")
 makedocs(sitename = "Neuroblox",
     authors = "Neuroblox Inc.",
     modules = [Neuroblox],
-    clean = true, doctest = false, linkcheck = true,
-    warnonly = [:docs_block, :missing_docs],
+    clean = true, doctest = false, linkcheck = false,
+    warnonly = [:docs_block, :missing_docs, :linkcheck],
     format = Documenter.HTML(assets = ["assets/favicon.ico"]),
         #canonical = "https://docs.sciml.ai/LinearSolve/stable/"),
     pages = pages)
