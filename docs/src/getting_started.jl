@@ -57,7 +57,6 @@ create_adjacency_edges!(g, adj)
 # Now, let's build the complete model:
 
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 
 # This creates a differential equations system from our graph representation using ModelingToolkit and symbolically simplifies it for efficient computation.
 
