@@ -67,6 +67,6 @@ create_adjacency_edges!(g, adj)
 prob = ODEProblem(sys, [], (0.0, 100), [])
 sol = solve(prob, Rodas4(), saveat=0.1)
 
-# [[1] Wilson, H. R., & Cowan, J. D. (1972). Excitatory and inhibitory interactions in localized populations of model neurons. Biophysical journal, 12(1), 1-24.](https://www.cell.com/biophysj/fulltext/S0006-3495(72)86068-5)
+# [[1] Wilson, H. R., & Cowan, J. D. (1972). Excitatory and inhibitory interactions in localized populations of model neurons. Biophysical journal, 12(1), 1-24.](https://www.sciencedirect.com/science/article/pii/S0006349572860685)
 
 # [[2] Destexhe, A., & Sejnowski, T. J. (2009). The Wilson–Cowan model, 36 years later. Biological cybernetics, 101(1), 1-2.](https://link.springer.com/article/10.1007/s00422-009-0328-3)
