@@ -16,6 +16,7 @@
 # ```
 # For full details of the model, see Eq. 12-14 on p. 7 of the SI Appendix of Börgers et al. [1].
 # Here is a visual representation of the network structure and which neurons receive the driving input:
+# ![PING network structure](/Users/achesebro/Documents/GitHub/Neuroblox.jl/docs/src/tutorials/ping_tutorial/basic_ping_illustration.png)
 
 # # Model setup
 # This section sets up the model parameters and the network structure. The network consists of 200 neurons: 40 driven excitatory neurons, 120 other excitatory neurons, and 40 inhibitory neurons.
@@ -109,14 +110,16 @@ rasterplot(exci,  sol; threshold=20.0)
 rasterplot(inhib, sol; threshold=20.0)
 
 # The first command should show the dynamics in Figure 1.C, with a clear population of excitatory neurons firing together from the external driving current, and the other excitatory neurons exhibiting more stochastic bursts, as in:
+# ![Figure 1.C from Börgers et al.](docs/src/tutorials/ping_tutorial/ping_network_exci.png)
 
 # The second command should show the dynamics in Figure 1.A, with the inhibitory neurons firing in a more synchronous manner than the excitatory neurons, as in:
+# ![Figure 1.A from Börgers et al.](docs/src/tutorials/ping_tutorial/ping_network_inhib.png)
 
 # # Conclusion
 # And there you have it! A complete PING demonstration that reproduces the dynamics of a published paper in a matter of 30 seconds, give or take. Have fun making your own!
 
 # # References
 # 1. Börgers C, Epstein S, Kopell NJ. Gamma oscillations mediate stimulus competition and attentional selection in a cortical network model. 
-# Proc Natl Acad Sci U S A. 2008 Nov 18;105(46):18023-8. DOI: [10.1073/pnas.0809511105](https://www.doi.org/10.1073/pnas.0809511105). Epub 2008 Nov 12. PMID: 19004759; PMCID: PMC2584712.
+# Proc Natl Acad Sci U S A. 2008 Nov 18;105(46):18023-8. DOI: [10.1073/pnas.0809511105](https://www.doi.org/10.1073/pnas.0809511105).
 # 2. Traub, RD, Miles, R. Neuronal Networks of the Hippocampus. Cambridge University Press, Cambridge, UK, 1991.
 # 3. Wang, X-J, Buzsáki, G. Gamma oscillation by synaptic inhibition in a hippocampal interneuronal network model. J. Neurosci., 16:6402–6413, 1996.
