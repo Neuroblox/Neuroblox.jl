@@ -1,4 +1,4 @@
-# [Getting Started with Neuroblox](@id neuroblox_example)
+# # Getting Started with Neuroblox
 
 # This tutorial will introduce you to simulating brain dynamics using Neuroblox.
 # In this example, we'll create a simple oscillating circuit using two Wilson-Cowan neural mass models [1]. The Wilson-Cowan model is one of the most influential models in computational neuroscience [2], describing the dynamics of interactions between populations of excitatory and inhibitory neurons.
