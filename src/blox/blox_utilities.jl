@@ -374,9 +374,8 @@ nanmean(x) = mean(filter(!isnan,x))
 function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
     namespaced_name = namespaced_nameof(blox)
     reset_param_name = Symbol(namespaced_name, "₊V_reset")
-    p = only(@parameters $(reset_param_name))
 
-    get_reset = getp(sol, p)
+    get_reset = getp(sol, reset_param_name)
     reset_value = get_reset(sol)
 
     V[V .== reset_value] .= NaN
@@ -493,10 +492,9 @@ function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolut
                           
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-    s = only(@variables $(state_name)(t))
 
     if isnothing(ts)
-        return sol[s]
+        return sol[state_name]
     else
         return Array(sol(ts, idxs = state_name))
     end
@@ -558,10 +556,9 @@ function powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution
 
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-    s = only(@variables $(state_name)(t))
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    data = isnothing(t_sampled) ? sol[s] : Array(sol(t_sampled, idxs = state_name))
+    data = isnothing(t_sampled) ? sol[state_name] : Array(sol(t_sampled, idxs = state_name))
 
     return method(data, fs = sampling_freq, window=window)
 end
