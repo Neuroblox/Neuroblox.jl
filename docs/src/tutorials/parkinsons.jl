@@ -94,7 +94,6 @@ add_edge!(g,4,4,:weight, C_BG_Th_Cor)
 # Let's build the complete model:
 
 @named final_system = system_from_graph(g)
-final_system_sys = structural_simplify(final_system)
 
 # This creates a differential equations system from our graph representation using ModelingToolkit and symbolically simplifies it for efficient computation.
 
