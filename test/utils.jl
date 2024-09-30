@@ -11,11 +11,10 @@ using SparseArrays
     add_blox!(g, n)
 
     sys = system_from_graph(g; name = global_ns)
-    ss = structural_simplify(sys)
-    prob = ODEProblem(ss, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
-    @test all(sol[ss.n.V] .== Neuroblox.voltage_timeseries(n, sol))
+    @test all(sol[sys.n.V] .== Neuroblox.voltage_timeseries(n, sol))
 end
 
 @testset "Voltage timeseries [Vector{<:AbstractNeuron}]" begin
@@ -34,11 +33,10 @@ end
     add_edge!(g, s => n1; weight=1)
 
     sys = system_from_graph(g; name=global_ns)
-    ss = structural_simplify(sys)
-    prob = ODEProblem(ss, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
-    V = hcat(sol[ss.n1.V], sol[ss.n2.V], sol[ss.n3.V])
+    V = hcat(sol[sys.n1.V], sol[sys.n2.V], sol[sys.n3.V])
 
     @test all(V .== Neuroblox.voltage_timeseries([n1, n2, n3], sol))
 end
@@ -59,11 +57,10 @@ end
     add_edge!(g, 1, 2, Dict(:weight => 1))
     
     sys = system_from_graph(g; name = global_ns)
-    ss = structural_simplify(sys)
-    prob = ODEProblem(ss, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     
-    V = hcat(sol[ss.n.neuron1.V], sol[ss.n.neuron2.V], sol[ss.n.neuron3.V])
+    V = hcat(sol[sys.n.neuron1.V], sol[sys.n.neuron2.V], sol[sys.n.neuron3.V])
     V[V .== V_reset] .= NaN
     
     V_nb = Neuroblox.voltage_timeseries(n, sol)
@@ -90,7 +87,7 @@ end
     add_edge!(g, 1, 2, :weight, 1)
     
     @named neuron_net = system_from_graph(g)
-    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 200), [])
+    prob = ODEProblem(neuron_net, [], (0.0, 200), [])
     sol = solve(prob, Vern7(), saveat=0.01)
     ps = powerspectrum(nn1, sol, "V")
     
@@ -120,7 +117,7 @@ end
     add_blox!.(Ref(g), assembly)
     add_edge!(g,1,2, :weight, 44)
     neuron_net = system_from_graph(g; name=global_ns)
-    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 1.0), [])
+    prob = ODEProblem(neuron_net, [], (0.0, 1.0), [])
     sol = solve(prob, Vern7())
     ps = powerspectrum(cb, sol, "V")
     ps2 = powerspectrum(cb, sol)
@@ -139,8 +136,7 @@ end
     add_edge!(g, s => cb; weight=1)
     
     sys = system_from_graph(g; name=global_ns)
-    ss = structural_simplify(sys)
-    prob = ODEProblem(ss, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     
     spikes_n = detect_spikes(n, sol)

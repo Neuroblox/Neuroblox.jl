@@ -55,7 +55,7 @@ struct Striatum <: CompositeBlox
         sys = system_from_parts(parts; name)
     else
         bc = connector_from_graph(g)
-        sys = system_from_graph(g, bc; name)
+        sys = system_from_graph(g, bc; name, simplify=false)
     end
     
     m = if isnothing(namespace) 
@@ -122,7 +122,7 @@ struct GPi <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -179,7 +179,7 @@ struct GPe <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -237,7 +237,7 @@ struct Thalamus <: CompositeBlox
     
         bc = connector_from_graph(g)
         
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -299,7 +299,7 @@ struct STN <: CompositeBlox
     # If there is a higher namespace, construct only a subsystem containing the parts of this level
     # and propagate the BloxConnector object `bc` to the higher level 
     # to potentially add more terms to the same connections.
-    sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+    sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
     
     # TO DO : m is a subset of unknowns to be plotted in the GUI. 
     # This can be moved to NeurobloxGUI, maybe via plotting recipes, 

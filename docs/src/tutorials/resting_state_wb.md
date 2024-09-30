@@ -46,7 +46,6 @@ create_adjacency_edges!(g, wm)
 
 ```@example resting-state-circuit
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 length(unknowns(sys))
 ```
 

@@ -1,7 +1,7 @@
 name = "Neuroblox"
 uuid = "769b91e5-4c60-41ee-bfae-153c84203cb2"
 repo = "https://github.com/Neuroblox/Neuroblox.jl.git"
-version = "0.4.2"
+version = "0.5.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

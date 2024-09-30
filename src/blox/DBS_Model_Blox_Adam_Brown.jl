@@ -108,7 +108,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -189,7 +189,7 @@ struct Striatum_FSI_Adam  <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -259,7 +259,7 @@ struct GPe_Adam <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -328,7 +328,7 @@ struct STN_Adam <: CompositeBlox
 
         bc = connector_from_graph(g)
     
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]

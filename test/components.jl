@@ -24,7 +24,6 @@ end
     add_edge!(g, 1, 3, Dict(:weight => 0.1))
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     prob = SDEProblem(sys, [], (0.0, 10.0))
     sol = solve(prob)
@@ -46,7 +45,6 @@ HarmonicOscillator tests
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g, Num[])
-    sys = structural_simplify(sys)
     sim_dur = 1e1
     prob = ODEProblem(sys, [], (0.0, sim_dur),[])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
@@ -64,7 +62,6 @@ end
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g, params)
-    sys = structural_simplify(sys)
     sim_dur = 1e1
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
@@ -106,8 +103,7 @@ New Jansen-Rit tests
     @named final_system = system_from_graph(g, params)
     final_delays = graph_delays(g)
     sim_dur = 2000.0 # Simulate for 2 Seconds
-    final_system_sys = structural_simplify(final_system)
-    prob = ODEProblem(final_system_sys,
+    prob = ODEProblem(final_system,
         [],
         (0.0, sim_dur))
     alg = Vern7()
@@ -147,12 +143,11 @@ end
     
     # Now you can run the same code as above, but it will handle the delays automatically.
     @named final_system = system_from_graph(g)
-    final_system_sys = structural_simplify(final_system)
     
     # Collect the graph delays and create a DDEProblem.
     final_delays = graph_delays(g)
     sim_dur = 1000.0 # Simulate for 1 second
-    prob = DDEProblem(final_system_sys,
+    prob = DDEProblem(final_system,
         [],
         (0.0, sim_dur),
         constant_lags = final_delays)
@@ -173,8 +168,7 @@ end
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
-
+    
     sim_dur = 1e2
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
@@ -191,7 +185,6 @@ end
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     sim_dur = 1e2
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
@@ -209,7 +202,6 @@ end
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     sim_dur = 1e2
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
@@ -227,7 +219,6 @@ end
     create_adjacency_edges!(g, adj)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     sim_dur = 1e2
     prob = SDEProblem(sys, [0.1, 0.2], (0.0, sim_dur), [])
@@ -254,9 +245,8 @@ end
                                        0 0 0 -1;
                                        0 0 0  0])
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl =structural_simplify(sys)
 
-    prob = ODEProblem(sys_simpl, [], (0, 10))
+    prob = ODEProblem(sys, [], (0, 10))
     sol = solve(prob, Vern7(), saveat=0.1)
     sum(sol[end, 2:end])
     @test sol.retcode == ReturnCode.Success
@@ -319,7 +309,6 @@ end
     add_edge!(g, 1, 2, Dict(:weight => 100.0))
     
     sys = system_from_graph(g, name=global_ns)
-    sys = structural_simplify(sys)
     
     prob_oujr = SDEProblem(sys,[],(0.0, 20.0))
     sol = solve(prob_oujr, alg_hints = [:stiff])
@@ -442,7 +431,7 @@ end
     add_edge!(g, 3, 1, :weight, 0.2)
     
     @named neuron_net = system_from_graph(g)
-    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
+    prob = ODEProblem(neuron_net, [], (0.0, 2), [])
     sol = solve(prob, Vern7())
     @test neuron_net isa ODESystem
     @test sol.retcode == ReturnCode.Success
@@ -457,7 +446,7 @@ end
     add_blox!.(Ref(g), assembly)
     add_edge!(g,1,2, :weight, 44)
     neuron_net = system_from_graph(g; name=global_ns)
-    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
+    prob = ODEProblem(neuron_net, [], (0.0, 2), [])
     sol = solve(prob, Vern7())
     @test neuron_net isa ODESystem
     @test sol.retcode == ReturnCode.Success
@@ -472,7 +461,7 @@ end
     add_blox!.(Ref(g), assembly)
     add_edge!(g,1,2, :weight, 44)
     neuron_net = system_from_graph(g; name=global_ns)
-    prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 2), [])
+    prob = ODEProblem(neuron_net, [], (0.0, 2), [])
     sol = solve(prob, Vern7())
     @test sol.retcode == ReturnCode.Success
 end
@@ -498,8 +487,8 @@ end
     add_blox!.(Ref(g), [wta1, wta2])
     add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.5))
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl =structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0,2))
+
+    prob = ODEProblem(sys, [], (0,2))
     sol = solve(prob, Vern7(), saveat=0.1)
     @test sol.retcode == ReturnCode.Success 
 end
@@ -562,8 +551,7 @@ end
     add_blox!(g, cb)
     add_edge!(g, 1, 2, :weight, 1)
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 2))
+    prob = ODEProblem(sys, [], (0, 2))
     sol = solve(prob, Vern7())
     @test sol.retcode == ReturnCode.Success 
 end
@@ -576,8 +564,7 @@ end
     add_blox!.(Ref(g), [cb1, cb2])
     add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.1))
     sys = system_from_graph(g; name=global_ns, t_block=90.0)
-    sys_simpl =structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0,2))
+    prob = ODEProblem(sys, [], (0,2))
     sol = solve(prob, Vern7(), saveat=0.1)
     @test sol.retcode == ReturnCode.Success 
 end
@@ -599,8 +586,7 @@ end
     add_edge!(g, 5, 2, Dict(:weight => 1, :density => 0.1))
 
     sys = system_from_graph(g; name=namespace=global_ns)
-    sys_simpl =structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0,2))
+    prob = ODEProblem(sys, [], (0,2))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success 
 end
@@ -613,8 +599,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => -0.008, :connection_rule => "basic"))
     add_edge!(g, 2, 1, Dict(:weight => -0.007, :connection_rule => "basic"))
     @named sys = system_from_graph(g)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 100.0))
+    prob = ODEProblem(sys, [], (0, 100.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -627,8 +612,7 @@ end
     adj = [0 1; 1 0]
     create_adjacency_edges!(g, adj)
     @named sys = system_from_graph(g)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success 
 end
@@ -641,8 +625,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "psp"))
     add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "psp"))
     @named sys = system_from_graph(g)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -655,8 +638,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => -0.5, :connection_rule => "basic"))
     add_edge!(g, 2, 1, Dict(:weight => 1.0, :connection_rule => "basic"))
     @named sys = system_from_graph(g)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -666,8 +648,7 @@ end
     g = MetaDiGraph()
     add_blox!(g, solo)
     @named sys = system_from_graph(g)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -689,8 +670,7 @@ end
     end
 
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], (0, 200.0))
+    prob = ODEProblem(sys, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -721,8 +701,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => 1))
     
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], tspan)
+    prob = ODEProblem(sys, [], tspan)
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -744,8 +723,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => 1))
     
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], tspan)
+    prob = ODEProblem(sys, [], tspan)
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -767,8 +745,7 @@ end
     add_edge!(g, 1, 2, Dict(:weight => 1))
 
     sys = system_from_graph(g; name=global_ns)
-    sys_simpl = structural_simplify(sys)
-    prob = ODEProblem(sys_simpl, [], tspan)
+    prob = ODEProblem(sys, [], tspan)
     sol = solve(prob, Tsit5())
     @test sol.retcode == ReturnCode.Success
 end
@@ -783,7 +760,6 @@ end
     add_edge!(g, inhi_PING => exci_PING; weight=10.0)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     sim_dur = 100.0
     prob = SDEProblem(sys, [], (0.0, sim_dur))
@@ -801,7 +777,6 @@ end
     add_edge!(g, popQ => popP; weight=1.0)
 
     @named sys = system_from_graph(g)
-    sys = structural_simplify(sys)
 
     sim_dur = 200.0
     prob = ODEProblem(sys, [], (0.0, sim_dur))

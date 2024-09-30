@@ -43,8 +43,7 @@ using MAT
     end
 
     # compose model
-    @named neuronmodel = system_from_graph(g)
-    neuronmodel = structural_simplify(neuronmodel; split=false)
+    @named neuronmodel = system_from_graph(g; split=false)
 
     # attribute initial conditions to states
     sts, idx_sts = get_dynamic_states(neuronmodel)
@@ -199,8 +198,7 @@ end
         end
     end
 
-    @named fullmodel = system_from_graph(g)
-    fullmodel = structural_simplify(fullmodel, split=false)
+    @named fullmodel = system_from_graph(g; split=false)
 
     # attribute initial conditions to states
     sts, idx_sts = get_dynamic_states(fullmodel)
