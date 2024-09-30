@@ -2,62 +2,12 @@
 Subcortical Blox used for DBS model in Adam et al,2021 
 """
 
-function adam_connection_matrix(density, N, weight)
-    connection_matrix = zeros(N, N)
-    in_degree = Int(ceil(density*(N)))
-    idxs = 1:N
-    for i in idxs
-        source_set = setdiff(idxs, i)
-        source = sample(source_set, in_degree; replace=false)
-        for j in source
-            connection_matrix[j, i] = weight / in_degree
-        end
-    end
-    connection_matrix
-end
-
-function adam_connection_matrix_gap(density, g_density, N, weight, g_weight)
-    connection_matrix = [(weight = 0.0, g_weight = 0.0) for _ ∈ 1:N, _ ∈ 1:N]
-    in_degree = Int(ceil(density*N))
-    gap_degree = Int(ceil(g_density*N))
-    idxs = 1:N
-    gap_junctions = zeros(Int, N)
-    for i in idxs
-        if gap_junctions[i] < gap_degree
-            other_fsi = setdiff(idxs,i)
-            rem = findall(x -> x < gap_degree, gap_junctions[other_fsi])
-            gap_idx = sample(rem, min(gap_degree, length(rem)); replace=false)
-            gap_nbr = other_fsi[gap_idx]
-            gap_junctions[i] += length(gap_idx)
-            gap_junctions[gap_nbr] .+= 1
-        else
-            gap_nbr = []
-        end
-        source_set = setdiff(idxs, i)
-        syn_source = sample(source_set, in_degree; replace=false)
-        only_syn=setdiff(syn_source,gap_nbr)
-        only_gap=setdiff(gap_nbr,syn_source)
-        syn_gap=intersect(syn_source,gap_nbr)
-        for j in only_syn
-            connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=0)
-        end
-        for j in only_gap
-            connection_matrix[j, i] = (;weight = 0, g_weight=g_weight/gap_degree)
-        end
-        for j in syn_gap
-           connection_matrix[j, i] = (;weight = weight/in_degree, g_weight=g_weight/gap_degree)
-        end
-    end
-    connection_matrix
-end
-
 struct Striatum_MSN_Adam <: CompositeBlox
     namespace
     parts
     odesystem
     connector
     mean
-    connection_matrix
 
     function Striatum_MSN_Adam(;
         name, 
@@ -71,8 +21,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
         σ=0.11,
         density=0.3,
         weight=0.1,
-        G_M=1.3,
-        connection_matrix=nothing
+        G_M=1.3
     )
         n_inh = [
             HHNeuronInhib_MSN_Adam_Blox(
@@ -93,17 +42,16 @@ struct Striatum_MSN_Adam <: CompositeBlox
         for i in Base.OneTo(N_inhib)
             add_blox!(g, n_inh[i])
         end
-        if isnothing(connection_matrix)
-            connection_matrix = adam_connection_matrix(density, N_inhib, weight)
-        end
-        for j ∈ axes(connection_matrix, 1)
-            for i ∈ axes(connection_matrix, 2)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
-                end
+        in_degree = Int(ceil(density*(N_inhib)))
+        idxs = Base.OneTo(N_inhib)
+        for i in idxs
+            source_set = setdiff(idxs, i)
+            source = sample(source_set, in_degree; replace=false)
+            for j in source
+                add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
             end
         end
+
         parts = n_inh
 
         bc = connector_from_graph(g)
@@ -113,10 +61,12 @@ struct Striatum_MSN_Adam <: CompositeBlox
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
+            @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
-        new(namespace, parts, sys, bc, m, connection_matrix)
+
+        new(namespace, parts, sys, bc, m)
     end
 
 end    
@@ -127,7 +77,6 @@ struct Striatum_FSI_Adam  <: CompositeBlox
     odesystem
     connector
     mean
-    connection_matrix
 
     function Striatum_FSI_Adam(;
         name, 
@@ -143,8 +92,7 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         density=0.58,
         g_density=0.33,
         weight=0.6,
-        g_weight=0.15,
-        connection_matrix=nothing
+        g_weight=0.15
     )
         n_inh = [
             HHNeuronInhib_FSI_Adam_Blox(
@@ -165,24 +113,39 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         for i in Base.OneTo(N_inhib)
             add_blox!(g, n_inh[i])
         end
-        if isnothing(connection_matrix)
-            connection_matrix = adam_connection_matrix_gap(density, g_density, N_inhib, weight, g_weight)
-        end
-        for i ∈ axes(connection_matrix, 1)
-            for j ∈ axes(connection_matrix, 2)
-                cij = connection_matrix[i, j]
-                cji = connection_matrix[j, i]
+        in_degree = Int(ceil(density*(N_inhib)))
+        gap_degree = Int(ceil(g_density*(N_inhib)))
+        idxs = Base.OneTo(N_inhib)
 
-                if iszero(cij.weight) && iszero(cij.g_weight) 
-                    nothing
-                elseif iszero(cij.g_weight) 
-                    add_edge!(g, i, i, Dict(:weight=>cij.weight))
-                else
-                    add_edge!(g, i, j, Dict(:weight=>cij.weight,
-                                            :gap => true,
-                                            :gap_weight => cij.g_weight)) 
-                end
+        gap_junctions = zeros(Int, N_inhib)
+        for i in idxs
+            if gap_junctions[i]<gap_degree
+                other_fsi = setdiff(idxs,i)
+                rem = findall(x -> x < gap_degree, gap_junctions[other_fsi])
+                gap_idx = sample(rem, min(gap_degree, length(rem)); replace=false)
+                gap_nbr = other_fsi[gap_idx]
+                gap_junctions[i] += length(gap_idx)
+                gap_junctions[gap_nbr] .+= 1
+
+            else
+                gap_nbr = []
             end
+            source_set = setdiff(idxs, i)
+            syn_source = sample(source_set, in_degree; replace=false)
+            only_syn=setdiff(syn_source,gap_nbr)
+            only_gap=setdiff(gap_nbr,syn_source)
+            syn_gap=intersect(syn_source,gap_nbr)
+            for j in only_syn
+                add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
+            end
+            for j in only_gap
+                add_edge!(g, j, i, Dict(:weight=>0, :gap => true, :gap_weight => g_weight/gap_degree))
+            end
+
+            for j in syn_gap
+                add_edge!(g, j, i, Dict(:weight=>weight/in_degree, :gap => true, :gap_weight => g_weight/gap_degree))
+            end
+
         end
 
         parts = n_inh
@@ -199,10 +162,10 @@ struct Striatum_FSI_Adam  <: CompositeBlox
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(namespace, parts, sys, bc, m)
     end
 
-end
+end    
 
 struct GPe_Adam <: CompositeBlox
     namespace
@@ -210,7 +173,6 @@ struct GPe_Adam <: CompositeBlox
     odesystem
     connector
     mean
-    connection_matrix
 
     function GPe_Adam(;
         name, 
@@ -224,7 +186,6 @@ struct GPe_Adam <: CompositeBlox
         σ=1.7,
         density=0.0,
         weight=0.0,
-        connection_matrix=nothing
     )
         n_inh = [
             HHNeuronInhib_MSN_Adam_Blox(
@@ -244,17 +205,16 @@ struct GPe_Adam <: CompositeBlox
         for i in Base.OneTo(N_inhib)
             add_blox!(g, n_inh[i])
         end
-        if isnothing(connection_matrix)
-            connection_matrix = adam_connection_matrix(density, N_inhib, weight)
-        end
-        for j ∈ axes(connection_matrix, 1)
-            for i ∈ axes(connection_matrix, 2)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
-                end
+        in_degree = Int(ceil(density*(N_inhib)))
+        idxs = Base.OneTo(N_inhib)
+        for i in idxs
+            source_set = setdiff(idxs, i)
+            source = sample(source_set, in_degree; replace=false)
+            for j in source
+                add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
             end
         end
+
         parts = n_inh
 
         bc = connector_from_graph(g)
@@ -264,11 +224,12 @@ struct GPe_Adam <: CompositeBlox
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
+            @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(namespace, parts, sys, bc, m)
     end
 
 end    
@@ -279,7 +240,6 @@ struct STN_Adam <: CompositeBlox
     odesystem
     connector
     mean
-    connection_matrix
 
     function STN_Adam(;
         name, 
@@ -292,8 +252,7 @@ struct STN_Adam <: CompositeBlox
         τ_exci=2,
         σ=1.7,
         density=0.0,
-        weight=0.0,
-        connection_matrix=nothing
+        weight=0.0
     )
         n_exci = [
             HHNeuronExci_STN_Adam_Blox(
@@ -313,17 +272,16 @@ struct STN_Adam <: CompositeBlox
         for i in Base.OneTo(N_exci)
             add_blox!(g, n_exci[i])
         end
-        if isnothing(connection_matrix)
-            connection_matrix = adam_connection_matrix(density, N_exci, weight)
-        end
-        for j ∈ axes(connection_matrix, 1)
-            for i ∈ axes(connection_matrix, 2)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
-                end
+        in_degree = Int(ceil(density*(N_exci)))
+        idxs = Base.OneTo(N_exci)
+        for i in idxs
+            source_set = setdiff(idxs, i)
+            source = sample(source_set, in_degree; replace=false)
+            for j in source
+                add_edge!(g, j, i, Dict(:weight=>weight/in_degree))
             end
         end
+
         parts = n_exci
 
         bc = connector_from_graph(g)
@@ -333,10 +291,12 @@ struct STN_Adam <: CompositeBlox
         m = if isnothing(namespace) 
             [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
         else
+            @variables t
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
-        new(namespace, parts, sys, bc, m, connection_matrix)
+
+        new(namespace, parts, sys, bc, m)
     end
 
 end    
