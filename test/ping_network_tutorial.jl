@@ -24,7 +24,10 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), vcat(exci_driven, exci_other, inhib))
 
 # Extra parameters
-p = @parameters N=N_total g_II=0.2 g_IE=0.6 g_EI=0.6
+N=N_total
+g_II=0.2 
+g_IE=0.6 
+g_EI=0.6
 
 for i = 1:NE_driven+NE_other
     for j = NE_driven+NE_other+1:N_total
@@ -39,8 +42,7 @@ for i = NE_driven+NE_other+1:N_total
     end
 end
 
-@named sys = system_from_graph(g, p)
-sys = structural_simplify(sys)
+@named sys = system_from_graph(g, graphdynamics=true)
 prob = ODEProblem(sys, [], (0.0, 20.0))
 @time sol = solve(prob, Tsit5(), saveat=0.1)
 
