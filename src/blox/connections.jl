@@ -994,21 +994,3 @@ function (bc::BloxConnector)(
     
     accumulate_equation!(bc, eq)
 end
-
-# May not be necessary because could be handled by abstract neuron version
-function (bc::BloxConnector)(
-    bloxout::AbstractPINGNeuron, 
-    bloxin::AbstractPINGNeuron; 
-    kwargs...
-)
-    sys_out = get_namespaced_sys(bloxout)
-    sys_in = get_namespaced_sys(bloxin)
-
-    w = generate_weight_param(bloxout, bloxin; kwargs...)
-    push!(bc.weights, w)
-
-    x = namespace_expr(bloxout.output, sys_out)
-    eq = sys_in.jcn ~ w*x*(sys_out.voltage - sys_in.voltage)
-    
-    accumulate_equation!(bc, eq)
-end
