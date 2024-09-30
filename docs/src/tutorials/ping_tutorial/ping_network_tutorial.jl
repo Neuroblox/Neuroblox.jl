@@ -77,7 +77,6 @@ inhib       = [PINGNeuronInhib(name=Symbol("ID$i"), I_ext=rand(I_driveI) + rand(
 # This portion illustrates how we go about creating a network of neuronal connections.
 
 g = MetaDiGraph() ## Initialize the graph
-add_blox!.(Ref(g), vcat(exci, inhib)) ## Add all the blocks created above to the graph
 
 ## Add the E -> I and I -> E connections
 for ne ∈ exci
