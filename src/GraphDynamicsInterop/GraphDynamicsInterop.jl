@@ -324,7 +324,7 @@ end
 
 
 """
-    graphsystem_from_graph(g::MetaDiGraph; sparsity_heuristic=0.5, sparse_length_cutoff=100)
+    graphsystem_from_graph(g::MetaDiGraph; sparsity_heuristic=1.0, sparse_length_cutoff=0)
 
 Take a graph constructed as found in Neuroblox.jl describing different cortical
 components connected together, and then convert it into a form usable with GraphDynamics.jl

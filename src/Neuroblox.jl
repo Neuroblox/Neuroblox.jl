@@ -119,10 +119,9 @@ include("blox/reinforcement_learning.jl")
 include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
-include("Neurographs.jl")
 include("blox/ping_neuron_examples.jl")
 include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
-using .GraphDynamicsInterop: graphsystem_from_graph
+include("Neurographs.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -256,7 +255,6 @@ export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
-export graphsystem_from_graph
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries
 end

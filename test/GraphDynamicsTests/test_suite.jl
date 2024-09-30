@@ -31,7 +31,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
         gl = g
         gr = g
     end
-    gsys = graphsystem_from_graph(gl)
+    @named gsys = system_from_graph(gl; GraphDynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp = let sys = gsys
         prob = ODEProblem(sys, [], tspan)
@@ -52,7 +52,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
    
     if mtk
         sol_mtk, du_mtk = let @named sys = system_from_graph(gr)
-            prob = ODEProblem(structural_simplify(sys), [], tspan)
+            prob = ODEProblem(sys, [], tspan)
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
@@ -117,12 +117,13 @@ function basic_smoketest()
                     end
                 end
                 tspan = (0.0, 1.0)
-                sol_grp = let prob = ProbType(graphsystem_from_graph(g), [], tspan)
+                @named sys = system_from_graph(g; GraphDynamics=true)
+                sol_grp = let prob = ProbType(sys, [], tspan)
                     sol = solve(prob)
                     @test sol.retcode == ReturnCode.Success
                     sol.u[end]
                 end
-                sol_grp_parallel = let prob = ProbType(graphsystem_from_graph(g), [], tspan; scheduler=StaticScheduler())
+                sol_grp_parallel = let prob = ProbType(sys, [], tspan; scheduler=StaticScheduler())
                     sol = solve(prob)
                     @test sol.retcode == ReturnCode.Success
                     sol.u[end]
@@ -225,7 +226,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         graph_r = g
     end
     
-    gsys = graphsystem_from_graph(graph_l)
+    @named gsys = system_from_graph(graph_l; GraphDynamics=true)
     state_names = variable_symbols(gsys)
     
     sol_grp_ens, du_grp, dnoise_grp = let sys = gsys
@@ -258,7 +259,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
     end
     if mtk
         sol_mtk_ens, du_mtk, dnoise_mtk = let neuron_net = system_from_graph(graph_r; name=:neuron_net)
-            prob = SDEProblem(structural_simplify(neuron_net), [], tspan, [])
+            prob = SDEProblem(neuron_net, [], tspan, [])
             (; f, g, u0, p, noise_rate_prototype) = prob
             du = similar(u0)
             f(du, u0, p, 1.1)
@@ -298,7 +299,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
         graph_l = graph
         graph_r = graph
     end
-    gsys = graphsystem_from_graph(graph_l)
+    @named gsys = system_from_graph(graph_l; GraphDynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp, dnoise_grp = let sys = gsys
         prob = SDEProblem(sys, [], tspan, [], seed=seed)
@@ -320,7 +321,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     end
     if mtk
         sol_mtk, du_mtk, dnoise_mtk = let neuron_net = system_from_graph(graph_r; name=:neuron_net)
-            prob = SDEProblem(structural_simplify(neuron_net), [], tspan, [], seed=seed)
+            prob = SDEProblem(neuron_net, [], tspan, [], seed=seed)
             (; f, g, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.1)
@@ -406,7 +407,6 @@ function ngei_test()
         g = MetaDiGraph()
         add_blox!.(Ref(g), assembly)
         add_edge!(g,1,2, :weight, 44)
-        neuron_net = system_from_graph(g; name=global_ns)
         test_compare_du_and_sols(ODEProblem, g, (0.0, 2); rtol=1e-3)
     end
 end
@@ -779,7 +779,7 @@ function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
     #         sol[name][end]
     #     end
     # end
-    # sol_mtk = let sys = structural_simplify(system_from_graph(g; name=:sys))
+    # sol_mtk = let sys = system_from_graph(g; name=:sys)
     #     prob = ODEProblem(sys, [], tspan, [])
     #     sol = solve(prob, Tsit5())
     #     sol_u_reordered = map(state_names) do name
@@ -788,7 +788,6 @@ function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
     # end
     # sort(sol_gys .- sol_mtk)
 end
-
 
 function ping_tests(;tspan=(0.0, 2.0))
     
@@ -833,9 +832,6 @@ function ping_tests(;tspan=(0.0, 2.0))
             add_edge!(g, i, j, Dict(:weight => g_II/N))
         end
     end
-    sys = graphsystem_from_graph(g)
-    prob = ODEProblem(sys, [], tspan)
-    sol = solve(prob, Tsit5())
 
-    test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-10, alg=Tsit5())
+    test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
 end

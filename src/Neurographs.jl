@@ -140,7 +140,7 @@ end
 
 
 """
-    system_from_graph(g::MetaDiGraph, p=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
+    system_from_graph(g::MetaDiGraph, p=Num[]; name, simplify=true, graphdynamics=false, kwargs...)
 
 Take in a `MetaDiGraph` `g` describing a network of neural structures (and optionally a vector of extra parameters `p`) and construct a `System` which can be used to construct various `Problem` types (i.e. `ODEProblem`) for use with DifferentialEquations.jl solvers.
 
@@ -154,10 +154,17 @@ is equivalent to
 sys = structural_simplify(sys; kwarg1=x, kwarg2=y)
 ```
 See the docstring for `structural_simplify` for information on which options it supports.
+
+If `GraphDynamics=true` (defaults to `false`), the output will be a `GraphSystem` from [GraphDynamics.jl](https://github.com/Neuroblox/GraphDynamics.jl), and the `kwargs` will be sent to the `GraphDynamics` constructor instead of using [ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl/). The GraphDynamics.jl backend is typically significantly faster for large neural systems than the default backend, but is experimental and does not yet support all Neuroblox.jl features. 
 """
-function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, simplify_kwargs...)
-    bc = connector_from_graph(g)
-    return system_from_graph(g, bc, p; name, t_block, simplify, simplify_kwargs...)
+function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name, t_block=missing, simplify=true, GraphDynamics=false, kwargs...)
+    if GraphDynamics
+        isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
+        GraphDynamicsInterop.graphsystem_from_graph(g; kwargs...)
+    else
+        bc = connector_from_graph(g)
+        return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
+    end
 end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}=Num[];
