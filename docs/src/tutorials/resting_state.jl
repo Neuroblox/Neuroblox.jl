@@ -44,7 +44,7 @@ create_adjacency_edges!(g, wm)
 
 prob = SDEProblem(sys,rand(-2:0.1:4,76*2), (0.0, 6e5), [])
 sol = solve(prob, EulerHeun(), dt=0.5, saveat=5)
-lines(sol.t, sol[5,:], xlims=(0,10000))
+lines(sol.t, sol[5,:])
 
 # To evaluate the connectivity of our simulated resting state network, we calculate the statistically significant correlations
 
