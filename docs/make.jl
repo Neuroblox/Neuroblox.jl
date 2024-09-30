@@ -1,6 +1,18 @@
 using Neuroblox
 using Documenter
 
+using Literate
+
+Literate.markdown("./docs/src/getting_started.jl", "./docs/src/"; documenter = true)
+
+Literate.markdown.([
+    "./docs/src/tutorials/resting_state.jl",
+    "./docs/src/tutorials/parkinsons.jl",
+    ],
+    "./docs/src/tutorials";
+    documenter = true
+)
+
 cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml", force = true)
 cp("./docs/Project.toml", "./docs/src/assets/Project.toml", force = true)
 
