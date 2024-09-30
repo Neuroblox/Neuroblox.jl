@@ -1,6 +1,5 @@
 using SafeTestsets
 
-@time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
 @time @safetestset "Utilities" begin include("utils.jl") end
 @time @safetestset "Components Tests" begin include("components.jl") end
 @time @safetestset "Neurograph Tests" begin include("graphs.jl") end
@@ -18,6 +17,8 @@ using SafeTestsets
 @time @safetestset "Source Tests" begin include("source_components.jl") end
 @time @safetestset "Reinforcement Learning Tests" begin include("reinforcement_learning.jl") end
 @time @safetestset "Cort-Cort plasticity Tests" begin include("plasticity.jl") end
+
+@time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
 # fitting tests should be at the end since they take the longest
 # removing them for now until we have real fitting tests
 # @time @safetestset "Fitting Tests" begin include("fitting.jl") end
