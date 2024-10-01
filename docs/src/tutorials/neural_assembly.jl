@@ -16,10 +16,8 @@
 
 
 using Neuroblox
-using MetaGraphs  ## use its MetaGraph type to build the circuit
 using DifferentialEquations ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Random ## for generating random variables
-using Plots ## Plotting timeseries
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
 using DataFrames ## to format the data into DataFrames
@@ -45,8 +43,11 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 # acessing the voltage timeseries from the neuron block and plotting the voltage
 v = voltage_timeseries(n_inh,sol)
-Plots.plot(sol.t,v,xlims=(0,1000),xlabel="time (ms)",ylabel="mV")
 
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
+lines!(ax, sol.t, v)
+fig ## to display the figure
 
 # ## Connecting three neurons through synapses to make a small local circuit
 
@@ -208,8 +209,11 @@ sol = solve(prob, Vern7(), saveat=0.1)
 voltage_stack(CB,sol)
 
 # plot the meanfield of all cortical block neurons (mean membrane voltage)
-mnv = meanfield_timeseries(CB,sol)
-Plots.plot(sol.t,mnv,xlabel="time (ms)",ylabel="mV") 
+mnv = meanfield_timeseries(CB, sol)
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Meanfield voltage (mv)")
+lines!(ax, sol.t, mnv)
+fig ## to display the figure
 
 # plot power spectrum of the meanfield
 powerspectrumplot(CB,sol)
@@ -232,11 +236,6 @@ global_namespace=:g
 fn = joinpath(@__DIR__, "../data/image_example.csv") ## image data file
 image_set = CSV.read(fn, DataFrame) ## reading data into DataFrame format
 image_sample = 10 ## set which image to input (from 1 to 1000)
-
-## plot the image that the visual cortex 'sees'
-pixels=Array(image_set[image_sample,1:end-1])## access the desired image sample from respective row
-pixels=reshape(pixels,15,15)## reshape into 15 X 15 square image matrix
-Plots.plot(Gray.(ar),xlims=(0.5,15.5),ylims=(0.5,15.5)) ## plot the grayscale image
 
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
@@ -269,11 +268,20 @@ sol = solve(prob, Vern7(), saveat=0.1)
 ## VAC
 voltage_stack(VAC,sol)
 mnv = meanfield_timeseries(VAC,sol)
-Plots.plot(sol.t,mnv)
+
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
+lines!(ax, sol.t, mnv)
+fig ## to display the figure
+
 powerspectrumplot(VAC,sol)
 
 ## AC
 voltage_stack(AC,sol)
 mnv = meanfield_timeseries(AC,sol)
-Plots.plot(sol.t,mnv)
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
+lines!(ax, sol.t, mnv)
+fig ## to display the figure
+
 powerspectrumplot(AC,sol)
