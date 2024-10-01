@@ -487,7 +487,7 @@ function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
     return t, rₘ
 end
 
-function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution,
+function state_timeseries(blox, sol::SciMLBase.AbstractSolution,
                           state::String; ts=nothing)
                           
     namespaced_name = namespaced_nameof(blox)
@@ -515,7 +515,7 @@ function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:Abstract
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-voltage_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
+voltage_timeseries(blox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
     state_timeseries(blox, sol, "V"; ts)
 
 function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
