@@ -165,7 +165,8 @@ end
         ),
         win_size = 10, # ms
         overlap = 0,
-        transient = 0
+        transient = 0,
+        threshold = nothing
     )
 end
 
@@ -181,7 +182,7 @@ function Makie.plot!(p::FRPlot)
 
     hideydecorations!(ax)
     
-    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[])
+    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[], threshold = p.threshold[])
 
     t = range(p.transient[], stop = last(sol.t), length = length(fr))
     lines!(p, t .* 1e-3, fr; color = p.color[])
