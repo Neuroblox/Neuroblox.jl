@@ -29,10 +29,8 @@ nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.5)
 g = MetaDiGraph() ## defines a graph
 add_blox!.(Ref(g), [nn1]) ## adds the defined blocks into the graph
 
-
 # create an ODESystem from the graph
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 length(unknowns(sys)) ## shows the number of variables in the simplified system
 
 # To solve the system, we first create an Ordinary Differential Equation Problem and then solve it over the tspan of (0,1e) using a Vern7() solver.  The solution is saved every 0.1ms. The unit of time in Neuroblox is 1ms.
