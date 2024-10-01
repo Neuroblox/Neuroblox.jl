@@ -599,4 +599,4 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
     end
 end
 
-get_system(blox::AbstractBlox) = blox.odesystem
+get_system(blox::AbstractBlox; simplify = false) = simplify ? structural_simplify(blox.odesystem) : blox.odesystem
