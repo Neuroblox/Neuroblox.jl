@@ -21,7 +21,7 @@ Random.seed!(123) ## Set a random seed for reproducibility
 # Blox definition
 N_MSN = 100 ## number of Medium Spiny Neurons
 @named msn = Striatum_MSN_Adam(N_inhib = N_MSN)
-sys = get_system(msn)
+sys = get_system(msn; simplify = true)
 
 ## Check the system's variables (100 neurons, each with associated currents)
 unknowns(sys)
