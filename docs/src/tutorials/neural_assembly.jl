@@ -46,6 +46,7 @@ ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, v)
 fig ## to display the figure
 
+# Suggestion : Try different values of input current 'I_bg' and run the entire code block to see the output activity
 # ## Connecting three neurons through synapses to make a small local circuit
 
 ## While creating a system of multiple components (neurons in this case), each component should be defined within the same namespace. So first
@@ -71,6 +72,8 @@ sol = solve(prob, Vern7(), saveat=0.1)
 ## plotting membrane voltage activity of all neurons in a stacked form
 
 stackplot([nn1,nn2,nn3],sol)	## stackplot(<blox or array of blox>, sol)
+
+# Suggestion : Try different values of input currents 'I_bg' and connection weights. One can try different permutations of excitatory and inhibitory neurons.
 
 # ## Creating a lateral inhibition circuit (the "winner-takes-all" circuit) in superficial cortical layer
 
@@ -99,6 +102,9 @@ end
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 stackplot(vcat(n_excis,n_inh),sol)
+
+# Suggestion : Instead of uniform random input current in each excitatory neuron, try different configurations (random or constant) of input currents I_bg for each neuron. 
+# One can vary the size of circuit by changing number of excitatory neurons. 
 
 # ## Creating lateral inhibition "winner-take-all" circuit (WTA) blocks from the inbuilt functions and connecting two WTA circuit blocks
 
@@ -164,6 +170,8 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 stackplot(vcat(wtas, n_ff_inh),sol)
 
+# Sugestion : try different connection densities and weights and see how it affects the population activity. 
+
 # ## Creating an ascending system block (ASC1 in Pathak et. al. 2024), a single inbuilt cortical superficial layer block (SCORT in Pathak et. al. 2024) and connecting them.
 
 global_namespace=:g
@@ -201,8 +209,7 @@ fig ## to display the figure
 powerspectrumplot(CB,sol)
 
 # Notice the peak at 16 Hz, representing beta oscillations.
-
-
+# Sugestion : try changing parameters of ASC1 to generate different cortical rhythms. See how the peak shifts in the powerspectrum
 # ## Creating simulation of visual stimulus response in cortical blocks (add Hebbian learning later)
 
 # create cortical blocks for visual area cortex (VAC), anterior cortex (AC) and ascending system block (ASC1)
@@ -217,13 +224,21 @@ global_namespace=:g
 
 fn = joinpath(@__DIR__, "../data/image_example.csv") ## image data file
 image_set = CSV.read(fn, DataFrame) ## reading data into DataFrame format
-image_sample = 10 ## set which image to input (from 1 to 1000)
+image_sample = 11 ## set which image to input (from 1 to 1000)
 
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-## to try new image samples, change the image_sample and re-run the subsequent code lines 
 @named stim = ImageStimulus(image_set[[image_sample],:]; namespace=global_namespace, t_stimulus=1000, t_pause=0) 
+
+
+# plot the image that the visual cortex 'sees'
+pixels=Array(image_set[image_sample,1:end-1])## access the desired image sample from respective row
+pixels=reshape(pixels,15,15)## reshape into 15 X 15 square image matrix
+fig = Figure();
+ax = Axis(fig[1, 1])
+heatmap!(ax, pixels,colormap = :gray1) #input image matrix seen as heatmap
+fig
 
 # assemble the blox into a graph and set connections with their keword arguments like connection weight and connection density
 
@@ -265,3 +280,6 @@ lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
 powerspectrumplot(AC,sol)
+
+# Sugestion : Try changing the image samples and notice the change in the spatial firing patterns in VAC and AC neurons. One can make multiple cortical blocks simillar to AC and connect them in various 
+# connection topologies. All of them can directly or indirectly get input from VAC.  
