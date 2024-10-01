@@ -116,7 +116,11 @@ end
 
 @recipe(StackPlot, blox, sol) do scene
     Theme(
-        color = :black
+        color = :black,
+        Axis = (
+            xlabel = "Time (ms)",
+            ylabel = "Neurons",
+        )
     )
 end
 
@@ -126,6 +130,10 @@ function Makie.plot!(p::StackPlot)
     sol = p.sol[]
     blox = p.blox[]
 
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+    
     V = voltage_timeseries(blox, sol)
     
     V = V .- mean(V; dims = 1)
