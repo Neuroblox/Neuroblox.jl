@@ -25,7 +25,7 @@ using DataFrames ## to format the data into DataFrames
 # define a single excitatory neuron 'blox' with steady input current I_bg = 0.5 microA/cm2
 nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.5)
 
-# add the single neuron 'blox' as a single node in a graph
+# define graph and add the single neuron 'blox' as a single node into the graph
 g = MetaDiGraph() ## defines a graph
 add_blox!.(Ref(g), [nn1]) ## adds the defined blocks into the graph
 
@@ -57,15 +57,11 @@ global_namespace=:g
 nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.4,namespace=global_namespace)
 nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), I_bg=0.1,namespace=global_namespace)
 nn3 = HHNeuronExciBlox(name=Symbol("nrn3"), I_bg=1.4,namespace=global_namespace)
-assembly = [nn1,nn2,nn3] 
 
-## add the three neurons as nodes in a graph
+## defien graph and connect the nodes with the edges (synapses in this case), with the synaptic 'weights' specified as arguments
 g = MetaDiGraph()
-add_blox!.(Ref(g), assembly)
-
-## connect the nodes with the edges (synapses in this case), with the synaptic weights specified as arguments
-add_edge!(g, 1, 2, Dict(:weight => 1)) ##connection from node 1 to node 2 (nn1 to nn2)
-add_edge!(g, 2, 3, Dict(:weight => 0.2)) ##connection from node 2 to node 3 (nn2 to nn3)
+add_edge!(g, nn1 => nn2, weight = 1) ##connection from neuron 1 to neuron 2 (nn1 to nn2)
+add_edge!(g, nn2 => nn3, weight = 0.2) ##connection from node 2 to node 3 (nn2 to nn3)
 
 ## create an ODESystem from the graph and then solve it using an ODE solver
 @named sys = system_from_graph(g)
@@ -74,7 +70,7 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 ## plotting membrane voltage activity of all neurons in a stacked form
 
-voltage_stack([nn1,nn2,nn3],sol)	## voltage_stack(<blox or array of blox>, sol)
+stackplot([nn1,nn2,nn3],sol)	## stackplot(<blox or array of blox>, sol)
 
 # ## Creating a lateral inhibition circuit (the "winner-takes-all" circuit) in superficial cortical layer
 
@@ -93,17 +89,16 @@ n_excis = [HHNeuronExciBlox(
                             ) for i = 1:N_exci]
 
 g = MetaDiGraph()
-add_blox!(g, n_inh)
+
 for i in Base.OneTo(N_exci)
-    add_blox!(g, n_excis[i])
-    add_edge!(g, 1, i+1, :weight, 1.0)
-    add_edge!(g, i+1, 1, :weight, 1.0)
+    add_edge!(g, n_inh => n_excis[i], weight = 1.0)
+    add_edge!(g, n_excis[i] => n_inh, weight = 1.0)
 end
 
 @named sys = system_from_graph(g)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
-voltage_stack(n_excis,sol)
+stackplot(vcat(n_excis,n_inh),sol)
 
 # ## Creating lateral inhibition "winner-take-all" circuit (WTA) blocks from the inbuilt functions and connecting two WTA circuit blocks
 
@@ -114,8 +109,7 @@ wta1 = WinnerTakeAllBlox(name=Symbol("wta1"), I_bg=5.0, N_exci=N_exci, namespace
 wta2 = WinnerTakeAllBlox(name=Symbol("wta2"), I_bg=4.0, N_exci=N_exci, namespace=global_namespace)
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), [wta1, wta2])
-add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.5)) ##density keyword sets the connection probability from each excitatory neuron of source WTA circuit to each excitatory neuron of target WTA circuit
+add_edge!(g, wta1 => wta2, weight=1, density=0.5) ##density keyword sets the connection probability from each excitatory neuron of source WTA circuit to each excitatory neuron of target WTA circuit
 
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
@@ -153,24 +147,22 @@ n_ff_inh = HHNeuronInhibBlox(;
                             )
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
 
 ## connecting WTA circuits to each other with given connection density, and feedforward interneuron connects to each WTA circuit 
 for i in 1:N_wta
     for j in 1:N_wta
         if j != i
-            add_edge!(g, i, j, Dict(:weight => 1, :density => density))
+            add_edge!(g, wtas[i] => wtas[j], weight=1, density=density)
         end
     end
-    add_edge!(g, N_wta+1, i, Dict(:weight => 1))
+    add_edge!(g, n_ff_inh => wtas[i], weight=1)
 end
 
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
-voltage_stack(vcat(wtas, n_ff_inh),sol)
-
+stackplot(vcat(wtas, n_ff_inh),sol)
 
 # ## Creating an ascending system block (ASC1 in Pathak et. al. 2024), a single inbuilt cortical superficial layer block (SCORT in Pathak et. al. 2024) and connecting them.
 
@@ -182,13 +174,11 @@ global_namespace=:g
 
 ## define the superficial layer cortical block using inbuilt function
 ## Number if WTA circuits = N_wta=45; number of pyramidal neurons in each WTA circuit = N_exci = 5;
-@named CB = CorticalBlox(N_wta=45, N_exci=5, density=0.01, weight=1,I_bg_ar=5;namespace=global_namespace)
+@named CB = CorticalBlox(N_wta=45, N_exci=5, density=0.01, weight=1,I_bg_ar=7;namespace=global_namespace)
 
-## define graph and add both blox in the graph
+## define graph and connect ASC1->CB
 g = MetaDiGraph()
-add_blox!.(Ref(g), [ASC1,CB])
-## connect ASC1->CB
-add_edge!(g, 1, 2, Dict(:weight => 44))
+add_edge!(g, ASC1 => CB, weight=44)
 
 ## solve the system for time 0 to 1000 ms
 sys = system_from_graph(g, name=global_namespace)
@@ -196,7 +186,9 @@ prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1)
 
 # plot neuron time series
-voltage_stack(CB,sol)
+neuron_set = get_neurons(CB) ## extract neurons from a composite block like CorticalBlox
+n_neurons = 50 ## set number nof neurons to display in the stackplot
+stackplot(neuron_set[1:n_neurons],sol)
 
 # plot the meanfield of all cortical block neurons (mean membrane voltage)
 mnv = meanfield_timeseries(CB, sol)
@@ -205,7 +197,7 @@ ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Meanfield voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
-# plot power spectrum of the meanfield
+# plot power spectrum of the meanfield (average over membrane potentials)
 powerspectrumplot(CB,sol)
 
 # Notice the peak at 16 Hz, representing beta oscillations.
@@ -233,32 +225,29 @@ image_sample = 10 ## set which image to input (from 1 to 1000)
 ## to try new image samples, change the image_sample and re-run the subsequent code lines 
 @named stim = ImageStimulus(image_set[[image_sample],:]; namespace=global_namespace, t_stimulus=1000, t_pause=0) 
 
-# assemble the blox into a graph and set connections
-
-circuit = [stim,VAC,AC,ASC1]
-d = Dict(b => i for (i,b) in enumerate(circuit)) ## can refer to nodes through their names instead of their indices
+# assemble the blox into a graph and set connections with their keword arguments like connection weight and connection density
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), circuit) ## add all the blox into the graph
 
-## set connections and their keword arguments like connection weight and connection density
-add_edge!(g, d[stim], d[VAC], :weight, 14) 
-add_edge!(g, d[ASC1], d[VAC], Dict(:weight => 44))
-add_edge!(g, d[ASC1], d[AC], Dict(:weight => 44))
-add_edge!(g, d[VAC], d[AC], Dict(:weight => 3, :density => 0.08))
+add_edge!(g, stim => VAC, weight=14) 
+add_edge!(g, ASC1 => VAC, weight=44)
+add_edge!(g, ASC1 => AC, weight=44)
+add_edge!(g, VAC => AC, weight=3, density=0.08)
 
-## define odesyste, simplify and solve
+## define odesystem and solve
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1)
 
-##plot voltage stacks, mean fields and powerspectrums
+# plot voltage stacks, mean fields and powerspectrums
 
 ## VAC
-voltage_stack(VAC,sol)
+VAC_neuron_set = get_neurons(VAC) ## extract neurons from VAC
+n_neurons = 100
+stackplot(VAC_neuron_set[1:n_neurons],sol)
 mnv = meanfield_timeseries(VAC, sol)
 
-fig = Figure()
+fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
@@ -266,9 +255,11 @@ fig ## to display the figure
 powerspectrumplot(VAC,sol)
 
 ## AC
-voltage_stack(AC,sol)
+AC_neuron_set = get_neurons(AC) ## extract neurons from VAC
+n_neurons = 100
+stackplot(AC_neuron_set[1:n_neurons],sol)
 mnv = meanfield_timeseries(AC,sol)
-fig = Figure()
+fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
