@@ -63,7 +63,7 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
         # and propagate the BloxConnector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(parts; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
 
         new{Union{eltype(n_excis), typeof(n_inh)}}(namespace, parts, sys, bc)
     end 

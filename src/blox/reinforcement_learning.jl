@@ -183,19 +183,18 @@ mutable struct Agent{S,P,A,LR,PA}
 
         t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
         # TODO: add another version that uses system_from_graph(g,bc,params;)
-        sys = system_from_graph(g, bc; name, t_block)
-        ss = structural_simplify(sys; allow_parameter=false)
+        sys = system_from_graph(g, bc; name, t_block, allow_parameter=false)
 
         u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
         p = haskey(kwargs, :p) ? kwargs[:p] : []
         
-        prob = ODEProblem(ss, u0, (0.,1.), p)
+        prob = ODEProblem(sys, u0, (0.,1.), p)
         init_params = copy(prob.p)
         
         policy = action_selection_from_graph(g)
         learning_rules = bc.learning_rules
 
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(ss, prob, policy, learning_rules, init_params, #=ss=#)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(sys, prob, policy, learning_rules, init_params, #=ss=#)
     end
 end
 

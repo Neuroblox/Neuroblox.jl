@@ -374,9 +374,8 @@ nanmean(x) = mean(filter(!isnan,x))
 function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
     namespaced_name = namespaced_nameof(blox)
     reset_param_name = Symbol(namespaced_name, "₊V_reset")
-    p = only(@parameters $(reset_param_name))
 
-    get_reset = getp(sol, p)
+    get_reset = getp(sol, reset_param_name)
     reset_value = get_reset(sol)
 
     V[V .== reset_value] .= NaN
@@ -442,10 +441,27 @@ function detect_spikes(
     neurons = get_neurons(blox)
 
     S = mapreduce(sparse_hcat, neurons) do neuron
-        detect_spikes(neuron, sol; threshold)
+        detect_spikes(neuron, sol; threshold, ts)
     end
 
     return S
+end
+
+function firing_rate(
+    blox, sol::SciMLBase.AbstractSolution; 
+    win_size = last(sol.t), win_resolution = 1e-3, 
+    transient = 0, overlap = 0, threshold = nothing)
+
+    ts = sol.t
+    t_win_start = transient:(win_size - win_size*overlap):(last(ts) - win_size)
+
+    fr = map(t_win_start) do tws
+        spikes = detect_spikes(blox, sol; threshold, ts = tws:win_resolution:(tws + win_size))
+        N_neurons = size(spikes, 2)
+        1000.0 * (nnz(spikes) / N_neurons) / win_size
+    end
+
+    return fr
 end
 
 function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
@@ -476,10 +492,9 @@ function state_timeseries(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolut
                           
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-    s = only(@variables $(state_name)(t))
 
     if isnothing(ts)
-        return sol[s]
+        return sol[state_name]
     else
         return Array(sol(ts, idxs = state_name))
     end
@@ -541,12 +556,27 @@ function powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution
 
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
-    s = only(@variables $(state_name)(t))
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
-    data = isnothing(t_sampled) ? sol[s] : Array(sol(t_sampled, idxs = state_name))
+    data = isnothing(t_sampled) ? sol[state_name] : Array(sol(t_sampled, idxs = state_name))
 
     return method(data, fs = sampling_freq, window=window)
+end
+
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                       sols::SciMLBase.EnsembleSolution, state::String; sampling_rate=nothing,
+                       method=periodogram, window=nothing)::Vector{DSP.Periodograms.Periodogram}
+
+    t_sampled, sampling_freq = get_sampling_info(sols[1]; sampling_rate=sampling_rate)
+    powspecs = DSP.Periodograms.Periodogram[]
+    
+    for sol in sols
+        s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
+        powspec = method(s, fs=sampling_freq, window=window)
+        push!(powspecs, powspec)
+    end
+
+    return powspecs
 end
 
 function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
@@ -568,3 +598,5 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
         return nothing, 1000 / sampling_rate
     end
 end
+
+get_system(blox::AbstractBlox) = blox.odesystem

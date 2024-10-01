@@ -78,7 +78,7 @@ struct CorticalBlox <: CompositeBlox
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
         # and propagate the BloxConnector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(vcat(wtas, n_ff_inh); name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
         new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
     end
@@ -156,7 +156,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
 
         bc = connector_from_graph(g)
         
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
 
         new(namespace, neurons, sys, bc, kwargs)
     end
@@ -230,7 +230,7 @@ struct LIFInhCircuitBlox <: CompositeBlox
 
         bc = connector_from_graph(g)
         
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name) : system_from_parts(neurons; name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
 
         new(namespace, neurons, sys, bc, kwargs)
     end

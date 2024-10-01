@@ -43,8 +43,7 @@ using MAT
     end
 
     # compose model
-    @named neuronmodel = system_from_graph(g)
-    neuronmodel = structural_simplify(neuronmodel; split=false)
+    @named neuronmodel = system_from_graph(g; split=false)
 
     # attribute initial conditions to states
     _, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
@@ -161,8 +160,7 @@ end
         end
     end
 
-    @named fullmodel = system_from_graph(g)
-    fullmodel = structural_simplify(fullmodel, split=false)
+    @named fullmodel = system_from_graph(g; split=false)
 
     # attribute initial conditions to states
     sts, idx_sts = get_dynamic_states(fullmodel)
