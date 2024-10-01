@@ -35,12 +35,11 @@ length(unknowns(sys)) ## shows the number of variables in the simplified system
 
 # To solve the system, we first create an Ordinary Differential Equation Problem and then solve it over the tspan of (0,1e) using a Vern7() solver.  The solution is saved every 0.1ms. The unit of time in Neuroblox is 1ms.
 
-
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
 # acessing the voltage timeseries from the neuron block and plotting the voltage
-v = voltage_timeseries(n_inh,sol)
+v = voltage_timeseries(nn1, sol)
 
 fig = Figure()
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
@@ -70,15 +69,12 @@ add_edge!(g, 2, 3, Dict(:weight => 0.2)) ##connection from node 2 to node 3 (nn2
 
 ## create an ODESystem from the graph and then solve it using an ODE solver
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
 ## plotting membrane voltage activity of all neurons in a stacked form
 
 voltage_stack([nn1,nn2,nn3],sol)	## voltage_stack(<blox or array of blox>, sol)
-
-
 
 # ## Creating a lateral inhibition circuit (the "winner-takes-all" circuit) in superficial cortical layer
 
@@ -105,7 +101,6 @@ for i in Base.OneTo(N_exci)
 end
 
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 voltage_stack(n_excis,sol)
@@ -123,7 +118,6 @@ add_blox!.(Ref(g), [wta1, wta2])
 add_edge!(g, 1, 2, Dict(:weight => 1, :density => 0.5)) ##density keyword sets the connection probability from each excitatory neuron of source WTA circuit to each excitatory neuron of target WTA circuit
 
 sys = system_from_graph(g, name=global_namespace)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -172,7 +166,6 @@ for i in 1:N_wta
 end
 
 sys = system_from_graph(g, name=global_namespace)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -199,7 +192,6 @@ add_edge!(g, 1, 2, Dict(:weight => 44))
 
 ## solve the system for time 0 to 1000 ms
 sys = system_from_graph(g, name=global_namespace)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -257,7 +249,6 @@ add_edge!(g, d[VAC], d[AC], Dict(:weight => 3, :density => 0.08))
 
 ## define odesyste, simplify and solve
 sys = system_from_graph(g, name=global_namespace)
-sys = structural_simplify(sys)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -265,7 +256,7 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 ## VAC
 voltage_stack(VAC,sol)
-mnv = meanfield_timeseries(VAC,sol)
+mnv = meanfield_timeseries(VAC, sol)
 
 fig = Figure()
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
