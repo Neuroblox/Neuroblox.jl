@@ -133,7 +133,8 @@ function Makie.plot!(p::StackPlot)
     ax = current_axis()
     ax.xlabel = p.Axis.xlabel[]
     ax.ylabel = p.Axis.ylabel[]
-    
+    hideydecorations!(ax; label = false)
+
     V = voltage_timeseries(blox, sol)
     
     V = V .- mean(V; dims = 1)
