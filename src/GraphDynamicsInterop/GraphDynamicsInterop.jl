@@ -99,14 +99,6 @@ using ModelingToolkit:
     ODESystem,
     getdefault
 
-using StaticArrays:
-    StaticArrays,
-    StaticArray,
-    SMatrix,
-    MMatrix,
-    SVector,
-    MVector
-
 using ModelingToolkit:
     get_ps,
     get_noiseeqs,
