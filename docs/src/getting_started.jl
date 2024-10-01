@@ -31,7 +31,6 @@
 using Neuroblox
 using DifferentialEquations
 using Graphs
-using MetaGraphs
 
 ## Create two Wilson-Cowan blox
 @named WC1 = WilsonCowan()
@@ -42,6 +41,11 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), [WC1, WC2])
 
 ## Define the connectivity between the neural masses
+add_edge!(g, WC1 => WC1; weight = -1) ## recurrent connection from WC1 to itself
+add_edge!(g, WC1 => WC2; weight = 7) ## connection from WC1 to WC2
+add_edge!(g, WC2 => WC1; weight = 4) ## connection from WC2 to WC1
+add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
+
 adj = [-1 7; 4 -1]
 create_adjacency_edges!(g, adj)
 
