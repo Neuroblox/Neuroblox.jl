@@ -14,7 +14,6 @@
 using Neuroblox
 using CSV
 using DataFrames
-using MetaGraphs
 using DifferentialEquations
 using Random
 using CairoMakie
@@ -38,7 +37,7 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), blocks)
 create_adjacency_edges!(g, wm)
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g);
 
 # To solve the system, we first create an Stochastic Differential Equation Problem and then solve it using a EulerHeun solver. The solution is saved every 0.5 ms. The unit of time in Neuroblox is 1 ms.
 
