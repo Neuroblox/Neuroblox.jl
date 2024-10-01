@@ -218,7 +218,11 @@ end
         end
     end
 
-    priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    # priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    priors = (μθ_pr = modelparam,
+              Σθ_pr = paramvariance
+    );
+
     hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
     hyperpriors = Dict(:Πλ_pr => hype["ihC"],               # prior metaparameter precision, needs to be a matrix
                     :μλ_pr => vec(hype["hE"]),              # prior metaparameter mean, needs to be a vector
