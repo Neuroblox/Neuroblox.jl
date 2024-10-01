@@ -88,9 +88,10 @@ end
     Theme(
         color = :black,
         threshold = nothing,
+        title = "",
         Axis = (
             xlabel = "Time (ms)",
-            ylabel = "Neurons",
+            ylabel = "Neurons"
         )
     )
 end
@@ -106,6 +107,7 @@ function Makie.plot!(p::RasterPlot)
     ax = current_axis()
     ax.xlabel = p.Axis.xlabel[]
     ax.ylabel = p.Axis.ylabel[]
+    ax.title = p.title[]
 
     spikes = detect_spikes(blox, sol; threshold=threshold)
     spike_times, neuron_indices = findnz(spikes)

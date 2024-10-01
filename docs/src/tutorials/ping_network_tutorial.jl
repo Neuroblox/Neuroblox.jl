@@ -106,12 +106,8 @@ sol = solve(prob, Tsit5(), saveat=0.1) ## Solve the problem and save at 0.1ms re
 # To create raster plots in Neuroblox for the excitatory and inhibitory populations, it is as simple as:
 
 fig = Figure()
-rasterplot(fig[1,1], exci, sol; threshold=20.0)
-rasterplot(fig[2,1], inhib, sol; threshold=20.0)
-ax1 = fig[1, 1] = Axis(fig; title="Excitatory")
-ax2 = fig[2, 1] = Axis(fig; title="Inhibitory")
-hidedecorations!(ax1)
-hidedecorations!(ax2)
+rasterplot(fig[1,1], exci, sol; threshold=20.0, title="Excitatory Neurons")
+rasterplot(fig[2,1], inhib, sol; threshold=20.0, title="Inhibitory Neurons")
 fig
 
 # The upper panel should show the dynamics in Figure 1.C, with a clear population of excitatory neurons firing together from the external driving current, and the other excitatory neurons exhibiting more stochastic bursts.
