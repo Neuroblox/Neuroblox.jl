@@ -105,8 +105,12 @@ sol = solve(prob, Tsit5(), saveat=0.1) ## Solve the problem and save at 0.1ms re
 # Now that we have a whole simulation, let's plot the results and see how they line up with the original figures. We're looking to reproduce the dynamics shown in Figure 1 of Börgers et al. [1].
 # To create raster plots in Neuroblox for the excitatory and inhibitory populations, it is as simple as:
 
-rasterplot(exci,  sol; threshold=20.0)
-rasterplot(inhib, sol; threshold=20.0)
+fig = Figure()
+ax1 = fig[1, 1] = Axis(fig; title="Excitatory", xlabel="Time (ms)", ylabel="Neurons")
+ax2 = fig[2, 1] = Axis(fig; title="Inhibitory")
+rasterplot!(ax1, exci, sol; threshold=20.0)
+rasterplot!(ax2, inhib, sol; threshold=20.0)
+fig
 
 # The first command should show the dynamics in Figure 1.C, with a clear population of excitatory neurons firing together from the external driving current, and the other excitatory neurons exhibiting more stochastic bursts, as in:
 # ![Figure 1.C from Börgers et al.](../assets/ping_network_exci.png)
