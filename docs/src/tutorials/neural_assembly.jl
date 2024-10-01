@@ -2,6 +2,7 @@
 
 
 # ## Single spiking neuron from Hodgkin-Huxley model
+# ![fig1](../assets/neural_assembly_figures/1.png)
 
 # Hodgkin-Huxley (HH) formalism to describe membrane potential of a single neuron
 
@@ -47,7 +48,9 @@ lines!(ax, sol.t, v)
 fig ## to display the figure
 
 # Suggestion : Try different values of input current 'I_bg' and run the entire code block to see the output activity
-# ## Connecting three neurons through synapses to make a small local circuit
+# ## Connecting three neurons through synapses to make a local feed-forward circuit
+
+# ![fig2](../assets/neural_assembly_figures/2.png)
 
 ## While creating a system of multiple components (neurons in this case), each component should be defined within the same namespace. So first
 ## we define a global namespace.
@@ -62,7 +65,8 @@ nn3 = HHNeuronExciBlox(name=Symbol("nrn3"), I_bg=1.4,namespace=global_namespace)
 ## defien graph and connect the nodes with the edges (synapses in this case), with the synaptic 'weights' specified as arguments
 g = MetaDiGraph()
 add_edge!(g, nn1 => nn2, weight = 1) ##connection from neuron 1 to neuron 2 (nn1 to nn2)
-add_edge!(g, nn2 => nn3, weight = 0.2) ##connection from node 2 to node 3 (nn2 to nn3)
+add_edge!(g, nn2 => nn3, weight = 0.2) ##connection from neuron 2 to neuron 3 (nn2 to nn3)
+add_edge!(g, nn1 => nn3, weight = 0.5) ##connection from neuron 1 to neuron 3 (nn2 to nn3)
 
 ## create an ODESystem from the graph and then solve it using an ODE solver
 @named sys = system_from_graph(g)
@@ -76,6 +80,8 @@ stackplot([nn1,nn2,nn3],sol)	## stackplot(<blox or array of blox>, sol)
 # Suggestion : Try different values of input currents 'I_bg' and connection weights. One can try different permutations of excitatory and inhibitory neurons.
 
 # ## Creating a lateral inhibition circuit (the "winner-takes-all" circuit) in superficial cortical layer
+
+# ![fig3](../assets/neural_assembly_figures/3.png)
 
 global_namespace=:g 
 N_exci = 5; ##number of excitatory neurons
@@ -124,6 +130,8 @@ sol = solve(prob, Vern7(), saveat=0.1)
 voltage_stack([wta1,wta2],sol)
 
 # ## Creating a single cortical superficial layer block (SCORT in Pathak et. al. 2024) by connecting multiple WTA circuits
+
+# ![fig4](../assets/neural_assembly_figures/4.png)
 
 global_namespace=:g 
 N_wta=20 ## number of WTA circuits
@@ -210,8 +218,9 @@ powerspectrumplot(CB,sol)
 
 # Notice the peak at 16 Hz, representing beta oscillations.
 # Sugestion : try changing parameters of ASC1 to generate different cortical rhythms. See how the peak shifts in the powerspectrum
-# ## Creating simulation of visual stimulus response in cortical blocks (add Hebbian learning later)
+# ## Creating simulation of visual stimulus response in cortical blocks 
 
+# ![fig5](../assets/neural_assembly_figures/5.png)
 # create cortical blocks for visual area cortex (VAC), anterior cortex (AC) and ascending system block (ASC1)
 global_namespace=:g
 ## cortical blox
@@ -235,10 +244,7 @@ image_sample = 11 ## set which image to input (from 1 to 1000)
 # plot the image that the visual cortex 'sees'
 pixels=Array(image_set[image_sample,1:end-1])## access the desired image sample from respective row
 pixels=reshape(pixels,15,15)## reshape into 15 X 15 square image matrix
-fig = Figure();
-ax = Axis(fig[1, 1])
-heatmap!(ax, pixels,colormap = :gray1) #input image matrix seen as heatmap
-fig
+heatmap(pixels,colormap = :gray1) #input image matrix seen as heatmap
 
 # assemble the blox into a graph and set connections with their keword arguments like connection weight and connection density
 
