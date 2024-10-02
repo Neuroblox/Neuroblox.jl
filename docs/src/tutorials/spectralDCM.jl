@@ -2,15 +2,6 @@
 # Here we roughly resemble the simulation in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script DEM_demo_induced_fMRI.m in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[1]
 
-using Neuroblox
-using LinearAlgebra
-using Graphs
-using DifferentialEquations
-using DataFrames
-using OrderedCollections
-using CairoMakie
-using ModelingToolkit
-
 # In this tutorial we will define a circuit of three linear neuronal mass models, all driven by an Ornstein-Uhlenbeck process.
 # We will model fMRI data by a balloon model and BOLD signal on top.
 # After simulation of this simple model we will use spectral Dynamic Causal Modeling to infer some of the model parameters from the simulation time series. 
@@ -20,6 +11,15 @@ using ModelingToolkit
 # - setup the DCM
 # - estimate
 # - plot the results
+
+using Neuroblox
+using LinearAlgebra
+using Graphs
+using DifferentialEquations
+using DataFrames
+using OrderedCollections
+using CairoMakie
+using ModelingToolkit
 
 # # Model simulation
 # ## Define the model
