@@ -1,6 +1,5 @@
 using Neuroblox
 using Documenter
-
 using Literate
 
 Literate.markdown("./docs/src/getting_started.jl", "./docs/src/"; documenter = true)
@@ -8,6 +7,7 @@ Literate.markdown("./docs/src/getting_started.jl", "./docs/src/"; documenter = t
 Literate.markdown.([
     "./docs/src/tutorials/resting_state.jl",
     "./docs/src/tutorials/parkinsons.jl",
+    "./docs/src/tutorials/neural_assembly.jl"
     ],
     "./docs/src/tutorials";
     documenter = true

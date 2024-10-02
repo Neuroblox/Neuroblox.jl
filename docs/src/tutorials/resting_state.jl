@@ -14,7 +14,6 @@
 using Neuroblox
 using CSV
 using DataFrames
-using MetaGraphs
 using DifferentialEquations
 using Random
 using CairoMakie
@@ -25,26 +24,35 @@ using HypothesisTests
 weights = CSV.read("../data/weights.csv",DataFrame)
 region_names = names(weights)
 
-wm = Array(weights)
+wm = Array(weights) ## transform the weights into a matrix
+N_bloxs = size(wm)[1] ## number of blox components
 
-## assemble list of neural mass models
-blocks = []
-for i in 1:size(wm)[1]
-    push!(blocks, Neuroblox.Generic2dOscillator(name=Symbol(region_names[i]),bn=sqrt(5e-4)))
-end
+## create an array of neural mass models
+blocks = [Generic2dOscillator(name=Symbol(region_names[i]),bn=sqrt(5e-4)) for i in 1:N_bloxs]
 
 ## add neural mass models to Graph and connect using the connection matrix
 g = MetaDiGraph()
 add_blox!.(Ref(g), blocks)
 create_adjacency_edges!(g, wm)
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g);
 
 # To solve the system, we first create an Stochastic Differential Equation Problem and then solve it using a EulerHeun solver. The solution is saved every 0.5 ms. The unit of time in Neuroblox is 1 ms.
 
 prob = SDEProblem(sys,rand(-2:0.1:4,76*2), (0.0, 6e5), [])
 sol = solve(prob, EulerHeun(), dt=0.5, saveat=5)
-lines(sol.t, sol[5,:])
+
+# Let us plot the voltage potential of the first couple of components
+
+v1 = voltage_timeseries(blocks[1], sol)
+v2 = voltage_timeseries(blocks[2], sol)
+
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Potential")
+lines!(ax, sol.t, v1)
+lines!(ax, sol.t, v2)
+xlims!(ax, (0, 1000)) ## limit the x-axis to the first second of simulation
+fig
 
 # To evaluate the connectivity of our simulated resting state network, we calculate the statistically significant correlations
 
