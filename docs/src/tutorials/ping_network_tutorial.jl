@@ -25,9 +25,8 @@
 # ## Import the necessary packages
 # Reasons for each non-Neuroblox package are given in the comments after each
 using Neuroblox 
-using DifferentialEquations ## to build the ODE problem and solve it, gain access to multiple solvers from this
+using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Distributions ## for statistical distributions 
-using MetaGraphs ## use its MetaGraph type to build the circuit
 using Random ## for random number generation
 using CairoMakie ## for plotting
 
