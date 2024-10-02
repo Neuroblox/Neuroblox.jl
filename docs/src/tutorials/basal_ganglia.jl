@@ -9,7 +9,6 @@
 
 using Neuroblox
 using DifferentialEquations ## For building and solving differential equations problems
-using MetaGraphs ## use its MetaGraph type to build the circuit
 using CairoMakie ## For plotting
 using Random ## For setting a random seed
 
