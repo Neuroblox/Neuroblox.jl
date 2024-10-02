@@ -1,5 +1,8 @@
-using Neuroblox
+# # Neuroblox Spectral Dynamic Causal Modeling Tutorial
+# Here we roughly resemble the simulation in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script DEM_demo_induced_fMRI.m in [Neuroblox](https://www.neuroblox.org/).
+# This work was also presented in Hofmann et al.[1]
 
+using Neuroblox
 using LinearAlgebra
 using Graphs
 using DifferentialEquations
@@ -8,19 +11,17 @@ using OrderedCollections
 using CairoMakie
 using ModelingToolkit
 
-########## Assemble model ##########
 # In this tutorial we will define a circuit of three linear neuronal mass models, all driven by an Ornstein-Uhlenbeck process.
 # We will model fMRI data by a balloon model and BOLD signal on top.
 # After simulation of this simple model we will use spectral Dynamic Causal Modeling to infer some of the model parameters from the simulation time series. 
-# Step 1: define the graph, add blocks
-# Step 2: simulate the model
-# Step 3: compute the cross spectral density
-# Step 4: setup the DCM
-# Step 5: estimate
-# Step 5: plot the results
+# - define the graph, add blocks
+# - simulate the model
+# - compute the cross spectral density
+# - setup the DCM
+# - estimate
+# - plot the results
 
 # # Model simulation
-
 # ## Define the model
 # We will define a model of 3 regions. This means first of all to define a graph.
 # To this graph we will add three linear neuronal mass models which constitute the (hidden) neuronal dynamics.
@@ -48,7 +49,7 @@ for i = 1:nr
     add_edge!(g, region => measurement; :weight => 1.0)
 end
 # Next we define the between-region connectivity matrix and make sure that it is diagonally dominant to guarantee numerical stability (see Gershgorin theorem).
-A_true = randn(nr, nr)
+A_true = 0.1*randn(nr, nr)
 A_true -= diagm(map(a -> sum(abs, a), eachrow(A_true)))    # ensure diagonal dominance of matrix
 for idx in CartesianIndices(A_true)
     add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => A_true[idx[1], idx[2]])
@@ -75,19 +76,20 @@ ax = Axis(f[1, 1],
 )
 lines!(ax, sol, idxs=idx_m)
 f
+
 # We note that the initial spike is not meaningful and a result of the equilibration of the stochastic process thus we remove it.
-dfsol = DataFrame(sol[ceil(Int, 101/dt):end])
+dfsol = DataFrame(sol[ceil(Int, 101/dt):end]);
 
 # ## Estimate and plot the cross-spectral densities
 nameswitht = [n * "(t)" for n in names(dfsol)]  # this will hopefully soon become obsolete once https://github.com/SciML/SciMLBase.jl/issues/798 is fixed
 rename!(dfsol, nameswitht)
-data = Matrix(dfsol[:, idx_m])
+data = Matrix(dfsol[:, idx_m]);
 # We compute the cross-spectral density by fitting a linear model of order `p` and then compute the csd analytically from the parameters of the multivariate autoregressive model
 p = 8
 mar = mar_ml(data, p)   # maximum likelihood estimation of the MAR coefficients and noise covariance matrix
 ns = size(data, 1)
 freq = range(min(128, ns*dt)^-1, max(8, 2*dt)^-1, 32)
-csd = mar2csd(mar, freq, dt^-1)
+csd = mar2csd(mar, freq, dt^-1);
 # Now plot the cross-spectrum:
 fig = Figure(size=(1200, 800))
 grid = fig[1, 1] = GridLayout()
@@ -95,16 +97,9 @@ for i = 1:nr
     for j = 1:nr
         ax = Axis(grid[i, j])
         lines!(ax, freq, real.(csd[:, i, j]))
-        if (i==1) && (j==2)
-            ax.title = "Cross spectral density"
-        end
-        if (i==3) && (j==2)
-            ax.xlabel = "Frequency [Hz]"
-        end
     end
 end
 fig
-
 
 # # Model Inference
 
@@ -112,7 +107,7 @@ fig
 # This procedure is similar to before with the difference that we will define global parameters and use tags such as [tunable=false/true] to define which parameters we will want to estimate.
 # Note that parameters are tunable by default.
 g = MetaDiGraph()
-regions = []   # list of neural mass blocks to then connect them to each other with an adjacency matrix
+regions = [];   # list of neural mass blocks to then connect them to each other with an adjacency matrix
 
 # The following parameters are shared accross regions, which is why we define them here. 
 @parameters lnκ=0.0 [tunable=false] lnϵ=0.0 [tunable=false] lnτ=0.0 [tunable=false]   # lnκ: decay parameter for hemodynamics; lnϵ: ratio of intra- to extra-vascular components, lnτ: transit time scale
@@ -145,10 +140,9 @@ end
 @named fitmodel = system_from_graph(g, split=false)
 
 # ## Setup spectral DCM
-max_iter = 128            # maximum number of iterations
-
-# attribute initial conditions to states
-sts, _ = get_dynamic_states(fitmodel)
+max_iter = 128;            # maximum number of iterations
+## attribute initial conditions to states
+sts, _ = get_dynamic_states(fitmodel);
 # the following step is needed if the model's Jacobian would give degenerate eigenvalues if expanded around 0 (which is the default expansion)
 perturbedfp = Dict(sts .=> abs.(0.001*rand(length(sts))))     # slight noise to avoid issues with Automatic Differentiation. TODO: find different solution, this is hacky.
 # We can use the default prior function to use standardized prior values as given in SPM12.
@@ -164,14 +158,15 @@ hyperpriors = Dict(:Πλ_pr => 128.0*ones(1, 1),   # prior metaparameter precisi
 # To compute the cross spectral densities we need to provide the sampling interval of the time series, the frequency axis and the order of the multivariate autoregressive model:
 csdsetup = (mar_order = p, freq = freq, dt = dt);
 
-_, s_bold = get_eqidx_tagged_vars(fitmodel, "measurement")    # get bold signal variables
+_, s_bold = get_eqidx_tagged_vars(fitmodel, "measurement");    # get bold signal variables
 # Prepare the DCM:
 (state, setup) = setup_sDCM(dfsol[:, String.(Symbol.(s_bold))], fitmodel, perturbedfp, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
 
-# HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
-# this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
-with_stack(f, n) = fetch(schedule(Task(f, n)))
-# Finally: run the optimization procedure :)
+## HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
+## this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
+with_stack(f, n) = fetch(schedule(Task(f, n)));
+
+# We are ready to run the optimization procedure! :)
 with_stack(5_000_000) do  # 5MB of stack space
     for iter in 1:max_iter
         state.iter = iter
@@ -188,16 +183,13 @@ with_stack(5_000_000) do  # 5MB of stack space
 end
 
 # # Plot Results
-# Later place all into one figure using [Makie-style layouts](https://docs.makie.org/stable/tutorials/layout-tutorial)
-# Plot the free energy evolution:
+# (Later place all into one figure using [Makie-style layouts](https://docs.makie.org/stable/tutorials/layout-tutorial))
+# Plot the free energy evolution over optimization iterations:
 freeenergy(state)
 
 # Plot the estimated posterior of the effective connectivity and compare that to the true parameter values.
 # Bar hight are the posterior mean and error bars are the standard deviation of the posterior.
+ecbarplot(ax, state, setup, A_true)
 
-ecbarplot(state, setup, A_true)
-## TODO: need to implement a ecbarplot! to be able to integrate into one figure
-
-
-using Literate
-Literate.markdown("./docs/src/tutorials/spectralDCM.jl", "./docs/src/tutorials/")
+# ## References
+# [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
