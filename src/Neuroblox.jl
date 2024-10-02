@@ -1,9 +1,5 @@
 module Neuroblox
 
-if !isdefined(Base, :get_extension)
-    using Requires
-end
-
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
@@ -22,22 +18,20 @@ ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
 using ChainRules: _eigen_norm_phase_fwd!
 
 using LinearAlgebra
-using MKL
 using ToeplitzMatrices: Toeplitz
 using ExponentialUtilities: exponential!
 
 using DSP, Statistics
-using OrdinaryDiffEq
-using DifferentialEquations
+
 using Interpolations
 using Random
 using OrderedCollections
-using DelayDiffEq
 
 using StatsBase: sample
 using Distributions
 
-using SciMLBase: AbstractSolution
+using SciMLBase: SciMLBase, AbstractSolution, solve, remake
+
 
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
@@ -46,10 +40,8 @@ import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval
 
-using DelimitedFiles: readdlm
 using CSV: read
 using DataFrames
-using JLD2
 
 using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
 using SparseArrays
@@ -216,13 +208,8 @@ function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
     #end
-
-    @static if !isdefined(Base, :get_extension)
-        @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
-            include("../ext/MakieExtension.jl")
-        end
-    end
 end
+
 
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, van_der_pol, Generic2dOscillator
