@@ -18,7 +18,7 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
         E_syn_exci=0.0,
         E_syn_inhib=-70,
         G_syn_exci=3.0,
-        G_syn_inhib=3.0,
+        G_syn_inhib=4.0,
         I_bg=zeros(N_exci),
         freq=0.0,
         phase=0.0,

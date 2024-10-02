@@ -44,8 +44,8 @@ get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
 get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.eqs)
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
-    name_out = namespaced_nameof(blox_out)
-    name_in = namespaced_nameof(blox_in)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
 
     weight = get_weight(kwargs, name_out, name_in)
     w_name = Symbol("w_$(name_out)_$(name_in)")
@@ -59,8 +59,8 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
 end
 
 function generate_gap_weight_param(blox_out, blox_in; kwargs...)
-    name_out = namespaced_nameof(blox_out)
-    name_in = namespaced_nameof(blox_in)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
 
     gap_weight = get_gap_weight(kwargs, name_out, name_in)
     gw_name = Symbol("g_w_$(name_out)_$(name_in)")
@@ -71,6 +71,21 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
     end    
 
     return gw
+end
+
+function generate_nmda_weight_param(blox_out, blox_in; kwargs...)
+    name_out = inner_namespaced_nameof(blox_out)
+    name_in = inner_namespaced_nameof(blox_in)
+
+    nmda_weight = get_nmda_weight(kwargs, name_out, name_in)
+    nw_name = Symbol("n_w_$(name_out)_$(name_in)")
+    if typeof(nmda_weight) == Num   # Symbol
+        nw = nmda_weight
+    else
+        nw = only(@parameters $(nw_name)=nmda_weight)
+    end    
+
+    return nw
 end
 
 function hypergeometric_connections!(bc, neurons_out, neurons_in, name_out, name_in; kwargs...)
@@ -143,8 +158,8 @@ function params(bc::BloxConnector)
 end
 
 function (bc::BloxConnector)(
-    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
-    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
+    HH_out::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}, 
+    HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox, HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}; 
     kwargs...
 )
     sys_out = get_namespaced_sys(HH_out)
@@ -168,6 +183,21 @@ function (bc::BloxConnector)(
     end
 
     accumulate_equation!(bc, eq)
+    nmda_r = get_nmda(kwargs, nameof(HH_out), nameof(HH_in))
+    if nmda_r
+        w_nmda = generate_nmda_weight_param(HH_out, HH_in; kwargs...)
+        push!(bc.weights, w_nmda)
+        nmda_set = get_receptor(HH_in) #collects all nmda receptors
+        nmda_rec=nmda_set[HH_in.current_receptor] #picks the next unused receptor
+        nmda_sys=get_namespaced_sys(nmda_rec)
+        eq4 = nmda_sys.V ~ sys_in.V
+        accumulate_equation!(bc, eq4)
+        eq5 = nmda_sys.Glu ~ sys_out.Glu
+        accumulate_equation!(bc, eq5)
+        eq6 = sys_in.I_syn ~ -w_nmda*nmda_sys.O_AA*(sys_in.V - sys_out.E_syn)
+        accumulate_equation!(bc, eq6)
+        HH_in.current_receptor += 1
+    end
 end
 
 function (bc::BloxConnector)(
@@ -246,6 +276,102 @@ function (bc::BloxConnector)(
 end
 
 function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Pyramidal_Assembly_Adam},
+    cb_in::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam},
+    cb_in::Union{Cortical_Pyramidal_Assembly_Adam};
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam},
+    cb_in::Union{Cortical_Interneuron_Assembly_Phasic_Adam, Cortical_Interneuron_Assembly_Tonic_Adam};
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+    neurons_out = get_inh_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    cb_out::Union{Cortical_Pyramidal_Assembly_Adam},
+    cb_in::Union{Cortical_Pyramidal_Assembly_Adam};
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+    neurons_out = get_exci_neurons(cb_out)
+
+    indegree_constrained_connections!(bc, neurons_out, neurons_in, nameof(cb_out), nameof(cb_in); kwargs...)
+end
+
+function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    cb_in::Union{Cortical_Interneuron_Assembly_Tonic_Adam, Cortical_Interneuron_Assembly_Phasic_Adam}; 
+    kwargs...
+)
+    neurons_in = get_inh_neurons(cb_in)
+
+    for neuron_postsyn in neurons_in
+        bc(Glu_out, neuron_postsyn; kwargs...)
+    end
+    
+end
+
+function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    cb_in::Cortical_Pyramidal_Assembly_Adam; 
+    kwargs...
+)
+    neurons_in = get_exci_neurons(cb_in)
+
+    for neuron_postsyn in neurons_in
+        bc(Glu_out, neuron_postsyn; kwargs...)
+    end
+    
+end
+
+function (bc::BloxConnector)(
+    Glu_out::Union{Steady_Glutamate, Glutamate_puff}, 
+    HH_in::Union{HHNeuronExci_pyr_Adam_Blox, HHNeuronInh_inter_Adam_Blox}; 
+    kwargs...
+)
+    sys_out = get_namespaced_sys(Glu_out)
+    sys_in = get_namespaced_sys(HH_in)
+
+    
+    nmda_r = get_nmda(kwargs, nameof(Glu_out), nameof(HH_in))
+    if nmda_r
+        w_nmda = generate_nmda_weight_param(Glu_out, HH_in; kwargs...)
+        push!(bc.weights, w_nmda)
+        nmda_set = get_receptor(HH_in) #collects all nmda receptors
+        nmda_rec=nmda_set[HH_in.current_receptor] #picks the next unused receptor
+        nmda_sys=get_namespaced_sys(nmda_rec)
+        eq4 = nmda_sys.V ~ sys_in.V
+        accumulate_equation!(bc, eq4)
+        eq5 = nmda_sys.Glu ~ sys_out.Glu
+        accumulate_equation!(bc, eq5)
+        eq6 = sys_in.I_syn ~ -w_nmda*nmda_sys.O_AA*(sys_in.V - sys_out.E_syn)
+        accumulate_equation!(bc, eq6)
+        HH_in.current_receptor += 1
+    end
+end
+
+function (bc::BloxConnector)(
     asc_out::NextGenerationEIBlox, 
     HH_in::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
     kwargs...
@@ -283,7 +409,7 @@ function (bc::BloxConnector)(
     sysparts_out = get_blox_parts(bloxout)
     sysparts_in = get_blox_parts(bloxin)
 
-    wm = get_weightmatrix(kwargs, namespaced_nameof(bloxin), namespaced_nameof(bloxout))
+    wm = get_weightmatrix(kwargs, inner_namespaced_nameof(bloxin), inner_namespaced_nameof(bloxout))
 
     idxs = findall(!iszero, wm)
     for idx in idxs
@@ -566,7 +692,7 @@ function (bc::BloxConnector)(
     neurons_in = get_inh_neurons(str)
     neurons_out = get_exci_neurons(cb)
 
-    w = get_weight(kwargs, namespaced_nameof(cb), namespaced_nameof(str))
+    w = get_weight(kwargs, inner_namespaced_nameof(cb), inner_namespaced_nameof(str))
 
     dist = Uniform(0,1)
     wt_ar = 2*w*rand(dist, length(neurons_out)) # generate a uniform distribution of weights with average value w 

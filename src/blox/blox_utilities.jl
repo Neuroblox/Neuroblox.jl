@@ -73,7 +73,7 @@ function get_namespaced_sys(blox)
         only(independent_variables(sys)), 
         unknowns(sys), 
         parameters(sys); 
-        name = namespaced_nameof(blox)
+        name = inner_namespaced_nameof(blox)
     ) 
 end
 
@@ -83,7 +83,9 @@ nameof(blox) = (nameof ∘ get_sys)(blox)
 
 namespaceof(blox) = blox.namespace
 
-namespaced_nameof(blox) = namespaced_name(inner_namespaceof(blox), nameof(blox))
+inner_namespaced_nameof(blox) = namespaced_name(inner_namespaceof(blox), nameof(blox))
+
+namespaced_nameof(blox) = namespaced_name(namespaceof(blox), nameof(blox))
 
 """
     Returns the complete namespace EXCLUDING the outermost (highest) level.
@@ -190,6 +192,14 @@ function get_gap_weight(kwargs, name_blox1, name_blox2)
     end
 end
 
+function get_nmda_weight(kwargs, name_blox1, name_blox2)
+    if haskey(kwargs, :nmda_weight)
+        return kwargs[:nmda_weight]
+    else
+        error("NMDA conductance from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
 function get_weightmatrix(kwargs, name_blox1, name_blox2)
     get(kwargs, :weightmatrix) do
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
@@ -215,6 +225,10 @@ end
 
 function get_gap(kwargs, name_blox1, name_blox2)
     get(kwargs, :gap, false)    
+end
+
+function get_nmda(kwargs, name_blox1, name_blox2)
+    haskey(kwargs, :nmda) ? kwargs[:nmda] : false    
 end
 
 function get_event_time(kwargs, name_blox1, name_blox2)
@@ -248,8 +262,8 @@ function get_weights(agent::Agent, blox_out, blox_in)
     pv = agent.problem.p
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
 
-    name_out = String(namespaced_nameof(blox_out))
-    name_in = String(namespaced_nameof(blox_in))
+    name_out = String(inner_namespaced_nameof(blox_out))
+    name_in = String(inner_namespaced_nameof(blox_in))
 
     idxs_weight = findall(ps) do p
         n = String(Symbol(p))
