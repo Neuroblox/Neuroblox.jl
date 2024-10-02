@@ -45,7 +45,7 @@ sol = solve(prob, EulerHeun(), dt=0.5, saveat=5)
 # Let us plot the voltage potential of the first couple of components
 
 v1 = voltage_timeseries(blocks[1], sol)
-v3 = voltage_timeseries(blocks[2], sol)
+v2 = voltage_timeseries(blocks[2], sol)
 
 fig = Figure()
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Potential")
