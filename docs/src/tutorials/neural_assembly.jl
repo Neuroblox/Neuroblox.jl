@@ -37,7 +37,7 @@ length(unknowns(sys)) ## shows the number of variables in the simplified system
 # To solve the system, we first create an Ordinary Differential Equation Problem and then solve it over the tspan of (0,1e) using a Vern7() solver.  The solution is saved every 0.1ms. The unit of time in Neuroblox is 1ms.
 
 prob = ODEProblem(sys, [], (0.0, 1000), [])
-sol = solve(prob, Vern7(), saveat=0.1)
+sol = solve(prob, Vern7(), saveat=0.1);
 
 # acessing the voltage timeseries from the neuron block and plotting the voltage
 v = voltage_timeseries(nn1, sol)
@@ -71,7 +71,7 @@ add_edge!(g, nn1 => nn3, weight = 0.5) ##connection from neuron 1 to neuron 3 (n
 ## create an ODESystem from the graph and then solve it using an ODE solver
 @named sys = system_from_graph(g)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
-sol = solve(prob, Vern7(), saveat=0.1)
+sol = solve(prob, Vern7(), saveat=0.1);
 
 ## plotting membrane voltage activity of all neurons in a stacked form
 
@@ -129,7 +129,6 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 voltage_stack([wta1,wta2],sol)
 
-#=
 # ## Creating a single cortical superficial layer block (SCORT in Pathak et. al. 2024) by connecting multiple WTA circuits
 
 # ![fig4](../assets/neural_assembly_figures/4.png)
@@ -200,7 +199,7 @@ add_edge!(g, ASC1 => CB, weight=44)
 ## solve the system for time 0 to 1000 ms
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
-sol = solve(prob, Vern7(), saveat=0.1)
+sol = solve(prob, Vern7(), saveat=0.1);
 
 # plot neuron time series
 neuron_set = get_neurons(CB) ## extract neurons from a composite block like CorticalBlox
@@ -239,7 +238,7 @@ image_sample = 11 ## set which image to input (from 1 to 1000)
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-@named stim = ImageStimulus(image_set[[image_sample],:]; namespace=global_namespace, t_stimulus=1000, t_pause=0) 
+@named stim = ImageStimulus(image_set[[image_sample],:]; namespace=global_namespace, t_stimulus=1000, t_pause=0); 
 
 
 # plot the image that the visual cortex 'sees'
@@ -259,14 +258,15 @@ add_edge!(g, VAC => AC, weight=3, density=0.08)
 ## define odesystem and solve
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
-sol = solve(prob, Vern7(), saveat=0.1)
+sol = solve(prob, Vern7(), saveat=0.1);
 
-# plot voltage stacks, mean fields and powerspectrums
-
-## VAC
+# Let us now plot neuron potentials, meanfield activity and powerspectrums for the VAC and AC blox.
+# First we show the stackplot of voltage potentials from the first 10 neurons of VAC
 VAC_neuron_set = get_neurons(VAC) ## extract neurons from VAC
-n_neurons = 100
+n_neurons = 10
 stackplot(VAC_neuron_set[1:n_neurons],sol)
+
+# then we plot the meanfield potential out of all neurons within VAC
 mnv = meanfield_timeseries(VAC, sol)
 
 fig = Figure();
@@ -274,20 +274,23 @@ ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
+# Here is the powerspectrum from all neurons within VAC
 powerspectrumplot(VAC,sol)
 
-## AC
+# Moving on to the AC blox, we first plot the voltage potential of its neurons
 AC_neuron_set = get_neurons(AC) ## extract neurons from VAC
-n_neurons = 100
+n_neurons = 10
 stackplot(AC_neuron_set[1:n_neurons],sol)
+
+# followed by the meanfield activity 
 mnv = meanfield_timeseries(AC,sol)
 fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
+# and finally the AC powerspectrum
 powerspectrumplot(AC,sol)
 
 # Sugestion : Try changing the image samples and notice the change in the spatial firing patterns in VAC and AC neurons. One can make multiple cortical blocks simillar to AC and connect them in various 
 # connection topologies. All of them can directly or indirectly get input from VAC.  
-=#
