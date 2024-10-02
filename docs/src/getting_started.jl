@@ -30,8 +30,7 @@
 
 using Neuroblox
 using DifferentialEquations
-using Graphs
-using MetaGraphs
+using CairoMakie
 
 ## Create two Wilson-Cowan blox
 @named WC1 = WilsonCowan()
@@ -42,8 +41,10 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), [WC1, WC2])
 
 ## Define the connectivity between the neural masses
-adj = [-1 7; 4 -1]
-create_adjacency_edges!(g, adj)
+add_edge!(g, WC1 => WC1; weight = -1) ## recurrent connection from WC1 to itself
+add_edge!(g, WC1 => WC2; weight = 7) ## connection from WC1 to WC2
+add_edge!(g, WC2 => WC1; weight = 4) ## connection from WC2 to WC1
+add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
 # Here, we've created two Wilson-Cowan Blox and connected them as nodes in a directed graph. The `adj` matrix defines the weighted edges between these nodes. Each entry `adj[i,j]` represents how the output of blox `j` influences the input of blox `i`:
 # 
@@ -62,10 +63,24 @@ create_adjacency_edges!(g, adj)
 
 # ## Simulating the Model
 
-# Finally, let's simulate our model. The following code creates and solves an `ODEProblem` for our system, simulating 100 time units of activity. In Neuroblox, the default time unit is milliseconds. We use `Rodas4`, a solver efficient for stiff problems. The solution is saved every 0.1 ms, allowing us to observe the detailed evolution of the system's behavior.
+# We are now ready to simulate our model. The following code creates and solves an `ODEProblem` for our system, simulating 100 time units of activity. In Neuroblox, the default time unit is milliseconds. We use `Rodas4`, a solver efficient for stiff problems. The solution is saved every 0.1 ms, allowing us to observe the detailed evolution of the system's behavior.
 
 prob = ODEProblem(sys, [], (0.0, 100), [])
 sol = solve(prob, Rodas4(), saveat=0.1)
+
+# ## Plotting simulation results
+
+# Finally, let us plot the `E` and `I` states of the first component, `WC1`. 
+
+E1 = state_timeseries(WC1, sol, "E")
+I1 = state_timeseries(WC1, sol, "I")
+
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "time (ms)")
+lines!(ax, sol.t, E1, label = "E")
+lines!(ax, sol.t, I1, label = "I")
+Legend(fig[1,2], ax)
+fig
 
 # [[1] Wilson, H. R., & Cowan, J. D. (1972). Excitatory and inhibitory interactions in localized populations of model neurons. Biophysical journal, 12(1), 1-24.](https://www.sciencedirect.com/science/article/pii/S0006349572860685)
 

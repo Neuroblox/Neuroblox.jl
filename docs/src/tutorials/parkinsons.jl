@@ -28,8 +28,6 @@
 
 using Neuroblox
 using DifferentialEquations
-using Graphs
-using MetaGraphs
 using CairoMakie
 
 ## Convert time units from seconds to milliseconds

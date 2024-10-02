@@ -118,7 +118,11 @@ end
 
 @recipe(StackPlot, blox, sol) do scene
     Theme(
-        color = :black
+        color = :black,
+        Axis = (
+            xlabel = "Time (ms)",
+            ylabel = "Neurons",
+        )
     )
 end
 
@@ -127,6 +131,11 @@ argument_names(::Type{<: StackPlot}) = (:blox, :sol)
 function Makie.plot!(p::StackPlot)
     sol = p.sol[]
     blox = p.blox[]
+
+    ax = current_axis()
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+    hideydecorations!(ax; label = false)
 
     V = voltage_timeseries(blox, sol)
     
@@ -158,7 +167,8 @@ end
         ),
         win_size = 10, # ms
         overlap = 0,
-        transient = 0
+        transient = 0,
+        threshold = nothing
     )
 end
 
@@ -173,8 +183,8 @@ function Makie.plot!(p::FRPlot)
     ax.ylabel = p.Axis.ylabel[]
 
     hideydecorations!(ax)
-
-    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[])
+    
+    fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[], threshold = p.threshold[])
 
     t = range(p.transient[], stop = last(sol.t), length = length(fr))
     lines!(p, t .* 1e-3, fr; color = p.color[])
