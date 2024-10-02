@@ -129,6 +129,7 @@ sol = solve(prob, Vern7(), saveat=0.1)
 
 voltage_stack([wta1,wta2],sol)
 
+#=
 # ## Creating a single cortical superficial layer block (SCORT in Pathak et. al. 2024) by connecting multiple WTA circuits
 
 # ![fig4](../assets/neural_assembly_figures/4.png)
@@ -289,3 +290,4 @@ powerspectrumplot(AC,sol)
 
 # Sugestion : Try changing the image samples and notice the change in the spatial firing patterns in VAC and AC neurons. One can make multiple cortical blocks simillar to AC and connect them in various 
 # connection topologies. All of them can directly or indirectly get input from VAC.  
+=#
