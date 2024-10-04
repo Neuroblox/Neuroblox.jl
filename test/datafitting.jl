@@ -46,11 +46,10 @@ using MAT
     @named neuronmodel = system_from_graph(g; split=false)
 
     # attribute initial conditions to states
-    sts, idx_sts = get_dynamic_states(neuronmodel)
-    idx_u = get_idx_tagged_vars(neuronmodel, "ext_input")                  # get index of external input state
-    idx_bold, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
+    _, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
     rename!(data, Symbol.(obsvars))
 
+    sts, _ = get_dynamic_states(neuronmodel)
     initcond = OrderedDict(sts .=> 0.0)
     rnames = []
     map(x->push!(rnames, split(string(x), "₊")[1]), sts);
@@ -61,55 +60,18 @@ using MAT
         end
     end
 
-    # collect parameter default values, these constitute the prior mean.
-    modelparam = OrderedDict()
-    np = sum(tunable_parameters(neuronmodel); init=0) do par
-        val = Symbolics.getdefaultval(par)
-        modelparam[par] = val
-        length(val)
-    end
-    indices = Dict(:dspars => collect(1:np))
-    # Noise parameters
-    modelparam[:lnα] = [0.0, 0.0];            # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
-    n = length(modelparam[:lnα]);
-    indices[:lnα] = collect(np+1:np+n);
-    np += n;
-    modelparam[:lnβ] = [0.0, 0.0];            # global observation noise, ln(β) as above
-    n = length(modelparam[:lnβ]);
-    indices[:lnβ] = collect(np+1:np+n);
-    np += n;
-    modelparam[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
-    indices[:lnγ] = collect(np+1:np+nrr);
-    np += nrr
-    indices[:u] = idx_u
-    indices[:m] = idx_bold
-    indices[:sts] = idx_sts
-
-    # continue with prior variances
-    paramvariance = copy(modelparam)
-    paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
-    paramvariance[:lnα] = ones(Float64, length(modelparam[:lnα]))./64.0;
-    paramvariance[:lnβ] = ones(Float64, length(modelparam[:lnβ]))./64.0;
-    for (k, v) in paramvariance
-        if occursin("A", string(k))
-            paramvariance[k] = ones(length(v))
-        elseif occursin("κ", string(k))
-            paramvariance[k] = ones(length(v))./256.0;
-        elseif occursin("ϵ", string(k))
-            paramvariance[k] = 1/256.0;
-        elseif occursin("τ", string(k))
-            paramvariance[k] = 1/256.0;
-        end
-    end
-
-    priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    pmean, pcovariance, indices = defaultprior(neuronmodel, nrr)
+    # priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    priors = (μθ_pr = pmean,
+              Σθ_pr = pcovariance
+    );
     hyperpriors = (Πλ_pr = 128.0*ones(1, 1),   # prior metaparameter precision, needs to be a matrix
                    μλ_pr = [8.0]               # prior metaparameter mean, needs to be a vector
                 );
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
-    (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, modelparam, "fMRI");
+    (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
 
     # HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
     # this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
@@ -256,7 +218,11 @@ end
         end
     end
 
-    priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    # priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+    priors = (μθ_pr = modelparam,
+              Σθ_pr = paramvariance
+    );
+
     hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
     hyperpriors = Dict(:Πλ_pr => hype["ihC"],               # prior metaparameter precision, needs to be a matrix
                     :μλ_pr => vec(hype["hE"]),              # prior metaparameter mean, needs to be a vector

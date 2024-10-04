@@ -13,7 +13,7 @@ using DSP
 using Statistics: mean, std
 
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
@@ -31,40 +31,42 @@ function Makie.plot!(p::FreeEnergy)
     return p
 end
 
-@recipe(EffectiveConnectivity, spDCMresults, spDCMsetup, groundtruth) do scene
-    Theme()
+@recipe(ECBarPlot, spDCMresults, spDCMsetup, groundtruth) do scene
+    Theme(
+    Axis = (
+            xlabel = "Parameter Name",
+            ylabel = "Effective Connectivity",
+        )
+    )
 end
 
-argument_names(::Type{<: EffectiveConnectivity}) = (:spDCMresults, :spDCMsetup, :groundtruth)
+argument_names(::Type{<: ECBarPlot}) = (:spDCMresults, :spDCMsetup, :groundtruth)
 
-function Makie.plot!(p::EffectiveConnectivity)
+function Makie.plot!(p::ECBarPlot)
     nr = p.spDCMsetup[].systemnums[1]  # number of regions
     diagidx = 1:(nr+1):nr^2
-    gt = vec(p.groundtruth[])   # get ground truth values
+    modelparam = p.spDCMsetup[].modelparam
+    idx = collect(1:nr^2)
+    deleteat!(idx, diagidx)
+    xlabels = string.(collect(keys(modelparam))[idx])
+    ax = current_axis()
+    ax.xticks = (1:(nr^2-nr), xlabels)
+    ax.xlabel = p.Axis.xlabel[]
+    ax.ylabel = p.Axis.ylabel[]
+
+    gt = copy(vec(p.groundtruth[]))   # get ground truth values
     deleteat!(gt, diagidx)
     state = p.spDCMresults[]
     μA = state.μθ_po[1:nr^2]    # get estimated means of effective connectivity
     deleteat!(μA, diagidx)
     var_A = diag(state.Σθ_po[1:nr^2, 1:nr^2])  # get variance of effective connectivity
     deleteat!(var_A, diagidx)
+
     x = 1:(nr^2-nr)
     barplot!(p, x, μA)
     errorbars!(p, x, μA, sqrt.(var_A), color = :red)
     scatter!(p, x, gt)
     return p
-end
-
-function ecbarplot(spDCMresults::VLState, spDCMsetup::VLSetup, groundtruth)
-    nr = spDCMsetup.systemnums[1]  # number of regions
-    modelparam = spDCMsetup.modelparam
-    fig = Figure()
-    idx = collect(1:nr^2)
-    deleteat!(idx, 1:(nr+1):nr^2)
-    xlabels = string.(collect(keys(modelparam))[idx])
-    ax = Axis(fig[1,1], xticks = (1:(nr^2-nr), xlabels))
-
-    effectiveconnectivity!(ax, spDCMresults, spDCMsetup, groundtruth)
-    display(fig)
 end
 
 @recipe(MeanField, blox, sol) do scene

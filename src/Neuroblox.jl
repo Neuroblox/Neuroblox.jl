@@ -93,7 +93,7 @@ include("utilities/bold_methods.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
 include("measurementmodels/lfp.jl")
-include("datafitting/spectralDCM.jl")
+include("datafitting/spDCM_VL.jl")
 include("blox/neural_mass.jl")
 include("blox/cortical.jl")
 include("blox/canonicalmicrocircuit.jl")
@@ -195,8 +195,7 @@ function frplot! end
 function voltage_stack end
 
 function ecbarplot end
-function effectiveconnectivity end
-function effectiveconnectivity! end
+function ecbarplot! end
 
 function freeenergy end
 function freeenergy! end
@@ -229,7 +228,7 @@ export SynapticConnections, create_rl_loop
 export add_blox!, get_system
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!
+export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!, defaultprior
 export simulate, random_initials
 export system_from_graph, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
@@ -240,7 +239,7 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
-export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, effectiveconnectivity, effectiveconnectivity!, ecbarplot, freeenergy, freeenergy!
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons

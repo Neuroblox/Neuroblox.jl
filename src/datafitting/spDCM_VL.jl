@@ -325,6 +325,53 @@ function vecparam(param::OrderedDict)
     return flatparam
 end
 
+function defaultprior(model, nrr)
+    _, idx_sts = get_dynamic_states(model)
+    idx_u = get_idx_tagged_vars(model, "ext_input")                  # get index of external input state
+    idx_bold, _ = get_eqidx_tagged_vars(model, "measurement")  # get index of equation of bold state
+
+    # collect parameter default values, these constitute the prior mean.
+    parammean = OrderedDict()
+    np = sum(tunable_parameters(model); init=0) do par
+        val = Symbolics.getdefaultval(par)
+        parammean[par] = val
+        length(val)
+    end
+    indices = Dict(:dspars => collect(1:np))
+    # Noise parameters
+    parammean[:lnα] = [0.0, 0.0];            # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
+    n = length(parammean[:lnα]);
+    indices[:lnα] = collect(np+1:np+n);
+    np += n;
+    parammean[:lnβ] = [0.0, 0.0];            # global observation noise, ln(β) as above
+    n = length(parammean[:lnβ]);
+    indices[:lnβ] = collect(np+1:np+n);
+    np += n;
+    parammean[:lnγ] = zeros(Float64, nrr);   # region specific observation noise
+    indices[:lnγ] = collect(np+1:np+nrr);
+    np += nrr
+    indices[:u] = idx_u
+    indices[:m] = idx_bold
+    indices[:sts] = idx_sts
+
+    # continue with prior variances
+    paramvariance = copy(parammean)
+    paramvariance[:lnγ] = ones(Float64, nrr)./64.0;
+    paramvariance[:lnα] = ones(Float64, length(parammean[:lnα]))./64.0;
+    paramvariance[:lnβ] = ones(Float64, length(parammean[:lnβ]))./64.0;
+    for (k, v) in paramvariance
+        if occursin("A", string(k))
+            paramvariance[k] = ones(length(v))
+        elseif occursin("κ", string(k))
+            paramvariance[k] = ones(length(v))./256.0;
+        elseif occursin("ϵ", string(k))
+            paramvariance[k] = 1/256.0;
+        elseif occursin("τ", string(k))
+            paramvariance[k] = 1/256.0;
+        end
+    end
+    return parammean, paramvariance, indices
+end
 
 """
     function setup_sDCM(data, stateevolutionmodel, initcond, csdsetup, priors, hyperpriors, indices)
@@ -351,20 +398,20 @@ end
 """
 function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modelparam, modality)
     # compute cross-spectral density
-    dt = csdsetup.dt;              # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
-    freq = csdsetup.freq;                # frequencies at which the CSD is evaluated
+    dt = csdsetup.dt;                      # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
+    freq = csdsetup.freq;                  # frequencies at which the CSD is evaluated
     mar_order = csdsetup.mar_order;        # order of MAR
     _, vars = get_eqidx_tagged_vars(model, "measurement")
-    data = Matrix(data[:, Symbol.(vars)])  # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
+    data = Matrix(data[:, String.(Symbol.(vars))])           # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
     mar = mar_ml(data, mar_order);         # compute MAR from time series y and model order p
-    y_csd = mar2csd(mar, freq, dt^-1);        # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
+    y_csd = mar2csd(mar, freq, dt^-1);     # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
     jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
     derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
-    μθ_pr = vecparam(OrderedDict(priors.name .=> priors.mean))            # note: μθ_po is posterior and μθ_pr is prior
-    Σθ_pr = diagm(vecparam(OrderedDict(priors.name .=> priors.variance)))
+    μθ_pr = vecparam(priors.μθ_pr)   # note: μθ_po is posterior and μθ_pr is prior
+    Σθ_pr = diagm(vecparam(priors.Σθ_pr))
 
     ### Collect prior means and covariances ###
     if haskey(hyperpriors, :Q)
