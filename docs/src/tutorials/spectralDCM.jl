@@ -64,7 +64,7 @@ end
 tspan = (0.0, 612.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2.0   # two seconds as measurement interval for fMRI
-sol = solve(prob, LambaEM(), saveat=dt);
+sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # plot bold signal time series
 idx_m = get_idx_tagged_vars(simmodel, "measurement")    # get index of bold signal
