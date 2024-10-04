@@ -1,4 +1,5 @@
-# # Neuroblox Spectral Dynamic Causal Modeling Tutorial
+# # Spectral Dynamic Causal Modeling Tutorial
+# # Introduction
 # Here we roughly resemble the simulation in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script DEM_demo_induced_fMRI.m in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[1]
 
