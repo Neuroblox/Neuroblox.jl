@@ -28,7 +28,7 @@ struct PINGNeuronExci <: AbstractPINGNeuron
         a_m(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
         b_m(v) = 0.28*(v+27.0)/(exp((v+27.0)/5.0) - 1.0)
         a_n(v) = 0.032*(v+52.0)/(1.0 - exp(-(v+52.0)/5.0))
-        b_n(v) = 0.5*exp((v+57.0)/40.0)
+        b_n(v) = 0.5*exp(-(v+57.0)/40.0)
         a_h(v) = 0.128*exp((v+50.0)/18.0)
         b_h(v) = 4.0/(1.0 + exp(-(v+27.0)/5.0))
         
@@ -75,7 +75,7 @@ struct PINGNeuronInhib <: AbstractPINGNeuron
         b_h(v) = 5.0/(1.0 + exp(-(v+28.0)/10.0))
 
         m∞(v) = a_m(v)/(a_m(v) + b_m(v))
-        eqs = [D(V) ~ g_Na*m∞(V)^3*h*(V_Na - V) + g_K*(n^4)*(V_K - V) + g_L*(V_L - V) + I_ext,
+        eqs = [D(V) ~ g_Na*m∞(V)^3*h*(V_Na - V) + g_K*(n^4)*(V_K - V) + g_L*(V_L - V) + I_ext + jcn,
                D(n) ~ (a_n(V)*(1.0 - n) - b_n(V)*n),
                D(h) ~ (a_h(V)*(1.0 - h) - b_h(V)*h),
                D(s) ~ ((1+tanh(V/10.0))/2.0)*((1.0 - s)/τ_R) - s/τ_D
