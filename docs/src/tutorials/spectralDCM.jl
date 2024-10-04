@@ -3,7 +3,7 @@
 # <table style="width:100%">
 # <tr>
 # <td style="width:60%">
-
+#
 # In this tutorial we will introduce how to perform a spectral Dynamic Causal Modeling analysis on simulated data [1,2].
 # To do so we roughly resemble the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[2]
@@ -206,7 +206,7 @@ freeenergy(state)
 
 # Plot the estimated posterior of the effective connectivity and compare that to the true parameter values.
 # Bar hight are the posterior mean and error bars are the standard deviation of the posterior.
-ecbarplot(ax, state, setup, A_true)
+ecbarplot(state, setup, A_true)
 
 # ## References
 # [1] [Novelli, Leonardo, Karl Friston, and Adeel Razi. “Spectral Dynamic Causal Modeling: A Didactic Introduction and Its Relationship with Functional Connectivity.” Network Neuroscience 8, no. 1 (April 1, 2024): 178–202.](https://doi.org/10.1162/netn_a_00348) \
