@@ -1,10 +1,10 @@
+# # Pyramidal-Interneuron Gamma network
 # # Introduction
-
 # This tutorial provides a simple example of how to use the Neuroblox package to simulate a pyramidal-interneuron gamma (PING) network. 
 # These networks are generally useful in modeling cortical oscillations and are used in a variety of contexts.
 # This particular example is based on Börgers, Epstein, and Kopell [1] and is a simple example of how to replicate their initial network in Neuroblox.
 
-# ## PING network - conceptual definition
+# ## Conceptual definition
 # The PING network is a simple model of a cortical network that consists of two populations of neurons: excitatory and inhibitory.
 # We omit the detailed equations of the neurons here, but note they are Hodgkin-Huxley-like equations with a few modifications.
 # Excitatory neurons are reduced Traub-Miles cells [2] and inhibitory neurons are Wang-Buzasaki cells [3].
