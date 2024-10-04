@@ -5,7 +5,8 @@ pages = ["index.md",
     "Tutorials" => Any[
         "tutorials/resting_state.md",
         "tutorials/parkinsons.md",
-        "tutorials/neural_assembly.md"
+        "tutorials/neural_assembly.md",
+        "tutorials/ping_network.md"
     ],
     "API" => "api.md",
     "Release Notes" => "release_notes.md",
