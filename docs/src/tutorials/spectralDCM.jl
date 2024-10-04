@@ -1,4 +1,5 @@
-# # Neuroblox Spectral Dynamic Causal Modeling Tutorial
+# # Spectral Dynamic Causal Modeling Tutorial
+# # Introduction
 # Here we roughly resemble the simulation in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script DEM_demo_induced_fMRI.m in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[1]
 
@@ -14,8 +15,7 @@
 
 using Neuroblox
 using LinearAlgebra
-using Graphs
-using DifferentialEquations
+using StochasticDiffEq
 using DataFrames
 using OrderedCollections
 using CairoMakie
@@ -64,7 +64,7 @@ end
 tspan = (0.0, 612.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2.0   # two seconds as measurement interval for fMRI
-sol = solve(prob, saveat=dt);
+sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # plot bold signal time series
 idx_m = get_idx_tagged_vars(simmodel, "measurement")    # get index of bold signal
@@ -189,7 +189,7 @@ freeenergy(state)
 
 # Plot the estimated posterior of the effective connectivity and compare that to the true parameter values.
 # Bar hight are the posterior mean and error bars are the standard deviation of the posterior.
-ecbarplot(ax, state, setup, A_true)
+ecbarplot(state, setup, A_true)
 
 # ## References
 # [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
