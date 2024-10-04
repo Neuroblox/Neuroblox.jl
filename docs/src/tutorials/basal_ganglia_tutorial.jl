@@ -8,7 +8,7 @@
 # We'll start with simple components and gradually build up to the full basal ganglia circuit, demonstrating how to analyze the results at each stage.
 
 using Neuroblox
-using DifferentialEquations ## For building and solving differential equations problems
+using StochasticDiffEq ## For building and solving differential equations problems
 using MetaGraphs ## use its MetaGraph type to build the circuit
 using CairoMakie ## For plotting
 using Random ## For setting a random seed

@@ -14,7 +14,7 @@
 using Neuroblox
 using CSV
 using DataFrames
-using DifferentialEquations
+using StochasticDiffEq
 using Random
 using CairoMakie
 using Statistics

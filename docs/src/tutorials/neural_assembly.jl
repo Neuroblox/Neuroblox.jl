@@ -17,7 +17,7 @@
 
 
 using Neuroblox
-using DifferentialEquations ## to build the ODE problem and solve it, gain access to multiple solvers from this
+using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Random ## for generating random variables
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
