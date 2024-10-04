@@ -189,7 +189,7 @@ freeenergy(state)
 
 # Plot the estimated posterior of the effective connectivity and compare that to the true parameter values.
 # Bar hight are the posterior mean and error bars are the standard deviation of the posterior.
-ecbarplot(ax, state, setup, A_true)
+ecbarplot(state, setup, A_true)
 
 # ## References
 # [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
