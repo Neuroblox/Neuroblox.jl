@@ -27,7 +27,7 @@
 # Let's start by importing the necessary libraries and defining our neural masses:
 
 using Neuroblox
-using DifferentialEquations
+using OrdinaryDiffEq
 using CairoMakie
 
 ## Convert time units from seconds to milliseconds
