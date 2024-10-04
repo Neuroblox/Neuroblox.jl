@@ -120,7 +120,7 @@ end
 
 @recipe(StackPlot, blox, sol) do scene
     Theme(
-        color = :black,
+        dynamic_gap = false,        
         Axis = (
             xlabel = "Time (ms)",
             ylabel = "Neurons",
@@ -146,15 +146,22 @@ function Makie.plot!(p::StackPlot)
     mx = maximum(V; dims = 1)
     mn = minimum(V; dims = 1)
     
-    offset = 0.0
-    for (i, V_neuron) in enumerate(eachcol(V))
-        if i == 1
-            lines!(p, sol.t, V_neuron; color=p.color[])
-        else
-            offset += abs(mn[i]) * 1.2
-            lines!(p, sol.t, offset .+ V_neuron; color=p.color[])
+    if p.dynamic_gap[]
+        offset = 0.0
+        for (i, V_neuron) in enumerate(eachcol(V))
+            if i == 1
+                lines!(p, sol.t, V_neuron)
+            else
+                offset += abs(mn[i]) * 1.2
+                lines!(p, sol.t, offset .+ V_neuron)
+            end
+            offset += abs(mx[i]) * 1.2
         end
-        offset += abs(mx[i]) * 1.2
+    else
+        offset = maximum(mx .- mn)
+        for (i, V_neuron) in enumerate(eachcol(V))
+            lines!(p, sol.t, (i - 1) * offset .+ V_neuron)
+        end
     end
     
     return p
