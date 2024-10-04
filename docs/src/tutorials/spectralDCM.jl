@@ -30,8 +30,6 @@
 # </tr>
 # </table>
 
-using Literate
-Literate.markdown("./docs/src/tutorials/spectralDCM.jl")
 using Neuroblox
 using LinearAlgebra
 using StochasticDiffEq
