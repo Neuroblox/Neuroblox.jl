@@ -487,24 +487,19 @@ function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
     return t, rₘ
 end
 
-function state_timeseries(blox, sol::SciMLBase.AbstractSolution,
-                          state::String; ts=nothing)
-                          
-    namespaced_name = namespaced_nameof(blox)
-    state_name = Symbol(namespaced_name, "₊$(state)")
+function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                          sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
+    
+    neurons = get_neurons(cb)
+    state_names = map(neuron -> Symbol(namespaced_nameof(neuron), "₊", state), neurons)
 
     if isnothing(ts)
-        return sol[state_name]
+        s = stack(sol[state_names], dims=1)
     else
-        return Array(sol(ts, idxs = state_name))
+        s = transpose(Array(sol(ts; idxs=state_names)))
     end
-end
 
-function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
-
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        state_timeseries(neuron, sol, state; ts)
-    end
+    return s
 end
 
 function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution,
@@ -515,14 +510,8 @@ function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:Abstract
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
-voltage_timeseries(blox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
-    state_timeseries(blox, sol, "V"; ts)
-
 function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
-
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol; ts)
-    end
+    return state_timeseries(cb, sol, "V"; ts)
 end
 
 function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
