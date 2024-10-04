@@ -9,7 +9,8 @@ Literate.markdown.([
     "./docs/src/tutorials/parkinsons.jl",
     "./docs/src/tutorials/neural_assembly.jl",
     "./docs/src/tutorials/ping_network.jl",
-    "./docs/src/tutorials/basal_ganglia.jl"
+    "./docs/src/tutorials/basal_ganglia.jl",
+    "./docs/src/tutorials/spectralDCM.jl"
     ],
     "./docs/src/tutorials";
     documenter = true
