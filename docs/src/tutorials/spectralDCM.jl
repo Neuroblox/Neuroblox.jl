@@ -14,8 +14,7 @@
 
 using Neuroblox
 using LinearAlgebra
-using Graphs
-using DifferentialEquations
+using StochasticDiffEq
 using DataFrames
 using OrderedCollections
 using CairoMakie
@@ -64,7 +63,7 @@ end
 tspan = (0.0, 612.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2.0   # two seconds as measurement interval for fMRI
-sol = solve(prob, saveat=dt);
+sol = solve(prob, LambaEM(), saveat=dt);
 
 # plot bold signal time series
 idx_m = get_idx_tagged_vars(simmodel, "measurement")    # get index of bold signal
