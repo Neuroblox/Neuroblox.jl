@@ -27,7 +27,7 @@ unknowns(sys)
 
 # Create and solve the SDE problem
 ## Define simulation parameters
-tspan = (0.0, 5500.0) ## simulation time span [ms]
+tspan = (0.0, 2000.0) ## simulation time span [ms]
 dt = 0.05 ## time step for solving and saving [ms]
 
 ## Create a stochastic differential equation problem and use the RKMil method to solve it
