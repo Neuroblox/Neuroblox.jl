@@ -84,7 +84,7 @@ struct BalloonModel <: ObserverBlox
             D(lnq) ~ (exp(lnu)/exp(lnq)*((1 - (1 - H[5])^(exp(lnu)^-1))/H[5]) - exp(lnν)^(H[4]^-1 - 1))/(H[3]*exp(lnτ)),
             bold   ~ B[2]*(k1 - k1*exp(lnq) + exp(lnϵ)*B[3]*B[5]*B[1] - exp(lnϵ)*B[3]*B[5]*B[1]*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
         ]
-        sys = System(eqs, t, name=name)
+        sys = System(eqs, t, sts, p; name=name)
         new(p, Num(0), sts[5], sys, namespace)
     end
 end
