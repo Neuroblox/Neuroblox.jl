@@ -134,7 +134,7 @@ function Makie.plot!(p::StackPlot)
     sol = p.sol[]
     blox = p.blox[]
 
-    cl = get_neuron_color(blox)
+    cl = get_neuron_color.(blox)
 
     ax = current_axis()
     ax.xlabel = p.Axis.xlabel[]
@@ -154,17 +154,17 @@ function Makie.plot!(p::StackPlot)
         offset = 0.0
         for (i, V_neuron) in enumerate(eachcol(V))
             if i == 1
-                lines!(p, sol.t, V_neuron, color=cl)
+                lines!(p, sol.t, V_neuron, color=cl[i])
             else
                 offset += abs(mn[i]) * 1.2
-                lines!(p, sol.t, offset .+ V_neuron,color=cl)
+                lines!(p, sol.t, offset .+ V_neuron,color=cl[i])
             end
             offset += abs(mx[i]) * 1.2
         end
     else
         offset = maximum(mx .- mn) * 1.2
         for (i, V_neuron) in enumerate(eachcol(V))
-            lines!(p, sol.t, (i - 1) * offset .+ V_neuron, color=cl)
+            lines!(p, sol.t, (i - 1) * offset .+ V_neuron, color=cl[i])
         end
     end
     
