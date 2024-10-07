@@ -266,7 +266,7 @@ sol = solve(prob, Vern7(), saveat=0.1);
 # Let us now plot neuron potentials, meanfield activity and powerspectrums for the VAC and AC blox.
 # First we show the stackplot of voltage potentials from the first 10 neurons of VAC
 VAC_neuron_set = get_neurons(VAC) ## extract neurons from VAC
-n_neurons = 10 ##number of neurons displayed. You can try incresing it.
+n_neurons = 40 ##number of neurons displayed. You can try incresing it.
 stackplot(VAC_neuron_set[1:n_neurons],sol)
 
 # then we plot the meanfield potential out of all neurons within VAC
@@ -282,7 +282,7 @@ powerspectrumplot(VAC,sol)
 
 # Moving on to the AC blox, we first plot the voltage potential of its neurons
 AC_neuron_set = get_neurons(AC) ## extract neurons from VAC
-n_neurons = 10
+n_neurons = 40
 stackplot(AC_neuron_set[1:n_neurons],sol)
 
 # followed by the meanfield activity 
