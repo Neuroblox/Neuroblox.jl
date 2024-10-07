@@ -994,3 +994,36 @@ function (bc::BloxConnector)(
     
     accumulate_equation!(bc, eq)
 end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::Union{CompositeBlox, NeuralMassBlox, AbstractNeuronBlox};
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    neurons = get_neurons(bloxin)
+    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+    
+    for neuron in neurons
+        sys_neuron = get_namespaced_sys(neuron)
+        eq = sys_neuron.I_in ~ w * sys_dbs.u
+        accumulate_equation!(bc, eq)
+    end
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::Striatum_FSI_Adam;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    neurons = get_neurons(bloxin)
+
+    for neuron in neurons
+        sys_neuron = get_namespaced_sys(neuron)        
+        eq = sys_neuron.DBS_in ~ - sys_neuron.V/sys_neuron.b + sys_dbs.u
+        accumulate_equation!(bc, eq)
+    end
+end

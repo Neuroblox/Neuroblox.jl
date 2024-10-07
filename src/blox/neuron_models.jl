@@ -288,6 +288,8 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
             [input=true]
 			I_asc(t)
 			[input=true]
+			DBS_in(t)
+			[input=true]
 			G(t)=0.0 
 			[output = true] 
 			Gₛ(t)=0.0 
@@ -326,8 +328,8 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 		τₘD(v) = 2
 		hD_inf(v) = 1/(1+exp((v+70)/6))
 		τₕD(v) = 150
-		G_asymp(v,a,b) = a*(1+tanh(v/b))
-		
+		G_asymp(v,a,b) = a*(1+tanh(v/b + DBS_in))
+
 		eqs = [ 
 			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_gap+I_asc+I_in+σ*χ), 
 			   D(n)~(n_inf(V)-n)/τₙ(V), 
