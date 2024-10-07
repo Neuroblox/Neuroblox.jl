@@ -499,7 +499,7 @@ function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; 
     end
 end
 
-function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}},
                           sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
     
     neurons = get_neurons(cb)
