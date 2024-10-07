@@ -12,7 +12,9 @@ jobs:
     strategy:
       matrix:
         group:
-          - All
+          - Basics
+          - Advanced
+          - GraphDynamics
         version:
           - '1'
     steps:
