@@ -32,7 +32,7 @@ dt = 0.05 ## time step for solving and saving [ms]
 
 ## Create a stochastic differential equation problem and use the RKMil method to solve it
 prob = SDEProblem(sys, [], tspan, [])
-sol = solve(prob, RKMil(); dt=dt, saveat=dt, abstol = 1e-2, reltol = 1e-2)
+sol = solve(prob, RKMil(); dt=dt, saveat=dt, abstol = 1e-2, reltol = 1e-2);
 
 # Plot voltage of a single neuron
 plot(sol, idxs=1, axis = (xlabel = "time (ms)", ylabel = "membrane potential (mV)"))
@@ -45,7 +45,7 @@ spikes = detect_spikes(msn, sol; threshold=-55)
 t, fr = mean_firing_rate(spikes, sol)
 
 # Create a raster plot
-rasterplot(msn, sol, threshold = -55.0, axis = (; title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s"))
+rasterplot(msn, sol, threshold = -55.0, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
 
 # Compute and plot the power spectrum of the GABAa current
 fig = Figure(size = (1500, 600))
@@ -114,8 +114,8 @@ t, fr_fsi = mean_firing_rate(spikes_fsi, ens_sol[1])
 
 # Let's see their raster plots and power spectra
 fig = Figure(size = (1000, 800))
-rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, axis = (; title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s"))
-rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, axis = (; title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s"))
+rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
+rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
 
 powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
