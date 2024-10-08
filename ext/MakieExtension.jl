@@ -109,8 +109,10 @@ function Makie.plot!(p::RasterPlot)
     ax = current_axis()
     ax.xlabel = p.Axis.xlabel[]
     ax.ylabel = p.Axis.ylabel[]
-    ax.title = p.title[]
-
+    if p.title[] != ""
+        ax.title = p.title[]
+    end
+    
     spikes = detect_spikes(blox, sol; threshold=threshold)
     spike_times, neuron_indices = findnz(spikes)
     scatter!(p, sol.t[spike_times], neuron_indices; color=p.color[])
