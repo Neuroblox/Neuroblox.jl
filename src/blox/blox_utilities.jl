@@ -491,8 +491,7 @@ function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
     return t, rₘ
 end
 
-function state_timeseries(blox, sol::SciMLBase.AbstractSolution,
-                          state::String; ts=nothing)
+function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
                           
     namespaced_name = namespaced_nameof(blox)
     state_name = Symbol(namespaced_name, "₊$(state)")
@@ -504,15 +503,23 @@ function state_timeseries(blox, sol::SciMLBase.AbstractSolution,
     end
 end
 
-function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
+function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}},
+                          sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
+    
+    neurons = get_neurons(cb)
+    state_names = map(neuron -> Symbol(namespaced_nameof(neuron), "₊", state), neurons)
 
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        state_timeseries(neuron, sol, state; ts)
+    if isnothing(ts)
+        s = stack(sol[state_names], dims=1)
+    else
+        s = transpose(Array(sol(ts; idxs=state_names)))
     end
+
+    return s
 end
 
-function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution,
-                              state::String; ts=nothing)
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                              sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
                               
     s = state_timeseries(cb, sol, state; ts)
 
@@ -522,22 +529,22 @@ end
 voltage_timeseries(blox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
     state_timeseries(blox, sol, "V"; ts)
 
-function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
-
-    return mapreduce(hcat, get_neurons(cb)) do neuron
-        voltage_timeseries(neuron, sol; ts)
-    end
+function voltage_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}},
+                            sol::SciMLBase.AbstractSolution; ts=nothing)
+    return state_timeseries(cb, sol, "V"; ts)
 end
 
-function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution; ts=nothing)
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                              sol::SciMLBase.AbstractSolution; ts=nothing)
     V = voltage_timeseries(cb, sol; ts)
     replace_refractory!(V, cb, sol)
 
     return vec(mapslices(nanmean, V; dims = 2))
 end
 
-function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution, state::String;
-                       sampling_rate=nothing, method=periodogram, window=nothing)
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                       sol::SciMLBase.AbstractSolution, state::String; sampling_rate=nothing,
+                       method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
     s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
@@ -545,8 +552,9 @@ function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronB
     return method(s, fs=sampling_freq, window=window)
 end
 
-function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
-                       sampling_rate=nothing, method=periodogram, window=nothing)
+function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                       sol::SciMLBase.AbstractSolution; sampling_rate=nothing,
+                       method=periodogram, window=nothing)
 
     t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
     V = voltage_timeseries(cb, sol; ts = t_sampled)

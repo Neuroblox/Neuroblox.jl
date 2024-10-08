@@ -9,7 +9,6 @@
 
 using Neuroblox
 using StochasticDiffEq ## For building and solving differential equations problems
-using MetaGraphs ## use its MetaGraph type to build the circuit
 using CairoMakie ## For plotting
 using Random ## For setting a random seed
 
@@ -28,12 +27,12 @@ unknowns(sys)
 
 # Create and solve the SDE problem
 ## Define simulation parameters
-tspan = (0.0, 5500.0) ## simulation time span [ms]
+tspan = (0.0, 2000.0) ## simulation time span [ms]
 dt = 0.05 ## time step for solving and saving [ms]
 
 ## Create a stochastic differential equation problem and use the RKMil method to solve it
 prob = SDEProblem(sys, [], tspan, [])
-sol = solve(prob, RKMil(); dt=dt, saveat=dt)
+sol = solve(prob, RKMil(); dt=dt, saveat=dt, abstol = 1e-2, reltol = 1e-2)
 
 # Plot voltage of a single neuron
 plot(sol, idxs=1, axis = (xlabel = "time (ms)", ylabel = "membrane potential (mV)"))
@@ -71,7 +70,7 @@ fig
 
 # We can also run multiple simulations in parallel and compute the average power spectrum
 ens_prob = EnsembleProblem(prob)
-ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=5)
+ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=3, abstol = 1e-2, reltol = 1e-2);
 
 powerspectrumplot(msn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -104,7 +103,7 @@ add_edge!(g, 2, 1, Dict(:weight => weight_FSI_MSN, :density => density_FSI_MSN))
 @named sys = system_from_graph(g)
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
-ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=5)
+ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=3, abstol = 1e-2, reltol = 1e-2);
 
 # Detect spikes and compute firing rates
 spikes_msn = detect_spikes(msn, ens_sol[1]; threshold=-35)
@@ -170,7 +169,7 @@ add_edge!(g, 4, 2, Dict(:weight => weight_STN_FSI, :density => density_STN_FSI))
 @named sys = system_from_graph(g)
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
-ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=5)
+ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=3, abstol = 1e-2, reltol = 1e-2);
 
 # Compute and plot power spectra for all components
 fig = Figure(size = (1500, 600))
@@ -249,7 +248,7 @@ add_edge!(g, 4, 2, Dict(:weight => weight_STN_FSI, :density => density_STN_FSI))
 
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
-ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=5)
+ens_sol = solve(ens_prob, RKMil(); dt=dt, saveat=dt, trajectories=3, abstol = 1e-2, reltol = 1e-2);
 
 # Compute and compare power spectra for all neural populations in Parkinsonian condition against their counterparts in baseline conditions.
 powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
