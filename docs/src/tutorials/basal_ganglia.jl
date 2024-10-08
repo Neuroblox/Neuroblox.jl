@@ -45,7 +45,7 @@ spikes = detect_spikes(msn, sol; threshold=-55)
 t, fr = mean_firing_rate(spikes, sol)
 
 # Create a raster plot
-rasterplot(msn, sol, threshold = -55.0, axis = (; title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s"))
+rasterplot(msn, sol, threshold = -55.0, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
 
 # Compute and plot the power spectrum of the GABAa current
 fig = Figure(size = (1500, 600))
@@ -56,7 +56,7 @@ powerspectrumplot(fig[1,1], msn, sol; state = "G",
                   alpha_label_position = (8.5, 5),
                   beta_label_position = (22, 5),
                   gamma_label_position = (60, 5),
-                  axis = (; title = "FFT with no window"))
+                  title = "FFT with no window")
 
 powerspectrumplot(fig[1,2], msn, sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -65,7 +65,7 @@ powerspectrumplot(fig[1,2], msn, sol; state = "G",
                   alpha_label_position = (8.5, 5),
                   beta_label_position = (22, 5),
                   gamma_label_position = (60, 5),
-                  axis = (; title = "Welch's method + Hanning window"))
+                  title = "Welch's method + Hanning window")
 fig
 
 # We can also run multiple simulations in parallel and compute the average power spectrum
@@ -79,7 +79,7 @@ powerspectrumplot(msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 4),
                   beta_label_position = (22, 4),
                   gamma_label_position = (60, 4),
-                  axis = (; title = "Welch's method + Hanning window + Ensemble"))
+                  title = "Welch's method + Hanning window + Ensemble")
 
 # ## Core striatal network: MSN + FSI
 # Now we'll add Fast-Spiking Interneurons (FSIs) to our model
@@ -111,8 +111,8 @@ t, fr_fsi = mean_firing_rate(spikes_fsi, ens_sol[1])
 
 # Let's see their raster plots and power spectra
 fig = Figure(size = (1000, 800))
-rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, axis = (; title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s"))
-rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, axis = (; title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s"))
+rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
+rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
 
 powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -174,7 +174,7 @@ powerspectrumplot(fig[1,1], msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "MSN (Baseline)"))
+                  title = "MSN (Baseline)")
 
 powerspectrumplot(fig[1,2], fsi, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -182,7 +182,7 @@ powerspectrumplot(fig[1,2], fsi, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "FSI (Baseline)"))
+                  title = "FSI (Baseline)")
 
 powerspectrumplot(fig[1,3], gpe, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -190,7 +190,7 @@ powerspectrumplot(fig[1,3], gpe, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "GPe (Baseline)"))
+                  title = "GPe (Baseline)")
 
 powerspectrumplot(fig[1,4], stn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -198,7 +198,7 @@ powerspectrumplot(fig[1,4], stn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "STN (Baseline)"))
+                  title = "STN (Baseline)")
 
 fig
 
@@ -248,7 +248,7 @@ powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "MSN (PD)"))
+                  title = "MSN (PD)")
 
 powerspectrumplot(fig[2,2], fsi, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -256,7 +256,7 @@ powerspectrumplot(fig[2,2], fsi, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "FSI (PD)"))
+                  title = "FSI (PD)")
 
 powerspectrumplot(fig[2,3], gpe, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -265,7 +265,7 @@ powerspectrumplot(fig[2,3], gpe, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "GPe (PD)"))
+                  title = "GPe (PD)")
 
 powerspectrumplot(fig[2,4], stn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -273,7 +273,7 @@ powerspectrumplot(fig[2,4], stn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "STN (PD)"))
+                  title = "STN (PD)")
 
 fig
 

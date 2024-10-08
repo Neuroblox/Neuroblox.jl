@@ -235,6 +235,7 @@ end
             xticks = [8,12,20,30, 40, 50,60,70,80,90],
             yscale = log10,
         ),
+        title = "",
         xlims = (8, 100),
         ylims = (1e-3, 10),
         alpha_start = 8,
@@ -265,6 +266,9 @@ function Makie.plot!(p::PowerSpectrumPlot)
     ax.ylabel = p.Axis.ylabel[]
     ax.xticks = p.Axis.xticks[]
     ax.yscale = p.Axis.yscale[]
+    if p.title[] != ""
+        ax.title = p.title[]
+    end
 
     if p.show_bands[]
         y1 = p.ylims[][1]
