@@ -7,6 +7,7 @@ pages = ["index.md",
         "tutorials/parkinsons.md",
         "tutorials/neural_assembly.md",
         "tutorials/ping_network.md",
+        "tutorials/basal_ganglia.md",
         "tutorials/spectralDCM.md"
     ],
     "API" => "api.md",
