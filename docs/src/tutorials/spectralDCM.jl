@@ -9,7 +9,7 @@
 # We will model fMRI data by a balloon model and BOLD signal on top.
 # After simulation of this simple model we will use spectral Dynamic Causal Modeling to infer some of the model parameters from the simulation time series.
 # 
-# ![Workflow illustration](./docs/src/assets/spectral_DCM_illustration.png)
+# ![Workflow illustration](../assets/spectral_DCM_illustration.png)
 # 
 # A brief outline of the procedure we will pursue:
 # - define the graph, add blocks -> section A, B and C in the figure
