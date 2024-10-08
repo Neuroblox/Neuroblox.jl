@@ -1,17 +1,34 @@
 # # Spectral Dynamic Causal Modeling Tutorial
 # # Introduction
-# Here we roughly resemble the simulation in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script DEM_demo_induced_fMRI.m in [Neuroblox](https://www.neuroblox.org/).
-# This work was also presented in Hofmann et al.[1]
-
+# <table style="width:100%">
+# <tr>
+# <td style="width:60%">
+#
+# In this tutorial we will introduce how to perform a spectral Dynamic Causal Modeling analysis on simulated data [1,2].
+# To do so we roughly resemble the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
+# This work was also presented in Hofmann et al.[2]
+#
 # In this tutorial we will define a circuit of three linear neuronal mass models, all driven by an Ornstein-Uhlenbeck process.
 # We will model fMRI data by a balloon model and BOLD signal on top.
-# After simulation of this simple model we will use spectral Dynamic Causal Modeling to infer some of the model parameters from the simulation time series. 
-# - define the graph, add blocks
-# - simulate the model
-# - compute the cross spectral density
+# After simulation of this simple model we will use spectral Dynamic Causal Modeling to infer some of the model parameters from the simulation time series.
+# 
+# A brief outline of the procedure we will pursue:
+# - define the graph, add blocks -> section A, B and C in the figure
+# - simulate the model -> instead we could also use actual data, section D in figure
+# - compute the cross spectral density 
 # - setup the DCM
-# - estimate
+# - estimate parameters
 # - plot the results
+#
+# </td>
+# <td>
+#
+# <img src="./docs/src/assets/spectral_DCM_illustration.png" width="350" height="470" />
+#
+#
+# </td>
+# </tr>
+# </table>
 
 using Neuroblox
 using LinearAlgebra
@@ -192,4 +209,5 @@ freeenergy(state)
 ecbarplot(state, setup, A_true)
 
 # ## References
-# [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
+# [1] [Novelli, Leonardo, Karl Friston, and Adeel Razi. “Spectral Dynamic Causal Modeling: A Didactic Introduction and Its Relationship with Functional Connectivity.” Network Neuroscience 8, no. 1 (April 1, 2024): 178–202.](https://doi.org/10.1162/netn_a_00348) \
+# [2] [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
