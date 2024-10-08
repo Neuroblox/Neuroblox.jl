@@ -57,6 +57,10 @@ function get_neurons(vn::AbstractVector{<:AbstractBlox})
     mapreduce(x -> get_neurons(x), vcat, vn)
 end
 
+get_neuron_color(n::AbstractExciNeuronBlox) = "blue"
+get_neuron_color(n::AbstractInhNeuronBlox) = "red"
+get_neuron_color(n::AbstractNeuronBlox) = "black"
+
 
 function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)

@@ -42,9 +42,10 @@ sol = solve(prob, Vern7(), saveat=0.1);
 # acessing the voltage timeseries from the neuron block and plotting the voltage
 v = voltage_timeseries(nn1, sol)
 
-fig = Figure()
+fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
-lines!(ax, sol.t, v)
+cl = get_neuron_color(nn1) #specify color based on neuron type (excitatory/inhibitory)
+lines!(ax, sol.t, v, color=cl)
 fig ## to display the figure
 
 # Suggestion : Try different values of input current 'I_bg' and run the entire code block to see the output activity
@@ -127,7 +128,8 @@ sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
-voltage_stack([wta1,wta2],sol)
+neuron_set = get_neurons([wta1,wta2]) ## extract neurons from a composite blocks 
+stackplot(neuron_set,sol)
 
 # ## Creating a single cortical superficial layer block (SCORT in Pathak et. al. 2024) by connecting multiple WTA circuits
 
@@ -176,7 +178,8 @@ sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
-stackplot(vcat(wtas, n_ff_inh),sol)
+neuron_set = get_neurons(vcat(wtas, n_ff_inh)) ## extract neurons from a composite blocks
+stackplot(neuron_set,sol)
 
 # Sugestion : try different connection densities and weights and see how it affects the population activity. 
 
@@ -208,7 +211,7 @@ stackplot(neuron_set[1:n_neurons],sol)
 
 # plot the meanfield of all cortical block neurons (mean membrane voltage)
 mnv = meanfield_timeseries(CB, sol)
-fig = Figure()
+fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Meanfield voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
@@ -233,7 +236,7 @@ global_namespace=:g
 
 fn = joinpath(@__DIR__, "../data/image_example.csv") ## image data file
 image_set = CSV.read(fn, DataFrame) ## reading data into DataFrame format
-image_sample = 11 ## set which image to input (from 1 to 1000)
+image_sample = 2 ## set which image to input (from 1 to 1000)
 
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
@@ -263,7 +266,7 @@ sol = solve(prob, Vern7(), saveat=0.1);
 # Let us now plot neuron potentials, meanfield activity and powerspectrums for the VAC and AC blox.
 # First we show the stackplot of voltage potentials from the first 10 neurons of VAC
 VAC_neuron_set = get_neurons(VAC) ## extract neurons from VAC
-n_neurons = 10
+n_neurons = 40 ##number of neurons displayed. You can try incresing it.
 stackplot(VAC_neuron_set[1:n_neurons],sol)
 
 # then we plot the meanfield potential out of all neurons within VAC
@@ -279,7 +282,7 @@ powerspectrumplot(VAC,sol)
 
 # Moving on to the AC blox, we first plot the voltage potential of its neurons
 AC_neuron_set = get_neurons(AC) ## extract neurons from VAC
-n_neurons = 10
+n_neurons = 40
 stackplot(AC_neuron_set[1:n_neurons],sol)
 
 # followed by the meanfield activity 
