@@ -23,7 +23,7 @@
 # The network is set up as a directed graph with excitatory neurons driving inhibitory neurons and vice versa, with self-inhibition but not self-excitation present.
 
 # ## Import the necessary packages
-# Reasons for each non-Neuroblox package are given in the comments after each
+# Reasons for each non-Neuroblox package are given in the comments after each.
 using Neuroblox 
 using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Distributions ## for statistical distributions 
@@ -116,7 +116,6 @@ fig
 # And there you have it! A complete PING demonstration that reproduces the dynamics of a published paper in a matter of 30 seconds, give or take. Have fun making your own!
 
 # # References
-# 1. Börgers C, Epstein S, Kopell NJ. Gamma oscillations mediate stimulus competition and attentional selection in a cortical network model. 
-# Proc Natl Acad Sci U S A. 2008 Nov 18;105(46):18023-8. DOI: [10.1073/pnas.0809511105](https://www.doi.org/10.1073/pnas.0809511105).
+# 1. Börgers C, Epstein S, Kopell NJ. Gamma oscillations mediate stimulus competition and attentional selection in a cortical network model. Proc Natl Acad Sci U S A. 2008 Nov 18;105(46):18023-8. DOI: [10.1073/pnas.0809511105](https://www.doi.org/10.1073/pnas.0809511105).
 # 2. Traub, RD, Miles, R. Neuronal Networks of the Hippocampus. Cambridge University Press, Cambridge, UK, 1991.
 # 3. Wang, X-J, Buzsáki, G. Gamma oscillation by synaptic inhibition in a hippocampal interneuronal network model. J. Neurosci., 16:6402–6413, 1996.
