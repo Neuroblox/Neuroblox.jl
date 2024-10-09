@@ -1,5 +1,6 @@
 using Neuroblox
-using DifferentialEquations
+using OrdinaryDiffEq
+using StochasticDiffEq
 using Statistics
 using SparseArrays
 
