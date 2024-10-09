@@ -20,14 +20,15 @@ struct DBS <: StimulusBlox
             offset=offset,
             start_time=start_time
         )
-        frequency, amplitude, pulse_width, offset, start_time = p
-        
-        # Calculate duty cycle from pulse width and frequency
-        duty_cycle = pulse_width * frequency
 
+        frequency, amplitude, pulse_width, offset, start_time = p
         sts = @variables u(t)=offset [output = true]
-        # eqs = [u ~ Blocks.smooth_square(t, smooth, frequency, amplitude, offset, start_time)]
-        eqs = [u ~ smooth_square(t, smooth, frequency, amplitude, offset, start_time, duty_cycle)]
+
+        if smooth == 0
+            eqs = [u ~ square(t, frequency, amplitude, offset, start_time, pulse_width)]
+        else
+            eqs = [u ~ square(t, frequency, amplitude, offset, start_time, pulse_width, smooth)]
+        end
 
         sys = System(eqs, t, sts, p; name=name)
         
@@ -35,22 +36,33 @@ struct DBS <: StimulusBlox
     end
 end
 
+function sawtooth(t, f, offset)
+    f * (t - offset) .- floor.(f * (t - offset))
+end
 
-# based on the ModelingToolkitStandardLibrary source block,
-# modified for allowing to set the pulse width
+# smoothed square pulses
+function square(t, f, amplitude, offset, start_time, pulse_width, δ)
+    invδ = 1 / δ
+    threshold = 1 - 2 * pulse_width
+    amp_half = amplitude * 0.5
+    start_time = start_time + pulse_width*0.5
 
-function smooth_square(x, δ, f, amplitude, offset, start_time, pulse_width)
-    θ = (x - start_time) * f        # normalized time
-    φ = θ - floor(θ)                # fractional part of θ, in [0,1)
-
-    rise = atan((φ) / δ) / π + 0.5
-    fall = atan((φ - pulse_width) / δ) / π + 0.5
-    y = offset + amplitude * (rise - fall)
-    y = y*smooth_step(x, δ, one(x), zero(x), start_time)
+    saw = sawtooth(t, f, start_time)
+    triangle_wave = 4 * abs(saw - 0.5) - 1
+    y = amp_half * (1 + tanh((triangle_wave - threshold) * invδ)) + offset
 
     return y
 end
 
-function smooth_step(x, δ, height, offset, start_time)
-    offset .+ height .* (atan((x .- start_time) ./ δ) ./ π .+ 0.5)
+# non-smoothed square pulses
+function square(t, f, amplitude, offset, start_time, pulse_width)
+
+    saw1 = sawtooth(t, f, start_time + pulse_width)
+    saw2 = sawtooth(t, f, start_time)
+    saw3 = sawtooth(0.0, f, start_time + pulse_width)
+    saw4 = sawtooth(0.0, f, start_time)
+    
+    y = amplitude * (saw1 - saw2 - saw3 + saw4 + 1.0) + offset
+    
+    return y
 end
