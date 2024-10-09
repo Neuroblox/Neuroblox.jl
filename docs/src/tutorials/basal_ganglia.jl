@@ -32,7 +32,7 @@ dt = 0.05 ## time step for solving and saving [ms]
 
 ## Create a stochastic differential equation problem and use the RKMil method to solve it
 prob = SDEProblem(sys, [], tspan, [])
-sol = solve(prob, RKMil(); dt=dt, saveat=dt, abstol = 1e-2, reltol = 1e-2)
+sol = solve(prob, RKMil(); dt=dt, saveat=dt, abstol = 1e-2, reltol = 1e-2);
 
 # Plot voltage of a single neuron
 plot(sol, idxs=1, axis = (xlabel = "time (ms)", ylabel = "membrane potential (mV)"))
@@ -45,7 +45,7 @@ spikes = detect_spikes(msn, sol; threshold=-55)
 t, fr = mean_firing_rate(spikes, sol)
 
 # Create a raster plot
-rasterplot(msn, sol, threshold = -55.0, axis = (; title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s"))
+rasterplot(msn, sol, threshold = -55.0, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
 
 # Compute and plot the power spectrum of the GABAa current
 fig = Figure(size = (1500, 600))
@@ -56,7 +56,7 @@ powerspectrumplot(fig[1,1], msn, sol; state = "G",
                   alpha_label_position = (8.5, 5),
                   beta_label_position = (22, 5),
                   gamma_label_position = (60, 5),
-                  axis = (; title = "FFT with no window"))
+                  title = "FFT with no window")
 
 powerspectrumplot(fig[1,2], msn, sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -65,7 +65,7 @@ powerspectrumplot(fig[1,2], msn, sol; state = "G",
                   alpha_label_position = (8.5, 5),
                   beta_label_position = (22, 5),
                   gamma_label_position = (60, 5),
-                  axis = (; title = "Welch's method + Hanning window"))
+                  title = "Welch's method + Hanning window")
 fig
 
 # We can also run multiple simulations in parallel and compute the average power spectrum
@@ -79,7 +79,7 @@ powerspectrumplot(msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 4),
                   beta_label_position = (22, 4),
                   gamma_label_position = (60, 4),
-                  axis = (; title = "Welch's method + Hanning window + Ensemble"))
+                  title = "Welch's method + Hanning window + Ensemble")
 
 # ## Core striatal network: MSN + FSI
 # Now we'll add Fast-Spiking Interneurons (FSIs) to our model
@@ -90,15 +90,12 @@ N_FSI = 50 ## number of Fast Spiking Interneurons
 @named msn = Striatum_MSN_Adam(namespace=global_ns, N_inhib = N_MSN)
 @named fsi = Striatum_FSI_Adam(namespace=global_ns, N_inhib = N_FSI)
 
-assembly = [msn, fsi]
-
 ḡ_FSI_MSN = 0.6 ## maximal conductance for FSI to MSN synapses [mS/cm^-2]
 density_FSI_MSN = 0.15 ## fraction of FSIs connecting to the MSN population
 weight_FSI_MSN = ḡ_FSI_MSN / (N_FSI * density_FSI_MSN) ## normalized synaptic weight
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), assembly)
-add_edge!(g, 2, 1, Dict(:weight => weight_FSI_MSN, :density => density_FSI_MSN))
+add_edge!(g, fsi => msn; weight = weight_FSI_MSN, density = density_FSI_MSN)
 
 @named sys = system_from_graph(g)
 prob = SDEProblem(sys, [], tspan, [])
@@ -114,8 +111,8 @@ t, fr_fsi = mean_firing_rate(spikes_fsi, ens_sol[1])
 
 # Let's see their raster plots and power spectra
 fig = Figure(size = (1000, 800))
-rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, axis = (; title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s"))
-rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, axis = (; title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s"))
+rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
+rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
 
 powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -145,8 +142,6 @@ N_STN = 40 ## number of STN neurons
 @named gpe = GPe_Adam(namespace=global_ns, N_inhib = N_GPe)
 @named stn = STN_Adam(namespace=global_ns, N_exci = N_STN)
 
-assembly = [msn, fsi, gpe, stn]
-
 ḡ_MSN_GPe = 2.5 ## maximal conductance for MSN to GPe synapses [mS/cm^-2]
 ḡ_GPe_STN = 0.3 ## maximal conductance for GPe to STN synapses [mS/cm^-2]
 ḡ_STN_FSI = 0.165 ## maximal conductance for STN to FSI synapses [mS/cm^-2]
@@ -160,11 +155,10 @@ weight_GPe_STN = ḡ_GPe_STN / (N_GPe * density_GPe_STN)
 weight_STN_FSI = ḡ_STN_FSI / (N_STN * density_STN_FSI)
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), assembly)
-add_edge!(g, 1, 3, Dict(:weight => weight_MSN_GPe, :density => density_MSN_GPe))
-add_edge!(g, 2, 1, Dict(:weight => weight_FSI_MSN, :density => density_FSI_MSN))
-add_edge!(g, 3, 4, Dict(:weight => weight_GPe_STN, :density => density_GPe_STN))
-add_edge!(g, 4, 2, Dict(:weight => weight_STN_FSI, :density => density_STN_FSI))
+add_edge!(g, fsi => msn, weight = weight_FSI_MSN, density = density_FSI_MSN)
+add_edge!(g, msn => gpe, weight = weight_MSN_GPe, density = density_MSN_GPe)
+add_edge!(g, gpe => stn, weight = weight_GPe_STN, density = density_GPe_STN)
+add_edge!(g, stn => fsi, weight = weight_STN_FSI, density = density_STN_FSI)
 
 @named sys = system_from_graph(g)
 prob = SDEProblem(sys, [], tspan, [])
@@ -180,7 +174,7 @@ powerspectrumplot(fig[1,1], msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "MSN (Baseline)"))
+                  title = "MSN (Baseline)")
 
 powerspectrumplot(fig[1,2], fsi, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -188,7 +182,7 @@ powerspectrumplot(fig[1,2], fsi, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "FSI (Baseline)"))
+                  title = "FSI (Baseline)")
 
 powerspectrumplot(fig[1,3], gpe, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -196,7 +190,7 @@ powerspectrumplot(fig[1,3], gpe, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "GPe (Baseline)"))
+                  title = "GPe (Baseline)")
 
 powerspectrumplot(fig[1,4], stn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -204,7 +198,7 @@ powerspectrumplot(fig[1,4], stn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "STN (Baseline)"))
+                  title = "STN (Baseline)")
 
 fig
 
@@ -232,17 +226,14 @@ fig
 @named msn = Striatum_MSN_Adam(namespace=global_ns, N_inhib = N_MSN, I_bg = 1.2519*ones(N_MSN), G_M = 1.2)
 @named fsi = Striatum_FSI_Adam(namespace=global_ns, N_inhib = N_FSI, I_bg = 4.511*ones(N_FSI), weight = 0.2, g_weight = 0.075)
 
-assembly = [msn, fsi, gpe, stn]
-
 ḡ_FSI_MSN = 0.48 ## decreased maximal conductance of FSI-MSN projection [mS/cm^-2]
 weight_FSI_MSN = ḡ_FSI_MSN / (N_FSI * density_FSI_MSN) ## normalized synaptic weight
 
 g = MetaDiGraph()
-add_blox!.(Ref(g), assembly)
-add_edge!(g, 2, 1, Dict(:weight => weight_FSI_MSN, :density => density_FSI_MSN))
-add_edge!(g, 1, 3, Dict(:weight => weight_MSN_GPe, :density => density_MSN_GPe))
-add_edge!(g, 3, 4, Dict(:weight => weight_GPe_STN, :density => density_GPe_STN))
-add_edge!(g, 4, 2, Dict(:weight => weight_STN_FSI, :density => density_STN_FSI))
+add_edge!(g, fsi => msn, weight = weight_FSI_MSN, density = density_FSI_MSN)
+add_edge!(g, msn => gpe, weight = weight_MSN_GPe, density = density_MSN_GPe)
+add_edge!(g, gpe => stn, weight = weight_GPe_STN, density = density_GPe_STN)
+add_edge!(g, stn => fsi, weight = weight_STN_FSI, density = density_STN_FSI)
 
 @named sys = system_from_graph(g)
 
@@ -257,7 +248,7 @@ powerspectrumplot(fig[2,1], msn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "MSN (PD)"))
+                  title = "MSN (PD)")
 
 powerspectrumplot(fig[2,2], fsi, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -265,7 +256,7 @@ powerspectrumplot(fig[2,2], fsi, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "FSI (PD)"))
+                  title = "FSI (PD)")
 
 powerspectrumplot(fig[2,3], gpe, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -274,7 +265,7 @@ powerspectrumplot(fig[2,3], gpe, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "GPe (PD)"))
+                  title = "GPe (PD)")
 
 powerspectrumplot(fig[2,4], stn, ens_sol; state = "G",
                   method=welch_pgram, window=hanning,
@@ -282,7 +273,7 @@ powerspectrumplot(fig[2,4], stn, ens_sol; state = "G",
                   alpha_label_position = (8.5, 2),
                   beta_label_position = (22, 2),
                   gamma_label_position = (60, 2),
-                  axis = (; title = "STN (PD)"))
+                  title = "STN (PD)")
 
 fig
 
