@@ -1,7 +1,6 @@
 using SafeTestsets
 
 const GROUP = get(ENV, "GROUP", "All")
-@show GROUP
 
 if GROUP == "All" || GROUP == "Basics"
     @time @safetestset "Utilities" begin include("utils.jl") end
