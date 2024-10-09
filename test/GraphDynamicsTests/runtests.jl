@@ -9,17 +9,18 @@ if GROUP == "All" || GROUP == "GraphDynamics1"
     basic_hh_network_tests()
     stochastic_hh_network_tests()
     ngei_test()
-    kuramato_test()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics2"
+    kuramato_test()
     wta_tests()
     dbs_circuit_components()
     dbs_circuit()
     discrete()
-end
-if GROUP == "All" || GROUP == "GraphDynamics3"
     striatum_tests()
+end
+
+if GROUP == "All" || GROUP == "GraphDynamics3"
     lif_exci_inh_tests()
     decision_making_test()
     ping_tests()
