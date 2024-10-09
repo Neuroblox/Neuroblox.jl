@@ -1,5 +1,7 @@
 using Neuroblox
-using DifferentialEquations
+using OrdinaryDiffEq
+using StochasticDiffEq
+using DelayDiffEq
 using DataFrames
 using Test
 using Distributions
@@ -26,7 +28,7 @@ end
     @named sys = system_from_graph(g)
 
     prob = SDEProblem(sys, [], (0.0, 10.0))
-    sol = solve(prob)
+    sol = solve(prob, ISSEM())
     @test sol.retcode == ReturnCode.Success
 end
 
@@ -222,7 +224,7 @@ end
 
     sim_dur = 1e2
     prob = SDEProblem(sys, [0.1, 0.2], (0.0, sim_dur), [])
-    sol = solve(prob, saveat=0.1)
+    sol = solve(prob, RKMil(), saveat=0.1)
     @test sol.retcode == ReturnCode.Success
 end
 
@@ -294,7 +296,7 @@ Test for OUBlox generator.
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
     ousimpl = structural_simplify(ou1connected)
     prob_ou = SDEProblem(ousimpl,[],(0.0,10.0))
-    sol = solve(prob_ou, alg_hints = [:stiff])
+    sol = solve(prob_ou, ISSEM())
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[1,:]) > 0.0 # there should be variance
 end
@@ -311,7 +313,7 @@ end
     sys = system_from_graph(g, name=global_ns)
     
     prob_oujr = SDEProblem(sys,[],(0.0, 20.0))
-    sol = solve(prob_oujr, alg_hints = [:stiff])
+    sol = solve(prob_oujr, ISSEM())
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[2,:]) > 0.0
     # this test does not make sense, it is true also when JR 
@@ -328,7 +330,7 @@ end
     sys = structural_simplify(ou1connected)
     
     prob_oujr = SDEProblem(sys,[],(0.0, 2.0))
-    sol = solve(prob_oujr, alg_hints = [:stiff])
+    sol = solve(prob_oujr, ISSEM())
     @test sol.retcode == SciMLBase.ReturnCode.Success
     @test std(sol[2,:]) > 0.0 # there should be variance
 end
