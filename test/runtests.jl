@@ -17,6 +17,6 @@ if GROUP == "All" || GROUP == "Advanced"
     @time @safetestset "Cort-Cort plasticity Tests" begin include("plasticity.jl") end
 end
 
-if GROUP == "All" || GROUP == "GraphDynamics"
-    @time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
-end
+
+@time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
+

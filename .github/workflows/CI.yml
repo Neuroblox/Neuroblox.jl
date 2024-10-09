@@ -14,7 +14,9 @@ jobs:
         group:
           - Basics
           - Advanced
-          - GraphDynamics
+          - GraphDynamics1
+          - GraphDynamics2
+          - GraphDynamics3
         version:
           - '1'
     steps:
