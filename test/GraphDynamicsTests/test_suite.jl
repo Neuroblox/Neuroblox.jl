@@ -98,18 +98,18 @@ end
 function basic_smoketest()
     Random.seed!(1234)
     @testset "Basic smoketest" begin
-    #let
-    # This is just some quick tests to hit some random mechanisms and make sure stuff at least runs before we move
+        #let
+        # This is just some quick tests to hit some random mechanisms and make sure stuff at least runs before we move
         # on to tests that compare results from GraphDynamics against those from MTK.
-        for (ProbType, neurons) ∈ ((ODEProblem, [IFNeuron(I_in=rand(), name=:lif1)
-                                                 IFNeuron(I_in=rand(), name=:lif2)
-                                                 QIFNeuron(I_in=rand(), name=:qif1)]),
-                                   (SDEProblem, [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3, freq=4)
-                                                 HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2, freq=6)
-                                                 HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=2, freq=3)]))
+        for (ProbType, alg, neurons) ∈ ((ODEProblem, Tsit5(), [IFNeuron(I_in=rand(), name=:lif1)
+                                                               IFNeuron(I_in=rand(), name=:lif2)
+                                                               QIFNeuron(I_in=rand(), name=:qif1)]),
+                                        (SDEProblem, RKMil(), [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3, freq=4)
+                                                               HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2, freq=6)
+                                                               HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=2, freq=3)]))
             @testset "$(join(unique(typeof.(neurons)), ", "))" begin
-            #let
-            g = MetaDiGraph()
+                #let
+                g = MetaDiGraph()
                 add_blox!.((g,), neurons)
                 for i ∈ eachindex(neurons)
                     for j ∈ eachindex(neurons)
@@ -119,12 +119,12 @@ function basic_smoketest()
                 tspan = (0.0, 1.0)
                 @named sys = system_from_graph(g; graphdynamics=true)
                 sol_grp = let prob = ProbType(sys, [], tspan)
-                    sol = solve(prob)
+                    sol = solve(prob, alg)
                     @test sol.retcode == ReturnCode.Success
                     sol.u[end]
                 end
                 sol_grp_parallel = let prob = ProbType(sys, [], tspan; scheduler=StaticScheduler())
-                    sol = solve(prob)
+                    sol = solve(prob, alg)
                     @test sol.retcode == ReturnCode.Success
                     sol.u[end]
                 end

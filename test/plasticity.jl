@@ -1,5 +1,5 @@
 using Neuroblox
-using DifferentialEquations
+using OrdinaryDiffEq
 using Test
 using Graphs
 using MetaGraphs
