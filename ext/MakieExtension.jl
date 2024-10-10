@@ -33,10 +33,9 @@ end
 
 @recipe(ECBarPlot, spDCMresults, spDCMsetup, groundtruth) do scene
     Theme(
-    Axis = (
-            xlabel = "Parameter Name",
-            ylabel = "Effective Connectivity",
-        )
+        xlabel = "Parameter Name",
+        ylabel = "Effective Connectivity",
+        title = ""
     )
 end
 
@@ -51,8 +50,9 @@ function Makie.plot!(p::ECBarPlot)
     xlabels = string.(collect(keys(modelparam))[idx])
     ax = current_axis()
     ax.xticks = (1:(nr^2-nr), xlabels)
-    ax.xlabel = p.Axis.xlabel[]
-    ax.ylabel = p.Axis.ylabel[]
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
 
     gt = copy(vec(p.groundtruth[]))   # get ground truth values
     deleteat!(gt, diagidx)
@@ -70,7 +70,11 @@ function Makie.plot!(p::ECBarPlot)
 end
 
 @recipe(MeanField, blox, sol) do scene
-    Theme()
+    Theme(
+        xlabel = "Time (ms)",
+        ylabel = "Voltage (mV)",
+        title = ""
+    )
 end
 
 argument_names(::Type{<: MeanField}) = (:blox, :sol)
@@ -78,6 +82,11 @@ argument_names(::Type{<: MeanField}) = (:blox, :sol)
 function Makie.plot!(p::MeanField)
     sol = p.sol[]
     blox = p.blox[]
+
+    ax = current_axis()
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
 
     V = meanfield_timeseries(blox, sol)
     
@@ -90,11 +99,9 @@ end
     Theme(
         color = :black,
         threshold = nothing,
-        title = "",
-        Axis = (
-            xlabel = "Time (ms)",
-            ylabel = "Neurons"
-        )
+        xlabel = "Time (ms)",
+        ylabel = "Neurons",
+        title = ""
     )
 end
 
@@ -107,12 +114,10 @@ function Makie.plot!(p::RasterPlot)
     threshold = p.threshold[]
 
     ax = current_axis()
-    ax.xlabel = p.Axis.xlabel[]
-    ax.ylabel = p.Axis.ylabel[]
-    if p.title[] != ""
-        ax.title = p.title[]
-    end
-    
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
+
     spikes = detect_spikes(blox, sol; threshold=threshold)
     spike_times, neuron_indices = findnz(spikes)
     scatter!(p, sol.t[spike_times], neuron_indices; color=p.color[])
@@ -123,11 +128,10 @@ end
 @recipe(StackPlot, blox, sol) do scene
     Theme(
         dynamic_gap = false,        
-        Axis = (
-            xlabel = "Time (ms)",
-            ylabel = "Neurons",
+        xlabel = "Time (ms)",
+        ylabel = "Neurons",
+        title = ""
         )
-    )
 end
 
 argument_names(::Type{<: StackPlot}) = (:blox, :sol)
@@ -139,8 +143,9 @@ function Makie.plot!(p::StackPlot)
     cl = get_neuron_color.(blox)
 
     ax = current_axis()
-    ax.xlabel = p.Axis.xlabel[]
-    ax.ylabel = p.Axis.ylabel[]
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
     hideydecorations!(ax; label = false)
 
     V = voltage_timeseries(blox, sol)
@@ -176,10 +181,9 @@ end
 @recipe(FRPlot, blox, sol) do scene
     Theme(
         color = :black,
-        Axis = (
-            ylabel = "Frequency (Hz)",
-            xlabel = "Time (s)"
-        ),
+        xlabel = "Time (s)",
+        ylabel = "Frequency (Hz)",
+        title = "",
         win_size = 10, # ms
         overlap = 0,
         transient = 0,
@@ -194,8 +198,9 @@ function Makie.plot!(p::FRPlot)
     blox = p.blox[]
 
     ax = current_axis()
-    ax.xlabel = p.Axis.xlabel[]
-    ax.ylabel = p.Axis.ylabel[]
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
 
     hideydecorations!(ax)
     
@@ -218,7 +223,7 @@ function voltage_stack(blox::Union{CompositeBlox, AbstractVector{<:AbstractBlox}
     N_ax = min(length(neurons), N_neurons)
 
     fig = Figure()
-    ax = Axis(fig[1,1], xlabel="Time", ylabel="Neurons")
+    ax = Axis(fig[1,1], xlabel="Time (ms)", ylabel="Neurons")
 
     hideydecorations!(ax)
 
@@ -229,12 +234,10 @@ end
 
 @recipe(PowerSpectrumPlot, blox, sol) do scene
     Theme(
-        Axis = (
-            xlabel = "Frequency (Hz)",
-            ylabel = "Power Spectrum",
-            xticks = [8,12,20,30, 40, 50,60,70,80,90],
-            yscale = log10,
-        ),
+        xlabel = "Frequency (Hz)",
+        ylabel = "Power Spectrum",
+        xticks = [8,12,20,30, 40, 50,60,70,80,90],
+        yscale = log10,
         title = "",
         xlims = (8, 100),
         ylims = (1e-3, 10),
@@ -262,13 +265,11 @@ function Makie.plot!(p::PowerSpectrumPlot)
     ax = current_axis()
     xlims!(ax, p.xlims[][1], p.xlims[][2])
     ylims!(ax, p.ylims[][1], p.ylims[][2])
-    ax.xlabel = p.Axis.xlabel[]
-    ax.ylabel = p.Axis.ylabel[]
-    ax.xticks = p.Axis.xticks[]
-    ax.yscale = p.Axis.yscale[]
-    if p.title[] != ""
-        ax.title = p.title[]
-    end
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.xticks = p.xticks[]
+    ax.yscale = p.yscale[]
+    ax.title = p.title[]
 
     if p.show_bands[]
         y1 = p.ylims[][1]
