@@ -67,7 +67,7 @@ fig
 step_sz = 1000
 time_steps = range(1, length(sol.t); step = step_sz)
 
-cs = Array{Float64}(undef, N_bloxs, N_bloxs, length(steps)-1)
+cs = Array{Float64}(undef, N_bloxs, N_bloxs, length(time_steps)-1)
 
 for (i, t) in enumerate(time_steps[1:end-1])
     V = voltage_timeseries(blox, sol; ts = t:(t + step_sz))
