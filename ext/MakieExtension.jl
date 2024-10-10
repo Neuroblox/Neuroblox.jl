@@ -17,7 +17,11 @@ import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, sta
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(FreeEnergy, spDCMresults) do scene
-    Theme()
+    Theme(
+        xlabel = "Iterations",
+        ylabel = "Free Energy",
+        title = ""
+    )
 end
 
 argument_names(::Type{<: FreeEnergy}) = (:spDCMresults)
@@ -26,6 +30,10 @@ function Makie.plot!(p::FreeEnergy)
     F = p.spDCMresults[].F
     deleteat!(F, 1)   # remove the first value since that's always -Inf
     
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.title = p.title[]
+
     lines!(p, 1:length(F), F)
     scatter!(p, 1:length(F), F)
     return p

@@ -187,7 +187,6 @@ with_stack(5_000_000) do  # 5MB of stack space
 end
 
 # # Plot Results
-# (Later place all into one figure using [Makie-style layouts](https://docs.makie.org/stable/tutorials/layout-tutorial))
 # Plot the free energy evolution over optimization iterations:
 freeenergy(state)
 
