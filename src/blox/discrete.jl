@@ -58,7 +58,7 @@ struct TAN <: AbstractDiscrete
     namespace
 
     function TAN(; name, namespace=nothing, κ=100, λ=1)
-        sts = @variables R(t)=κ 
+        sts = @variables R(t)
         ps = @parameters κ=κ λ=λ jcn=0 [input=true]
         eqs = [
                 R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
@@ -78,11 +78,11 @@ struct SNc <: AbstractModulator
     t_event
 
     function SNc(; name, namespace=nothing, κ_DA=1, N_time_blocks=5, DA_reward=10, λ_DA=0.33, t_event=90.0) 
-        sts = @variables R(t)=κ_DA R_(t)=κ_DA 
-        ps = @parameters κ=κ_DA λ_DA=λ_DA jcn=0 [input=true] jcn_=0.0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
+        sts = @variables R(t) R_(t) 
+        ps = @parameters κ=κ_DA λ=λ_DA jcn=0 [input=true] jcn_=0 #HACK: jcn_ stores the value of jcn at time t_event that can be accessed after the simulation
         eqs = [
-                R ~ min(κ_DA, κ_DA/(λ_DA*jcn + sqrt(eps()))),
-                R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
+                R ~ min(κ, κ/(λ*jcn + sqrt(eps()))),
+                R_ ~ min(κ, κ/(λ*jcn_ + sqrt(eps())))
               ]
 
         R_cb = [[t_event + sqrt(eps(t_event))] => [jcn_ ~ jcn]]     
