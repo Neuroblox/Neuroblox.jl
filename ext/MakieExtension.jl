@@ -30,6 +30,7 @@ function Makie.plot!(p::FreeEnergy)
     F = p.spDCMresults[].F
     deleteat!(F, 1)   # remove the first value since that's always -Inf
     
+    ax = current_axis()
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
     ax.title = p.title[]
