@@ -19,33 +19,41 @@ using Random
 using CairoMakie
 using Statistics
 using HypothesisTests
+using Downloads
+using SparseArrays
 
-## read connection matrix from file
-weights = CSV.read("../data/weights.csv",DataFrame)
+## download and read connection matrix from a file
+weights = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/weights.csv"), DataFrame)
 region_names = names(weights)
 
-wm = Array(weights) ## transform the weights into a matrix
-N_bloxs = size(wm)[1] ## number of blox components
+wm = Matrix(weights) ## transform the weights into a matrix
+N_bloxs = size(wm)[1]; ## number of blox components
+
+# You can visualize the sparsity structure by converting the weights matrix into a sparse matrix 
+wm_sparse = SparseMatrixCSC(wm)
+
+# After the connectivity structure, it's time to define the neural mass components of our model and then use the weight matrix to connect them together into our final system.
 
 ## create an array of neural mass models
-blocks = [Generic2dOscillator(name=Symbol(region_names[i]),bn=sqrt(5e-4)) for i in 1:N_bloxs]
+blox = [Generic2dOscillator(name=Symbol(region_names[i]),bn=sqrt(5e-4)) for i in 1:N_bloxs]
 
 ## add neural mass models to Graph and connect using the connection matrix
 g = MetaDiGraph()
-add_blox!.(Ref(g), blocks)
+add_blox!.(Ref(g), blox)
 create_adjacency_edges!(g, wm)
 
 @named sys = system_from_graph(g);
 
 # To solve the system, we first create an Stochastic Differential Equation Problem and then solve it using a EulerHeun solver. The solution is saved every 0.5 ms. The unit of time in Neuroblox is 1 ms.
 
-prob = SDEProblem(sys,rand(-2:0.1:4,76*2), (0.0, 6e5), [])
-sol = solve(prob, EulerHeun(), dt=0.5, saveat=5)
+tspan = (0.0, 6e5)
+prob = SDEProblem(sys,rand(-2:0.1:4,76*2), tspan, [])
+sol = solve(prob, EulerHeun(), dt=0.5, saveat=5);
 
-# Let us plot the voltage potential of the first couple of components
+# Let us now plot the voltage potential of the first couple of components
 
-v1 = voltage_timeseries(blocks[1], sol)
-v2 = voltage_timeseries(blocks[2], sol)
+v1 = voltage_timeseries(blox[1], sol)
+v2 = voltage_timeseries(blox[2], sol)
 
 fig = Figure()
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Potential")
@@ -56,17 +64,20 @@ fig
 
 # To evaluate the connectivity of our simulated resting state network, we calculate the statistically significant correlations
 
-cs = []
-for i in 1:Int((length(sol.t)-1)/1000)-1
-    solv = Array(sol[1:2:end,(i-1)*1000+1:(i*1000)])'
-    push!(cs,cor(solv))
-end
-css = stack(cs)
+step_sz = 1000
+time_steps = range(1, length(sol.t); step = step_sz)
 
-p = zeros(76,76)
-for i in 1:76
-    for j in 1:76
-        p[i,j] = pvalue(OneSampleTTest(css[i,j,:]))
+cs = Array{Float64}(undef, N_bloxs, N_bloxs, length(time_steps)-1)
+
+for (i, t) in enumerate(time_steps[1:end-1])
+    V = voltage_timeseries(blox, sol; ts = t:(t + step_sz))
+    cs[:,:,i] = cor(V)
+end
+
+p = zeros(N_bloxs, N_bloxs)
+for i in 1:N_bloxs
+    for j in 1:N_bloxs
+        p[i,j] = pvalue(OneSampleTTest(cs[i,j,:]))
     end
 end
 
@@ -75,3 +86,5 @@ heatmap(log10.(p) .* (p .< 0.05))
 
 heatmap(wm)
 # Fig.: Connection Adjacency Matrix that was used to connect the neural mass models
+
+# Notice how the correlation heatmap qualitatively matches the sparsity structure that we printed above with `wm_sparse`.
