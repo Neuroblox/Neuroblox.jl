@@ -237,8 +237,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         dnoise = zero(u0)
         g(dnoise, u0, p, 1.1)
 
-        # This is broken because ImplicitEM uses ForwardDiff which doesnt' work currently
-        @test_broken solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
+        @test solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
         
         ens_prob = EnsembleProblem(prob)
         sols = solve(ens_prob, alg, EnsembleThreads(); trajectories)
@@ -309,8 +308,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
         dnoise = zero(u0)
         g(dnoise, u0, p, 1.1)
 
-        # This is broken because ImplicitEM uses ForwardDiff which doesnt' work currently
-        @test_broken solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
+        @test solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
         
         sol = solve(prob, alg, saveat = 0.01)
         @test sol.retcode == ReturnCode.Success
@@ -333,7 +331,6 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
             sol_reordered = map(state_names) do name
                 sol[name][end]
             end
-            println()
             sol_reordered, collect(du), collect(dnoise)
         end
         @debug "" norm(sol_grp .- sol_mtk) / norm(sol_grp)
@@ -509,7 +506,7 @@ function wta_tests()
     weight = 1.0
     density = 0.25
     
-    @testset "WinnerTakeAll network" begin
+    @testset "WinnerTakeAll network 1" begin
         g1 = let g = MetaDiGraph()
             @named wta1 = WinnerTakeAllBlox(;I_bg=I_bg_1, N_exci=N_exci_1, namespace)
             @named wta2 = WinnerTakeAllBlox(;I_bg=I_bg_2, N_exci=N_exci_2, namespace)
@@ -538,7 +535,7 @@ function wta_tests()
         end
         test_compare_du_and_sols(ODEProblem, (g1, g2), tspan; rtol=1e-9, alg=Tsit5())
     end
-    @testset "WinnerTakeAll network" begin
+    @testset "WinnerTakeAll network 2" begin
         density_1_2 = 0.5
         connection_matrix_1_2 = rand(Bernoulli(density_1_2), N_exci_1, N_exci_2)
         g1 = let g = MetaDiGraph()
@@ -629,16 +626,14 @@ function dbs_circuit()
 end
 
 function discrete()
-    #@testset "Discrete blox" begin
-    let
-    g = MetaDiGraph()
+    @testset "Discrete blox" begin
+        g = MetaDiGraph()
         @named n = HHNeuronExciBlox()
         @named m = Matrisome(t_event=8.0)
         @named t = TAN()
         add_blox!.((g,), (n, m, t))
         add_edge!(g, 1, 2, :weight, 1.0)
         add_edge!(g, 3, 2, Dict(:weight => 0.1, :t_event=>5.0))
-        
         test_compare_du_and_sols(ODEProblem, g, (0.0, 20.0), rtol=1e-5, alg=Tsit5())
     end
 end
