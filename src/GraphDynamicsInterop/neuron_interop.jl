@@ -61,6 +61,7 @@ function define_neurons()
         input_init = NamedTuple{(input_syms...,)}(ntuple(i -> 0.0, length(inputs)))
         
         @eval begin
+            issupported(::$T) = true
             GraphDynamics.initialize_input(s::Subsystem{$T}) = $input_init
             function GraphDynamics.subsystem_differential((; $(p_and_s_syms...),)::Subsystem{$T}, ($(input_syms...),), t)
                 Dneuron = SubsystemStates{$T}(
@@ -150,6 +151,7 @@ for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
     end
 end
 
+issupported(::PoissonSpikeTrain) = true
 components(p::PoissonSpikeTrain) = (p,)
 function to_subsystem(s::PoissonSpikeTrain)
     states = SubsystemStates{PoissonSpikeTrain, Float64, @NamedTuple{}}((;))
@@ -163,6 +165,7 @@ GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) 
 
 #-------------------------
 # Kuramoto
+issupported(::KuramotoOscillator) = true
 function to_subsystem(o::KuramotoOscillator)
     states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
     params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.odesystem.ω), ζ=getdefault(o.odesystem.ζ)))
@@ -182,6 +185,7 @@ end
 
 #-------------------------
 # Matrisome
+issupported(::Matrisome) = true
 components(m::Matrisome) = (m,)
 GraphDynamics.initialize_input(s::Subsystem{Matrisome}) = 0.0
 function GraphDynamics.apply_subsystem_differential!(_, m::Subsystem{Matrisome}, jcn, t)
@@ -208,6 +212,7 @@ end
 
 #-------------------------
 # Striosome
+issupported(::Striosome) = true
 components(s::Striosome) = (s,)
 GraphDynamics.initialize_input(s::Subsystem{Striosome}) = 0.0
 GraphDynamics.subsystem_differential(s::Subsystem{Striosome}, _, _) = SubsystemStates{Striosome}((;))
@@ -225,6 +230,7 @@ end
 
 #-------------------------
 # TAN
+issupported(::TAN) = true
 components(t::TAN) = (t,)
 GraphDynamics.initialize_input(s::Subsystem{TAN}) = 0.0
 function GraphDynamics.apply_subsystem_differential!(_, s::Subsystem{TAN}, jcn, t)
@@ -242,6 +248,7 @@ end
 
 #-------------------------
 # SNc
+issupported(::SNc) = true
 components(s::SNc) = (s,)
 GraphDynamics.initialize_input(s::Subsystem{SNc}) = (;jcn,)
 GraphDynamics.subsystem_differential(s::Subsystem{SNc}, _, _) = SubsystemStates{SNc}((;))
