@@ -22,6 +22,7 @@ using Random ## for generating random variables
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
 using DataFrames ## to format the data into DataFrames
+using Downloads ## to download image stimuli files
 
 # define a single excitatory neuron 'blox' with steady input current I_bg = 0.5 microA/cm2
 nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.5)
@@ -234,8 +235,7 @@ global_namespace=:g
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
 
-fn = joinpath(@__DIR__, "../data/image_example.csv") ## image data file
-image_set = CSV.read(fn, DataFrame) ## reading data into DataFrame format
+image_set = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/image_example.csv"), DataFrame) ## reading data into DataFrame format
 image_sample = 2 ## set which image to input (from 1 to 1000)
 
 ## define stimulus source blox
