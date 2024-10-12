@@ -16,7 +16,7 @@ struct LeadField <: ObserverBlox
             lfp ~ L * jcn
         ]
 
-        sys = System(eqs, t, sts, p; name=name)
+        sys = System(eqs, t; name=name)
         new(p, Num(0), sts[2], sys, namespace)
     end
 end
