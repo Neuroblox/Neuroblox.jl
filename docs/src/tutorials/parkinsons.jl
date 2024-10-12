@@ -43,49 +43,41 @@ using CairoMakie
 @named PY  = JansenRit(cortical=true)  # default parameters cortical Jansen Rit blox
 @named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5)
 
-blox = [Str, GPE, STN, GPI, Th, EI, PY, II]
-
-
 #Here, we've created eight Jansen-Rit neural masses representing different brain regions involved in Parkinson's disease. The `τ_factor` is used to convert time units from seconds (as in the original paper) to milliseconds (Neuroblox's default time unit).
 
 # ## Building the Circuit
 
-# Now, let's create a graph representing our brain circuit:
+# Now, let's create a graph representing our brain circuit. The nodes on this graph are the neural mass models defined aboe and the edges are the connections between the nodes based on the known anatomy of the basal ganglia-thalamocortical circuit.
+# As an alternative to creating edges with an adjacency matrix, here we demonstrate a different approach by adding edges one by one. In this case, we set the connections specified in Table 2 of Liu et al. [1], although we only implement a subset of the nodes and edges to describe a simplified version of the model.
+# Our connections share some common parameters which we define here, both as symbols and values, and use them as expressions for the weight of each connection :
 
-g = MetaDiGraph()
-add_blox!.(Ref(g), blox)
+g = MetaDiGraph() ## define an empty graph
 
-# We've created a MetaDiGraph and added our neural masses as nodes. Next, we'll define the connections between these nodes based on the known anatomy of the basal ganglia-thalamocortical circuit.
+params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5 # define common connection parameters
 
-# ModelingToolkit allows us to create parameters that can be passed into the equations symbolically:
-
-# As an alternative to creating edges with an adjacency matrix (as shown in the previous example), here we demonstrate a different approach by adding edges one by one. In this case, we set the connections specified in Table 2 of Liu et al. [1], although we only implement a subset of the nodes and edges to describe a simplified version of the model:
-
-## Define connection strength parameters
-params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5
-
-add_edge!(g, 2, 1, Dict(:weight => -0.5*C_BG_Th))
-add_edge!(g, 2, 2, Dict(:weight => -0.5*C_BG_Th))
-add_edge!(g, 2, 3, Dict(:weight => C_BG_Th))
-add_edge!(g, 3, 2, Dict(:weight => -0.5*C_BG_Th))
-add_edge!(g, 3, 7, Dict(:weight => C_Cor_BG_Th))
-add_edge!(g, 4, 2, Dict(:weight => -0.5*C_BG_Th))
-add_edge!(g, 4, 3, Dict(:weight => C_BG_Th))
-add_edge!(g, 5, 4, Dict(:weight => -0.5*C_BG_Th))
-add_edge!(g, 6, 5, Dict(:weight => C_BG_Th_Cor))
-add_edge!(g, 6, 7, Dict(:weight => 6*C_Cor))
-add_edge!(g, 7, 6, Dict(:weight => 4.8*C_Cor))
-add_edge!(g, 7, 8, Dict(:weight => -1.5*C_Cor))
-add_edge!(g, 8, 7, Dict(:weight => 1.5*C_Cor))
-add_edge!(g, 8, 8, Dict(:weight => 3.3*C_Cor))
-add_edge!(g,1,1,:weight, -0.5*C_BG_Th)
-add_edge!(g,1,2,:weight, C_BG_Th)
-add_edge!(g,2,1,:weight, -0.5*C_BG_Th)
-add_edge!(g,2,5,:weight, C_Cor_BG_Th)
-add_edge!(g,3,1,:weight, -0.5*C_BG_Th)
-add_edge!(g,3,2,:weight, C_BG_Th)
-add_edge!(g,4,3,:weight, -0.5*C_BG_Th)
-add_edge!(g,4,4,:weight, C_BG_Th_Cor)
+## Create connections
+add_edge!(g, GPE => Str; weight = -0.5*C_BG_Th)
+add_edge!(g, GPE => GPE; weight = -0.5*C_BG_Th)
+add_edge!(g, GPE => STN; weight = C_BG_Th)
+add_edge!(g, STN => GPE; weight = -0.5*C_BG_Th)
+add_edge!(g, STN => PY; weight = C_Cor_BG_Th)
+add_edge!(g, GPI => GPE; weight = -0.5*C_BG_Th)
+add_edge!(g, GPI => STN; weight = C_BG_Th)
+add_edge!(g, Th => GPI; weight = -0.5*C_BG_Th)
+add_edge!(g, EI => Th; weight = C_BG_Th_Cor)
+add_edge!(g, EI => PY; weight = 6*C_Cor)
+add_edge!(g, PY => EI; weight = 4.8*C_Cor)
+add_edge!(g, PY => II; weight = -1.5*C_Cor)
+add_edge!(g, II => PY; weight = 1.5*C_Cor)
+add_edge!(g, II => II; weight = 3.3*C_Cor)
+add_edge!(g, Str => Str; weight = -0.5*C_BG_Th)
+add_edge!(g, Str => GPE; weight = C_BG_Th)
+add_edge!(g, GPE => Str; weight = -0.5*C_BG_Th)
+add_edge!(g, GPE => Th; weight = C_Cor_BG_Th)
+add_edge!(g, STN => Str; weight = -0.5*C_BG_Th)
+add_edge!(g, STN => GPE; weight = C_BG_Th)
+add_edge!(g, GPI => STN; weight = -0.5*C_BG_Th)
+add_edge!(g, GPI => GPI; weight = C_BG_Th_Cor)
 
 # ## Creating the Model
 

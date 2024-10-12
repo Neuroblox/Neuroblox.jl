@@ -314,6 +314,17 @@ Could not create a ordered subsystem layout in $(N_tries) attempts, this is like
     """)
 end
 
+function check_all_supported_blox(g::MetaDiGraph)
+    unsupported_blox = filter(vertices(g)) do i
+        blox = get_blox(g, i)
+        !issupported(blox)
+    end
+    if !isempty(unsupported_blox)
+        v = unique(typeof.(unsupported_blox))
+        error("Got unsupported Blox. The GraphDynamics backend is not compatible with blox of type $(join(v, ", "))")
+    end
+end
+
 
 """
     graphsystem_from_graph(g::MetaDiGraph; sparsity_heuristic=1.0, sparse_length_cutoff=0)
@@ -327,6 +338,7 @@ of connections, but only if the matrix is also longer than `sparse_length_cutoff
 situations where tiny matrices like (e.g. 5x5) get stored as sparse arrays rather than dense arrays. 
 """
 function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_length_cutoff=0)
+    check_all_supported_blox(_g)
     g = flat_graph(_g)
     
     total_eltype = mapreduce(promote_type, vertices(g)) do i

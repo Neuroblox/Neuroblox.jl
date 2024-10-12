@@ -57,10 +57,15 @@ function get_neurons(vn::AbstractVector{<:AbstractBlox})
     mapreduce(x -> get_neurons(x), vcat, vn)
 end
 
+get_parts(blox::CompositeBlox) = blox.parts
+get_parts(blox) = blox
+
+get_components(blox::Union{CompositeBlox, Vector{<:AbstractBlox}}) = mapreduce(x -> get_components(x), vcat, get_parts(blox))
+get_components(blox) = blox
+
 get_neuron_color(n::AbstractExciNeuronBlox) = "blue"
 get_neuron_color(n::AbstractInhNeuronBlox) = "red"
 get_neuron_color(n::AbstractNeuronBlox) = "black"
-
 
 function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
@@ -178,8 +183,6 @@ get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
 get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
 get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
-
-get_blox_parts(blox::Union{CompositeBlox, AbstractComponent}) = blox.parts
 
 function get_weight(kwargs, name_blox1, name_blox2)
     get(kwargs, :weight) do
@@ -506,7 +509,7 @@ end
 function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}},
                           sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
     
-    neurons = get_neurons(cb)
+    neurons = get_components(cb)
     state_names = map(neuron -> Symbol(namespaced_nameof(neuron), "₊", state), neurons)
 
     if isnothing(ts)
