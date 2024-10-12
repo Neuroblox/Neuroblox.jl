@@ -567,17 +567,17 @@ function blox_wiring_rule!(h, s::Striatum_FSI_Adam, v, kwargs)
     # just like how its done in Neuroblox.jl
     g = MetaDiGraph()
     add_vertices!(g, N_inhib)
-    for i ∈ axes(connection_matrix, 1)
-        for j ∈ axes(connection_matrix, 2)
-            cij = connection_matrix[i,j]
-            if iszero(cij.weight) && iszero(cij.g_weight) 
+    for i ∈ axes(connection_matrix, 2)
+        for j ∈ axes(connection_matrix, 1)
+            cji = connection_matrix[j, i]
+            if iszero(cji.weight) && iszero(cji.g_weight) 
                 nothing
-            elseif iszero(cij.g_weight)
-                add_edge!(g, i, i, Dict(:weight=>cij.weight))
+            elseif iszero(cji.g_weight) 
+                add_edge!(g, j, i, Dict(:weight=>cji.weight))
             else
-                add_edge!(g, i, j, Dict(:weight=>cij.weight,
+                add_edge!(g, j, i, Dict(:weight=>cji.weight,
                                         :gap => true,
-                                        :gap_weight => cij.g_weight)) 
+                                        :gap_weight => cji.g_weight)) 
             end
         end
     end
