@@ -170,17 +170,15 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         end
         for i ∈ axes(connection_matrix, 2)
             for j ∈ axes(connection_matrix, 1)
-                cij = connection_matrix[i, j]
                 cji = connection_matrix[j, i]
-
-                if iszero(cij.weight) && iszero(cij.g_weight) 
+                if iszero(cji.weight) && iszero(cji.g_weight) 
                     nothing
-                elseif iszero(cij.g_weight) 
-                    add_edge!(g, i, i, Dict(:weight=>cij.weight))
+                elseif iszero(cji.g_weight) 
+                    add_edge!(g, j, i, Dict(:weight=>cji.weight))
                 else
-                    add_edge!(g, i, j, Dict(:weight=>cij.weight,
+                    add_edge!(g, j, i, Dict(:weight=>cji.weight,
                                             :gap => true,
-                                            :gap_weight => cij.g_weight)) 
+                                            :gap_weight => cji.g_weight)) 
                 end
             end
         end
