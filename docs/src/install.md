@@ -15,7 +15,7 @@ The next step is to install Neuroblox from the JuliaHubRegistry. It is also usef
 ``` julia 
 using Downloads
 
-Downloads.download( , joinpath(@__DIR__, "Project.toml"))
+Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/Project.toml", joinpath(@__DIR__, "Project.toml"))
 Pkg.activate(@__DIR__)
 Pkg.instantiate()
 ```
