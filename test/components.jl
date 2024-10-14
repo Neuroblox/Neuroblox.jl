@@ -785,3 +785,42 @@ end
     sol = solve(prob, Tsit5(), saveat=1.0)
     @test sol.retcode == ReturnCode.Success
 end
+
+@testset "DBS circuit firing rates" begin
+    @testset "Striatum_MSN_Adam" begin
+        Random.seed!(1234)
+        @named msn = Striatum_MSN_Adam(N_inhib = 10)
+        sys = get_system(msn; simplify = true)
+        prob = SDEProblem(sys, [], (0.0, 6500.0), [])
+        ens_sol = solve(EnsembleProblem(prob), RKMil(); dt=0.05, saveat=0.05, trajectories=5, abstol=1e-2, reltol=1e-2);
+        t_fr, mean_fr, std_fr = mean_firing_rate(msn, ens_sol, threshold=-35, trim_transient=1000)
+        @test isapprox(mean_fr[1], 5.74, atol = 0.49)
+    end
+    @testset "Striatum_FSI_Adam" begin
+        Random.seed!(1234)
+        @named fsi = Striatum_FSI_Adam(N_inhib = 10)
+        sys = get_system(fsi; simplify = true)
+        prob = SDEProblem(sys, [], (0.0, 6500.0), [])
+        ens_sol = solve(EnsembleProblem(prob), RKMil(); dt=0.05, saveat=0.05, trajectories=5, abstol=1e-2, reltol=1e-2);
+        t_fr, mean_fr, std_fr = mean_firing_rate(fsi, ens_sol, threshold=-25, trim_transient=1000)
+        @test isapprox(mean_fr[1], 12.02, atol = 0.1)
+    end
+    @testset "GPe_Adam" begin
+        Random.seed!(1234)
+        @named gpe = GPe_Adam(N_inhib = 10, density = 0.5, weight = 0.5)
+        sys = get_system(gpe; simplify = true)
+        prob = SDEProblem(sys, [], (0.0, 6500.0), [])
+        ens_sol = solve(EnsembleProblem(prob), RKMil(); dt=0.05, saveat=0.05, trajectories=5, abstol=1e-2, reltol=1e-2);
+        t_fr, mean_fr, std_fr = mean_firing_rate(gpe, ens_sol, threshold=-25, trim_transient=1000)
+        @test isapprox(mean_fr[1], 32.46, atol = 0.18)
+    end
+    @testset "STN_Adam" begin
+        Random.seed!(1234)
+        @named stn = STN_Adam(N_exci = 10, density = 0.5, weight = 0.5)
+        sys = get_system(stn; simplify = true)
+        prob = SDEProblem(sys, [], (0.0, 6500.0), [])
+        ens_sol = solve(EnsembleProblem(prob), RKMil(); dt=0.05, saveat=0.05, trajectories=5, abstol=1e-2, reltol=1e-2);
+        t_fr, mean_fr, std_fr = mean_firing_rate(stn, ens_sol, threshold=-25, trim_transient=1000)
+        @test isapprox(mean_fr[1], 292.63, atol = 4.79)
+    end
+end
