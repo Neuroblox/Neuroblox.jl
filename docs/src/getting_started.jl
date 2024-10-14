@@ -1,9 +1,17 @@
-# # Getting Started with Neuroblox
+# # Getting Started
 
-# This tutorial will introduce you to simulating brain dynamics using Neuroblox.
-# In this example, we'll create a simple oscillating circuit using two Wilson-Cowan neural mass models [1]. The Wilson-Cowan model is one of the most influential models in computational neuroscience [2], describing the dynamics of interactions between populations of excitatory and inhibitory neurons.
+# ## Getting Started with Julia
 
-# ## The Wilson-Cowan Model
+# Here we would like to summarize some resources for people that are interested in learning more about the Julia language before or while exploring Neuroblox. Please follow the links below for introductory material on the language that is inclusive to all users; people familiar with programming or not, people with a mathematics, engineering, or science background :
+# - [Introduction to Julia](https://youtu.be/7hVV5uoEo-0?si=JdMSCh3R4w2cl5uT) by Matt Bauman at the JuliaCon 2024
+# - [Julia Tutorials & Workshops](https://julialang.org/learning/tutorials/), a collection of training materials from the official Julia website.
+# - [Modern Julia Workflows](https://modernjuliaworkflows.org/), an introduction to how to write and share your Julia code effectively with tips & tricks.
+
+# ## Getting Started with Neuroblox
+
+# This example will introduce you to simulating brain dynamics using Neuroblox. We will create a simple oscillating circuit using two Wilson-Cowan neural mass models [1]. The Wilson-Cowan model is one of the most influential models in computational neuroscience [2], describing the dynamics of interactions between populations of excitatory and inhibitory neurons.
+
+# ### The Wilson-Cowan Model
 
 # Each Wilson-Cowan neural mass is described by the following equations:
 
@@ -24,7 +32,7 @@
 
 # where $a_k$ and $\theta_k$ determine the steepness and threshold of the response, respectively.
 
-# ## Building the Circuit
+# ### Building the Circuit
 
 # Let's create an oscillating circuit by connecting two Wilson-Cowan neural masses:
 
@@ -53,7 +61,7 @@ add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
 # By default, the output of each Wilson-Cowan blox is its excitatory activity (E). The negative self-connections (-1) provide inhibitory feedback, while the positive inter-blox connections (6) provide strong excitatory coupling. This setup creates an oscillatory dynamic between the two Wilson-Cowan units.
 
-# ## Creating the Model
+# ### Creating the Model
 
 # Now, let's build the complete model:
 
@@ -61,14 +69,14 @@ add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
 # This creates a differential equations system from our graph representation using ModelingToolkit and symbolically simplifies it for efficient computation.
 
-# ## Simulating the Model
+# ### Simulating the Model
 
 # We are now ready to simulate our model. The following code creates and solves an `ODEProblem` for our system, simulating 100 time units of activity. In Neuroblox, the default time unit is milliseconds. We use `Rodas4`, a solver efficient for stiff problems. The solution is saved every 0.1 ms, allowing us to observe the detailed evolution of the system's behavior.
 
 prob = ODEProblem(sys, [], (0.0, 100), [])
 sol = solve(prob, Rodas4(), saveat=0.1)
 
-# ## Plotting simulation results
+# ### Plotting simulation results
 
 # Finally, let us plot the `E` and `I` states of the first component, `WC1`. 
 
