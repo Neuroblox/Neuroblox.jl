@@ -191,10 +191,7 @@ function ((;w, w_gap, w_gap_rev)::HHConnection_GAP)(HH_src::Subsystem{HHNeuronIn
 end
 
 ##----------------------------------------------
-# struct NGEI_HHConnection
-#     w::Float64
-# end
-# Base.zero(::Type{<:NGEI_HHConnection}) = NGEI_HHConnection(0.0)
+# Next Generation EI
 function get_connection(asc_src::NextGenerationEIBlox, 
                         HH_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox},
                         kwargs)
@@ -214,12 +211,7 @@ end
 
 
 #----------------------------------------------
-# Kuramoto Kuramoto
-# struct KK_Conn{T}
-#     w::T
-# end
-# Base.zero(::Type{KK_Conn{T}}) where {T} = KK_Conn(zero(T))
-
+# Kuramoto 
 function get_connection(src::KuramotoOscillator, dst::KuramotoOscillator, kwargs)
     (;w_val, name) = generate_weight_param(src, dst, kwargs)
     (;conn=BasicConnection(w_val), names=[name])
@@ -359,22 +351,6 @@ function GraphDynamics.apply_discrete_event!(integrator,
         !isnothing(i_dst_exci) && for j_dst ∈ j_dsts_exci
             states[i_dst_exci][:S_GABA, j_dst] += 1
         end
-
-
-        
-    #     !isnothing(i_dst_inh) && GraphDynamics.tforeach(j_dsts_inh) do j_dst # for j_dst ∈ j_dsts_inh
-    #         states[i_dst_inh][:S_AMPA, j_dst] += 1
-    #     end
-    #     !isnothing(i_dst_exci) && GraphDynamics.tforeach(j_dsts_exci) do j_dst # for j_dst ∈ j_dsts_exci
-    #         states[i_dst_exci][:S_AMPA, j_dst] += 1
-    #     end
-    # elseif states_src isa SubsystemStates{LIFInhNeuron}
-    #     !isnothing(i_dst_inh) && GraphDynamics.tforeach(j_dsts_inh) do j_dst #for j_dst ∈ j_dsts_inh
-    #         states[i_dst_inh][:S_GABA, j_dst] += 1
-    #     end
-    #     !isnothing(i_dst_exci) && GraphDynamics.tforeach(j_dsts_exci) do j_dst #for j_dst ∈ j_dsts_exci
-    #         states[i_dst_exci][:S_GABA, j_dst] += 1
-    #     end
     else
         error("this should be unreachable")
     end
@@ -419,6 +395,7 @@ end
 
 components(blox::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}) = blox.parts
 
+issupported(::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}) = true
 function blox_wiring_rule!(g, blox::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}, v, kwargs)
     neurons = components(blox)
     for i ∈ eachindex(neurons)
@@ -486,6 +463,7 @@ function blox_wiring_rule!(h, wta_src::WinnerTakeAllBlox, wta_dst::WinnerTakeAll
     end
 end
 
+issupported(::WinnerTakeAllBlox) = true
 function blox_wiring_rule!(h, wta::WinnerTakeAllBlox, v, kwargs)
     i_inh = v[1]
     inh = wta.parts[1]
@@ -507,6 +485,7 @@ end
 
 ##----------------------------------------------
 # CorticalBlox
+issupported(::CorticalBlox) = true
 components(c::CorticalBlox) = c.parts
 outer_nameof(c::CorticalBlox) = split(String(namespaced_nameof(c)), '₊')
 function blox_wiring_rule!(h, c::CorticalBlox, v, kwargs)
@@ -560,6 +539,7 @@ end
 
 #----------------------------------------------
 # Striatum_MSN_Adam
+issupported(::Striatum_MSN_Adam) = true
 components(s::Striatum_MSN_Adam) = s.parts
 function blox_wiring_rule!(h, s::Striatum_MSN_Adam, v, kwargs)
     n_inh = s.parts
@@ -577,6 +557,7 @@ end
 
 #----------------------------------------------
 # Striatum_FSI_Adam
+issupported(::Striatum_FSI_Adam) = true
 components(s::Striatum_FSI_Adam) = s.parts
 function blox_wiring_rule!(h, s::Striatum_FSI_Adam, v, kwargs)
     n_inh = s.parts
@@ -586,17 +567,17 @@ function blox_wiring_rule!(h, s::Striatum_FSI_Adam, v, kwargs)
     # just like how its done in Neuroblox.jl
     g = MetaDiGraph()
     add_vertices!(g, N_inhib)
-    for i ∈ axes(connection_matrix, 1)
-        for j ∈ axes(connection_matrix, 2)
-            cij = connection_matrix[i,j]
-            if iszero(cij.weight) && iszero(cij.g_weight) 
+    for i ∈ axes(connection_matrix, 2)
+        for j ∈ axes(connection_matrix, 1)
+            cji = connection_matrix[j, i]
+            if iszero(cji.weight) && iszero(cji.g_weight) 
                 nothing
-            elseif iszero(cij.g_weight)
-                add_edge!(g, i, i, Dict(:weight=>cij.weight))
+            elseif iszero(cji.g_weight) 
+                add_edge!(g, j, i, Dict(:weight=>cji.weight))
             else
-                add_edge!(g, i, j, Dict(:weight=>cij.weight,
+                add_edge!(g, j, i, Dict(:weight=>cji.weight,
                                         :gap => true,
-                                        :gap_weight => cij.g_weight)) 
+                                        :gap_weight => cji.g_weight)) 
             end
         end
     end
@@ -626,6 +607,7 @@ end
 
 #----------------------------------------------
 # GPe_Adam
+issupported(::GPe_Adam) = true
 components(gpe::GPe_Adam) = gpe.parts
 function blox_wiring_rule!(h, gpe::GPe_Adam, v, kwargs)
     n_inh = gpe.parts
@@ -643,6 +625,7 @@ end
 
 #----------------------------------------------
 # STN_Adam
+issupported(::STN_Adam) = true
 components(stn::STN_Adam) = stn.parts
 function blox_wiring_rule!(h, stn::STN_Adam, v, kwargs)
     n_inh = stn.parts
@@ -894,7 +877,7 @@ GraphDynamics.must_run_before(::Type{Striosome}, ::Type{<:Union{TAN, SNc}}) = tr
 
 #----------------------------------------------
 # Striatum - Striatum
-
+issupported(::Striatum) = true
 components(sta::Striatum) = sta.parts
 function blox_wiring_rule!(h, str::Striatum, v_src, kwargs)
     # no internal wiring
@@ -1041,15 +1024,15 @@ end
 
 function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronExci}, blox_dst::Subsystem{PINGNeuronInhib})
     (; w, V_E) = c
-    (;s)       = blox_src
-    (;V)    = blox_dst
+    (;s) = blox_src
+    (;V) = blox_dst
     (; jcn = w * s * (V_E - V))
 end
 
 function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Subsystem{<:AbstractPINGNeuron})
     (; w, V_I) = c
-    (;s)       = blox_src
-    (;V)    = blox_dst
+    (;s) = blox_src
+    (;V) = blox_dst
     (; jcn = w * s * (V_I - V))
 end
 
