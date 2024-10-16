@@ -654,7 +654,7 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.2 * 1e-6, # mF 
+        C = 0.2 * 1e-3, # mS / kHz 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
         t_refract = 1, # ms
@@ -718,7 +718,7 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
         V_I = -70, # mV
         θ = -50, # mV
         V_reset = -55, # mV
-        C = 0.5 * 1e-6, # mF 
+        C = 0.5 * 1e-3, # mS / kHz 
         τ_AMPA = 2, # ms
         τ_GABA = 5, # ms
         τ_NMDA_decay = 100, # ms
