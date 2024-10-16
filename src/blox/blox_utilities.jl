@@ -67,6 +67,8 @@ get_neuron_color(n::AbstractExciNeuronBlox) = "blue"
 get_neuron_color(n::AbstractInhNeuronBlox) = "red"
 get_neuron_color(n::AbstractNeuronBlox) = "black"
 
+get_neuron_color(n::Union{CompositeBlox, Vector{<:AbstractBlox}}) = map(get_neuron_color, get_neurons(n))
+
 function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
 end
@@ -133,29 +135,24 @@ end
 """
 function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     sys = get_sys(blox)
-    inps = inputs(sys)
     sys_eqs = equations(sys)
 
-    @variables t # needed for IV in namespace_equation
+    inps = inputs(sys)
+    filter!(inp -> isnothing(find_eq(sys_eqs, inp)), inps)
 
-    eqs = map(inps) do inp
-        idx = find_eq(sys_eqs, inp)
-        if isnothing(idx)
+    if !isempty(inps)
+        eqs = map(inps) do inp
             namespace_equation(
                 inp ~ 0, 
                 sys,
                 namespaced_name(inner_namespaceof(blox), nameof(blox))
             ) 
-        else
-            namespace_equation(
-                sys_eqs[idx],
-                sys,
-                namespaced_name(inner_namespaceof(blox), nameof(blox))
-            )
         end
-    end
 
-    return eqs
+        return eqs
+    else
+        return Equation[]
+    end
 end
 
 get_connector(blox::Union{CompositeBlox, AbstractComponent}) = blox.connector
