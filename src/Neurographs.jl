@@ -92,7 +92,7 @@ function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, b
 
     sys = get_namespaced_sys(blox)
     
-    cb = (sys.V >= sys.θ) => (
+    cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
         vcat(sys.V, states_dest), 
         [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
