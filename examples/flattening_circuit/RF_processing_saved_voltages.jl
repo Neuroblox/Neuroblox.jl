@@ -49,3 +49,27 @@ new_t = 0:lastindex(all_data.t)-1
 all_data.t .= collect(new_t)
 
 CSV.write(concat_file_path, all_data)
+
+all_data = CSV.read(concat_file_path, DataFrame)
+
+using DSP, Distributions, StatsBase
+
+function HRF(x,rtu=6.0,δ1=6.0,δ2=16.0,τ1=1.0,τ2=1.0,C=0.0)
+    return pdf.(Gamma(δ1,τ1),x)-pdf.(Gamma(δ2,τ2),x)/rtu + C
+end
+
+
+t_hrf = 0:0.001:32
+hrf = HRF.(t_hrf)
+
+hrf_data = DataFrame()
+
+for i ∈ names(all_data)[2:end]
+    next_data = all_data[:, i]
+    next_data = StatsBase.transform(fit(UnitRangeTransform, next_data), next_data)
+    conv_data = conv(next_data, hrf)
+    hrf_data[!, i] = conv_data
+end
+
+hrf_path = "/Users/achesebro/Downloads/all_sims/hrf_sims.csv"
+CSV.write(hrf_path, hrf_data)
