@@ -310,7 +310,7 @@ function GraphDynamics.discrete_event_condition(states,
                                                t) where {i_src, i_dst_inh, i_dsts_exci}
     (; j_src) = ev
     neuron_src = Subsystem(states[i_src][j_src], params[i_src][j_src])
-    neuron_src.V >= neuron_src.θ
+    neuron_src.V > neuron_src.θ
 end
 
 
@@ -372,9 +372,7 @@ end
 Base.zero(::Type{PoissonSpikeConn}) = PoissonSpikeConn(0.0, Set{Float64}())
 function ((;w)::PoissonSpikeConn)(stim::Subsystem{PoissonSpikeTrain},
                                   blox_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    (; S_AMPA_ext, g_AMPA_ext, V, V_E) = blox_dst
-    (; w, S_AMPA_ext, g_AMPA_ext, V, V_E )
-    (; jcn = w * S_AMPA_ext * g_AMPA_ext * (V - V_E))
+    (; jcn = 0.0)
 end
 GraphDynamics.has_discrete_events(::PoissonSpikeConn) = true
 GraphDynamics.has_discrete_events(::Type{PoissonSpikeConn}) = true
