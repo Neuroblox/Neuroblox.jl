@@ -689,9 +689,9 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
+        sts = @variables V(t)=-52 S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] jcn_external(t) [input=true]
         eqs = [
-            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - S_AMPA_ext * g_AMPA_ext * (V - V_E) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
             D(S_AMPA_ext) ~ - S_AMPA_ext / τ_AMPA
@@ -757,9 +757,9 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=V_L S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
-        eqs = [
-            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - jcn) / C,
+        sts = @variables V(t)=-52 S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
+        eqs = [ 
+            D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - S_AMPA_ext * g_AMPA_ext * (V - V_E) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
             D(S_NMDA) ~ - S_NMDA / τ_NMDA_decay + α * x * (1 - S_NMDA),
