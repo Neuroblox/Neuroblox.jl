@@ -57,7 +57,7 @@ end
 get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
 
 get_dynamics_bloxs(blox) = [blox]
-get_dynamics_bloxs(blox::Union{CompositeBlox}) = get_parts(blox)
+get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
