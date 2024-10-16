@@ -58,10 +58,10 @@ function get_neurons(vn::AbstractVector{<:AbstractBlox})
 end
 
 get_parts(blox::CompositeBlox) = blox.parts
-get_parts(blox) = blox
+get_parts(blox) = [blox]
 
 get_components(blox::Union{CompositeBlox, Vector{<:AbstractBlox}}) = mapreduce(x -> get_components(x), vcat, get_parts(blox))
-get_components(blox) = blox
+get_components(blox) = [blox]
 
 get_neuron_color(n::AbstractExciNeuronBlox) = "blue"
 get_neuron_color(n::AbstractInhNeuronBlox) = "red"
