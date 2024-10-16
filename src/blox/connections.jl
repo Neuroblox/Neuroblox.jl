@@ -1015,7 +1015,7 @@ end
 
 function (bc::BloxConnector)(
     bloxout::DBS,
-    bloxin::Striatum_FSI_Adam;
+    bloxin::STN_Adam;
     kwargs...
 )
     sys_dbs = get_namespaced_sys(bloxout)
