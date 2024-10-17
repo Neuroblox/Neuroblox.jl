@@ -148,8 +148,8 @@ argument_names(::Type{<: StackPlot}) = (:blox, :sol)
 function Makie.plot!(p::StackPlot)
     sol = p.sol[]
     blox = p.blox[]
-
-    cl = get_neuron_color.(blox)
+    
+    cl = get_neuron_color(blox)
 
     ax = current_axis()
     ax.xlabel = p.xlabel[]

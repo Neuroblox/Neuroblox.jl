@@ -917,10 +917,6 @@ function (bc::BloxConnector)(
     w = generate_weight_param(stim, neuron; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA_ext * sys_in.g_AMPA_ext * (sys_in.V - sys_in.V_E) 
-                    
-    accumulate_equation!(bc, eq)
-
     t_spikes = generate_spike_times(stim)
 
     cb = t_spikes => [sys_in.S_AMPA_ext ~ sys_in.S_AMPA_ext + 1]

@@ -57,7 +57,7 @@ end
 get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
 
 get_dynamics_bloxs(blox) = [blox]
-get_dynamics_bloxs(blox::Union{CompositeBlox}) = get_parts(blox)
+get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
@@ -92,7 +92,7 @@ function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, b
 
     sys = get_namespaced_sys(blox)
     
-    cb = (sys.V >= sys.θ) => (
+    cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
         vcat(sys.V, states_dest), 
         [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
