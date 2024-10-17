@@ -42,7 +42,7 @@ function sawtooth(t, f, offset)
     f * (t - offset) - floor(f * (t - offset))
 end
 
-# smoothed square pulses
+# Smoothed square pulses
 function square(t, f, amplitude, offset, start_time, pulse_width, δ)
     invδ = 1 / δ
     pulse_width_fraction = pulse_width * f
@@ -57,7 +57,7 @@ function square(t, f, amplitude, offset, start_time, pulse_width, δ)
     return y
 end
 
-# non-smoothed square pulses
+# Non-smoothed square pulses
 function square(t, f, amplitude, offset, start_time, pulse_width)
 
     saw1 = sawtooth(t - start_time, f, pulse_width)
@@ -70,82 +70,49 @@ function square(t, f, amplitude, offset, start_time, pulse_width)
     return y
 end
 
-# Detect the transition times of the boundaries of each pulse
-# Less efficient but sometimes more robust method
-function compute_transition_times(t, signal; threshold=250)
-    is_high = signal .>= threshold
-    transitions = findall(diff(is_high) .!= 0)
-    
-    transition_points = Float64[]
-    
-    for i in transitions
-        if is_high[i]  # Transition from low to high
-            last_zero = findlast(x -> x < threshold, signal[1:i])
-            if !isnothing(last_zero)
-                push!(transition_points, t[last_zero])
-            end
-            push!(transition_points, t[i+1])
-        else  # Transition from high to low
-            last_high = findlast(x -> x >= threshold, signal[1:i])
-            if !isnothing(last_high)
-                push!(transition_points, t[last_high])
-            end
-            push!(transition_points, t[i+1])
-        end
+function detect_transitions(t, signal::Vector{T}; return_vals=false, atol=0) where T <: AbstractFloat
+    low = minimum(signal)
+    high = maximum(signal)
+
+    # Get indexes when the signal is approximately equal to its low and high values
+    low_inds = isapprox.(signal, low; atol=atol)
+    high_inds = isapprox.(signal, high; atol=atol)
+
+    # Detect each type of transitions
+    trans_inds_1 = diff(low_inds) .== 1 
+    trans_inds_2 = diff(low_inds) .== -1 
+    trans_inds_3 = diff(high_inds) .== 1 
+    trans_inds_4 = diff(high_inds) .== -1 
+    circshift!(trans_inds_1, -1)
+    circshift!(trans_inds_3, -1)
+
+    # Combine all transition
+    transitions_inds = trans_inds_1 .| trans_inds_2 .| trans_inds_3 .| trans_inds_4
+    pushfirst!(transitions_inds, false)
+
+    if return_vals
+        return t[transitions_inds], signal[transitions_inds]
+    else
+        return t[transitions_inds]
     end
-    
-    # Handle the last transition if it's not caught by the loop
-    if !isempty(transitions)
-        last_transition = transitions[end]
-        if is_high[last_transition+1]  # If the last detected transition was to high
-            last_high = findlast(x -> x >= threshold, signal)
-            if !isnothing(last_high) && last_high > last_transition+1
-                push!(transition_points, t[last_high])
-                last_zero = findnext(x -> x < threshold, signal, last_high)
-                if !isnothing(last_zero)
-                    push!(transition_points, t[last_zero])
-                end
-            end
-        else  # If the last detected transition was to low
-            last_zero = findlast(x -> x < threshold, signal)
-            if !isnothing(last_zero) && last_zero > last_transition+1
-                last_high = findlast(x -> x >= threshold, signal[1:last_zero-1])
-                if !isnothing(last_high)
-                    push!(transition_points, t[last_high])
-                end
-                push!(transition_points, t[last_zero])
-            end
-        end
-    end
-    
-    return sort(unique(transition_points))
 end
 
-# Detect the transition times of the boundaries of each pulse
-# Much more efficient but possibly less robust method
-#
-# Δ should be the solver's dt if using a square pulse without smoothing,
-# or some other value accounting for smoothing otherwise
-function compute_transition_times(t, f, start_time, pulse_width, dt; smooth=0)
+function compute_transition_times(stimulus::Function, f , dt, tspan, start_time, pulse_width; atol=0)
     period = 1 / f
-    n_periods = floor((t[end] - start_time) / period)
+    n_periods = floor((tspan[end] - start_time) / period)
 
-    # Define single pulse transition points
-    if smooth == 0
-        single_pulse = [start_time - dt, start_time, start_time + pulse_width - dt, start_time + pulse_width]
-    else
-        Δ = abs(log(smooth))*dt*0.1
-        single_pulse = [start_time - Δ, start_time + dt + Δ*0.1, start_time + pulse_width - dt - Δ*0.1, start_time + pulse_width + Δ]
-        @show single_pulse
-    end
+    # Detect single pulse transition points
+    t = (start_time + 0.5 * period):dt:(start_time + 1.5 * period)
+    s = stimulus.(t)
+    single_pulse = detect_transitions(t, s; return_vals=false, atol=atol)
 
     # Calculate pulse times across all periods
-    period_offsets = (0:n_periods) * period
+    period_offsets = (-1:n_periods+1) * period
     pulses = single_pulse .+ period_offsets'
     transition_times = vec(pulses)
 
     # Filter estimated times within the actual time range
-    inds = (transition_times .>= t[1]) .& (transition_times .<= t[end])
+    inds = (transition_times .>= tspan[1]) .& (transition_times .<= tspan[end])
     
     return transition_times[inds]
 end
