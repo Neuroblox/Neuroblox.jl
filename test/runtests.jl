@@ -15,6 +15,7 @@ if GROUP == "All" || GROUP == "Advanced"
     @time @safetestset "Source Tests" begin include("source_components.jl") end
     @time @safetestset "Reinforcement Learning Tests" begin include("reinforcement_learning.jl") end
     @time @safetestset "Cort-Cort plasticity Tests" begin include("plasticity.jl") end
+    @time @safetestset "DBS" begin include("dbs.jl") end
 end
 
 
