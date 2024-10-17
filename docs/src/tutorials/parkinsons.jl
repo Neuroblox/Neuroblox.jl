@@ -96,4 +96,5 @@ prob = ODEProblem(final_system, [], (0.0, sim_dur))
 sol = solve(prob, Tsit5(), saveat=1)
 
 
+# ## References
 # [[1] Liu, C., Zhou, C., Wang, J., Fietkiewicz, C., & Loparo, K. A. (2020). The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Networks, 123, 381-392.](https://doi.org/10.1016/j.neunet.2019.12.021)

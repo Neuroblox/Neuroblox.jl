@@ -1,5 +1,13 @@
-# # Tutorial on bottom-up approach to building a neural assembly
+# # Bottom-up construction of a neural assembly
 
+# ## Introduction
+# This tutorial goes through the process of building a neural assembly that is part of a larger model that performs category learning of images [1]. We will follow a bottom-up approach with these steps :
+# - build a model of a single neuron
+# - expand that model by connecting a few neurons into a local circuit
+# - define a "winner-takes-all" (WTA) circuit with lateral inhibition
+# - build a cortical block by connecting multiple WTAs together with feed-forward inhibition 
+# - connect the cortical block to a model of an ascending system
+# - add a source of visual input (images) and a cortical block representing visual cortex to our model and simulate visual processing
 
 # ## Single spiking neuron from Hodgkin-Huxley model
 # ![fig1](../assets/neural_assembly_figures/1.png)
@@ -29,7 +37,7 @@ nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.5)
 
 # define graph and add the single neuron 'blox' as a single node into the graph
 g = MetaDiGraph() ## defines a graph
-add_blox!.(Ref(g), [nn1]) ## adds the defined blocks into the graph
+add_blox!(g, nn1) ## adds the defined blocks into the graph
 
 # create an ODESystem from the graph
 @named sys = system_from_graph(g)
@@ -132,8 +140,9 @@ sol = solve(prob, Vern7(), saveat=0.1)
 neuron_set = get_neurons([wta1,wta2]) ## extract neurons from a composite blocks 
 stackplot(neuron_set,sol)
 
-# ## Creating a single cortical superficial layer block (SCORT in Pathak et. al. 2024) by connecting multiple WTA circuits
+# ## Creating a single cortical superficial layer block by connecting multiple WTA circuits
 
+# This model is SCORT in [1] and looks like this
 # ![fig4](../assets/neural_assembly_figures/4.png)
 
 global_namespace=:g 
@@ -184,7 +193,9 @@ stackplot(neuron_set,sol)
 
 # Sugestion : try different connection densities and weights and see how it affects the population activity. 
 
-# ## Creating an ascending system block (ASC1 in Pathak et. al. 2024), a single inbuilt cortical superficial layer block (SCORT in Pathak et. al. 2024) and connecting them.
+# ## Connecting the cortical superficial layer block to an ascending system block
+
+# Now we will expand on the SCORT block of the previous section by defining a block representing an ascending system (ASC1 in [1]) and then connecting the two blocks together. 
 
 global_namespace=:g
 
@@ -297,3 +308,6 @@ powerspectrumplot(AC,sol)
 
 # Sugestion : Try changing the image samples and notice the change in the spatial firing patterns in VAC and AC neurons. One can make multiple cortical blocks simillar to AC and connect them in various 
 # connection topologies. All of them can directly or indirectly get input from VAC.  
+
+# ## References
+# [1] Pathak A., Brincat S., Organtzidis H., Strey H., Senneff S., Antzoulatos E., Mujica-Parodi L., Miller E., Granger R. Biomimetic model of corticostriatal micro-assemblies discovers new neural code., bioRxiv 2023.11.06.565902, 2024
