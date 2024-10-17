@@ -57,17 +57,16 @@ function square(t, f, amplitude, offset, start_time, pulse_width, δ)
     return y
 end
 
-
 # non-smoothed square pulses
 function square(t, f, amplitude, offset, start_time, pulse_width)
 
-    saw1 = sawtooth(t, f, start_time + pulse_width)
-    saw2 = sawtooth(t, f, start_time)
-    saw3 = sawtooth(0.0, f, start_time + pulse_width)
-    saw4 = sawtooth(0.0, f, start_time)
+    saw1 = sawtooth(t - start_time, f, pulse_width)
+    saw2 = sawtooth(t - start_time, f, 0)
+    saw3 = sawtooth(-start_time, f, pulse_width)
+    saw4 = sawtooth(-start_time, f, 0)
     
-    y = amplitude * (saw1 - saw2 - saw3 + saw4 + 1.0) + offset
-    
+    y = amplitude * (saw1 - saw2 - saw3 + saw4) + offset
+
     return y
 end
 
@@ -127,12 +126,18 @@ end
 #
 # Δ should be the solver's dt if using a square pulse without smoothing,
 # or some other value accounting for smoothing otherwise
-function compute_transition_times(t, f, start_time, pulse_width, Δ)
+function compute_transition_times(t, f, start_time, pulse_width, dt; smooth=0)
     period = 1 / f
     n_periods = floor((t[end] - start_time) / period)
 
     # Define single pulse transition points
-    single_pulse = [start_time - Δ, start_time, start_time + pulse_width, start_time + pulse_width + Δ]
+    if smooth == 0
+        single_pulse = [start_time - dt, start_time, start_time + pulse_width - dt, start_time + pulse_width]
+    else
+        Δ = abs(log(smooth))*dt*0.1
+        single_pulse = [start_time - Δ, start_time + dt + Δ*0.1, start_time + pulse_width - dt - Δ*0.1, start_time + pulse_width + Δ]
+        @show single_pulse
+    end
 
     # Calculate pulse times across all periods
     period_offsets = (0:n_periods) * period
