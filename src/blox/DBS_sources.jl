@@ -29,7 +29,7 @@ struct DBS <: StimulusBlox
             start_time=start_time
         )
 
-        sts = @variables u(t)=offset [output = true]
+        sts = @variables u(t) [output = true]
 
         eqs = [u ~ stimulus(t)]
         sys = System(eqs, t, sts, p; name=name)
