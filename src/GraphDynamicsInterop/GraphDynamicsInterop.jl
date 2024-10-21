@@ -47,7 +47,8 @@ using ..Neuroblox:
     LIFInhCircuitBlox,
     PINGNeuronExci,
     PINGNeuronInhib,
-    AbstractPINGNeuron
+    AbstractPINGNeuron,
+    IzhikevichNeuronCC
 
 using GraphDynamics:
     GraphDynamics,

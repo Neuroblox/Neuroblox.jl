@@ -33,6 +33,7 @@ function define_neurons()
                      (:lif_inh, :LIFInhNeuron)
                      (:pexci, :PINGNeuronExci)
                      (:pinhib, :PINGNeuronInhib)
+                     (:izhcc, :IzhikevichNeuronCC)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
         system = structural_simplify(sys.odesystem; fully_determined=false)

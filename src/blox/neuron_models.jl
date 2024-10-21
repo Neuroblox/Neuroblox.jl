@@ -864,37 +864,3 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 		new(p, sts[2], sts[5], sts[1], sys, namespace)
 	end
 end
-
-# Remember to scale sⱼ by N!
-struct IzhikevichNeuronCC <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
-    namespace
-	function IzhikevichNeuronCC(;name,
-							   namespace=nothing,
-							   α=0.6215,
-							   η=0.12,
-							   a=0.0077,
-							   b=-0.0062,
-							   θ=200.0,
-							   vᵣ=-200.0,
-							   wⱼ=0.0189,
-							   sⱼ=1.2308,
-							   gₛ=1.2308,
-							   eᵣ=1.0,
-							   τ=2.6)
-		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
-		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t)=0.0 w(t)=0.0 z(t)=0.0 jcn(t) [input=true]
-		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
-				D(w) ~ a*(b*V - w),
-				D(z) ~ (-1/τ)*z
-			  ]
-		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~z+sⱼ]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[3], sts[4], sts[1], sys, namespace)
-	end
-end

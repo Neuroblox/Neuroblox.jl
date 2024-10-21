@@ -5,7 +5,7 @@ using OrdinaryDiffEq
 using Plots
 
 η_dist = Cauchy(0.12, 0.02)
-N = 20
+N = 500
 w = 1
 
 blox = [IzhikevichNeuronCC(name=Symbol("Izh$i"), η=rand(η_dist), sⱼ=1.2308/N) for i in 1:N]
@@ -13,15 +13,14 @@ blox = [IzhikevichNeuronCC(name=Symbol("Izh$i"), η=rand(η_dist), sⱼ=1.2308/N
 g = MetaDiGraph()
 add_blox!.(Ref(g), blox)
 
-for i ∈ blox
-    for j ∈ blox
-        add_edge!(g, i => j; weight=w)
-        add_edge!(g, j => i; weight=w)
+for i ∈ 1:N
+    for j ∈ 1:N
+        add_edge!(g, i, j, Dict(:weight => w))
     end
 end
 
-@named sys = system_from_graph(g)
-prob = ODEProblem(sys, [], (0.0, 800.0))
-sol = solve(prob, Tsit5(), saveat=1.0)
+@named sys = system_from_graph(g; graphdynamics=true)
+prob = ODEProblem(sys, [], (0.0, 200.0))
+@time sol = solve(prob, Tsit5(), saveat=1.0)
 
-plot(sol)
+plot(meanfield_timeseries(blox, sol))
