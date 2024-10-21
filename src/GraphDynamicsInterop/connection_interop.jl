@@ -1034,3 +1034,9 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (; jcn = w * s * (V_I - V))
 end
 
+# #-------------------------
+# IzhikevichCC Network
+function get_connection(blox_src::IzhikevichNeuronCC, blox_dst::IzhikevichNeuronCC, kwargs)
+    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
+    (; conn = BasicConnection(w_val), names=[name])
+end
