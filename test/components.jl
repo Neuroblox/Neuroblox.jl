@@ -268,9 +268,9 @@ end
     sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
 
     C=30
-    W = (1 .- conj.(sol[!,"Z"]))./(1 .+ conj.(sol[!,"Z"]))
+    W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
     R = (1/(C*pi))*(W+conj.(W))/2
-    ψ = log.(sol[!,"Z"]./R)/im
+    ψ = log.(sol[!,"Z(t)"]./R)/im
 
     @test norm.(R[length(R)]) < 0.1
 end
