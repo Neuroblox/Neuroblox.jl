@@ -86,8 +86,6 @@ f
 dfsol = DataFrame(sol[ceil(Int, 101/dt):end]);
 
 # ## Estimate and plot the cross-spectral densities
-nameswitht = [n * "(t)" for n in names(dfsol)]  # this will hopefully soon become obsolete once https://github.com/SciML/SciMLBase.jl/issues/798 is fixed
-rename!(dfsol, nameswitht)
 data = Matrix(dfsol[:, idx_m]);
 # We compute the cross-spectral density by fitting a linear model of order `p` and then compute the csd analytically from the parameters of the multivariate autoregressive model
 p = 8
