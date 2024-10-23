@@ -30,3 +30,34 @@ using Test
     transition_times_non_smooth = compute_transition_times(dbs.stimulus, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
     @test all(isapprox.(transition_times_smoothed, transition_times_non_smooth))
 end
+
+@testset "DBS connections" begin
+    # Test DBS -> single AbstractNeuronBlox
+    @named dbs = DBS()
+    @named n1 = HHNeuronExciBlox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => n1, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    @test sys isa ODESystem
+
+    # Test DBS -> Adam's STN
+    @named stn = HHNeuronExci_STN_Adam_Blox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => stn, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    @test sys isa SDESystem
+
+    # Test DBS -> NeuralMassBlox
+    @named mass = JansenRit()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => mass, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    @test sys isa ODESystem
+
+    # Test DBS -> CompositeBlox
+    @named cb = CorticalBlox(namespace=:g, N_wta=2, N_exci=2, density=0.1, weight=1.0)
+    g = MetaDiGraph()
+    add_edge!(g, dbs => cb, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    @test sys isa ODESystem
+end
