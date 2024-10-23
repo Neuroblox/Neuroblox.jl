@@ -23,13 +23,14 @@ function add_edge!(g::MetaDiGraph, p::Pair; kwargs...)
     src, dest = p
     
     src_idx = find_blox(g, src)
-    dest_idx = find_blox(g, dest)
     
     if isnothing(src_idx)
         add_blox!(g, src)
         src_idx = nv(g)
     end
     
+    dest_idx = find_blox(g, dest)
+
     if isnothing(dest_idx)
         add_blox!(g, dest)
         dest_idx = nv(g)
