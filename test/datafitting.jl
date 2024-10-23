@@ -33,7 +33,12 @@ using MAT
     end
 
     # add symbolic weights
-    @parameters A[1:length(vars["pE"]["A"])] = vec(vars["pE"]["A"]) [tunable = true]
+    A = []
+    for (i, a) in enumerate(vec(vars["pE"]["A"]))
+        symb = Symbol("A$(i)")
+        push!(A, only(@parameters $symb = a))
+    end
+    untune!(A, [])   # list indices of parameters that should be set to tunable=false
     for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
         if idx[1] == idx[2]
             add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12, likely to avoid instabilities of the linear model

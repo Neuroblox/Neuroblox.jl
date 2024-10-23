@@ -17,6 +17,12 @@ function paramscoping(;kwargs...)
     return paramlist
 end
 
+function untune!(parlist, nontunable)
+    for i in nontunable
+        parlist[i] = setmetadata(parlist[i], ModelingToolkit.VariableTunable, false)
+    end
+end
+
 get_HH_exci_neurons(n::HHNeuronExciBlox) = [n]
 get_HH_exci_neurons(n) = []
 

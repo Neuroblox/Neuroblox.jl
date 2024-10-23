@@ -86,8 +86,6 @@ f
 dfsol = DataFrame(sol[ceil(Int, 101/dt):end]);
 
 # ## Estimate and plot the cross-spectral densities
-nameswitht = [n * "(t)" for n in names(dfsol)]  # this will hopefully soon become obsolete once https://github.com/SciML/SciMLBase.jl/issues/798 is fixed
-rename!(dfsol, nameswitht)
 data = Matrix(dfsol[:, idx_m]);
 # We compute the cross-spectral density by fitting a linear model of order `p` and then compute the csd analytically from the parameters of the multivariate autoregressive model
 p = 8
@@ -131,8 +129,15 @@ end
 A_prior = 0.01*randn(nr, nr)
 A_prior -= diagm(diag(A_prior))    # ensure diagonal dominance of matrix
 # Since we want to optimize these weights we turn them into symbolic parameters:
-# Add the symbolic weights to the edges and connect reegions.
-@parameters A[1:nr^2] = vec(A_prior) [tunable = true]
+# Add the symbolic weights to the edges and connect regions.
+A = []
+for (i, a) in enumerate(vec(A_prior))
+    symb = Symbol("A$(i)")
+    push!(A, only(@parameters $symb = a))
+end
+# With the function `untune!`` we can list indices of parameters whose tunable flag should be set to false.
+# For instance the first element in the second row:
+untune!(A, [4])
 for (i, idx) in enumerate(CartesianIndices(A_prior))
     if idx[1] == idx[2]
         add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => -exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed

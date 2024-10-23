@@ -28,6 +28,8 @@ end
     @named n3 = LIFNeuron(; namespace = global_ns)
     g = MetaDiGraph()
 
+    add_edge!(g, n1 => n1; weight = 1)
+    @test nv(g) == 1
     add_edge!(g, n1 => n2; weight = 1.2)
     add_edge!(g, n2 => n2; connection_rule = "psp")
     add_edge!(g, n3 => n2)

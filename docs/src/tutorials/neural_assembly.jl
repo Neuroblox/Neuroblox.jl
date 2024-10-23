@@ -10,7 +10,7 @@
 # - add a source of visual input (images) and a cortical block representing visual cortex to our model and simulate visual processing
 
 # ## Single spiking neuron from Hodgkin-Huxley model
-# ![fig1](../assets/neural_assembly_figures/1.png)
+# ![fig1](../assets/neural_assembly_1.png)
 
 # Hodgkin-Huxley (HH) formalism to describe membrane potential of a single neuron
 
@@ -60,7 +60,7 @@ fig ## to display the figure
 # Suggestion : Try different values of input current 'I_bg' and run the entire code block to see the output activity
 # ## Connecting three neurons through synapses to make a local feed-forward circuit
 
-# ![fig2](../assets/neural_assembly_figures/2.png)
+# ![fig2](../assets/neural_assembly_2.png)
 
 ## While creating a system of multiple components (neurons in this case), each component should be defined within the same namespace. So first
 ## we define a global namespace.
@@ -91,7 +91,7 @@ stackplot([nn1,nn2,nn3],sol)	## stackplot(<blox or array of blox>, sol)
 
 # ## Creating a lateral inhibition circuit (the "winner-takes-all" circuit) in superficial cortical layer
 
-# ![fig3](../assets/neural_assembly_figures/3.png)
+# ![fig3](../assets/neural_assembly_3.png)
 
 global_namespace=:g 
 N_exci = 5; ##number of excitatory neurons
@@ -143,7 +143,7 @@ stackplot(neuron_set,sol)
 # ## Creating a single cortical superficial layer block by connecting multiple WTA circuits
 
 # This model is SCORT in [1] and looks like this
-# ![fig4](../assets/neural_assembly_figures/4.png)
+# ![fig4](../assets/neural_assembly_4.png)
 
 global_namespace=:g 
 N_wta=10 ## number of WTA circuits
@@ -235,7 +235,7 @@ powerspectrumplot(CB,sol)
 # Sugestion : try changing parameters of ASC1 to generate different cortical rhythms. See how the peak shifts in the powerspectrum
 # ## Creating simulation of visual stimulus response in cortical blocks 
 
-# ![fig5](../assets/neural_assembly_figures/5.png)
+# ![fig5](../assets/neural_assembly_5.png)
 # create cortical blocks for visual area cortex (VAC), anterior cortex (AC) and ascending system block (ASC1)
 global_namespace=:g
 ## cortical blox
