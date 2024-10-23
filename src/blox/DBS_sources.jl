@@ -70,7 +70,7 @@ function square(t, f, amplitude, offset, start_time, pulse_width)
     return y
 end
 
-function detect_transitions(t, signal::Vector{T}; return_vals=false, atol=0) where T <: AbstractFloat
+function detect_transitions(t, signal::Vector{T}; atol=0) where T <: AbstractFloat
     low = minimum(signal)
     high = maximum(signal)
 
@@ -90,11 +90,7 @@ function detect_transitions(t, signal::Vector{T}; return_vals=false, atol=0) whe
     transitions_inds = trans_inds_1 .| trans_inds_2 .| trans_inds_3 .| trans_inds_4
     pushfirst!(transitions_inds, false)
 
-    if return_vals
-        return t[transitions_inds], signal[transitions_inds]
-    else
-        return t[transitions_inds]
-    end
+    return transitions_inds
 end
 
 function compute_transition_times(stimulus::Function, f , dt, tspan, start_time, pulse_width; atol=0)
@@ -104,7 +100,8 @@ function compute_transition_times(stimulus::Function, f , dt, tspan, start_time,
     # Detect single pulse transition points
     t = (start_time + 0.5 * period):dt:(start_time + 1.5 * period)
     s = stimulus.(t)
-    single_pulse = detect_transitions(t, s; return_vals=false, atol=atol)
+    transitions_inds = detect_transitions(t, s, atol=atol)
+    single_pulse = t[transitions_inds]
 
     # Calculate pulse times across all periods
     period_offsets = (-1:n_periods+1) * period

@@ -14,7 +14,9 @@ using Test
 
     @named dbs = DBS(namespace=:g, frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, start_time=start_time, smooth=smooth, offset=offset)
     stimulus = dbs.stimulus.(t)
-    transition_times1, transition_values1 = detect_transitions(t, stimulus; return_vals=true, atol=0.05)
+    transitions_inds = detect_transitions(t, stimulus; atol=0.05)
+    transition_times1 = t[transitions_inds]
+    transition_values1 = stimulus[transitions_inds]
     transition_times2 = compute_transition_times(dbs.stimulus, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
     transition_values2 = compute_transition_values(transition_times2, t, stimulus)
     @test all(isapprox.(transition_times1, transition_times2, rtol=1e-3))
