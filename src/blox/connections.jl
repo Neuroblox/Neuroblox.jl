@@ -874,10 +874,8 @@ function (bc::BloxConnector)(
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
-                    w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+    eq = sys_in.jcn ~ w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
                     (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
-
     accumulate_equation!(bc, eq)
     
     # Compare the unique namespaced names of both systems
@@ -900,10 +898,6 @@ function (bc::BloxConnector)(
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_GABA * sys_in.g_GABA * (sys_in.V - sys_in.V_I) 
-                    
-    accumulate_equation!(bc, eq)
-
     accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_GABA])
 end
 
@@ -913,9 +907,6 @@ function (bc::BloxConnector)(
     kwargs...
 )
     sys_in = get_namespaced_sys(neuron)
-
-    w = generate_weight_param(stim, neuron; kwargs...)
-    push!(bc.weights, w)
 
     t_spikes = generate_spike_times(stim)
 
