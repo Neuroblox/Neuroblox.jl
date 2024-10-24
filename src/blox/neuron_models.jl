@@ -636,8 +636,10 @@ function LIF_spike_affect!(integ, u, p, ctx)
 
     SciMLBase.add_tstop!(integ, t_refract_end)
     
+    c = 1
     for i in eachindex(u)[2:end]
-        integ.u[u[i]] += 1
+        integ.u[u[i]] += integ.p[p[c + 4]]
+        c += 1
     end
 end
 
