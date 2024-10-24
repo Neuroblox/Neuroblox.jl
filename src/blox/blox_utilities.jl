@@ -179,9 +179,9 @@ get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
 get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
 get_discrete_callbacks(blox) = []
 
-get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
-get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
-get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
+get_spike_affects(bc::BloxConnector) = bc.spike_affects
+get_spike_affects(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affects ∘ get_connector)(blox)
+get_spike_affects(blox) = Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}()
 
 get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
