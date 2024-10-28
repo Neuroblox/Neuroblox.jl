@@ -104,6 +104,7 @@ include("blox/DBS_Model_Blox_Adam_Brown.jl")
 include("blox/van_der_pol.jl")
 include("blox/ts_outputs.jl")
 include("blox/sources.jl")
+include("blox/DBS_sources.jl")
 include("blox/rl_blox.jl")
 include("blox/winnertakeall.jl")
 include("blox/subcortical_blox.jl")
@@ -222,7 +223,7 @@ export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain, DBS, detect_transitions, compute_transition_times, compute_transition_values
 export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox

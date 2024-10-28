@@ -976,3 +976,56 @@ function (bc::BloxConnector)(
     
     accumulate_equation!(bc, eq)
 end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::CompositeBlox;
+    kwargs...
+)
+    components = get_components(bloxin)
+    for comp in components
+        bc(bloxout, comp; kwargs...)
+    end
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::AbstractNeuronBlox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+    
+    eq = sys_in.I_in ~ w * sys_dbs.u
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::NeuralMassBlox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+    
+    eq = sys_in.jcn ~ w * sys_dbs.u
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::HHNeuronExci_STN_Adam_Blox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    eq = sys_in.DBS_in ~ - sys_in.V/sys_in.b + sys_dbs.u
+    accumulate_equation!(bc, eq)
+end
