@@ -35,18 +35,17 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
 
         g = MetaDiGraph()
         sblox_parts = vcat(ss, sp, ii, dp)
-        add_blox!.(Ref(g), sblox_parts)
 
-        add_edge!(g, 1, 1, :weight, -800.0)
-        add_edge!(g, 2, 1, :weight, -800.0)
-        add_edge!(g, 3, 1, :weight, -1600.0)
-        add_edge!(g, 1, 2, :weight,  800.0)
-        add_edge!(g, 2, 2, :weight, -800.0)
-        add_edge!(g, 1, 3, :weight,  800.0)
-        add_edge!(g, 3, 3, :weight, -800.0)
-        add_edge!(g, 4, 3, :weight,  400.0)
-        add_edge!(g, 3, 4, :weight, -400.0)
-        add_edge!(g, 4, 4, :weight, -200.0)
+        add_edge!(g, ss => ss; :weight => -800.0)
+        add_edge!(g, sp => ss; :weight => -800.0)
+        add_edge!(g, ii => ss; :weight => -1600.0)
+        add_edge!(g, ss => sp; :weight =>  800.0)
+        add_edge!(g, sp => sp; :weight => -800.0)
+        add_edge!(g, ss => ii; :weight =>  800.0)
+        add_edge!(g, ii => ii; :weight => -800.0)
+        add_edge!(g, dp => ii; :weight =>  400.0)
+        add_edge!(g, ii => dp; :weight => -400.0)
+        add_edge!(g, dp => dp; :weight => -200.0)
 
         # Construct a BloxConnector object from the graph
         # containing all connection equations from lower levels and this level.

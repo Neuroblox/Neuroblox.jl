@@ -390,11 +390,8 @@ end
 # additional dispatch to connect to hemodynamic observer blox
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
-    bloxin::ObserverBlox; 
-    weight=1,
-    delay=0,
-    density=0.1
-)
+    bloxin::ObserverBlox;
+    kwargs...)
 
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
@@ -428,8 +425,7 @@ end
 function (bc::BloxConnector)(
     bloxout::StimulusBlox,
     bloxin::NeuralMassBlox;
-    weight=1
-)
+    kwargs...)
 
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
