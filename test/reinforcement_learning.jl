@@ -1,8 +1,6 @@
 using Neuroblox
 using OrdinaryDiffEq
 using Test
-using Graphs
-using MetaGraphs
 using DataFrames
 using CSV
 using ModelingToolkit: getp
