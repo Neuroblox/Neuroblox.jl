@@ -1,5 +1,6 @@
 using Neuroblox
 using Neuroblox: get_adjacency
+using Graphs
 using Test
 using SparseArrays
 
@@ -27,7 +28,7 @@ end
     A[2,1] = [0 1 ; 1 1]
     A[1,2] = [0 1 ; 1 1]
 
-    @named cb1 = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, connection_matrices=A, weight=1)
+    @named cb1 = CorticalBlox(N_wta=2, N_exci=2, connection_matrices=A, weight=1)
 
     adj = get_adjacency(cb1) 
 
