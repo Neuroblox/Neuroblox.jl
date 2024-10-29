@@ -1,8 +1,6 @@
 using Neuroblox
 using OrdinaryDiffEq
 using Test
-using Graphs
-using MetaGraphs
 using DataFrames
 using CSV
 using ModelingToolkit: getp
@@ -23,8 +21,7 @@ using ModelingToolkit: getp
     @named AS = GreedyPolicy(namespace=global_ns, t_decision=0.31*t_trial)
 
     fn = joinpath(@__DIR__, "../examples/image_example.csv")
-    data = CSV.read(fn, DataFrame)
-    @named stim = ImageStimulus(data[1:N_trials,:]; namespace=global_ns, t_stimulus=0.4*t_trial, t_pause=0.6*t_trial)
+    @named stim = ImageStimulus(fn; namespace=global_ns, t_stimulus=0.4*t_trial, t_pause=0.6*t_trial)
 
     bloxs = [VAC, PFC, STR_L, STR_R, SNcb, TAN_pop, AS, stim]
     d = Dict(b => i for (i,b) in enumerate(bloxs))
