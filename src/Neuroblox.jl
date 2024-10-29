@@ -1,5 +1,7 @@
 module Neuroblox
 
+import Base: merge
+
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
@@ -38,7 +40,7 @@ using ModelingToolkit: get_namespace, get_systems, isparameter,
                     AbstractODESystem, VariableTunable, getp
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
-using Symbolics: @register_symbolic, getdefaultval
+using Symbolics: @register_symbolic, getdefaultval, get_variables
 
 using CSV: read
 using DataFrames
@@ -117,6 +119,7 @@ include("blox/blox_utilities.jl")
 include("blox/ping_neuron_examples.jl")
 include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
 include("Neurographs.jl")
+include("adjacency.jl")
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -206,6 +209,9 @@ function freeenergy! end
 function powerspectrumplot end
 function powerspectrumplot! end
 
+function adjacency end
+function adjacency! end
+
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
         print_license()
@@ -242,7 +248,7 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export PYR_Izh, QIF_PING_NGNMM
-export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!, adjacency, adjacency!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color

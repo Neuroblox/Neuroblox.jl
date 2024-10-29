@@ -4,7 +4,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, get_adjacency
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
@@ -13,8 +13,45 @@ using DSP
 using Statistics: mean, std
 
 
-import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!
+import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, 
+                frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!,
+                adjacency, adjacency!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
+
+@recipe(Adjacency, blox_or_graph) do scene
+    Theme(
+        colormap = :vanimo
+    )
+end
+
+argument_names(::Type{<: Adjacency}) = (:blox_or_graph)
+
+function Makie.plot!(p::Adjacency)
+    blox_or_graph = p.blox_or_graph[]
+    adj = get_adjacency(blox_or_graph)
+
+    N = length(adj.names)
+
+    ax = current_axis()
+    ax.xticks = (Base.OneTo(N), String.(adj.names))
+    ax.yticks = (Base.OneTo(N), String.(adj.names))
+    ax.xticklabelrotation = pi/2
+
+    hidexdecorations!(ax, ticklabels = false, ticks = false)
+    hideydecorations!(ax, ticklabels = false, ticks = false)
+
+    X, Y, D = findnz(adj.matrix)
+
+    heatmap!(p, X, Y, D; colormap = p.colormap[])
+
+    idxs = Tuple.(findall(iszero, adj.matrix))
+    x_zero = first.(idxs)
+    y_zero = last.(idxs)
+
+    #heatmap!(p, x_zero, y_zero, fill(0, length(x_zero)); color=:black)
+
+    return p
+end
 
 @recipe(FreeEnergy, spDCMresults) do scene
     Theme(
