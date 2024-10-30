@@ -5,6 +5,7 @@ mutable struct BloxConnector
     discrete_callbacks
     spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
     learning_rules
+    adjacency
 
     BloxConnector() = new(Equation[], Num[], Num[], Pair{Any, Vector{Equation}}[], Dict{Symbol, Vector{Num}}(), Dict{Num, AbstractLearningRule}())
 
@@ -20,8 +21,9 @@ mutable struct BloxConnector
         # and this spike affects synaptic parameters of every destination Blox that it connects to.
         spike_affects = mapreduce(get_spike_affects, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
+        adjacency = mapreduce(get_adjacency, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, spike_affects, learning_rules)
+        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules, adjacency)
     end
 end
 
@@ -39,6 +41,19 @@ function accumulate_spike_affects!(bc::BloxConnector, name_blox_src, states_affe
     else
         bc.spike_affects[name_blox_src] = (states_affect, params_affect)
     end
+end
+
+function add_adjacency_edge!(bc::BloxConnector, blox_src, blox_dest, weight)
+
+    n_src = namespaced_nameof(blox_src)
+    n_dest = namespaced_nameof(blox_dest)
+
+    adj = get_adjacency(bc)
+    src_idx = findfirst(x -> isequal(n_src, x), adj.names)
+    dest_idx = findfirst(x -> isequal(n_dest, x), adj.names)
+
+    weight_value = substitute(weight, map(x -> x => ModelingToolkit.getdefault(x), Symbolics.get_variables(weight)))
+    adj.matrix[src_idx, dest_idx] = weight_value
 end
 
 get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.eqs)
@@ -170,6 +185,8 @@ function (bc::BloxConnector)(
     end
 
     accumulate_equation!(bc, eq)
+
+    add_adjacency_edge!(bc, HH_out, HH_in, get_weight(kwargs, namespaced_nameof(HH_out), namespaced_nameof(HH_in)))
 end
 
 function (bc::BloxConnector)(
@@ -981,5 +998,58 @@ function (bc::BloxConnector)(
     x = namespace_expr(bloxout.output, sys_out)
     eq = sys_in.jcn ~ w*x
     
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::CompositeBlox;
+    kwargs...
+)
+    components = get_components(bloxin)
+    for comp in components
+        bc(bloxout, comp; kwargs...)
+    end
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::AbstractNeuronBlox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+    
+    eq = sys_in.I_in ~ w * sys_dbs.u
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::NeuralMassBlox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
+    push!(bc.weights, w)
+    
+    eq = sys_in.jcn ~ w * sys_dbs.u
+    accumulate_equation!(bc, eq)
+end
+
+function (bc::BloxConnector)(
+    bloxout::DBS,
+    bloxin::HHNeuronExci_STN_Adam_Blox;
+    kwargs...
+)
+    sys_dbs = get_namespaced_sys(bloxout)
+    sys_in = get_namespaced_sys(bloxin)
+    
+    eq = sys_in.DBS_in ~ - sys_in.V/sys_in.b + sys_dbs.u
     accumulate_equation!(bc, eq)
 end

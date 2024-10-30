@@ -1,13 +1,3 @@
-function adjmatrixfromdigraph(g::MetaDiGraph)
-    myadj = map(Num, adjacency_matrix(g))
-    for edge in edges(g)
-        s = src(edge)
-        d = dst(edge)
-        myadj[s,d] = get_prop(g, edge, :weight)
-    end
-    return myadj
-end
-
 function find_blox(g::MetaDiGraph, blox)
     for v in vertices(g)
         b = get_prop(g, v, :blox)
@@ -257,56 +247,3 @@ function learning_rules_from_graph(g::MetaDiGraph)
     return d
 end
 
-## Create Learning Loop
-function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
-    # Create LearningBlox for each Region
-    regions = []
-    for r in eachindex(ROIs)
-        push!(regions, 
-            LearningBlox(
-                ω=parameters[:ω][r], d=parameters[:d][r], 
-                prange=vec(datasets[r][1]), pdata=vec(datasets[r][2]), 
-                name=ROIs[r]
-            )
-        )
-    end
-    # Connect Regions through an External Connection Weight
-    @parameters c_ext=c_ext
-    for r in eachindex(ROIs)
-        regions[r].adj[size(regions[r].adj, 1), size(regions[r].adj, 2)] = c_ext*regions[1:end .!= r, :][1].sys[3].x
-    end
-    # Update Adjacency Matrix to Incorporate External Connections
-    eqs = []
-    for r in eachindex(ROIs)
-        for s in eachindex(regions[r].sys) 
-            push!(eqs, regions[r].sys[s].jcn ~ sum(regions[r].adj[:, s]))
-        end
-    end
-    # Compose Loop
-    sys = []
-    for r in eachindex(ROIs)
-        sys = vcat(sys, regions[r].sys)
-    end
-    # Return One ODESystem
-    return ODESystem(eqs, systems=sys, name=name)
-end
-
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}; connection_rule="basic") where {T}
-    for i = 1:size(adj_matrix, 1)
-        for j = 1:size(adj_matrix, 2)
-            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :connection_rule => connection_rule))
-            end
-        end
-    end
-end
-
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}, delay_matrix) where {T}
-    for i = 1:size(adj_matrix, 1)
-        for j = 1:size(adj_matrix, 2)
-            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :delay => delay_matrix[i, j]))
-            end
-        end
-    end
-end
