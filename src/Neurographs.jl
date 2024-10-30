@@ -76,11 +76,11 @@ end
 generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
 
 function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
-    spike_affect_states = get_spike_affects(bc)
+    spike_affects = get_spike_affects(bc)
     name_blox = namespaced_nameof(blox)
     sys = get_namespaced_sys(blox)
 
-    states_affect, params_affect = get(spike_affect_states, name_blox, (Num[], Num[]))
+    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
 
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
