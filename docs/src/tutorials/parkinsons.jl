@@ -31,15 +31,22 @@ using CairoMakie
 ## Convert time units from seconds to milliseconds
 τ_factor = 1000
 
-## Define Jansen-Rit neural masses for different brain regions
-@named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
-@named GPE = JansenRit(τ=0.04*τ_factor, cortical=false)  # all default subcortical except τ
-@named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
-@named GPI = JansenRit(cortical=false)  # default parameters subcortical Jansen Rit blox
-@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5)
+## Create the cortical oscillators
+@named PY  = JansenRit(cortical=true)  ## default parameters cortical Jansen Rit blox
 @named EI  = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=5, r=5)
-@named PY  = JansenRit(cortical=true)  # default parameters cortical Jansen Rit blox
 @named II  = JansenRit(τ=2.0*τ_factor, H=60/τ_factor, λ=5, r=5)
+
+## Create the striatal oscillators
+@named D1 = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
+@named D2 = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
+@named FSI = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
+
+## Create the remaining subcortical oscillators
+@named STH = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
+@named GPE = JansenRit(cortical=false) ## default parameters subcortical Jansen Rit blox
+@named GPI = JansenRit(cortical=false)  ## default parameters subcortical Jansen Rit blox
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5)
+
 
 #Here, we've created eight Jansen-Rit neural masses representing different brain regions involved in Parkinson's disease. The `τ_factor` is used to convert time units from seconds (as in the original paper) to milliseconds (Neuroblox's default time unit).
 
@@ -51,31 +58,46 @@ using CairoMakie
 
 g = MetaDiGraph() ## define an empty graph
 
-params = @parameters C_Cor=60 C_BG_Th=60 C_Cor_BG_Th=5 C_BG_Th_Cor=5 # define common connection parameters
+params = @parameters C_Cor=60 C_BGTh=60 C_Cor➡BGTh=5 C_BGTh➡Cor=5 # define common connection parameters
+## additional paramters for healthy version
+##params = @parameters C_Cor=3 C_BGTh=3 C_Cor➡BGTh=9.75 C_BGTh➡Cor=9.75 # define common connection parameters
 
 ## Create connections
-add_edge!(g, GPE => Str; weight = -0.5*C_BG_Th)
-add_edge!(g, GPE => GPE; weight = -0.5*C_BG_Th)
-add_edge!(g, GPE => STN; weight = C_BG_Th)
-add_edge!(g, STN => GPE; weight = -0.5*C_BG_Th)
-add_edge!(g, STN => PY; weight = C_Cor_BG_Th)
-add_edge!(g, GPI => GPE; weight = -0.5*C_BG_Th)
-add_edge!(g, GPI => STN; weight = C_BG_Th)
-add_edge!(g, Th => GPI; weight = -0.5*C_BG_Th)
-add_edge!(g, EI => Th; weight = C_BG_Th_Cor)
-add_edge!(g, EI => PY; weight = 6*C_Cor)
-add_edge!(g, PY => EI; weight = 4.8*C_Cor)
-add_edge!(g, PY => II; weight = -1.5*C_Cor)
-add_edge!(g, II => PY; weight = 1.5*C_Cor)
-add_edge!(g, II => II; weight = 3.3*C_Cor)
-add_edge!(g, Str => Str; weight = -0.5*C_BG_Th)
-add_edge!(g, Str => GPE; weight = C_BG_Th)
-add_edge!(g, GPE => Str; weight = -0.5*C_BG_Th)
-add_edge!(g, GPE => Th; weight = C_Cor_BG_Th)
-add_edge!(g, STN => Str; weight = -0.5*C_BG_Th)
-add_edge!(g, STN => GPE; weight = C_BG_Th)
-add_edge!(g, GPI => STN; weight = -0.5*C_BG_Th)
-add_edge!(g, GPI => GPI; weight = C_BG_Th_Cor)
+# Values come from Table 2, signs come from Figure 1
+
+## thalamocortical connection
+add_edge!(g, Th => EI; weight = C_BGTh➡Cor)
+
+## remaining cortical → subcortical connections
+add_edge!(g, PY => STH; weight = C_Cor➡BGTh)
+add_edge!(g, PY => D1; weight = C_BGTh➡Cor)
+add_edge!(g, PY => D2; weight = C_BGTh➡Cor)
+add_edge!(g, PY => FSI; weight = C_BGTh➡Cor)
+
+## basal ganglia ↔ thalamus connections
+add_edge!(g, STH => GPE; weight = C_BGTh)
+add_edge!(g, STH => GPI; weight = C_BGTh)
+add_edge!(g, GPE => STH; weight = -0.5*C_BGTh)
+add_edge!(g, GPE => GPE; weight = -0.5*C_BGTh)
+add_edge!(g, GPE => GPI; weight = -0.5*C_BGTh)
+add_edge!(g, GPE => FSI; weight = -0.5*C_BGTh)
+add_edge!(g, FSI => D1; weight = -0.5*C_BGTh)
+add_edge!(g, FSI => D2; weight = -0.5*C_BGTh)
+add_edge!(g, FSI => FSI; weight = -0.5*C_BGTh)
+add_edge!(g, D1 => D1; weight = -0.5*C_BGTh)
+add_edge!(g, D1 => D2; weight = -0.5*C_BGTh)
+add_edge!(g, D1 => GPI; weight = -0.5*C_BGTh)
+add_edge!(g, D2 => D2; weight = -0.5*C_BGTh)
+add_edge!(g, D2 => D1; weight = -0.5*C_BGTh)
+add_edge!(g, D2 => GPE; weight = -0.5*C_BGTh)
+add_edge!(g, GPI => Th; weight = -0.5*C_BGTh)
+
+## corticocortical connections
+add_edge!(g, PY => EI; weight = 6*C_Cor)
+add_edge!(g, PY => II; weight = 1.5*C_Cor)
+add_edge!(g, EI => PY; weight = 4.8*C_Cor)
+add_edge!(g, II => PY; weight = -1.5*C_Cor)
+add_edge!(g, II => II; weight = -3.3*C_Cor)
 
 # ## Creating the Model
 
