@@ -14,16 +14,17 @@ mutable struct BloxConnector
         weights = mapreduce(get_weight_parameters, vcat, bloxs)
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
-        # spike_affect_states holds a Dictionary that maps 
-        # the name of a source Blox to the states of a destination Blox 
-        # that are affected by a continuous callback of the source Blox.
+        # spike_affects holds a Dictionary that maps 
+        # the name of a source Blox to a Tuple of (states, parameters) of a destination Blox. 
+        # The states are affected by a discrete callback of the source Blox 
+        # and the parameters determine the amount of this affect like `states .+= parameters`.
         # Typically this is used when a source Blox spikes, so its Voltage state crosses a threshold,
         # and this spike affects synaptic parameters of every destination Blox that it connects to.
         spike_affects = mapreduce(get_spike_affects, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
         adjacency = mapreduce(get_adjacency, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules, adjacency)
+        new(eqs, weights, delays, discrete_callbacks, spike_affects, learning_rules, adjacency)
     end
 end
 
