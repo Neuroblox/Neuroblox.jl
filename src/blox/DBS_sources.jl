@@ -7,9 +7,9 @@ struct DBS <: StimulusBlox
     function DBS(;
         name,
         namespace=nothing,
-        frequency=130.0,
-        amplitude=100.0,
-        pulse_width=0.15,
+        frequency=0.130,
+        amplitude=2.5,
+        pulse_width=0.066,
         offset=0.0,
         start_time=0.0,
         smooth=1e-4
@@ -35,6 +35,84 @@ struct DBS <: StimulusBlox
         sys = System(eqs, t, sts, p; name=name)
         
         new(p, sys, namespace, stimulus)
+    end
+end
+
+
+struct DBSProtocol <: StimulusBlox
+    params::Vector{Num}
+    odesystem::ODESystem
+    namespace::Union{Symbol, Nothing}
+    stimulus::Function
+    pulses_per_burst::Int
+    bursts_per_block::Int
+
+    function DBSProtocol(;
+        name,
+        namespace=nothing,
+        frequency=130.0,
+        amplitude=100.0,
+        pulse_width=0.15,
+        offset=0.0,
+        pulses_per_burst=10,
+        bursts_per_block=12,
+        pre_block_time=200.0,
+        inter_burst_time=200.0,
+        pulse_start_time=0.0,
+        smooth=1e-4
+    )
+        # Promote numerical inputs
+        frequency, amplitude, pulse_width, offset, pre_block_time, inter_burst_time = 
+            promote(frequency, amplitude, pulse_width, offset, pre_block_time, inter_burst_time)
+        
+        # Calculate timing parameters
+        pulse_period = 1/frequency  # Time between pulses in ms
+        burst_duration = pulse_period * pulses_per_burst  # Duration of each burst
+        
+        # Create closure with all necessary parameters
+        let frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, 
+            offset=offset, smooth=smooth, pre_block_time=pre_block_time,
+            burst_duration=burst_duration, inter_burst_time=inter_burst_time,
+            bursts_per_block=bursts_per_block, pulse_start_time=pulse_start_time
+
+            protocol_stimulus = t -> begin
+                # Adjust time relative to protocol start and pre-block period
+                t_adjusted = t - pre_block_time
+                burst_plus_gap = burst_duration + inter_burst_time
+                current_burst = floor(t_adjusted / burst_plus_gap)
+                t_within_burst_cycle = t_adjusted - current_burst * burst_plus_gap
+
+                # Nested (compatible with symbolics) conditions for protocol timing:
+                ifelse(t < pre_block_time,  # Before pre-block period
+                    offset,
+                    ifelse(current_burst >= bursts_per_block,  # After all bursts complete
+                        offset,
+                        ifelse(t_within_burst_cycle >= burst_duration - pulse_width/2,  # Between bursts
+                            offset,
+                            ifelse(smooth == 0,  # Generate pulse
+                                square(t_within_burst_cycle, frequency, amplitude, offset, pulse_start_time, pulse_width),
+                                square(t_within_burst_cycle, frequency, amplitude, offset, pulse_start_time, pulse_width, smooth)
+                            )
+                        )
+                    )
+                )
+            end
+
+            p = paramscoping(
+                frequency=frequency,
+                amplitude=amplitude,
+                pulse_width=pulse_width,
+                offset=offset,
+                pre_block_time=pre_block_time,
+                inter_burst_time=inter_burst_time
+            )
+
+            sts = @variables u(t) [output = true]
+            eqs = [u ~ protocol_stimulus(t)]
+            sys = System(eqs, t, sts, p; name=name)
+            
+            new(p, sys, namespace, protocol_stimulus, pulses_per_burst, bursts_per_block)
+        end
     end
 end
 
@@ -127,4 +205,18 @@ function compute_transition_values(transition_times, t, signal)
     transition_values = signal[indices]
     
     return transition_values
+end
+
+function get_protocol_duration(dbs::DBSProtocol)
+    # Access parameters in correct order based on paramscoping
+    frequency = ModelingToolkit.getdefault(dbs.params[1])
+    pre_block_time = ModelingToolkit.getdefault(dbs.params[5])
+    inter_burst_time = ModelingToolkit.getdefault(dbs.params[6])
+    
+    # Calculate timing components
+    pulse_period = 1/frequency
+    burst_duration = dbs.pulses_per_burst * pulse_period
+    block_duration = dbs.bursts_per_block * (burst_duration + inter_burst_time) - inter_burst_time
+    
+    return convert(Float64, pre_block_time + block_duration)
 end
