@@ -1,10 +1,10 @@
-# # Building a model of Parkinson's disease using Neural Mass models
+# # Building a model of the Basal Ganglia using Neural Mass models
 
 # In this example, we'll construct a model of Parkinson's disease using eight Jansen-Rit Neural Mass Models, based on the work of Liu et al. (2020) [1].
 
 # ## The Jansen-Rit Neural Mass Model
 
-# The Jansen-Rit model [2] is another popular neural mass model that, like the Wilson-Cowan model from [Example 1](#example-1-creating-a-simple-neural-circuit), describes the average activity of neural populations. Each Jansen-Rit unit is defined by the following differential equations:
+# The Jansen-Rit model [2] is another popular neural mass model that, like the [Wilson-Cowan model from the Getting Started](@ref getting_started_julia), describes the average activity of neural populations. Each Jansen-Rit unit is defined by the following differential equations:
 
 # ```math
 # \begin{align}
@@ -14,8 +14,6 @@
 # ```
 
 # where $x$ represents the average postsynaptic membrane potential of the neural population, $y$ is an auxiliary variable, $\tau$ is the membrane time constant, $H$ is the maximum postsynaptic potential amplitude, $\lambda$ determines the maximum firing rate, and $\sum{jcn}$ represents the sum of all synaptic inputs to the population. The sigmoid function $S(x)$ models the population's firing rate response to input and is defined as:
-
-
 # ```math
 # S(x) = \frac{1}{1 + \text{exp}(-rx)}
 # ```
