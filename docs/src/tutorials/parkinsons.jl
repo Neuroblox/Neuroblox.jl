@@ -46,7 +46,7 @@ using CairoMakie
 # ## Building the Circuit
 
 # Now, let's create a graph representing our brain circuit. The nodes on this graph are the neural mass models defined aboe and the edges are the connections between the nodes based on the known anatomy of the basal ganglia-thalamocortical circuit.
-# As an alternative to creating edges with an adjacency matrix, here we demonstrate a different approach by adding edges one by one. In this case, we set the connections specified in Table 2 of Liu et al. [1], although we only implement a subset of the nodes and edges to describe a simplified version of the model.
+# We define the connections specified in Table 2 of Liu et al. [1], although we only implement a subset of the nodes and edges to describe a simplified version of the model.
 # Our connections share some common parameters which we define here, both as symbols and values, and use them as expressions for the weight of each connection :
 
 g = MetaDiGraph() ## define an empty graph
