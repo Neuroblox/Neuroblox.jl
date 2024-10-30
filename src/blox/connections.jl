@@ -3,7 +3,7 @@ mutable struct BloxConnector
     weights::Vector{Num}
     delays::Vector{Num}
     discrete_callbacks
-    spike_affect_states::Dict{Symbol, Vector{Num}}
+    spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
     learning_rules
     adjacency
 
@@ -14,16 +14,17 @@ mutable struct BloxConnector
         weights = mapreduce(get_weight_parameters, vcat, bloxs)
         delays = mapreduce(get_delay_parameters, vcat, bloxs)
         discrete_callbacks = mapreduce(get_discrete_callbacks, vcat, bloxs)
-        # spike_affect_states holds a Dictionary that maps 
-        # the name of a source Blox to the states of a destination Blox 
-        # that are affected by a continuous callback of the source Blox.
+        # spike_affects holds a Dictionary that maps 
+        # the name of a source Blox to a Tuple of (states, parameters) of a destination Blox. 
+        # The states are affected by a discrete callback of the source Blox 
+        # and the parameters determine the amount of this affect like `states .+= parameters`.
         # Typically this is used when a source Blox spikes, so its Voltage state crosses a threshold,
         # and this spike affects synaptic parameters of every destination Blox that it connects to.
-        spike_affect_states = mapreduce(get_spike_affect_states, merge, bloxs)
+        spike_affects = mapreduce(get_spike_affects, merge, bloxs)
         learning_rules = mapreduce(get_weight_learning_rules, merge, bloxs)
         adjacency = mapreduce(get_adjacency, merge, bloxs)
 
-        new(eqs, weights, delays, discrete_callbacks, spike_affect_states, learning_rules, adjacency)
+        new(eqs, weights, delays, discrete_callbacks, spike_affects, learning_rules, adjacency)
     end
 end
 
@@ -33,11 +34,13 @@ function accumulate_equation!(bc::BloxConnector, eq)
     bc.eqs[idx] = bc.eqs[idx].lhs ~ bc.eqs[idx].rhs + eq.rhs
 end
 
-function accumulate_spike_affect_states!(bc::BloxConnector, name_blox_src, states_dst)
-    if haskey(bc.spike_affect_states, name_blox_src)
-        append!(bc.spike_affect_states[name_blox_src], states_dst)
+function accumulate_spike_affects!(bc::BloxConnector, name_blox_src, states_affect, params_affect)
+    if haskey(bc.spike_affects, name_blox_src)
+        spike_affects = bc.spike_affects[name_blox_src]
+        append!(spike_affects[1], states_affect)
+        append!(spike_affects[2], params_affect)
     else
-        bc.spike_affect_states[name_blox_src] = states_dst
+        bc.spike_affects[name_blox_src] = (states_affect, params_affect)
     end
 end
 
@@ -877,18 +880,16 @@ function (bc::BloxConnector)(
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_AMPA * sys_in.g_AMPA * (sys_in.V - sys_in.V_E) + 
-                    w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
+    eq = sys_in.jcn ~ w * sys_out.S_NMDA * sys_in.g_NMDA * (sys_in.V - sys_in.V_E) / 
                     (1 + sys_in.Mg * exp(-0.062 * sys_in.V) / 3.57)
-
     accumulate_equation!(bc, eq)
     
     # Compare the unique namespaced names of both systems
     if nameof(sys_out) == nameof(sys_in)
         # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x])
+        accumulate_spike_affects!(bc, nameof(sys_out), [sys_in.S_AMPA, sys_in.x], [w, w])
     else
-        accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_AMPA])
+        accumulate_spike_affects!(bc, nameof(sys_out), [sys_in.S_AMPA], [w])
     end
 end
 
@@ -903,11 +904,7 @@ function (bc::BloxConnector)(
     w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
-    eq = sys_in.jcn ~ w * sys_in.S_GABA * sys_in.g_GABA * (sys_in.V - sys_in.V_I) 
-                    
-    accumulate_equation!(bc, eq)
-
-    accumulate_spike_affect_states!(bc, nameof(sys_out), [sys_in.S_GABA])
+    accumulate_spike_affects!(bc, nameof(sys_out), [sys_in.S_GABA], [w])
 end
 
 function (bc::BloxConnector)(
@@ -916,9 +913,6 @@ function (bc::BloxConnector)(
     kwargs...
 )
     sys_in = get_namespaced_sys(neuron)
-
-    w = generate_weight_param(stim, neuron; kwargs...)
-    push!(bc.weights, w)
 
     t_spikes = generate_spike_times(stim)
 
