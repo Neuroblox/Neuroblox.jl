@@ -260,17 +260,12 @@ end
 
 function (c::BasicConnection)(sys_src::Subsystem{LIFExciNeuron},
                               sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    w = c.weight
-    (; S_AMPA, g_AMPA, V, V_E, g_NMDA, Mg) = sys_dst
-    (; S_NMDA) = sys_src
-    (; jcn = w * (S_AMPA * g_AMPA * (V - V_E) + S_NMDA * g_NMDA * (V - V_E) / (1 + Mg * exp(-0.062 * V) / 3.57)))
+    (; jcn = 0.0)
 end
 
-function (c::BasicConnection)(sys_src::Subsystem{LIFInhNeuron},
-                              sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    w = c.weight
-    (; S_GABA, g_GABA, V, V_I) = sys_dst
-    (;jcn = w * S_GABA * g_GABA * (V - V_I))
+function (c::BasicConnection)(::Subsystem{LIFInhNeuron},
+                              ::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
+    (; jcn = 0.0)
 end
 
 struct SpikeAffectEventBuilder
@@ -284,6 +279,7 @@ struct SpikeAffectEvent{i_src, i_LIFInh, i_LIFExci}
     j_dsts_inh::Vector{Int}
     j_dsts_exci::Vector{Int}
 end
+
 function (ev::SpikeAffectEventBuilder)(index_map)
     (i_src, j_src) = index_map[ev.idx_src]
     i_inh, j_dsts_inh = let v = ev.idx_dsts_inh
@@ -315,14 +311,18 @@ end
 
 
 
+
 function GraphDynamics.apply_discrete_event!(integrator,
                                             states::NTuple{Len, Any},
                                             params::NTuple{Len, Any},
-                                            _,
+                                            connection_matrices,
                                             t,
                                             ev::SpikeAffectEvent{i_src, i_dst_inh, i_dst_exci}
                                              ) where {i_src, i_dst_inh, i_dst_exci, Len}
     (; j_src, j_dsts_inh, j_dsts_exci) = ev
+
+    nc = connection_index(BasicConnection, connection_matrices)
+    
     params_src = params[i_src][j_src]
     @reset params_src.t_refract_end = t + params_src.t_refract_duration
     @reset params_src.is_refractory = 1
@@ -334,22 +334,39 @@ function GraphDynamics.apply_discrete_event!(integrator,
     states[i_src][:V, j_src] = params_src.V_reset
     if (states_src isa SubsystemStates{LIFExciNeuron}) && (j_src ∈ j_dsts_exci)
         # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        states[i_src][:x, j_src] += 1
+        w = connection_matrices[nc][i_src, i_src][j_src, j_src].weight
+        states[i_src][:x, j_src] += w
     end
     
     if states_src isa SubsystemStates{LIFExciNeuron}
-        !isnothing(i_dst_inh) && for j_dst ∈ j_dsts_inh
-            states[i_dst_inh][:S_AMPA, j_dst] += 1
+        if !isnothing(i_dst_inh)
+            M = connection_matrices[nc][i_src, i_dst_inh]
+            for j_dst ∈ j_dsts_inh
+                w = M[j_src, j_dst].weight
+                states[i_dst_inh][:S_AMPA, j_dst] += w
+            end
         end
-        !isnothing(i_dst_exci) && for j_dst ∈ j_dsts_exci
-            states[i_dst_exci][:S_AMPA, j_dst] += 1
+        if !isnothing(i_dst_exci)
+            M = connection_matrices[nc][i_src, i_dst_exci]
+            for j_dst ∈ j_dsts_exci
+                w = M[j_src, j_dst].weight
+                states[i_dst_exci][:S_AMPA, j_dst] += w
+            end
         end
     elseif states_src isa SubsystemStates{LIFInhNeuron}
-        !isnothing(i_dst_inh) && for j_dst ∈ j_dsts_inh
-            states[i_dst_inh][:S_GABA, j_dst] += 1
+        if !isnothing(i_dst_inh)
+            M = connection_matrices[nc][i_src, i_dst_inh]
+            for j_dst ∈ j_dsts_inh
+                w = M[j_src, j_dst].weight
+                states[i_dst_inh][:S_GABA, j_dst] += w
+            end
         end
-        !isnothing(i_dst_exci) && for j_dst ∈ j_dsts_exci
-            states[i_dst_exci][:S_GABA, j_dst] += 1
+        if !isnothing(i_dst_exci)
+            M = connection_matrices[nc][i_src, i_dst_exci]
+            for j_dst ∈ j_dsts_exci
+                w = M[j_src, j_dst].weight
+                states[i_dst_exci][:S_GABA, j_dst] += w
+            end
         end
     else
         error("this should be unreachable")
