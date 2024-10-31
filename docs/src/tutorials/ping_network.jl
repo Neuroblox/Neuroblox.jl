@@ -60,6 +60,7 @@ g_EI = 0.8; ## excitatory-inhibitory connection weight, manually tuned from valu
 # Finally, setup the driving currents. All neurons receive a base external current, and the inhibitory and driven excitatory populations receive a second external stimulus current.
 # The undriven excitatory neurons receive a small addition to the base current in lieu of the stochastic current in the original implementation.
 # There is also an external inhibitory bath for the inhibitory neurons - for the importance of this bath see the SI Appendix of Börgers et al. [1].
+# These currents are specified as distributions using the syntax from [Distributions.jl.](https://juliastats.org/Distributions.jl/stable/starting/) The advantage to this is that a distribution can be given to a call of ``rand()`` and the random number will be drawn from the specified distribution. We'll use this call during the neuron creation step below.
 
 I_base = Normal(0, 0.1) ## base external current for all neurons
 I_driveE = Normal(μ_E, σ_E) ## External current for driven excitatory neurons
@@ -70,7 +71,7 @@ I_bath = -0.7; ## External inhibitory bath for inhibitory neurons - value from p
 # # Creating a network in Neuroblox
 # Creating and running a network of neurons in Neuroblox consists of three steps: defining the neurons, defining the graph of connections between the neurons, and simulating the system represented by the graph.
 
-# ## Define the neurons
+# ### Define the neurons
 # The neurons from Börgers et al. [1] are implemented in Neuroblox as `PINGNeuronExci` and `PINGNeuronInhib`. We can specify their initial current drives and create the neurons as follows:
 
 exci_driven = [PINGNeuronExci(name=Symbol("ED$i"), I_ext=rand(I_driveE) + rand(I_base)) for i in 1:NE_driven] ## In-line loop to create the driven excitatory neurons, named ED1, ED2, etc.
@@ -78,7 +79,7 @@ exci_other  = [PINGNeuronExci(name=Symbol("EO$i"), I_ext=rand(I_base) + rand(I_u
 exci        = [exci_driven; exci_other] ## Concatenate the driven and undriven excitatory neurons into a single vector for convenience
 inhib       = [PINGNeuronInhib(name=Symbol("ID$i"), I_ext=rand(I_driveI) + rand(I_base) + I_bath) for i in 1:NI_driven]; ## In-line loop to create the inhibitory neurons, named ID1, ID2, etc.
 
-# ## Define the graph of network connections
+# ### Define the graph of network connections
 # This portion illustrates how we go about creating a network of neuronal connections.
 
 g = MetaDiGraph() ## Initialize the graph
@@ -98,7 +99,7 @@ for ni1 ∈ inhib
     end
 end
 
-# ## Alternative graph creation
+# ### Alternative graph creation
 # If you are creating a very large network of neurons, it may be more efficient to add all of the nodes first and then all of the edges via an adjacency matrix.
 # To illustrate this, here is an alternative to the previous block that will initialize the same graph. Just uncomment this code and use it to replace the code from the section above.
 
@@ -124,8 +125,11 @@ end
 ## Add all the edges to the graph
 ##create_adjacency_edges!(g, adj)
 
-# ## Simulate the network
+# If you'd like to try out this graph creation, simply uncomment these lines and replace the block above. This is typically more efficient for very large networks (e.g., 1000+ neurons).
+
+# ### Simulate the network
 # Now that we have the neurons and the graph, we can simulate the network. We use the `system_from_graph` function to create a system of ODEs from the graph and then solve it using the DifferentialEquations.jl package, but for performance scaling reasons we will use the experimental option `graphdynamics=true` which uses a separate compilation backend called [GraphDynamics.jl](https://github.com/Neuroblox/GraphDynamics.jl). The GraphDynamics.jl backend is still experimental, and may not yet support all of the standard Neuroblox features, such as those seen in the Spectral DCM tutorial.
+# We choose to solve this system using the ``Tsit5()`` solver. If you're coming from Matlab, this is a more efficient solver analogous to ``ode45``. It's a good first try for systems that aren't really stiff. If you want to try other solvers, we'd recommend trying with ``Vern7()`` (higher precision but still efficient). If you're **really** interested in solver choices, one of the great things about Julia is the [wide variety of solvers available.](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/)
 
 tspan = (0.0, 300.0) ## Time span for the simulation - run for 300ms to match the Börgers et al. [1] Figure 1.
 @named sys = system_from_graph(g, graphdynamics=true) ## Use GraphDynamics.jl otherwise this can be a very slow simulation
