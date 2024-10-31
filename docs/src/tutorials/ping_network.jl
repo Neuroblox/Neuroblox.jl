@@ -103,6 +103,27 @@ end
 # If you are creating a very large network of neurons, it may be more efficient to add all of the nodes first and then all of the edges via an adjacency matrix.
 # To illustrate this, here is an alternative to the previous block that will initialize the same graph. Just uncomment this code and use it to replace the code from the section above.
 
+##g = MetaDiGraph() ## Initialize the graph
+##add_blox!.(Ref(g), [exci; inhib]) ## Add all the neurons to the graph
+##adj = zeros(N_total, N_total) ## Initialize the adjacency matrix
+
+## Create adjaceny matrix edges for E -> I and I -> E connections
+##for i ∈ 1:NE_driven + NE_other
+##    for j ∈ 1:NI_driven
+##        adj[i, NE_driven + NE_other + j] = g_EI/N
+##        adj[NE_driven + NE_other + j, i] = g_IE/N
+##    end
+##end
+
+## Create adjaceny matrix edges for I -> I connections
+##for i ∈ 1:NI_driven
+##    for j ∈ 1:NI_driven
+##        adj[NE_driven + NE_other + i, NE_driven + NE_other + j] = g_II/N
+##    end
+##end
+
+## Add all the edges to the graph
+##create_adjacency_edges!(g, adj)
 
 # If you'd like to try out this graph creation, simply uncomment these lines and replace the block above. This is typically more efficient for very large networks (e.g., 1000+ neurons).
 
