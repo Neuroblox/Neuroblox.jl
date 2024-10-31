@@ -99,33 +99,26 @@ for ni1 ∈ inhib
     end
 end
 
-# ### Alternative graph creation
-# If you are creating a very large network of neurons, it may be more efficient to add all of the nodes first and then all of the edges via an adjacency matrix.
-# To illustrate this, here is an alternative to the previous block that will initialize the same graph. Just uncomment this code and use it to replace the code from the section above.
-
-##g = MetaDiGraph() ## Initialize the graph
-##add_blox!.(Ref(g), [exci; inhib]) ## Add all the neurons to the graph
-##adj = zeros(N_total, N_total) ## Initialize the adjacency matrix
-
-## Create adjaceny matrix edges for E -> I and I -> E connections
-##for i ∈ 1:NE_driven + NE_other
-##    for j ∈ 1:NI_driven
-##        adj[i, NE_driven + NE_other + j] = g_EI/N
-##        adj[NE_driven + NE_other + j, i] = g_IE/N
-##    end
-##end
-
-## Create adjaceny matrix edges for I -> I connections
-##for i ∈ 1:NI_driven
-##    for j ∈ 1:NI_driven
-##        adj[NE_driven + NE_other + i, NE_driven + NE_other + j] = g_II/N
-##    end
-##end
-
-## Add all the edges to the graph
-##create_adjacency_edges!(g, adj)
-
-# If you'd like to try out this graph creation, simply uncomment these lines and replace the block above. This is typically more efficient for very large networks (e.g., 1000+ neurons).
+#md # !!! note "Alternative graph creation"
+#md #       If you are creating a very large network of neurons, it may be more efficient to add all of the nodes first and then all of the edges via an adjacency matrix.
+#md #       To illustrate this, here is an alternative to the previous block that will initialize the same graph. Just uncomment this code and use it to replace the code from the section above.
+#md #       ```julia
+#md #       g = MetaDiGraph() ## Initialize the graph
+#md #       add_blox!.(Ref(g), [exci; inhib]) ## Add all the neurons to the graph
+#md #       adj = zeros(N_total, N_total) ## Initialize the adjacency matrix
+#md #       for i ∈ 1:NE_driven + NE_other
+#md #           for j ∈ 1:NI_driven
+#md #               adj[i, NE_driven + NE_other + j] = g_EI/N
+#md #               adj[NE_driven + NE_other + j, i] = g_IE/N
+#md #           end
+#md #       end
+#md #       for i ∈ 1:NI_driven
+#md #           for j ∈ 1:NI_driven
+#md #               adj[NE_driven + NE_other + i, NE_driven + NE_other + j] = g_II/N
+#md #           end
+#md #       end
+#md #       create_adjacency_edges!(g, adj)
+#md # ```
 
 # ### Simulate the network
 # Now that we have the neurons and the graph, we can simulate the network. We use the `system_from_graph` function to create a system of ODEs from the graph and then solve it using the DifferentialEquations.jl package, but for performance scaling reasons we will use the experimental option `graphdynamics=true` which uses a separate compilation backend called [GraphDynamics.jl](https://github.com/Neuroblox/GraphDynamics.jl). The GraphDynamics.jl backend is still experimental, and may not yet support all of the standard Neuroblox features, such as those seen in the Spectral DCM tutorial.
