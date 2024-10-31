@@ -1,16 +1,24 @@
 # # Building a model of the Basal Ganglia using Neural Mass models
 
-# In this example, we'll construct a model of Parkinson's disease using eight Jansen-Rit Neural Mass Models, based on the work of Liu et al. (2020) [1].
+# In this example, we will construct a model of Parkinson's disease using Jansen-Rit neural mass models, based on the work of Liu et al. (2020) [1].
+# More generally, this tutorial shows how to build a simple version of the cortico-basal ganglia-thalamocortical neural loop, including both the [direct and indirect pathways](https://www.ncbi.nlm.nih.gov/books/NBK537141/).
+# In this tutorial, we will specifically cover:
+# - How to create a Jansen-Rit neural mass model in Neuroblox
+# - How to create blocks with different default sets of parameters
+# - Using symbolic hyperparameters during graph definition
+# - Visualizing neural mass outputs in both temporal and spectral plots 
 
 # ## The Jansen-Rit Neural Mass Model
 
-# The Jansen-Rit model [2] is another popular neural mass model that, like the [Wilson-Cowan model from the Getting Started](@ref getting_started_julia), describes the average activity of neural populations. Each Jansen-Rit unit is defined by the following differential equations:
+# The Jansen-Rit model [2] is another popular neural mass model that, like the [Wilson-Cowan model from the Getting Started](@ref getting_started_julia), describes the average activity of neural populations. 
+# [This resource](https://link.springer.com/referenceworkentry/10.1007/978-1-4614-7320-6_65-2) is a good general introduction to the Jansen-Rit model if you'd like to read more.
+# Each Jansen-Rit unit is defined by the following differential equations:
 
 # ```math
-# \begin{align}
+# \begin{align*}
 # \frac{dx}{dt} &= y-\frac{2}{\tau}x \\[10pt]
 # \frac{dy}{dt} &= -\frac{x}{\tau^2} + \frac{H}{\tau} \left[2\lambda S(\textstyle\sum{jcn}) - \lambda\right]
-# \end{align}
+# \end{align*}
 # ```
 
 # where $x$ represents the average postsynaptic membrane potential of the neural population, $y$ is an auxiliary variable, $\tau$ is the membrane time constant, $H$ is the maximum postsynaptic potential amplitude, $\lambda$ determines the maximum firing rate, and $\sum{jcn}$ represents the sum of all synaptic inputs to the population. The sigmoid function $S(x)$ models the population's firing rate response to input and is defined as:
@@ -20,16 +28,31 @@
 
 # where $r$ controls the steepness of the sigmoid, affecting the population's sensitivity to input.
 
+# This model consists of four main components:
+# - A cortical column consisting of pyramidal cells ``PY``, an excitatory interneuron population ``EI``, and an inhibitory interneuron population ``II``
+# - A striatal network consisting of two populations of medium spiny neurons, ``D1`` and ``D2`` (named for the different dopamine receptors), and fast-spiking interneurons ``FSI``
+# - Subcortical structures including the subthalamic nucleus ``STH``, the external segment of the globus pallidus ``GPE``, and the internal segment of the globus pallidus ``GPI``
+# - A thalamic oscillator ``Th``
+
+# The connections between these oscillators are shown in the Neuroblox GUI below:
+# NEED FIGURE HERE!!
+
+
 # ## Setting Up the Model
 
-# Let's start by importing the necessary libraries and defining our neural masses:
+# We're now going to set up this model using code. Let's start by importing the necessary libraries and defining our neural masses:
 
 using Neuroblox
 using OrdinaryDiffEq
 using CairoMakie
 
-## Convert time units from seconds to milliseconds
-τ_factor = 1000
+# The original paper uses parameters in seconds, but all models in Neuroblox have milliseconds as their time unit. We therefore specify a scaling factor to use the paramters from the paper:
+
+τ_factor = 1000; ## Convert time units from seconds to milliseconds
+
+# Now we'll setup the neural masses. The values are all taken from the original paper [1], Table 1.
+# Notice that some of these neural masses have the default Neuroblox parameters (e.g., ``PY`` uses default cortical parameters, so the user can simply specify ``cortical=true`` to access these).
+# If you want to see the full list of defaults for the Jansen-Rit model, you can type ``?Jansen-Rit`` in your Julia REPL to view the docstring.
 
 ## Create the cortical oscillators
 @named PY  = JansenRit(cortical=true)  ## default parameters cortical Jansen Rit blox
@@ -45,10 +68,7 @@ using CairoMakie
 @named STH = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
 @named GPE = JansenRit(cortical=false) ## default parameters subcortical Jansen Rit blox
 @named GPI = JansenRit(cortical=false)  ## default parameters subcortical Jansen Rit blox
-@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5)
-
-
-#Here, we've created eight Jansen-Rit neural masses representing different brain regions involved in Parkinson's disease. The `τ_factor` is used to convert time units from seconds (as in the original paper) to milliseconds (Neuroblox's default time unit).
+@named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5);
 
 # ## Building the Circuit
 
@@ -117,4 +137,5 @@ sol = solve(prob, Tsit5(), saveat=1)
 
 
 # ## References
-# [[1] Liu, C., Zhou, C., Wang, J., Fietkiewicz, C., & Loparo, K. A. (2020). The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Networks, 123, 381-392.](https://doi.org/10.1016/j.neunet.2019.12.021)
+# [1] Liu, C, Zhou, C, Wang, J, Fietkiewicz, C, & Loparo, KA. (2020). The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Networks, 123, 381-392. DOI: [10.1016/j.neunet.2019.12.021](https://doi.org/10.1016/j.neunet.2019.12.021)
+# [2] Jansen BH, Rit VG. Electroencephalogram and visual evoked potential generation in a mathematical model of coupled cortical columns. Biol Cybern. 1995 Sep;73(4):357-66. DOI: [10.1007/BF00199471](https://pubmed.ncbi.nlm.nih.gov/7578475/).
