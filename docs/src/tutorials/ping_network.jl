@@ -141,6 +141,11 @@ fig
 # # Conclusion
 # And there you have it! A complete PING demonstration that reproduces the dynamics of a published paper in a matter of 30 seconds, give or take. Have fun making your own!
 
+# # For further exploration
+# If you want to explore the PING network further, you can try the following:
+# 1. You might notice that the excitatory and inhibitory populations become slightly desynchronized by the end of the simulation, unlike in the original paper. This is because of slight differences in how we implement the excitatory drive and inhibitory bath, which adjusts the overall E/I balance. Try increasing the inhibitory bath or decreasing the percentage of excitatory neurons that receive input and see how this affects the synchrony!
+# 2. This tutorial is written entirely using built-in blocks for the excitatory and inhibitory neurons. If you want to explore the details, try typing ``?PINGNeuronExci`` or ``?PINGNeuronInhib`` in your Julia REPL to see the full details of the blocks. If you really want to dig into the details, type ``@edit PINGNeuronExci()`` to open the source code and see how the equations are written.
+
 # # References
 # 1. Börgers C, Epstein S, Kopell NJ. Gamma oscillations mediate stimulus competition and attentional selection in a cortical network model. Proc Natl Acad Sci U S A. 2008 Nov 18;105(46):18023-8. DOI: [10.1073/pnas.0809511105](https://www.doi.org/10.1073/pnas.0809511105).
 # 2. Traub, RD, Miles, R. Neuronal Networks of the Hippocampus. Cambridge University Press, Cambridge, UK, 1991. DOI: [10.1017/CBO9780511895401](https://www.doi.org/10.1017/CBO9780511895401)
