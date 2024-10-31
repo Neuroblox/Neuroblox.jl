@@ -22,7 +22,7 @@ global_namespace=:g
 @named stim = ImageStimulus(image_set[[1:N_trials],:]; namespace=global_namespace, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
-@named VAC = CorticalBlox(N_wta=10, N_exci=5,  density=0.05, weight=1,I_bg_ar=0;namespace=global_namespace) 
+@named VAC = CorticalBlox(N_wta=4, N_exci=5,  density=0.05, weight=1,I_bg_ar=0;namespace=global_namespace) 
 @named AC = CorticalBlox(N_wta=2, N_exci=5, density=0.05, weight=1,I_bg_ar=0;namespace=global_namespace) 
 ## ascending system blox, modulating frequency set to 16 Hz
 @named ASC1 = NextGenerationEIBlox(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
