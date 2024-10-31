@@ -1,7 +1,40 @@
 # First, create an abstract neuron that we'll extend to create the neurons for this tutorial.
 abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
 
-# Create an excitatory neuron that inherits from this neuron blox.
+"""
+    PINGNeuronExci(name, namespace, C, g_Na, V_Na, g_K, V_K, g_L, V_L, I_ext, τ_R, τ_D)
+
+    Create an excitatory neuron from Borgers et al. (2008).
+    The formal definition of this blox is:
+
+```math
+\\frac{dV}{dt} = \\frac{1}{C}(-g_{Na}*m_{\\infty}^3*h*(V - V_{Na}) - g_K*n^4*(V - V_K) - g_L*(V - V_L) + I_{ext} + jcn)
+\\m_{\\infty} = \\frac{a_m(V)}{a_m(V) + b_m(V)}
+\\frac{dn}{dt} = a_n(V)*(1 - n) - b_n(V)*n
+\\frac{dh}{dt} = a_h(V)*(1 - h) - b_h(V)*h
+\\frac{ds}{dt} = \\frac{1}{2}*(1 + \\tanh(V/10))*(\\frac{1 - s}{\\tau_R} - \\frac{s}{\\tau_D})
+```
+where ``jcn`` is any input to the blox. Note that this is a modified Hodgkin-Huxley formalism with an additional synaptic accumulation term.
+Synapses are added into the ``jcn`` term by connecting the postsynaptic neuron's voltage to the presynaptic neuron's output:
+```math
+jcn = w*s*(V_E - V)
+```
+where ``w`` is the weight of the synapse and ``V_E`` is the reversal potential of the excitatory synapse.
+
+Inputs:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- C: Membrane capacitance (defaults to 1.0).
+- g_Na: Sodium conductance (defaults to 100.0).
+- V_Na: Sodium reversal potential (defaults to 50.0).
+- g_K: Potassium conductance (defaults to 80.0).
+- V_K: Potassium reversal potential (defaults to -100.0).
+- g_L: Leak conductance (defaults to 0.1).
+- V_L: Leak reversal potential (defaults to -67.0).
+- I_ext: External current (defaults to 0.0).
+- τ_R: Rise time of synaptic conductance (defaults to 0.2).
+- τ_D: Decay time of synaptic conductance (defaults to 2.0).
+"""
 struct PINGNeuronExci <: AbstractPINGNeuron
     params
     output
@@ -43,7 +76,40 @@ struct PINGNeuronExci <: AbstractPINGNeuron
     end
 end
 
-# Create an inhibitory neuron that inherits from the same neuron blox.
+"""
+    PINGNeuronInhib(name, namespace, C, g_Na, V_Na, g_K, V_K, g_L, V_L, I_ext, τ_R, τ_D)
+
+    Create an inhibitory neuron from Borgers et al. (2008).
+    The formal definition of this blox is:
+
+```math
+\\frac{dV}{dt} = \\frac{1}{C}(-g_{Na}*m_{\\infty}^3*h*(V - V_{Na}) - g_K*n^4*(V - V_K) - g_L*(V - V_L) + I_{ext} + jcn)
+\\m_{\\infty} = \\frac{a_m(V)}{a_m(V) + b_m(V)}
+\\frac{dn}{dt} = a_n(V)*(1 - n) - b_n(V)*n
+\\frac{dh}{dt} = a_h(V)*(1 - h) - b_h(V)*h
+\\frac{ds}{dt} = \\frac{1}{2}*(1 + \\tanh(V/10))*(\\frac{1 - s}{\\tau_R} - \\frac{s}{\\tau_D})
+```
+where ``jcn`` is any input to the blox. Note that this is a modified Hodgkin-Huxley formalism with an additional synaptic accumulation term.
+Synapses are added into the ``jcn`` term by connecting the postsynaptic neuron's voltage to the presynaptic neuron's output:
+```math
+jcn = w*s*(V_I - V)
+```
+where ``w`` is the weight of the synapse and ``V_I`` is the reversal potential of the inhibitory synapse.
+
+Inputs:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- C: Membrane capacitance (defaults to 1.0).
+- g_Na: Sodium conductance (defaults to 35.0).
+- V_Na: Sodium reversal potential (defaults to 55.0).
+- g_K: Potassium conductance (defaults to 9.0).
+- V_K: Potassium reversal potential (defaults to -90.0).
+- g_L: Leak conductance (defaults to 0.1).
+- V_L: Leak reversal potential (defaults to -65.0).
+- I_ext: External current (defaults to 0.0).
+- τ_R: Rise time of synaptic conductance (defaults to 0.5).
+- τ_D: Decay time of synaptic conductance (defaults to 10.0).
+"""
 struct PINGNeuronInhib <: AbstractPINGNeuron
     params
     output
