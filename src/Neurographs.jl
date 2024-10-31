@@ -1,13 +1,3 @@
-function adjmatrixfromdigraph(g::MetaDiGraph)
-    myadj = map(Num, adjacency_matrix(g))
-    for edge in edges(g)
-        s = src(edge)
-        d = dst(edge)
-        myadj[s,d] = get_prop(g, edge, :weight)
-    end
-    return myadj
-end
-
 function find_blox(g::MetaDiGraph, blox)
     for v in vertices(g)
         b = get_prop(g, v, :blox)
@@ -86,17 +76,39 @@ end
 generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
 
 function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
-    spike_affect_states = get_spike_affect_states(bc)
+    spike_affects = get_spike_affects(bc)
     name_blox = namespaced_nameof(blox)
-
-    states_dest = get(spike_affect_states, name_blox, Num[])
-
     sys = get_namespaced_sys(blox)
+
+    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
+
+    # HACK : MTK will complain if the parameter vector passed to a functional affect
+    # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
+    # affect states in the loop in LIF_spike_affect! .
+    # Passing parameters with Symbol aliases bypasses this issue and allows for duplicates. 
+    affect_pairs = if unique(params_affect) == length(params_affect)
+        [p => Symbol(p) for p in params_affect]
+    else
+        map(params_affect) do p
+            if count(pi -> Symbol(pi) == Symbol(p), params_affect) > 1
+                p => Symbol(p, "_$(rand(1:1000))")
+            else
+                p => Symbol(p)
+            end
+        end
+    end
+    
+    ps = vcat([
+        sys.V_reset => Symbol(sys.V_reset), 
+        sys.t_refract_duration => Symbol(sys.t_refract_duration), 
+        sys.t_refract_end => Symbol(sys.t_refract_end), 
+        sys.is_refractory => Symbol(sys.is_refractory)
+    ], affect_pairs)
     
     cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
-        vcat(sys.V, states_dest), 
-        [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
+        vcat(sys.V, states_affect), 
+        ps, 
         [], 
         nothing
     )
@@ -235,56 +247,3 @@ function learning_rules_from_graph(g::MetaDiGraph)
     return d
 end
 
-## Create Learning Loop
-function create_rl_loop(;name, ROIs, datasets, parameters, c_ext)
-    # Create LearningBlox for each Region
-    regions = []
-    for r in eachindex(ROIs)
-        push!(regions, 
-            LearningBlox(
-                ω=parameters[:ω][r], d=parameters[:d][r], 
-                prange=vec(datasets[r][1]), pdata=vec(datasets[r][2]), 
-                name=ROIs[r]
-            )
-        )
-    end
-    # Connect Regions through an External Connection Weight
-    @parameters c_ext=c_ext
-    for r in eachindex(ROIs)
-        regions[r].adj[size(regions[r].adj, 1), size(regions[r].adj, 2)] = c_ext*regions[1:end .!= r, :][1].sys[3].x
-    end
-    # Update Adjacency Matrix to Incorporate External Connections
-    eqs = []
-    for r in eachindex(ROIs)
-        for s in eachindex(regions[r].sys) 
-            push!(eqs, regions[r].sys[s].jcn ~ sum(regions[r].adj[:, s]))
-        end
-    end
-    # Compose Loop
-    sys = []
-    for r in eachindex(ROIs)
-        sys = vcat(sys, regions[r].sys)
-    end
-    # Return One ODESystem
-    return ODESystem(eqs, systems=sys, name=name)
-end
-
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}; connection_rule="basic") where {T}
-    for i = 1:size(adj_matrix, 1)
-        for j = 1:size(adj_matrix, 2)
-            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :connection_rule => connection_rule))
-            end
-        end
-    end
-end
-
-function create_adjacency_edges!(g::MetaDiGraph, adj_matrix::Matrix{T}, delay_matrix) where {T}
-    for i = 1:size(adj_matrix, 1)
-        for j = 1:size(adj_matrix, 2)
-            if !isequal(adj_matrix[i, j], zero(T)) #use isequal because != doesn't work for symbolics
-                add_edge!(g, i, j, Dict(:weight => adj_matrix[i, j], :delay => delay_matrix[i, j]))
-            end
-        end
-    end
-end

@@ -72,7 +72,8 @@ using GraphDynamics:
     StateIndex,
     ParamIndex,
     event_times,
-    calculate_inputs
+    calculate_inputs,
+    connection_index
 
 using Random:
     Random,
