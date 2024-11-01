@@ -76,17 +76,39 @@ end
 generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
 
 function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
-    spike_affect_states = get_spike_affect_states(bc)
+    spike_affects = get_spike_affects(bc)
     name_blox = namespaced_nameof(blox)
-
-    states_dest = get(spike_affect_states, name_blox, Num[])
-
     sys = get_namespaced_sys(blox)
+
+    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
+
+    # HACK : MTK will complain if the parameter vector passed to a functional affect
+    # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
+    # affect states in the loop in LIF_spike_affect! .
+    # Passing parameters with Symbol aliases bypasses this issue and allows for duplicates. 
+    affect_pairs = if unique(params_affect) == length(params_affect)
+        [p => Symbol(p) for p in params_affect]
+    else
+        map(params_affect) do p
+            if count(pi -> Symbol(pi) == Symbol(p), params_affect) > 1
+                p => Symbol(p, "_$(rand(1:1000))")
+            else
+                p => Symbol(p)
+            end
+        end
+    end
+    
+    ps = vcat([
+        sys.V_reset => Symbol(sys.V_reset), 
+        sys.t_refract_duration => Symbol(sys.t_refract_duration), 
+        sys.t_refract_end => Symbol(sys.t_refract_end), 
+        sys.is_refractory => Symbol(sys.is_refractory)
+    ], affect_pairs)
     
     cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
-        vcat(sys.V, states_dest), 
-        [sys.V_reset, sys.t_refract_duration, sys.t_refract_end, sys.is_refractory], 
+        vcat(sys.V, states_affect), 
+        ps, 
         [], 
         nothing
     )

@@ -179,9 +179,9 @@ get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
 get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
 get_discrete_callbacks(blox) = []
 
-get_spike_affect_states(bc::BloxConnector) = bc.spike_affect_states
-get_spike_affect_states(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affect_states ∘ get_connector)(blox)
-get_spike_affect_states(blox) = Dict{Symbol, Vector{Num}}()
+get_spike_affects(bc::BloxConnector) = bc.spike_affects
+get_spike_affects(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affects ∘ get_connector)(blox)
+get_spike_affects(blox) = Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}()
 
 get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
 get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
@@ -617,6 +617,18 @@ function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronB
     end
 
     return powspecs
+end
+
+function powerspectrum(cb::NeuralMassBlox, sol::SciMLBase.AbstractSolution, state::String;
+                       sampling_rate=nothing, method=periodogram, window=nothing)
+
+    namespaced_name = namespaced_nameof(cb)
+    state_name = Symbol(namespaced_name, "₊$(state)")
+
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    data = isnothing(t_sampled) ? sol[state_name] : Array(sol(t_sampled, idxs = state_name))
+
+    return method(data, fs = sampling_freq, window=window)
 end
 
 function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
