@@ -12,7 +12,7 @@ trial_dur = 1000 ##ms
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
 
-image_set = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/image_example.csv"), DataFrame) ## reading data into DataFrame format
+image_set = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/stimuli_set.csv"), DataFrame) ## reading data into DataFrame format
 ## change the source file to stimuli_set.csv
 
 global_namespace=:g
