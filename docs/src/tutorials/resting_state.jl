@@ -22,6 +22,8 @@ using HypothesisTests
 using Downloads
 using SparseArrays
 
+Random.seed!(123); # Set a fixed RNG seed for reproducible results
+
 ## download and read connection matrix from a file
 weights = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/weights.csv"), DataFrame)
 region_names = names(weights)
@@ -50,7 +52,7 @@ tspan = (0.0, 6e5)
 prob = SDEProblem(sys,rand(-2:0.1:4,76*2), tspan, [])
 sol = solve(prob, EulerHeun(), dt=0.5, saveat=5);
 
-# Let us now plot the voltage potential of the first couple of components
+# Let us now plot the voltage potential of the first couple of components. We can extract the voltage timeseries of a blox from the solution object using the `voltage_timeseries` function.
 
 v1 = voltage_timeseries(blox[1], sol)
 v2 = voltage_timeseries(blox[2], sol)
@@ -69,22 +71,31 @@ time_steps = range(1, length(sol.t); step = step_sz)
 
 cs = Array{Float64}(undef, N_bloxs, N_bloxs, length(time_steps)-1)
 
+## First we get the voltage timeseries of all blox in time bins 
 for (i, t) in enumerate(time_steps[1:end-1])
+    ## Get the voltage timeseries of all blox within a time window in a matrix 
     V = voltage_timeseries(blox, sol; ts = t:(t + step_sz))
+    ## Calculate the correlation matrix of all timeseries per time window
     cs[:,:,i] = cor(V)
 end
 
 p = zeros(N_bloxs, N_bloxs)
 for i in 1:N_bloxs
     for j in 1:N_bloxs
+        ## Perform a t-test on the voltage correlations across all time windows
         p[i,j] = pvalue(OneSampleTTest(cs[i,j,:]))
     end
 end
 
-heatmap(log10.(p) .* (p .< 0.05))
-# Fig.: log10(p value) displaying statistally significant correlation between time series
+fig = Figure()
+ax = [
+    Axis(fig[1,1]; title = "Correlation p-values", aspect = AxisAspect(1)),
+    Axis(fig[1,2]; title = "Adjacency matrix", aspect = AxisAspect(1))
+]
+## Use logical indexing to only plot the statistically significan p-values (p .< 0.05)
+heatmap!(ax[1], log10.(p) .* (p .< 0.05))
 
-heatmap(wm)
-# Fig.: Connection Adjacency Matrix that was used to connect the neural mass models
+heatmap!(ax[2], wm)
+fig
 
 # Notice how the correlation heatmap qualitatively matches the sparsity structure that we printed above with `wm_sparse`.
