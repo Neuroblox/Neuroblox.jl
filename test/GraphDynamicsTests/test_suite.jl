@@ -768,34 +768,6 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     add_edge!(g, n_inh => n_ns; weight = 1)
 
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
-
-    # local state_names
-    # sol_gys = let sys = system_from_graph(g; graphdynamics=true)
-    #     prob = ODEProblem(sys, [], tspan, [])
-    #     sol = solve(prob, Tsit5(), saveat=0.1)
-    #     # state_names = variable_symbols(sys)
-    #     # sol_u_reordered = map(state_names) do name
-    #     #     sol[name][end]
-    #     # end
-    #     # sol.t, sol_u_reordered
-    # end
-    # sol_mtk = let sys = system_from_graph(g; name=:sys)
-    #     prob = ODEProblem(sys, [], tspan, [])
-    #     sol = solve(prob, Tsit5(), saveat=0.1)
-    #     # sol_u_reordered = map(state_names) do name
-    #     #     sol[name][end]
-    #     # end
-    # end
-    # # sort(sol_gys .- sol_mtk)
-    # idxs = [:n_ns₊neuron1₊V,
-    #         #:n_inh₊neuron1₊V,
-    #         #:n_B₊neuron1₊V,
-    #         #:n_A₊neuron1₊V
-    #         ]
-    # @show getp(sol_gys, :n_ns₊neuron1₊g_L)(sol_gys)
-    # @show getp(sol_mtk, :n_ns₊neuron1₊g_L)(sol_mtk)
-    # plot( sol_gys; idxs)
-    # plot!(sol_mtk; idxs)
 end
 
 function ping_tests(;tspan=(0.0, 2.0))
