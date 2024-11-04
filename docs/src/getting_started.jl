@@ -7,7 +7,7 @@
 # - [Julia Tutorials & Workshops](https://julialang.org/learning/tutorials/), a collection of training materials from the official Julia website.
 # - [Modern Julia Workflows](https://modernjuliaworkflows.org/), an introduction to how to write and share your Julia code effectively with tips & tricks.
 
-# ## Getting Started with Neuroblox
+# ## [Getting Started with Neuroblox](@id getting_started_julia)
 
 # This example will introduce you to simulating brain dynamics using Neuroblox. We will create a simple oscillating circuit using two Wilson-Cowan neural mass models [1]. The Wilson-Cowan model is one of the most influential models in computational neuroscience [2], describing the dynamics of interactions between populations of excitatory and inhibitory neurons.
 
@@ -54,10 +54,7 @@ add_edge!(g, WC1 => WC2; weight = 7) ## connection from WC1 to WC2
 add_edge!(g, WC2 => WC1; weight = 4) ## connection from WC2 to WC1
 add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
-# Here, we've created two Wilson-Cowan Blox and connected them as nodes in a directed graph. The `adj` matrix defines the weighted edges between these nodes. Each entry `adj[i,j]` represents how the output of blox `j` influences the input of blox `i`:
-# 
-# - Diagonal elements (`adj[1,1]` and `adj[2,2]`): Self-connections, adding feedback to each blox.
-# - Off-diagonal elements (`adj[1,2]` and `adj[2,1]`): Inter-blox connections, determining how each blox influences the other.
+# Here, we've created two Wilson-Cowan blox and connected them as nodes in a directed graph. Each blox connects to itself and to the other blox. 
 
 # By default, the output of each Wilson-Cowan blox is its excitatory activity (E). The negative self-connections (-1) provide inhibitory feedback, while the positive inter-blox connections (6) provide strong excitatory coupling. This setup creates an oscillatory dynamic between the two Wilson-Cowan units.
 
@@ -78,7 +75,7 @@ sol = solve(prob, Rodas4(), saveat=0.1)
 
 # ### Plotting simulation results
 
-# Finally, let us plot the `E` and `I` states of the first component, `WC1`. 
+# Finally, let us plot the `E` and `I` states of the first component, `WC1`. To do this we will use the `state_timeseries` function that extracts the timeseries of a blox state from the solution object. 
 
 E1 = state_timeseries(WC1, sol, "E")
 I1 = state_timeseries(WC1, sol, "I")
