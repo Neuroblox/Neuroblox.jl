@@ -692,7 +692,7 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
 end
 
-function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
+function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5)
     
     ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
