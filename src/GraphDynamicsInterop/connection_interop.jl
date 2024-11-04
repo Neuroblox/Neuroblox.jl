@@ -178,7 +178,7 @@ function get_connection(
     (;conn, names)
 end
 
-struct HHConnection_GAP
+struct HHConnection_GAP <: ConnectionRule
     w::Float64
     w_gap::Float64
     w_gap_rev::Float64
@@ -309,7 +309,7 @@ function blox_wiring_rule!(h,
     conn = PoissonSpikeConn(w_val, Set(Neuroblox.generate_spike_times(stim)))
     add_edge!(h, i, j, Dict(:conn => conn, :names => [name]))
 end
-struct PoissonSpikeConn
+struct PoissonSpikeConn <: ConnectionRule
     w::Float64
     t_spikes::Set{Float64}
 end
@@ -681,7 +681,7 @@ function get_connection(discr_src::Matrisome, discr_dst::Matrisome, kwargs)
     MMConn(t_event)
 end
 
-struct MMConn{T}
+struct MMConn{T} <: ConnectionRule
     t_event::T
 end
 
@@ -757,7 +757,7 @@ function get_connection(discr_src::TAN, discr_dst::Matrisome, kwargs)
     (; conn = TAN_M_Conn(w_val, t_event), names=[name])
 end
 
-struct TAN_M_Conn
+struct TAN_M_Conn <: ConnectionRule
     w::Float64
     t_event::Float64
 end
@@ -951,7 +951,7 @@ end
 
 # #-------------------------
 # PING Network
-struct PINGConnection
+struct PINGConnection <: ConnectionRule
     w::Float64
     V_E::Float64
     V_I::Float64
