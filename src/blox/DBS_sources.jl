@@ -6,7 +6,24 @@ struct DBS <: StimulusBlox
     stimulus::Function
 end
 
-# Constructor for continuous DBS with single pulses
+"""
+    DBS(; name, namespace=nothing, frequency=0.130, amplitude=2.5, pulse_width=0.066, 
+        offset=0.0, start_time=0.0, smooth=1e-4)
+
+Create a continuous deep brain stimulation (DBS) stimulus with regular pulses.
+
+Arguments:
+- name: Name given to ODESystem object within the blox
+- namespace: Additional namespace above name if needed for inheritance
+- frequency: Pulse frequency in kHz 
+- amplitude: Pulse amplitude in arbitrary units
+- pulse_width: Duration of each pulse in ms
+- offset: Baseline value of the signal between pulses
+- start_time: Time delay before stimulation begins in ms
+- smooth: Smoothing parameter for pulse transitions, set to 0 for sharp transitions
+
+Returns a DBS stimulus blox that outputs square pulses with specified parameters.
+"""
 function DBS(;
     name,
     namespace=nothing,
@@ -43,7 +60,30 @@ function DBS(;
     DBS(p, sys, namespace, stimulus)
 end
 
-# Constructor for protocol DBS with bursts of pulses
+"""
+    protocol_dbs(; name, namespace=nothing, frequency=0.130, amplitude=2.5,
+                  pulse_width=0.066, offset=0.0, start_time=0.0, smooth=1e-4,
+                  pulses_per_burst=10, bursts_per_block=12, 
+                  pre_block_time=200.0, inter_burst_time=200.0)
+
+Create a deep brain stimulation (DBS) stimulus consisting of a block of pulse bursts.
+
+Arguments:
+- name: Name given to ODESystem object within the blox
+- namespace: Additional namespace above name if needed for inheritance
+- frequency: Pulse frequency in kHz
+- amplitude: Pulse amplitude in arbitrary units  
+- pulse_width: Duration of each pulse in ms
+- offset: Baseline value of the signal between pulses
+- start_time: Time delay before stimulation begins in ms
+- smooth: Smoothing parameter for pulse transitions, set to 0 for sharp transitions
+- pulses_per_burst: Number of pulses in each burst
+- bursts_per_block: Number of bursts in the block
+- pre_block_time: Time before the block starts in ms
+- inter_burst_time: Time between bursts in ms
+
+Returns a DBS stimulus blox that outputs a block of pulse bursts.
+"""
 function protocol_dbs(;
     name,
     namespace=nothing,
