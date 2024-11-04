@@ -256,12 +256,6 @@ function populate_flatgraph(h, g, blox, v, g_i, h_i)
     if length(components(blox)) == 1 && only(components(blox)) == blox
         h_i += 1
         add_subsystem!(h, to_subsystem(blox), Neuroblox.namespaced_nameof(blox))
-        # add_vertices!(h, 1)
-        # subsystem = to_subsystem(blox)
-        # name = Neuroblox.namespaced_nameof(blox)
-
-        # set_subsystem!(h, to_subsystem(blox), h_i)
-        # set_name!(h, name, h_i)
         if v isa Dict
             @assert !haskey(v, g_i)
             v[g_i] = h_i
@@ -341,14 +335,9 @@ situations where tiny matrices like (e.g. 5x5) get stored as sparse arrays rathe
 function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_length_cutoff=0)
     check_all_supported_blox(_g)
     g = flat_graph(_g)
-    
-    total_eltype = mapreduce(promote_type, vertices(g)) do i
-        eltype(get_subsystem(g, i))
-    end
-    fix_eltype(s::Subsystem{Name}) where {Name} = convert(Subsystem{Name, total_eltype}, s)
-    
+
     subsystems_and_names_flat = map(vertices(g)) do i
-        (subsystem = fix_eltype(get_subsystem(g, i)), name = get_name(g, i))
+        (subsystem = get_subsystem(g, i), name = get_name(g, i))
     end
     names_flat = map(last, subsystems_and_names_flat)
     subsystems_flat = map(first, subsystems_and_names_flat)
