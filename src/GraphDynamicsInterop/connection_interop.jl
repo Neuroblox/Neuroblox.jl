@@ -86,6 +86,7 @@ end
 struct BasicConnection <: ConnectionRule
     weight::Float64
 end
+Base.zero(::BasicConnection) = Base.zero(BasicConnection)
 Base.zero(::Type{<:BasicConnection}) = BasicConnection(0.0)
 function (c::BasicConnection)(blox_src, blox_dst)
     (; jcn = c.weight * output(blox_src))
@@ -211,7 +212,7 @@ end
 
 
 #----------------------------------------------
-# Kuramoto 
+# Kuramoto
 function get_connection(src::KuramotoOscillator, dst::KuramotoOscillator, kwargs)
     (;w_val, name) = generate_weight_param(src, dst, kwargs)
     (;conn=BasicConnection(w_val), names=[name])
@@ -227,40 +228,12 @@ end
 #----------------------------------------------
 # LIFExci / LIFInh
 
-function blox_wiring_rule!(h, blox::Union{LIFExciNeuron, LIFInhNeuron}, v, kwargs)
-    evbs = h.composite_discrete_events_builder
-    i = only(v)
-    push!(evbs, SpikeAffectEventBuilder(i, Int[], Int[]))
-end
-
-
-function blox_wiring_rule!(h,
-                           blox_src::Union{LIFExciNeuron, LIFInhNeuron}, 
-                           blox_dst::Union{LIFExciNeuron, LIFInhNeuron},
-                           v_src, v_dst, kwargs)
-    #this is the fallback method for non-composite blox, hence vi and vj should have only one element
-    i, j = only(v_src), only(v_dst)
-    (; w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
-    conn = BasicConnection(w_val)
-    
-    let evbs = h.composite_discrete_events_builder
-        idx = findfirst(evb -> (evb isa SpikeAffectEventBuilder) && (evb.idx_src == i), evbs)
-        if isnothing(idx)
-            error("SpikeAffectEventBuilder for neuron not found, this indicates its blox wiring rule never ran.")
-        else
-            if blox_dst isa LIFExciNeuron
-                push!(evbs[idx].idx_dsts_exci, j)
-            elseif blox_dst isa LIFInhNeuron
-                push!(evbs[idx].idx_dsts_inh, j)
-            end
-        end
-    end
-    add_edge!(h, i, j, Dict(:conn => conn, :names => [name]))
-end
-
 function (c::BasicConnection)(sys_src::Subsystem{LIFExciNeuron},
                               sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    (; jcn = 0.0)
+    w = c.weight
+
+    (; jcn = w * sys_src.S_NMDA * sys_dst.g_NMDA * (sys_dst.V - sys_dst.V_E) / 
+        (1 + sys_dst.Mg * exp(-0.062 * sys_dst.V) / 3.57))
 end
 
 function (c::BasicConnection)(::Subsystem{LIFInhNeuron},
@@ -268,110 +241,64 @@ function (c::BasicConnection)(::Subsystem{LIFInhNeuron},
     (; jcn = 0.0)
 end
 
-struct SpikeAffectEventBuilder
-    idx_src::Int
-    idx_dsts_inh::Vector{Int}
-    idx_dsts_exci::Vector{Int}
+const LIFExciInhNeuron = Union{LIFExciNeuron, LIFInhNeuron}
+GraphDynamics.has_discrete_events(::Type{LIFExciNeuron}) = true
+GraphDynamics.has_discrete_events(::Type{LIFInhNeuron}) = true
+function GraphDynamics.discrete_event_condition((; t_refract_end, V, θ)::Subsystem{LIF}, t, _) where {LIF <: LIFExciInhNeuron}
+    # Triggers when either a refractory period is ending, or the neuron spiked (voltage exceeds threshold θ)
+    (V > θ) || (t_refract_end == t)
 end
-
-struct SpikeAffectEvent{i_src, i_LIFInh, i_LIFExci}
-    j_src::Int
-    j_dsts_inh::Vector{Int}
-    j_dsts_exci::Vector{Int}
-end
-
-function (ev::SpikeAffectEventBuilder)(index_map)
-    (i_src, j_src) = index_map[ev.idx_src]
-    i_inh, j_dsts_inh = let v = ev.idx_dsts_inh
-        if isempty(v)
-            nothing, Int[]
-        else
-            index_map[first(v)][1], map(idx -> index_map[idx][2], v)
-        end
-    end
-    i_exci, j_dsts_exci = let v = ev.idx_dsts_exci
-        if isempty(v)
-            nothing, Int[]
-        else
-            index_map[first(v)][1], map(idx -> index_map[idx][2], v)
-        end
-    end
-    SpikeAffectEvent{i_src, i_inh, i_exci}(j_src, j_dsts_inh, j_dsts_exci)
-end
-
-function GraphDynamics.discrete_event_condition(states,
-                                               params,
-                                               connection_matrices,
-                                               ev::SpikeAffectEvent{i_src, i_dst_inh, i_dsts_exci},
-                                               t) where {i_src, i_dst_inh, i_dsts_exci}
-    (; j_src) = ev
-    neuron_src = Subsystem(states[i_src][j_src], params[i_src][j_src])
-    neuron_src.V > neuron_src.θ
-end
-
-
-
-
 function GraphDynamics.apply_discrete_event!(integrator,
-                                            states::NTuple{Len, Any},
-                                            params::NTuple{Len, Any},
-                                            connection_matrices,
-                                            t,
-                                            ev::SpikeAffectEvent{i_src, i_dst_inh, i_dst_exci}
-                                             ) where {i_src, i_dst_inh, i_dst_exci, Len}
-    (; j_src, j_dsts_inh, j_dsts_exci) = ev
+                                             states_view_src, params_view_src,
+                                             neuron_src::Subsystem{LIF},
+                                             foreach_connected_neuron) where {LIF <: LIFExciInhNeuron}
+    t = integrator.t
+    if t == neuron_src.t_refract_end # Refreactory period is over
+        params = params_view_src[]
+        params_view_src[] = @set params.is_refractory = 0
+    else # Neuron fired
+        # Begin refractory period
+        params_src = params_view_src[]
+        @reset params_src.t_refract_end = t + params_src.t_refract_duration
+        @reset params_src.is_refractory = 1
+        
+        add_tstop!(integrator, params_src.t_refract_end)
+        params_view_src[] = params_src
 
-    nc = connection_index(BasicConnection, connection_matrices)
-    
-    params_src = params[i_src][j_src]
-    @reset params_src.t_refract_end = t + params_src.t_refract_duration
-    @reset params_src.is_refractory = 1
+        # Reset the neuron voltage
+        states_view_src[:V] = params_src.V_reset
 
-    params[i_src][j_src] = params_src
-    add_tstop!(integrator, params_src.t_refract_end)
-
-    states_src = states[i_src][j_src]
-    states[i_src][:V, j_src] = params_src.V_reset
-    if (states_src isa SubsystemStates{LIFExciNeuron}) && (j_src ∈ j_dsts_exci)
-        # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        w = connection_matrices[nc][i_src, i_src][j_src, j_src].weight
-        states[i_src][:x, j_src] += w
-    end
-    
-    if states_src isa SubsystemStates{LIFExciNeuron}
-        if !isnothing(i_dst_inh)
-            M = connection_matrices[nc][i_src, i_dst_inh]
-            for j_dst ∈ j_dsts_inh
-                w = M[j_src, j_dst].weight
-                states[i_dst_inh][:S_AMPA, j_dst] += w
-            end
+        # Now apply a function to each connected dst neuron
+        foreach_connected_neuron() do conn, neuron_dst, states_view_dst, params_view_dst
+            lif_exci_inh_update_connected_neuron(neuron_src, states_view_src, conn, neuron_dst, states_view_dst)
         end
-        if !isnothing(i_dst_exci)
-            M = connection_matrices[nc][i_src, i_dst_exci]
-            for j_dst ∈ j_dsts_exci
-                w = M[j_src, j_dst].weight
-                states[i_dst_exci][:S_AMPA, j_dst] += w
-            end
-        end
-    elseif states_src isa SubsystemStates{LIFInhNeuron}
-        if !isnothing(i_dst_inh)
-            M = connection_matrices[nc][i_src, i_dst_inh]
-            for j_dst ∈ j_dsts_inh
-                w = M[j_src, j_dst].weight
-                states[i_dst_inh][:S_GABA, j_dst] += w
-            end
-        end
-        if !isnothing(i_dst_exci)
-            M = connection_matrices[nc][i_src, i_dst_exci]
-            for j_dst ∈ j_dsts_exci
-                w = M[j_src, j_dst].weight
-                states[i_dst_exci][:S_GABA, j_dst] += w
-            end
-        end
-    else
-        error("this should be unreachable")
     end
 end
+function lif_exci_inh_update_connected_neuron(neuron_src::Subsystem{LIFExciNeuron},
+                                              states_view_src,
+                                              conn::BasicConnection,
+                                              neuron_dst::Subsystem{<:LIFExciInhNeuron},
+                                              states_view_dst)
+    w = conn.weight
+    # check if the neuron is connected to itself
+    if states_view_src === states_view_dst
+        # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
+        states_view_dst[:x] += w
+    end
+    states_view_dst[:S_AMPA] += w
+    nothing
+end
+function lif_exci_inh_update_connected_neuron(neuron_src::Subsystem{LIFInhNeuron},
+                                              states_view_src,
+                                              conn::BasicConnection,
+                                              neuron_dst::Subsystem{<:LIFExciInhNeuron},
+                                              states_view_dst)
+    w = conn.weight
+    states_view_dst[:S_GABA] += w
+    nothing
+end
+
+
 
 function blox_wiring_rule!(h,
                            stim::PoissonSpikeTrain, 
@@ -391,22 +318,28 @@ function ((;w)::PoissonSpikeConn)(stim::Subsystem{PoissonSpikeTrain},
                                   blox_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
     (; jcn = 0.0)
 end
-GraphDynamics.has_discrete_events(::PoissonSpikeConn) = true
-GraphDynamics.has_discrete_events(::Type{PoissonSpikeConn}) = true
 GraphDynamics.event_times((;t_spikes)::PoissonSpikeConn) = (t_spikes)
-GraphDynamics.discrete_event_condition((;t_spikes)::PoissonSpikeConn, t) = (t ∈ t_spikes)
 
-function GraphDynamics.apply_discrete_event!(integrator,
-                                            _, _,
-                                            vstates_dst, _,
-                                            _::PoissonSpikeConn,
-                                            _::Subsystem{PoissonSpikeTrain},
-                                             _::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    states = vstates_dst[]
-    states = @set states.S_AMPA_ext += 1
-    vstates_dst[] = states
-    nothing
+GraphDynamics.has_discrete_events(::Type{PoissonSpikeTrain}) = true
+function GraphDynamics.discrete_event_condition(p::Subsystem{PoissonSpikeTrain}, t, foreach_connected_neuron::F) where {F}
+    # check if any of the downstream connections from p spike at time t.
+    cond = mapreduce(|, foreach_connected_neuron; init=false) do conn, _, _, _
+        t ∈ conn.t_spikes
+    end
 end
+function GraphDynamics.apply_discrete_event!(integrator,
+                                             states_view_src, params_view_src,
+                                             neuron_src::Subsystem{PoissonSpikeTrain},
+                                             foreach_connected_neuron::F) where {F}
+    t = integrator.t
+    foreach_connected_neuron() do conn, neuron_dst, states_view_dst, params_view_dst
+        # Check each downstream connection, if it's time to spike, increment the downstream neuron's S_AMPA_ext
+        if t ∈ conn.t_spikes
+            states_view_dst[:S_AMPA_ext] += 1
+        end
+    end
+end
+
 
 components(blox::Union{LIFExciCircuitBlox, LIFInhCircuitBlox}) = blox.parts
 
@@ -438,7 +371,6 @@ function blox_wiring_rule!(h,
                            blox_dst::Union{LIFExciCircuitBlox, LIFInhCircuitBlox},
                            v_src, v_dst, kwargs)
     neurons_dst = components(blox_dst)
-
     for (j, neuron_dst) ∈ enumerate(neurons_dst)
         blox_wiring_rule!(h, stim, neuron_dst, only(v_src), v_dst[j], kwargs)
     end
