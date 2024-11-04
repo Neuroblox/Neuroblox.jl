@@ -1,4 +1,4 @@
-using Neuroblox
+using Neuroblox 
 using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Random ## for generating random variables
 using CairoMakie ## for customized plotting recipies for blox
@@ -19,7 +19,7 @@ global_namespace=:g
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-@named stim = ImageStimulus(image_set[[1:N_trials],:]; namespace=global_namespace, t_stimulus=trial_dur, t_pause=0); 
+@named stim = ImageStimulus(image_set[1:N_trials,:]; namespace=global_namespace, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
 @named VAC = CorticalBlox(N_wta=4, N_exci=5,  density=0.05, weight=1,I_bg_ar=0;namespace=global_namespace) 
@@ -41,6 +41,6 @@ add_edge!(g, VAC => AC, weight=3, density=0.1, learning_rule = hebbian_cort) ## 
 
 agent = Agent(g; name=:ag, t_block = time_block_dur); ## define agent
 env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
+run_experiment!(agent, env; alg=Vern7())
 
 
