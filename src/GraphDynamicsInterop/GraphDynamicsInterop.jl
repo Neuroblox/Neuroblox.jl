@@ -72,8 +72,7 @@ using GraphDynamics:
     StateIndex,
     ParamIndex,
     event_times,
-    calculate_inputs,
-    connection_index
+    calculate_inputs
 
 using Random:
     Random,
@@ -422,9 +421,9 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_
             end
         end
     end
-    states_partitioned           = map(v -> map(get_states, v), subsystems)
+    states_partitioned = map(v -> map(get_states, v), subsystems)
     params_partitioned = map(v -> map(get_params, v), subsystems)
-    names_partitioned            = map(v -> map(last, v), subsystems_and_names)
+    names_partitioned  = map(v -> map(last, v), subsystems_and_names)
 
     composite_continuous_events_partitioned = let
         if isempty(g.composite_continuous_events_builder)
@@ -468,5 +467,5 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_
     end
 end
 
-
 end#module GraphDynamicsInterop
+
