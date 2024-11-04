@@ -619,6 +619,18 @@ function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronB
     return powspecs
 end
 
+function powerspectrum(cb::NeuralMassBlox, sol::SciMLBase.AbstractSolution, state::String;
+                       sampling_rate=nothing, method=periodogram, window=nothing)
+
+    namespaced_name = namespaced_nameof(cb)
+    state_name = Symbol(namespaced_name, "₊$(state)")
+
+    t_sampled, sampling_freq = get_sampling_info(sol; sampling_rate=sampling_rate)
+    data = isnothing(t_sampled) ? sol[state_name] : Array(sol(t_sampled, idxs = state_name))
+
+    return method(data, fs = sampling_freq, window=window)
+end
+
 function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothing)
     t_raw = unique(sol.t)
     dt = diff(t_raw)

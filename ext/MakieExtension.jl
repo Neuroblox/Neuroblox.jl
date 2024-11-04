@@ -42,13 +42,7 @@ function Makie.plot!(p::Adjacency)
 
     X, Y, D = findnz(adj.matrix)
 
-    heatmap!(p, X, Y, D; colormap = p.colormap[])
-
-    idxs = Tuple.(findall(iszero, adj.matrix))
-    x_zero = first.(idxs)
-    y_zero = last.(idxs)
-
-    #heatmap!(p, x_zero, y_zero, fill(0, length(x_zero)); color=:black)
+    heatmap!(p, X, Y, D; colormap = p.colormap[], colorrange = (minimum(D), maximum(D)))
 
     return p
 end

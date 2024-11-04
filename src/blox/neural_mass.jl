@@ -167,10 +167,10 @@ where ``jcn`` is any input to the blox.
 Arguments:
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
-- τ: Time constant. This is changed from the original source as the time constant was in seconds, while all our blocks are in milliseconds.
-- H: See equation for use.
-- λ: See equation for use.
-- r: See equation for use.
+- τ: Time constant. Defaults to 1 for cortical regions, 14 for subcortical.
+- H: See equation for use. Defaults to 0.02 for both cortical and subcortical regions.
+- λ: See equation for use. Defaults to 5 for cortical regions, 400 for subcortical.
+- r: See equation for use. Defaults to 0.15 for cortical regions, 0.1 for subcortical.
 - cortical: Boolean to determine whether to use cortical or subcortical parameters. Specifying any of the parameters above will override this.
 - delayed: Boolean to indicate whether states are delayed
 
