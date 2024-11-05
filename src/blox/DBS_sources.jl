@@ -46,6 +46,7 @@ function DBS(;
     end
 
     p = paramscoping(
+        tunable=false;
         frequency=frequency,
         amplitude=amplitude,
         pulse_width=pulse_width,
@@ -134,6 +135,7 @@ function protocol_dbs(;
     end
 
     p = paramscoping(
+        tunable=false;
         frequency=frequency,
         amplitude=amplitude,
         pulse_width=pulse_width,
