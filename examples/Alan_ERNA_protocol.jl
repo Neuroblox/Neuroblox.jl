@@ -38,7 +38,7 @@ add_edge!(g, gpe => stn, weight = weight_GPe_STN, density = density_GPe_STN)
 add_edge!(g, stn => fsi, weight = weight_STN_FSI, density = density_STN_FSI)
 
 
-frequency = 0.130
+frequency = 130.0
 amplitude = 600.0
 pulse_width = 0.066
 smooth = 1e-3
@@ -49,7 +49,7 @@ bursts_per_block = 12
 pre_block_time = 200.0
 inter_burst_time = 200.0
 
-@named dbs = protocol_dbs(
+@named dbs = ProtocolDBS(
                 namespace=global_ns,
                 frequency=frequency,
                 amplitude=amplitude,
@@ -65,7 +65,7 @@ inter_burst_time = 200.0
 t_end = get_protocol_duration(dbs)
 t_end = t_end + inter_burst_time
 
-tspan = (0.0, t_end)  # Simulation time span [ms]
+# tspan = (0.0, t_end)  # Simulation time span [ms]
 tspan = (0.0, 900.0) # for testing when little RAM is available
 dt = 0.001  # Time step for solving and saving [ms]
 

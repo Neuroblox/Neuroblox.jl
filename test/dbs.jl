@@ -2,7 +2,7 @@ using Neuroblox
 using Test
 
 @testset "Detection of stimulus transitions" begin
-    frequency = 0.130
+    frequency = 130.0
     amplitude = 10.0
     pulse_width = 1
     smooth = 1e-3

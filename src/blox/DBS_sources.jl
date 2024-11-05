@@ -7,7 +7,7 @@ struct DBS <: StimulusBlox
 end
 
 """
-    DBS(; name, namespace=nothing, frequency=0.130, amplitude=2.5, pulse_width=0.066, 
+    DBS(; name, namespace=nothing, frequency=130.0, amplitude=2.5, pulse_width=0.066, 
         offset=0.0, start_time=0.0, smooth=1e-4)
 
 Create a continuous deep brain stimulation (DBS) stimulus with regular pulses.
@@ -15,7 +15,7 @@ Create a continuous deep brain stimulation (DBS) stimulus with regular pulses.
 Arguments:
 - name: Name given to ODESystem object within the blox
 - namespace: Additional namespace above name if needed for inheritance
-- frequency: Pulse frequency in kHz 
+- frequency: Pulse frequency in Hz 
 - amplitude: Pulse amplitude in arbitrary units
 - pulse_width: Duration of each pulse in ms
 - offset: Baseline value of the signal between pulses
@@ -27,7 +27,7 @@ Returns a DBS stimulus blox that outputs square pulses with specified parameters
 function DBS(;
     name,
     namespace=nothing,
-    frequency=0.130,
+    frequency=130.0,
     amplitude=2.5,
     pulse_width=0.066,
     offset=0.0,
@@ -37,12 +37,15 @@ function DBS(;
     # Ensure consistent numeric types for all parameters
     frequency, amplitude, pulse_width, offset, start_time, smooth = 
         promote(frequency, amplitude, pulse_width, offset, start_time, smooth)
+    
+    # Convert to kHz (to match interal time in ms)
+    frequency_khz = frequency/1000.0
 
     # Create stimulus function based on smooth/non-smooth square wave
     stimulus = if smooth == 0
-        t -> square(t, frequency, amplitude, offset, start_time, pulse_width)
+        t -> square(t, frequency_khz, amplitude, offset, start_time, pulse_width)
     else
-        t -> square(t, frequency, amplitude, offset, start_time, pulse_width, smooth)
+        t -> square(t, frequency_khz, amplitude, offset, start_time, pulse_width, smooth)
     end
 
     p = paramscoping(
@@ -62,7 +65,7 @@ function DBS(;
 end
 
 """
-    protocol_dbs(; name, namespace=nothing, frequency=0.130, amplitude=2.5,
+    ProtocolDBS(; name, namespace=nothing, frequency=130.0, amplitude=2.5,
                   pulse_width=0.066, offset=0.0, start_time=0.0, smooth=1e-4,
                   pulses_per_burst=10, bursts_per_block=12, 
                   pre_block_time=200.0, inter_burst_time=200.0)
@@ -72,7 +75,7 @@ Create a deep brain stimulation (DBS) stimulus consisting of a block of pulse bu
 Arguments:
 - name: Name given to ODESystem object within the blox
 - namespace: Additional namespace above name if needed for inheritance
-- frequency: Pulse frequency in kHz
+- frequency: Pulse frequency in Hz
 - amplitude: Pulse amplitude in arbitrary units  
 - pulse_width: Duration of each pulse in ms
 - offset: Baseline value of the signal between pulses
@@ -85,10 +88,10 @@ Arguments:
 
 Returns a DBS stimulus blox that outputs a block of pulse bursts.
 """
-function protocol_dbs(;
+function ProtocolDBS(;
     name,
     namespace=nothing,
-    frequency=0.130,
+    frequency=130.0,
     amplitude=2.5,
     pulse_width=0.066,
     offset=0.0,
@@ -103,8 +106,11 @@ function protocol_dbs(;
     frequency, amplitude, pulse_width, offset, start_time, smooth, pre_block_time, inter_burst_time = 
         promote(frequency, amplitude, pulse_width, offset, start_time, smooth, pre_block_time, inter_burst_time)
 
+    # Convert to kHz (to match interal time in ms)
+    frequency_khz = frequency/1000.0
+
     # Pre-compute timing parameters for the protocol
-    pulse_period = 1/frequency  
+    pulse_period = 1/frequency_khz  
     burst_duration = pulse_period * pulses_per_burst
     burst_plus_gap = burst_duration + inter_burst_time
     
@@ -126,8 +132,8 @@ function protocol_dbs(;
                 ifelse(t_within_burst_cycle >= burst_duration - pulse_width/2,
                     offset,
                     ifelse(smooth == 0,
-                        square(t_within_burst_cycle, frequency, amplitude, offset, start_time, pulse_width),
-                        square(t_within_burst_cycle, frequency, amplitude, offset, start_time, pulse_width, smooth)
+                        square(t_within_burst_cycle, frequency_khz, amplitude, offset, start_time, pulse_width),
+                        square(t_within_burst_cycle, frequency_khz, amplitude, offset, start_time, pulse_width, smooth)
                     )
                 )
             )
