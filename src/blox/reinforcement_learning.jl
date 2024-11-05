@@ -341,19 +341,20 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
         weights[w] = defs[w]
     end
 
-    for trial_num in Base.OneTo(N_trials)
 
-        stim_params = get_trial_stimulus(env)
+function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwargs...)
 
-        to_update = merge(weights, stim_params)
-        new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
+    prob = remake(agent.problem; tspan=(0, t_warmup))
+    if haskey(kwargs, :alg)
+        sol = solve(prob, kwargs[:alg]; save_everystep=false, kwargs...)
+    else
+        sol = solve(prob; alg_hints = [:stiff], save_everystep=false, kwargs...)
+    end
+    u0 = sol[:,end] # last value of state vector
 
-        prob = remake(prob; p = new_params, u0=u0)
-        if haskey(kwargs, :alg)
-            sol = solve(prob, kwargs[:alg]; kwargs...)
-        else
-            sol = solve(prob; alg_hints = [:stiff], kwargs...)
-        end
+    return u0
+end
+
 
         # u0 = sol[1:end,end] # next run should continue where the last one ended   
         # In the paper we assume sufficient time interval before net stimulus so that
