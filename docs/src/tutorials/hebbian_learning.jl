@@ -12,7 +12,7 @@ using Downloads ## to download image stimuli files
 
 # ## Cortico-cortical plasticity
 
-time_block_dur = 90 ## ms (size of discrete time blocks)
+time_block_dur = 90.0 ## ms (size of discrete time blocks)
 N_trials = 5 ##number of trials
 trial_dur = 1000 ##ms
 
@@ -55,7 +55,7 @@ run_experiment!(agent, env)#; alg=Vern7())
 
 time_block_dur = 90.0 ## ms (size of discrete time blocks)
 N_trials = 10 ##number of trials
-trial_dur = 1000 ##ms
+trial_dur = 600 ##ms
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
 
