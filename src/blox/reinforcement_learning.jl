@@ -358,5 +358,5 @@ function save_voltages(sol, filepath, numtrial)
     df = DataFrame(sol)
     fname = "sim"*lpad(numtrial, 4, "0")*".csv"
     fullpath = joinpath(filepath, fname)
-    CSV.write(fullpath, df)
+    write(fullpath, df)
 end
