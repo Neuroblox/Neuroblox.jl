@@ -294,7 +294,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     =#
 
     for trial in Base.OneTo(N_trials)
-        sol = run_trial!(agent, env, weights, nothing; save_idxs, kwargs...)
+        sol = run_trial!(agent, env, weights, nothing; kwargs...)
 
         save_voltages(sol, save_path, trial)
     end
