@@ -31,6 +31,10 @@ function weight_gradient(hp::HebbianPlasticity, sol, w, feedback)
     return hp(val_pre, val_post, w, feedback)
 end
 
+get_eval_times(l::HebbianPlasticity) = [l.t_pre, l.t_post]
+
+get_eval_states(l::HebbianPlasticity) = [l.state_pre, l.state_post]
+
 mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     const K
     const decay
@@ -73,6 +77,10 @@ function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
 
     return hmp(val_pre, val_post, val_mod, w, feedback)
 end
+
+get_eval_times(l::HebbianModulationPlasticity) = [l.t_pre, l.t_post, l.t_mod]
+
+get_eval_states(l::HebbianModulationPlasticity) = [l.state_pre, l.state_post, get_modulator_state(l.modulator)]
 
 function maybe_set_state_pre!(lr::AbstractLearningRule, state)
     if isnothing(lr.state_pre)
@@ -121,7 +129,7 @@ end
 
 (env::ClassificationEnvironment)(action) = action == env.category[env.current_trial]
 
-increment_trial!(env::AbstractEnvironment) = env.current_trial += 1
+increment_trial!(env::AbstractEnvironment) = env.current_trial = mod(env.current_trial, env.N_trials) + 1
 
 reset!(env::AbstractEnvironment) = env.current_trial = 1
 
@@ -152,6 +160,10 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     comp_vals = sol(p.t_decision; idxs=p.competitor_states)
     return argmax(comp_vals)
 end
+
+get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
+
+get_eval_states(gp::GreedyPolicy) = gp.competitor_states
 
 """
 function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
