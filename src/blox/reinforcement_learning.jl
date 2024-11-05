@@ -355,32 +355,45 @@ function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwar
     return u0
 end
 
+function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; kwargs...)
 
-        # u0 = sol[1:end,end] # next run should continue where the last one ended   
-        # In the paper we assume sufficient time interval before net stimulus so that
-        # system reaches back to steady state, so we don't continue from previous trial's endpoint
+    prob = agent.problem
+    action_selection = agent.action_selection
+    learning_rules = agent.learning_rules
+    sys = get_sys(agent)
+    defs = ModelingToolkit.get_defaults(sys)
 
-        if isnothing(action_selection)
-            feedback = 1
-        else
-            action = action_selection(sol)
-            feedback = env(action)
-        end
-
-        for (w, rule) in learning_rules
-            w_val = weights[w]
-            Δw = weight_gradient(rule, sol, w_val, feedback)
-            weights[w] += Δw
-        end
-        increment_trial!(env)
-
-        if !isnothing(save_path)
-            save_voltages(sol, save_path, trial_num)
-        end
-
+    if haskey(kwargs, :alg)
+        sol = solve(prob, kwargs[:alg]; kwargs...)
+    else
+        sol = solve(prob; alg_hints = [:stiff], kwargs...)
     end
 
-    agent.problem = prob
+    # u0 = sol[1:end,end] # next run should continue where the last one ended   
+    # In the paper we assume sufficient time interval before next stimulus so that
+    # system reaches back to steady state, so we don't continue from previous trial's endpoint
+
+    if isnothing(action_selection)
+        feedback = 1
+    else
+        action = action_selection(sol)
+        feedback = env(action)
+    end
+
+    for (w, rule) in learning_rules
+        w_val = weights[w]
+        Δw = weight_gradient(rule, sol, w_val, feedback)
+        weights[w] += Δw
+    end
+    
+    increment_trial!(env)
+
+    stim_params = get_trial_stimulus(env)
+    new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
+
+    agent.problem = remake(prob; p = new_params)
+
+    return sol
 end
 
 function save_voltages(sol, filepath, numtrial)
