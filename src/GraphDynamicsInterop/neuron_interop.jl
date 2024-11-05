@@ -128,8 +128,8 @@ function define_neurons()
             ))
             @eval begin
                 GraphDynamics.has_continuous_events(::Type{$T}) = true
-                GraphDynamics.continuous_event_condition((; $(p_and_s_syms...))::Subsystem{$T}, t) = $ev_condition
-                function GraphDynamics.apply_continuous_event!(integrator, sview, pview, neuron::Subsystem{$T})
+                GraphDynamics.continuous_event_condition((; $(p_and_s_syms...))::Subsystem{$T}, t, _) = $ev_condition
+                function GraphDynamics.apply_continuous_event!(integrator, sview, pview, neuron::Subsystem{$T}, _)
                     (; $(p_and_s_syms...)) = neuron
                     sview[] = SubsystemStates{$T}(merge(NamedTuple(get_states(neuron)), $ev_affect))
                 end
@@ -140,16 +140,16 @@ end
 define_neurons() # it's useful when developing this module to have these in a function
 
 #Maybe should just encorporate this into define_neurons()
-for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
-    @eval begin
-        GraphDynamics.has_discrete_events(::Type{$T}) = true
-        GraphDynamics.discrete_event_condition((; t_refract_end)::Subsystem{$T}, t) = t_refract_end == t
-        function GraphDynamics.apply_discrete_event!(integrator, _, pview, neuron::Subsystem{$T})
-            params = get_params(neuron)
-            pview[] = @set params.is_refractory = 0
-        end
-    end
-end
+# for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
+#     @eval begin
+#         GraphDynamics.has_discrete_events(::Type{$T}) = true
+#         GraphDynamics.discrete_event_condition((; t_refract_end)::Subsystem{$T}, t) = t_refract_end == t
+#         function GraphDynamics.apply_discrete_event!(integrator, _, pview, neuron::Subsystem{$T}, _)
+#             params = get_params(neuron)
+#             pview[] = @set params.is_refractory = 0
+#         end
+#     end
+# end
 
 issupported(::PoissonSpikeTrain) = true
 components(p::PoissonSpikeTrain) = (p,)
@@ -199,11 +199,11 @@ function to_subsystem(s::Matrisome)
 end
 GraphDynamics.has_discrete_events(::Type{Matrisome}) = true
 GraphDynamics.discrete_events_require_inputs(::Type{Matrisome}) = true
-function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{Matrisome}, t)
+function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{Matrisome}, t, _)
     t == t_event
 end
 GraphDynamics.event_times((;t_event)::Subsystem{Matrisome}) = t_event
-function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{Matrisome}, jcn)
+function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{Matrisome}, _, jcn)
     # recording the values of jcn and H at the event time in the parameters jcn_ and H_
     params = get_params(s)
     vparams[] = @set params.jcn_ = jcn
@@ -270,14 +270,13 @@ end
 
 GraphDynamics.has_discrete_events(::Type{SNc}) = true
 GraphDynamics.discrete_events_require_inputs(::Type{SNc}) = true
-function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{SNc}, t)
+function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{SNc}, t, _)
     t == t_event
 end
 GraphDynamics.event_times((;t_event)::Subsystem{SNc}) = t_event
-function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{SNc}, jcn)
+function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{SNc}, _, jcn)
     # recording the values of jcn and H at the event time in the parameters jcn_ and H_
     params = get_params(s)
     vparams[] = @set params.jcn_ = jcn
     nothing
 end
-
