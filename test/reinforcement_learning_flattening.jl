@@ -69,7 +69,7 @@ using ModelingToolkit: getp
     init_params_idxs_other_params = params_at(idxs_other_params)
     
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-    run_experiment!(agent, env, "./"; alg=Vern7(), reltol=1e-9,abstol=1e-9)
+    run_experiment!(agent, env, "./"; t_warmup=200, alg=Vern7(), reltol=1e-9,abstol=1e-9)
     
     final_params = reduce(vcat, agent.problem.p)
     # At least some weights need to be different.
