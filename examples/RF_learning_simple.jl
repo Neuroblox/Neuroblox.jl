@@ -74,4 +74,4 @@ agent = Agent(g; name=:ag, t_block = 90);
 #define environment : contains stimuli and feedback
 env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
    
-run_experiment!(agent, env; alg=Vern7(), reltol=1e-9,abstol=1e-9)
+run_experiment!(agent, env; t_warmup=200, alg=Vern7(), reltol=1e-9,abstol=1e-9)
