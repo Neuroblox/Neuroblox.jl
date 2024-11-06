@@ -217,7 +217,7 @@ function detect_transitions(t, signal::Vector{T}; atol=0) where T <: AbstractFlo
 end
 
 function compute_transition_times(stimulus::Function, f , dt, tspan, start_time, pulse_width; atol=0)
-    period = 1 / f
+    period = 1000.0 / f
     n_periods = floor((tspan[end] - start_time) / period)
 
     # Detect single pulse transition points
