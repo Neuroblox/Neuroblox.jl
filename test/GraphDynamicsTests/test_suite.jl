@@ -70,6 +70,11 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
             sol_u_reordered, du_reordered
         end
         @debug "" norm(sol_grp .- sol_mtk) / norm(sol_mtk)
+        for i ∈ eachindex(state_names)
+            if !isapprox(sol_grp[i], sol_mtk[i]; rtol=rtol)
+                @debug  "" i state_names[i] sol_grp[i] sol_mtk[i]
+            end
+        end
         @test sort(du_grp) ≈ sort(du_mtk) # due to the MTK getu bug, we'll compare the sorted versions
         @test sol_grp ≈ sol_mtk rtol=rtol
     end
@@ -686,13 +691,13 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     add_edge!(g, background_input2 => n1; weight = 0.0)
     add_edge!(g, stim_A => n1;            weight = 1.0)
     add_edge!(g, stim_B => n1;            weight = 1.0)
-    add_edge!(g, n1 => n2;               weight = 1.0)
-    add_edge!(g, n2 => n1; weight = 2.0)
-    add_edge!(g, n3 => n1; weight = 3.0)
+    add_edge!(g, n1 => n2;                weight = 1.0)
+    add_edge!(g, n2 => n1;                weight = 2.0)
+    add_edge!(g, n3 => n1;                weight = 3.0)
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
 end
 
-function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
+function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     
     ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
@@ -700,7 +705,7 @@ function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
     spike_rate = 2.4 ## spikes / ms
 
     f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
-    N_E = 24 ## total number of excitatory neurons
+    N_E ## total number of excitatory neurons
     N_I = Int(ceil(N_E / 4)) ## total number of inhibitory neurons
     N_E_selective = Int(ceil(f * N_E)) ## number of selective excitatory neurons
     N_E_nonselective = N_E - 2 * N_E_selective ## number of non-selective excitatory neurons
@@ -761,26 +766,8 @@ function decision_making_test(;tspan=(0.0, 9.0), rtol=1e-5)
     add_edge!(g, n_inh => n_A; weight = 1)
     add_edge!(g, n_inh => n_B; weight = 1)
     add_edge!(g, n_inh => n_ns; weight = 1)
+
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
-
-    # local state_names
-    # sol_gys = let sys = graphsystem_from_graph(g)
-    #     prob = ODEProblem(sys, [], tspan, [])
-    #     sol = solve(prob, Tsit5())
-
-    #     state_names = variable_symbols(sys)
-    #     sol_u_reordered = map(state_names) do name
-    #         sol[name][end]
-    #     end
-    # end
-    # sol_mtk = let sys = system_from_graph(g; name=:sys)
-    #     prob = ODEProblem(sys, [], tspan, [])
-    #     sol = solve(prob, Tsit5())
-    #     sol_u_reordered = map(state_names) do name
-    #         sol[name][end]
-    #     end
-    # end
-    # sort(sol_gys .- sol_mtk)
 end
 
 function ping_tests(;tspan=(0.0, 2.0))

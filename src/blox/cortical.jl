@@ -115,6 +115,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
         Mg = 1, # mM
         exci_scaling_factor = 1,
         inh_scaling_factor = 1,
+        skip_system_creation=false,
         kwargs...
         )
 
@@ -154,10 +155,13 @@ struct LIFExciCircuitBlox <: CompositeBlox
             end
         end
 
-        bc = connector_from_graph(g)
-        
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
-
+        if skip_system_creation
+            bc = nothing
+            sys = nothing
+        else
+            bc = connector_from_graph(g)
+            sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
+        end
         new(namespace, neurons, sys, bc, kwargs)
     end
 end
@@ -191,6 +195,7 @@ struct LIFInhCircuitBlox <: CompositeBlox
         Mg = 1, # mM 
         exci_scaling_factor = 1,
         inh_scaling_factor = 1,
+        skip_system_creation = false,
         kwargs...
         )
 
@@ -228,10 +233,14 @@ struct LIFInhCircuitBlox <: CompositeBlox
             end
         end
 
-        bc = connector_from_graph(g)
+        if skip_system_creation
+            bc = nothing
+            sys = nothing
+        else
+            bc = connector_from_graph(g)
+            sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
+        end
         
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
-
         new(namespace, neurons, sys, bc, kwargs)
     end
 end

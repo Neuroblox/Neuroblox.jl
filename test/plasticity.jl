@@ -49,7 +49,7 @@ using ModelingToolkit: getp
 
     
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
-    run_experiment!(agent, env; alg=Tsit5(), reltol=1e-6,abstol=1e-9)
+    run_experiment!(agent, env; t_warmup=200, alg=Tsit5(), reltol=1e-6,abstol=1e-9)
 
     final_params = agent.problem.p
     # At least some weights need to be different.
