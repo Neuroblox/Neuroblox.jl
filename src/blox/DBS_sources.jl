@@ -267,7 +267,7 @@ function get_protocol_duration(dbs::DBS)
     inter_burst_time = ModelingToolkit.getdefault(dbs.params[10])
 
     # Calculate total protocol duration
-    pulse_period = 1/frequency
+    pulse_period = 1000.0/frequency
     burst_duration = pulses_per_burst * pulse_period
     block_duration = bursts_per_block * (burst_duration + inter_burst_time) - inter_burst_time
     
