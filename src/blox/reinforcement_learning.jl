@@ -2,18 +2,21 @@ abstract type AbstractEnvironment end
 abstract type AbstractLearningRule end
 
 mutable struct HebbianPlasticity <:AbstractLearningRule
-    const K
-    const W_lim
-    state_pre
-    state_post
-    t_pre
-    t_post
+    const K::Float64
+    const W_lim::Float64
+    state_pre::Num
+    state_post::Num
+    t_pre::Float64
+    t_post::Float64
 
     function HebbianPlasticity(; 
         K, W_lim, 
         state_pre=nothing, state_post=nothing,
         t_pre=nothing, t_post=nothing
     )
+        state_pre = isnothing(state_pre) ? variable(:state_pre) : state_pre
+        state_post = isnothing(state_post) ? variable(:state_post) : state_post
+
         new(K, W_lim, state_pre, state_post, t_pre, t_post)
     end
 end
@@ -35,24 +38,27 @@ get_eval_times(l::HebbianPlasticity) = [l.t_pre, l.t_post]
 
 get_eval_states(l::HebbianPlasticity) = [l.state_pre, l.state_post]
 
-mutable struct HebbianModulationPlasticity <: AbstractLearningRule
-    const K
-    const decay
-    const α
-    const θₘ
-    state_pre
-    state_post
-    t_pre
-    t_post
-    t_mod
-    modulator
+mutable struct HebbianModulationPlasticity{M} <: AbstractLearningRule
+    const K::Float64
+    const decay::Float64
+    const α::Float64
+    const θₘ::Float64
+    state_pre::Num
+    state_post::Num
+    t_pre::Float64
+    t_post::Float64
+    t_mod::Float64
+    modulator::M
 
     function HebbianModulationPlasticity(; 
         K, decay, α, θₘ, modulator=nothing,
         state_pre=nothing, state_post=nothing, 
         t_pre=nothing, t_post=nothing, t_mod=nothing,   
     )
-        new(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
+        state_pre = isnothing(state_pre) ? variable(:state_pre) : state_pre
+        state_post = isnothing(state_post) ? variable(:state_post) : state_post
+
+        new{typeof(modulator)}(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
     end
 end
 
