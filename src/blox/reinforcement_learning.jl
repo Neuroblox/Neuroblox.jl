@@ -200,7 +200,6 @@ mutable struct Agent{S,P,A,LR,PA}
     action_selection::A
     learning_rules::LR
     init_params::PA
-    # simsys::SS
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
@@ -216,7 +215,7 @@ mutable struct Agent{S,P,A,LR,PA}
         init_params = copy(prob.p)
         
         policy = action_selection_from_graph(g)
-        learning_rules = bc.learning_rules
+        learning_rules =  narrowtype(bc.learning_rules)  
 
         new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(sys, prob, policy, learning_rules, init_params, #=ss=#)
     end
