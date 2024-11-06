@@ -40,7 +40,7 @@ using ModelingToolkit: get_namespace, get_systems, isparameter,
                     AbstractODESystem, VariableTunable, getp
 import ModelingToolkit: inputs, nameof, outputs, getdescription
 
-using Symbolics: @register_symbolic, getdefaultval, get_variables
+using Symbolics: @register_symbolic, getdefaultval, get_variables, variable
 
 using CSV: read, write
 using DataFrames
