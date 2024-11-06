@@ -42,7 +42,7 @@ import ModelingToolkit: inputs, nameof, outputs, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval, get_variables
 
-using CSV: read
+using CSV: read, write
 using DataFrames
 
 using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
