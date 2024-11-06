@@ -188,6 +188,12 @@ function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
 end
 """
 
+function narrowtype(d::Dict)
+    types = unique(typeof.(values(d)))
+    U = Union{types...}
+    Dict{Num, U}(d)
+end
+
 mutable struct Agent{S,P,A,LR,PA}
     odesystem::S
     problem::P
