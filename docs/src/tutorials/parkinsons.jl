@@ -36,8 +36,8 @@
 # - Subcortical structures including the subthalamic nucleus ``STH``, the external segment of the globus pallidus ``GPE``, and the internal segment of the globus pallidus ``GPI``
 # - A thalamic oscillator ``Th``
 
-# The connections between these oscillators are shown in the Neuroblox GUI below:
-# NEED FIGURE HERE!!
+# The connections between these oscillators are shown in the Neuroblox GUI below (blue = excitatory, red = inhibitory connections):
+# ![Cortico-basal ganglia-thalamic-cortical loop structure](../assets/MMSN-Parkinsons-Full.png)
 
 
 # ## Setting Up the Model
