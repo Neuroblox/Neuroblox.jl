@@ -1,17 +1,17 @@
 """
-    function paramscoping(;kwargs...)
+    function paramscoping(;tunable=true, kwargs...)
     
     Scope arguments that are already a symbolic model parameter thereby keep the correct namespace 
     and make those that are not yet symbolic a symbol.
     Keyword arguments are used, because parameter definition require names, not just values.
 """
-function paramscoping(;kwargs...)
+function paramscoping(;tunable=true, kwargs...)
     paramlist = []
     for (kw, v) in kwargs
         if v isa Num
             paramlist = vcat(paramlist, ParentScope(v))
         else
-            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
+            paramlist = vcat(paramlist, @parameters $kw = v [tunable=tunable])
         end
     end
     return paramlist
