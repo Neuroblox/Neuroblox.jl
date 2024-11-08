@@ -33,11 +33,11 @@
 # This model consists of four main components:
 # - A cortical column consisting of pyramidal cells ``PY``, an excitatory interneuron population ``EI``, and an inhibitory interneuron population ``II``
 # - A striatal network consisting of two populations of medium spiny neurons, ``D1`` and ``D2`` (named for the different dopamine receptors), and fast-spiking interneurons ``FSI``
-# - Subcortical structures including the subthalamic nucleus ``STH``, the external segment of the globus pallidus ``GPE``, and the internal segment of the globus pallidus ``GPI``
+# - Subcortical structures including the subthalamic nucleus ``STN``, the external segment of the globus pallidus ``GPE``, and the internal segment of the globus pallidus ``GPI``
 # - A thalamic oscillator ``Th``
 
-# The connections between these oscillators are shown in the Neuroblox GUI below:
-# NEED FIGURE HERE!!
+# The connections between these oscillators are shown in the Neuroblox GUI below (blue = excitatory, red = inhibitory connections):
+# ![Cortico-basal ganglia-thalamic-cortical loop structure](../assets/MMSN_Parkinsons_Full.png)
 
 
 # ## Setting Up the Model
@@ -67,7 +67,7 @@ using CairoMakie
 @named FSI = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3)
 
 ## Create the remaining subcortical oscillators
-@named STH = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
+@named STN = JansenRit(τ=0.01*τ_factor, H=20/τ_factor, λ=500, r=0.1)
 @named GPE = JansenRit(cortical=false) ## default parameters subcortical Jansen Rit blox
 @named GPI = JansenRit(cortical=false)  ## default parameters subcortical Jansen Rit blox
 @named Th  = JansenRit(τ=0.002*τ_factor, H=10/τ_factor, λ=20, r=5);
@@ -88,15 +88,15 @@ params = @parameters C_Cor=3 C_BGTh=3 C_Cor➡BGTh=9.75 C_BGTh➡Cor=9.75 ## def
 add_edge!(g, Th => EI; weight = C_BGTh➡Cor)
 
 ## remaining cortical → subcortical connections
-add_edge!(g, PY => STH; weight = C_Cor➡BGTh)
+add_edge!(g, PY => STN; weight = C_Cor➡BGTh)
 add_edge!(g, PY => D1; weight = C_BGTh➡Cor)
 add_edge!(g, PY => D2; weight = C_BGTh➡Cor)
 add_edge!(g, PY => FSI; weight = C_BGTh➡Cor)
 
 ## basal ganglia ↔ thalamus connections
-add_edge!(g, STH => GPE; weight = C_BGTh)
-add_edge!(g, STH => GPI; weight = C_BGTh)
-add_edge!(g, GPE => STH; weight = -0.5*C_BGTh)
+add_edge!(g, STN => GPE; weight = C_BGTh)
+add_edge!(g, STN => GPI; weight = C_BGTh)
+add_edge!(g, GPE => STN; weight = -0.5*C_BGTh)
 add_edge!(g, GPE => GPE; weight = -0.5*C_BGTh)
 add_edge!(g, GPE => GPI; weight = -0.5*C_BGTh)
 add_edge!(g, GPE => FSI; weight = -0.5*C_BGTh)
