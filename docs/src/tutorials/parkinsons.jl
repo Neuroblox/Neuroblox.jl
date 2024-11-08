@@ -37,7 +37,7 @@
 # - A thalamic oscillator ``Th``
 
 # The connections between these oscillators are shown in the Neuroblox GUI below (blue = excitatory, red = inhibitory connections):
-# ![Cortico-basal ganglia-thalamic-cortical loop structure](../assets/MMSN-Parkinsons-Full.png)
+# ![Cortico-basal ganglia-thalamic-cortical loop structure](../assets/MMSN_Parkinsons_Full.png)
 
 
 # ## Setting Up the Model
