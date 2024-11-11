@@ -457,16 +457,20 @@ end
 
 function firing_rate(
     blox, sol::SciMLBase.AbstractSolution; 
-    win_size = last(sol.t), win_resolution = 1e-3, 
-    transient = 0, overlap = 0, threshold = nothing)
+    win_size = last(sol.t), transient = 0, overlap = 0, 
+    threshold = nothing)
 
+    spikes = detect_spikes(blox, sol; threshold)    
+    N_neurons = size(spikes, 2)
+    
     ts = sol.t
     t_win_start = transient:(win_size - win_size*overlap):(last(ts) - win_size)
 
     fr = map(t_win_start) do tws
-        spikes = detect_spikes(blox, sol; threshold, ts = tws:win_resolution:(tws + win_size))
-        N_neurons = size(spikes, 2)
-        1000.0 * (nnz(spikes) / N_neurons) / win_size
+        idx_start = findfirst(x -> x >= tws, ts)
+        idx_end = findfirst(x -> x >= tws + win_size, ts)
+        
+        1000.0 * (nnz(spikes[idx_start:idx_end, :]) / N_neurons) / win_size
     end
 
     return fr
