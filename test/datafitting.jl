@@ -22,13 +22,11 @@ using MAT
         add_blox!(g, region)
         regions[ii] = nv(g)    # store index of neural mass model
         taskinput = ExternalInput(;name=Symbol("r$(ii)₊ei"), I=1.0)
-        # add_blox!(g, taskinput)
-        add_edge!(g, taskinput => region; :weight => C)
+        add_edge!(g, taskinput => region, weight = C)
         # add hemodynamic observer
         observer = BalloonModel(;name=Symbol("r$(ii)₊bm"), lnκ=lnκ, lnϵ=lnϵ)
-        add_blox!(g, observer)
         # connect observer with neuronal signal
-        add_edge!(g, region => observer; :weight => 1.0)
+        add_edge!(g, region => observer, weight = 1.0)
     end
 
     # add symbolic weights
@@ -129,12 +127,12 @@ end
         add_blox!(g, region)
         regions[ii] = nv(g)    # store index of neural mass model
         input = ExternalInput(;name=Symbol("r$(ii)₊ei"), I=1.0)
-        add_edge!(g, input => region; :weight => C)
+        add_edge!(g, input => region; weight = C)
 
         # add lead field (LFP measurement)
         measurement = LeadField(;name=Symbol("r$(ii)₊lf"))
         # connect measurement with neuronal signal
-        add_edge!(g, region => measurement; :weight => 1.0)
+        add_edge!(g, region => measurement; weight = 1.0)
     end
 
     nl = Int((nrr^2-nrr)/2)   # number of links unidirectional
