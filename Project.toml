@@ -60,7 +60,11 @@ GraphDynamics = "0.2"
 Graphs = "1"
 Interpolations = "0.14, 0.15"
 MetaGraphs = "0.7"
+<<<<<<< HEAD
 ModelingToolkit = "9.46.0 - 9.50.0"
+=======
+ModelingToolkit = "9.46.0 - 9.49"
+>>>>>>> master
 ModelingToolkitStandardLibrary = "2"
 MuladdMacro = "0.2"
 OrderedCollections = "1.6.3"
