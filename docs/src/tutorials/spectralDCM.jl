@@ -1,8 +1,12 @@
-# # Spectral Dynamic Causal Modeling Tutorial
+# # Solving Inverse Problems with Spectral Dynamic Causal Modeling
 # # Introduction
 #
-# In this tutorial we will introduce how to perform a spectral Dynamic Causal Modeling analysis on simulated data [1,2].
-# To do so we roughly resemble the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
+# Neuroblox provides you with a comprehensive environment for simulations as we have explored previously, but its functionality doesn't stop there.
+# We will now pivot and turn our attention to a different kind of problem: 
+# inferring model parameters, that is solving inverse problems, from time series. 
+# The method of choice is one of the most widely spread in imaging neuroscience, spectral Dynamic Causal Modeling (spDCM)[1,2]. 
+# In this tutorial we will introduce how to perform a spDCM analysis on simulated data.
+# To do so we roughly reproduce the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[2]
 #
 # In this tutorial we will define a circuit of three linear neuronal mass models, all driven by an Ornstein-Uhlenbeck process.
