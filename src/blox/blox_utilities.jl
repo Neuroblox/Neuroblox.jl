@@ -403,13 +403,11 @@ end
 
 replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 
-function find_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}
-    spikes = spzeros(Bool, size(x))
-    
+function find_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}    
     spike_idxs = argmaxima(x)
     peakheights!(spike_idxs, x[spike_idxs]; minheight = threshold)
 
-    spikes[spike_idxs] .= 1
+    spikes = sparsevec(spike_idxs, ones(length(spike_idxs)), length(x))
 
     return spikes
 end
