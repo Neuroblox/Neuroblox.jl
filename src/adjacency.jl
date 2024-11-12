@@ -23,6 +23,34 @@ function get_adjacency(g::MetaDiGraph)
     return get_adjacency(bc)
 end
 
+function get_adjacency(bc::BloxConnector, sys::AbstractODESystem, prob::ODEProblem)
+    A = get_adjacency(bc)
+    names = A.names
+    mat = A.matrix
+
+    I, J, _ = findnz(mat)
+
+    ps = String.(Symbol.(parameters(sys)))
+
+    w_idxs = map(zip(I,J)) do (src_idx, dst_idx)
+        w = join(["w", names[src_idx], names[dst_idx]], "_")
+        findfirst(p -> p == w, ps)
+    end
+    
+    W = getp(prob, parameters(sys)[w_idxs])(prob)
+    S = sparse(I, J, W, size(mat)...)
+
+    return AdjacencyMatrix(S, names)
+end
+
+function get_adjacency(agent::Agent)
+    prob = agent.problem
+    sys = get_system(agent)
+    bc = get_connector(agent)
+
+    return get_adjacency(bc, sys, prob)
+end
+
 function adjmatrixfromdigraph(g::MetaDiGraph)
     myadj = map(Num, adjacency_matrix(g))
     for edge in edges(g)
