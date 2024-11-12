@@ -76,7 +76,7 @@ end
     A_graph = get_adjacency(g)
 
     Random.seed!(123)
-    agent = Agent(g; name=global_namespace, t_block = time_block_dur); ## define agent
+    agent = Agent(g; name=global_namespace, t_block = 1);
     A_agent = get_adjacency(agent)
 
     @test all(A_graph.matrix .== A_agent.matrix)
