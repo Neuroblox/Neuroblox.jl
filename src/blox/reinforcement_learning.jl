@@ -222,7 +222,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
     learning_rules = agent.learning_rules
 
@@ -258,7 +258,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
     learning_rules = agent.learning_rules
 
@@ -323,7 +323,7 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; k
     prob = agent.problem
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
 
     if haskey(kwargs, :alg)
