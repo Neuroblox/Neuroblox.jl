@@ -187,16 +187,13 @@ end
     indices = Dict(:dspars => collect(1:np))
     # Noise parameter mean
     modelparam[:lnα] = zeros(Float64, 2, nrr);        # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
-    modelparam[:lnα] = zeros(Float64, 2, nrr);        # intrinsic fluctuations, ln(α) as in equation 2 of Friston et al. 2014 
     n = length(modelparam[:lnα]);
     indices[:lnα] = collect(np+1:np+n);
     np += n;
     modelparam[:lnβ] = [-16.0, -16.0];                # global observation noise, ln(β) as above
-    modelparam[:lnβ] = [-16.0, -16.0];                # global observation noise, ln(β) as above
     n = length(modelparam[:lnβ]);
     indices[:lnβ] = collect(np+1:np+n);
     np += n;
-    modelparam[:lnγ] = [-16.0, -16.0];                # region specific observation noise
     modelparam[:lnγ] = [-16.0, -16.0];                # region specific observation noise
     indices[:lnγ] = collect(np+1:np+nrr);
     np += nrr
