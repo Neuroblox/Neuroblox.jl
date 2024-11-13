@@ -188,12 +188,12 @@ function narrowtype(d::Dict)
     Dict{Num, U}(d)
 end
 
-mutable struct Agent{S,P,A,LR,PA}
+mutable struct Agent{S,P,A,LR,C}
     odesystem::S
     problem::P
     action_selection::A
     learning_rules::LR
-    init_params::PA
+    connector::C
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
@@ -206,23 +206,20 @@ mutable struct Agent{S,P,A,LR,PA}
         p = haskey(kwargs, :p) ? kwargs[:p] : []
         
         prob = ODEProblem(sys, u0, (0.,1.), p)
-        init_params = copy(prob.p)
         
         policy = action_selection_from_graph(g)
         learning_rules =  narrowtype(bc.learning_rules)  
 
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(init_params)#=, typeof(ss)=#}(sys, prob, policy, learning_rules, init_params, #=ss=#)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(bc)}(sys, prob, policy, learning_rules, bc)
     end
 end
-
-reset!(ag::Agent) = ag.problem = remake(ag.problem; p = ag.init_params)
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=0, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
     learning_rules = agent.learning_rules
 
@@ -258,7 +255,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     t_trial = env.t_trial
     tspan = (0, t_trial)
 
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
     learning_rules = agent.learning_rules
 
@@ -323,7 +320,7 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; k
     prob = agent.problem
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
-    sys = get_sys(agent)
+    sys = get_system(agent)
     defs = ModelingToolkit.get_defaults(sys)
 
     if haskey(kwargs, :alg)

@@ -76,8 +76,6 @@ using ModelingToolkit: getp
     @test all(init_params_idxs_other_params .== params_at(idxs_other_params))
     # @test all(init_params[map_idxs[idxs_other_params]] .== final_params[map_idxs[idxs_other_params]])
 
-    reset!(agent)
-    @test all(init_params_all .== params_at(:))
     reset!(env)
     @test env.current_trial == 1
 end
@@ -142,7 +140,7 @@ end
     init_params_all = params_at(:)
     init_params_idxs_weight = params_at(idxs_weight)
     init_params_idxs_other_params = params_at(idxs_other_params)
-    
+        
     env = ClassificationEnvironment(stim; name=:env, namespace=global_ns)
     run_experiment!(agent, env, "./"; t_warmup=200, alg=Vern7(), reltol=1e-9,abstol=1e-9)
     
@@ -154,9 +152,6 @@ end
     @test all(init_params_idxs_other_params .== params_at(idxs_other_params))
     # @test all(init_params[map_idxs[idxs_other_params]] .== final_params[map_idxs[idxs_other_params]])
 
-    reset!(agent)
-    @test all(init_params_all .== params_at(:))
-    @show setdiff(init_params_all, params_at(:))
     reset!(env)
     @test env.current_trial == 1
 end

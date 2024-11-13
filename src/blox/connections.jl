@@ -788,8 +788,8 @@ function (bc::BloxConnector)(
     # The connection from stimulus is conceptual, the weight can not be updated.
 
     eq = sys_in.I_in ~ w * pixels[stim.current_pixel]
-
-    stim.current_pixel += 1
+    
+    increment_pixel!(stim)
     accumulate_equation!(bc, eq)
 end
 
