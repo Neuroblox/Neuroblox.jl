@@ -2,6 +2,10 @@ module Neuroblox
 
 import Base: merge
 
+using Base.Threads: nthreads
+
+using OhMyThreads: tmapreduce
+
 using Reexport
 @reexport using ModelingToolkit
 const t = ModelingToolkit.t_nounits
