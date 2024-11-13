@@ -443,12 +443,12 @@ end
 
 function detect_spikes(
     blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
-    threshold = nothing, ts=nothing, kwargs...
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
 )
 
     neurons = get_neurons(blox)
 
-    S = tmapreduce(sparse_hcat, neurons; kwargs...) do neuron
+    S = tmapreduce(sparse_hcat, neurons; scheduler, kwargs...) do neuron
         detect_spikes(neuron, sol; threshold, ts)
     end
 
@@ -458,9 +458,9 @@ end
 function firing_rate(
     blox, sol::SciMLBase.AbstractSolution; 
     win_size = last(sol.t), transient = 0, overlap = 0, 
-    threshold = nothing, kwargs...)
+    threshold = nothing, scheduler=:serial, kwargs...)
 
-    spikes = detect_spikes(blox, sol; threshold, kwargs...)    
+    spikes = detect_spikes(blox, sol; threshold, scheduler, kwargs...)    
     N_neurons = size(spikes, 2)
     
     ts = sol.t
@@ -487,13 +487,14 @@ function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
 end
 
 function mean_firing_rate(blox, sols::SciMLBase.EnsembleSolution; trim_transient = 0,
-                          Δt = last(sols[1].t) - trim_transient, threshold = -35)
+                          Δt = last(sols[1].t) - trim_transient, threshold = -35,
+                          scheduler=:serial, kwargs...)
 
     t_fr = trim_transient:Δt:last(sols[1].t)
     firing_rates = Vector{Float64}[]
 
     for sol in sols
-        spikes = detect_spikes(blox, sol; threshold = threshold)
+        spikes = detect_spikes(blox, sol; threshold, scheduler, kwargs...)
         spikes = transpose(spikes)
         fr = _mean_firing_rate(spikes, unique(sol.t), t_fr)
         push!(firing_rates, fr)
