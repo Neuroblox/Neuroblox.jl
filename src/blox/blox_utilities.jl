@@ -421,7 +421,7 @@ end
 
 function detect_spikes(
     blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
-    threshold = nothing, tolerance = 1e-3, ts = nothing
+    threshold = nothing, tolerance = 1e-3, ts = nothing, kwargs...
 )
     namespaced_name = namespaced_nameof(blox)
 
