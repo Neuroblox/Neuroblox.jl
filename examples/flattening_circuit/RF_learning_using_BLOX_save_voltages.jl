@@ -181,7 +181,7 @@ begin
     t_trial = env.t_trial
     tspan = (0, t_trial)
     stim_params_in = Neuroblox.get_trial_stimulus(env)
-    sys = Neuroblox.get_sys(agent)
+    sys = Neuroblox.get_system(agent)
     prob2 = remake(prob; p = merge(stim_params_in),tspan=(0,1600))
 
 	if t_warmup > 0
@@ -210,7 +210,7 @@ end
 
 # ╔═╡ b7e84b20-0b80-478c-bc88-2883f80bcbb4
 begin
-	# sys = Neuroblox.get_sys(agent)
+	# sys = Neuroblox.get_system(agent)
 	# learning_rules = agent.learning_rules
 	# weights = Dict{Num, Float64}()
 	# for w in keys(learning_rules)

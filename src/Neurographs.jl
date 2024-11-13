@@ -45,7 +45,7 @@ function get_bloxs(g::MetaDiGraph)
     return bs
 end
 
-get_sys(g::MetaDiGraph) = get_sys.(get_bloxs(g))
+get_system(g::MetaDiGraph) = get_system.(get_bloxs(g))
 
 get_dynamics_bloxs(blox) = [blox]
 get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
@@ -185,7 +185,7 @@ end
 
 function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}=Num[];
                            name, t_block=missing, simplify=true, simplify_kwargs...)
-    blox_syss = get_sys(g)
+    blox_syss = get_system(g)
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
@@ -200,7 +200,7 @@ end
 
 
 function system_from_parts(parts::AbstractVector; name)
-    return compose(System(Equation[], t; name), get_sys.(parts))
+    return compose(System(Equation[], t; name), get_system.(parts))
 end
 
 function action_selection_from_graph(g::MetaDiGraph)

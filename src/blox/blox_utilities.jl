@@ -1,17 +1,17 @@
 """
-    function paramscoping(;kwargs...)
+    function paramscoping(;tunable=true, kwargs...)
     
     Scope arguments that are already a symbolic model parameter thereby keep the correct namespace 
     and make those that are not yet symbolic a symbol.
     Keyword arguments are used, because parameter definition require names, not just values.
 """
-function paramscoping(;kwargs...)
+function paramscoping(;tunable=true, kwargs...)
     paramlist = []
     for (kw, v) in kwargs
         if v isa Num
             paramlist = vcat(paramlist, ParentScope(v))
         else
-            paramlist = vcat(paramlist, @parameters $kw = v [tunable=true])
+            paramlist = vcat(paramlist, @parameters $kw = v [tunable=tunable])
         end
     end
     return paramlist
@@ -79,12 +79,12 @@ function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
 end
 
-get_sys(blox) = blox.odesystem
-get_sys(sys::AbstractODESystem) = sys
-get_sys(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
+get_system(blox) = blox.odesystem
+get_system(sys::AbstractODESystem) = sys
+get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
 function get_namespaced_sys(blox)
-    sys = get_sys(blox)
+    sys = get_system(blox)
     System(
         equations(sys), 
         only(independent_variables(sys)), 
@@ -96,7 +96,7 @@ end
 
 get_namespaced_sys(sys::AbstractODESystem) = sys
 
-nameof(blox) = (nameof ∘ get_sys)(blox)
+nameof(blox) = (nameof ∘ get_system)(blox)
 
 namespaceof(blox) = blox.namespace
 
@@ -140,7 +140,7 @@ end
     from lower levels and this level.
 """
 function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
-    sys = get_sys(blox)
+    sys = get_system(blox)
     sys_eqs = equations(sys)
 
     inps = inputs(sys)
@@ -161,7 +161,7 @@ function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     end
 end
 
-get_connector(blox::Union{CompositeBlox, AbstractComponent}) = blox.connector
+get_connector(blox::Union{CompositeBlox, Agent}) = blox.connector
 
 get_input_equations(bc::BloxConnector) = bc.eqs
 get_input_equations(blox::Union{CompositeBlox, AbstractComponent}) = (get_input_equations ∘ get_connector)(blox)
@@ -650,5 +650,3 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
         return nothing, 1000 / sampling_rate
     end
 end
-
-get_system(blox::AbstractBlox; simplify = false) = simplify ? structural_simplify(blox.odesystem) : blox.odesystem

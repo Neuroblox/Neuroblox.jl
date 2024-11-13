@@ -153,6 +153,8 @@ mutable struct ImageStimulus <: StimulusBlox
     end
 end
 
+increment_pixel!(stim::ImageStimulus) = stim.current_pixel = mod(stim.current_pixel, stim.N_pixels) + 1
+
 struct PoissonSpikeTrain{N} <: StimulusBlox
     name
     namespace

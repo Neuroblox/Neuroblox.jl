@@ -72,10 +72,10 @@ function define_neurons()
             end
             function to_subsystem($name::$T)
                 states = SubsystemStates{$T}(NamedTuple{$(Expr(:tuple, QuoteNode.(s_syms)...))}(
-                    $(Expr(:tuple, (:(float($recursive_getdefault($getproperty(Neuroblox.get_sys($name), $(QuoteNode(s)))))) for s ∈ s_syms)...))
+                    $(Expr(:tuple, (:(float($recursive_getdefault($getproperty(Neuroblox.get_system($name), $(QuoteNode(s)))))) for s ∈ s_syms)...))
                 ))
                 params = SubsystemParams{$T}(NamedTuple{$(Expr(:tuple, QuoteNode.(p_syms)...))}(
-                    $(Expr(:tuple, (:($recursive_getdefault($getproperty(Neuroblox.get_sys($name), $(QuoteNode(s))))) for s ∈ p_syms)...))
+                    $(Expr(:tuple, (:($recursive_getdefault($getproperty(Neuroblox.get_system($name), $(QuoteNode(s))))) for s ∈ p_syms)...))
                 ))
                 Subsystem(states, params)
             end

@@ -4,6 +4,7 @@ using Graphs
 using MetaGraphs
 using Test
 using SparseArrays
+using Random
 
 @testset "AdjacencyMatrix [HH Neurons]" begin
     @named n1 = HHNeuronExciBlox()
@@ -59,6 +60,27 @@ end
     ]
 
     @test all(nms .== adj.names)
+end
+
+@testset "AdjacencyMatrix [Agent]" begin
+    global_namespace = :g
+
+    @named VAC = CorticalBlox(N_wta=2, N_exci=5,  density=0.1, weight=1; namespace=global_namespace) 
+    @named AC = CorticalBlox(N_wta=2, N_exci=5, density=0.2, weight=1; namespace=global_namespace) 
+
+    g = MetaDiGraph()
+
+    add_edge!(g, VAC => AC, weight=3, density=0.1)
+
+    Random.seed!(123)
+    A_graph = get_adjacency(g)
+
+    Random.seed!(123)
+    agent = Agent(g; name=global_namespace, t_block = 1);
+    A_agent = get_adjacency(agent)
+
+    @test all(A_graph.matrix .== A_agent.matrix)
+    @test all(A_graph.names .== A_agent.names)
 end
 
 @testset "Graph to adjacency matrix" begin
