@@ -868,3 +868,44 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 		new(p, sts[2], sts[5], sts[1], sys, namespace)
 	end
 end
+
+#I'm making this a <:AbstractNeuronBlox even though I didn't actually bother doing
+#any of the MTK-side stuff we'd normally do with a AbstractNeuronBlox
+struct Izh2 <: AbstractNeuronBlox
+    vₚ::Float64
+    vᵣ::Float64
+    τᵣ::Float64
+    η::Float64
+    α::Float64
+    a::Float64
+    b::Float64
+    wⱼ::Float64
+    sⱼ::Float64
+    eᵣ::Float64
+    gₛ::Float64
+    τₛ::Float64
+    Iₑ::Float64
+    namespace::Symbol
+    name::Symbol
+    function Izh2(;name,
+                  vₚ=200,
+                  vᵣ=-200,
+                  ηₘ=0.12,
+                  ηₛ=0.02,
+                  α=0.6215,
+                  a=0.0077,
+                  b=-0.0062,
+                  wⱼ=0.0189,
+                  sⱼ=1.2308,
+                  eᵣ=1.0,
+                  gₛ=1.2308,
+                  τₛ=2.6,
+                  Iₑ=0.0, 
+                  τᵣ=nothing,
+                  namespace=Symbol(""))
+        τᵣ = isnothing(τᵣ) ? 2.0/vₚ : τᵣ
+        η = rand(Cauchy(ηₘ, ηₛ))
+        new(vₚ, vᵣ, τᵣ, η, α, a, b, wⱼ, sⱼ, eᵣ, gₛ, τₛ, Iₑ, namespace, name)
+    end
+end
+nameof((;name)::Izh2) = name

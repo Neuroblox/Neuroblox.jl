@@ -983,3 +983,31 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (; jcn = w * s * (V_I - V))
 end
 
+#-------------------------
+# Izh2
+# This lets GraphDynamics do some optimizations by promising that the differential never depends on the connections
+# Connections between Izh2 neurons shouldn't do anything (during solving). They only exist for events.
+function (c::BasicConnection)(::Subsystem{Izh2}, ::Subsystem{Izh2})
+    0.0
+end
+# Tell GraphDynamics that Izh2 has events
+GraphDynamics.has_discrete_events(::Type{Izh2}) = true
+
+# The events trigger when V exceeds some threshold
+function GraphDynamics.discrete_event_condition(n::Subsystem{Izh2}, t, _)
+    n.V >= n.vₚ
+end
+
+# When the event triggers, we want to update the neuron which fired *and* every destination neuron it has a
+# connection to.
+function GraphDynamics.apply_discrete_event!(integrator, sview, _, neuron_src::Subsystem{Izh2}, foreach_connected_neuron::F) where {F}
+    # Set the neuron to the post-firing state
+    sview[:V]  = neuron_src.vᵣ
+    sview[:w] += neuron_src.wⱼ
+
+    # For each neuron which has a connection leading to it from neuron_src
+    # we increment it's `z` state
+    foreach_connected_neuron() do conn, neuron_dst, states_view_dst, params_view_dst
+        states_view_dst[:z] += conn.weight * neuron_src.sⱼ
+    end
+end

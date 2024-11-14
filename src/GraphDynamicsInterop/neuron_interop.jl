@@ -280,3 +280,27 @@ function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsyste
     vparams[] = @set params.jcn_ = jcn
     nothing
 end
+
+#-------------------------
+# Izh2
+issupported(::Izh2) = true
+
+# Teach GraphDynamics how to create a GraphDynamics.Subsystem out of a Izh2 struct
+function to_subsystem((;vₚ, vᵣ, τᵣ, η, α, a, b, wⱼ, sⱼ, eᵣ, gₛ, τₛ, Iₑ)::Izh2)
+    states = SubsystemStates{Izh2}((; V=0.0, w=0.0, z=0.0))
+    params = SubsystemParams{Izh2}((;vₚ, vᵣ, τᵣ, η, α, a, b, wⱼ, sⱼ, eᵣ, gₛ, τₛ, Iₑ))
+    Subsystem(states, params)
+end
+
+GraphDynamics.initialize_input(::Subsystem{Izh2}) = 0.0
+function GraphDynamics.subsystem_differential(s::Subsystem{Izh2}, _, t)
+    (;V, w, z) = s
+    (;vₚ, vᵣ, τᵣ, η, α, a, b, wⱼ, sⱼ, eᵣ, gₛ, τₛ, Iₑ) = s
+    dV = V * (V - α) - w + η + Iₑ + gₛ * z * (eᵣ - V)
+    dw = a * (b * V - w)
+    dz = -z/τₛ
+    SubsystemStates{Izh2}((;V=dV, w=dw, z=dz))
+end
+
+GraphDynamics.subsystem_differential_requires_inputs(::Type{<:Izh2}) = false
+
