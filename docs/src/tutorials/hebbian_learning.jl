@@ -10,7 +10,6 @@ using Downloads ## to download image stimuli files
 
 # ## Cortico-cortical plasticity
 
-time_block_dur = 90.0 ## ms (size of discrete time blocks)
 N_trials = 5 ##number of trials
 trial_dur = 1000 ##ms
 
@@ -18,12 +17,12 @@ trial_dur = 1000 ##ms
 
 image_set = CSV.read(Downloads.download("raw.githubusercontent.com/Neuroblox/NeurobloxDocsHost/refs/heads/main/data/stimuli_set.csv"), DataFrame) ## reading data into DataFrame format
 ## change the source file to stimuli_set.csv
-
+ 
 model_name=:g
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-@named stim = ImageStimulus(image_set; namespace=global_namespace, t_stimulus=trial_dur, t_pause=0); 
+@named stim = ImageStimulus(image_set; namespace=model_name, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
 @named VAC = CorticalBlox(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
@@ -41,9 +40,14 @@ add_edge!(g, ASC1 => VAC, weight=44)
 add_edge!(g, ASC1 => AC, weight=44)
 add_edge!(g, VAC => AC, weight=3, density=0.1, learning_rule = hebbian_cort) ## give learning rule as parameter
 
-agent = Agent(g; name=model_name, t_block = time_block_dur); ## define agent
-env = ClassificationEnvironment(stim; name=:env, namespace=global_namespace)
-run_experiment!(agent, env)
+agent = Agent(g; name=model_name); ## define agent
+env = ClassificationEnvironment(stim, N_trials; name=:env, namespace=model_name)
+
+adjacency(agent)
+
+run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
+
+adjacency(agent)
 
 # ## Cortico-striatal circuit performing category learning 
 
