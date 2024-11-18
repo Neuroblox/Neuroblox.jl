@@ -32,7 +32,7 @@ model_name=:g
 @named ASC1 = NextGenerationEIBlox(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
 
 ## define learning rule
-hebbian_cort = HebbianPlasticity(K=5e-3, W_lim=7, t_pre=trial_dur-eps(), t_post=trial_dur-eps()) 
+hebbian_cort = HebbianPlasticity(K=5e-5, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 	
 g = MetaDiGraph()
 
