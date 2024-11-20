@@ -457,10 +457,10 @@ end
 
 function firing_rate(
     blox, sol::SciMLBase.AbstractSolution; 
-    win_size = last(sol.t), transient = 0, overlap = 0, 
+    transient = 0, win_size = last(sol.t) - transient, overlap = 0, 
     threshold = nothing, scheduler=:serial, kwargs...)
 
-    spikes = detect_spikes(blox, sol; threshold, scheduler, kwargs...)    
+    spikes = detect_spikes(blox, sol; threshold, scheduler, kwargs...)
     N_neurons = size(spikes, 2)
     
     ts = sol.t
