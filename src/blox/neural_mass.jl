@@ -558,7 +558,7 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
                             A=0.0)
         p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
         Δ, τₘ, H, I_ext, J_internal = p
-        sts = @variables r(t)=0.0 [output=true] v(t)=0.0 jcn(t)=0.0 [input=true]
+        sts = @variables r(t)=0.0 [output=true] v(t)=0.0 jcn(t) [input=true]
         @brownian ξ
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
                D(v) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
