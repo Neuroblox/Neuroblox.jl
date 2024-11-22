@@ -332,7 +332,7 @@ function Makie.plot!(p::PreComputedPowerSpectrums)
     
     # plot only within x-limits so that Makie computes the right limits
     xlims = p.xlims[]
-    in_range = findall(xlims[1] .<= spectra[1].freq .<= xlims[2])
+    in_range = findall(xlims[1]-1 .<= spectra[1].freq .<= xlims[2]+1)
 
     for powspec in spectra
         power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
@@ -350,7 +350,7 @@ function Makie.plot!(p::PreComputedPowerSpectrum)
     spectra = p[1][]
     # plot only within x-limits so that Makie computes the right limits
     xlims = p.xlims[]
-    in_range = findall(xlims[1] .<= spectra.freq .<= xlims[2])
+    in_range = findall(xlims[1]-1 .<= spectra.freq .<= xlims[2]+1)
 
     power_db = 10 * log10.(spectra.power[in_range]) # convert to dB scale
     power_db .-= power_db[1]
@@ -399,7 +399,8 @@ end
 function _powerspectrumplot(p, blox, sol::AbstractSolution, powspec_kwargs)
     powspec = powerspectrum(blox, sol, p.state[]; powspec_kwargs...)
     xlims = p.xlims[]
-    in_range = findall(xlims[1] .<= powspec.freq .<= xlims[2])
+    in_range = findall(xlims[1]-1 .<= powspec.freq .<= xlims[2]+1)
+
     power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
     power_db .-= power_db[1]
     lines!(p, powspec.freq[in_range], power_db)
@@ -410,7 +411,7 @@ function _powerspectrumplot(p, blox, sols::EnsembleSolution, powspec_kwargs)
     powspecs = powerspectrum(blox, sols, p.state[]; powspec_kwargs...)
 
     xlims = p.xlims[]
-    in_range = findall(xlims[1] .<= powspecs[1].freq .<= xlims[2])
+    in_range = findall(xlims[1]-1 .<= powspecs[1].freq .<= xlims[2]+1)
 
     mean_power = mean(powspec.power[in_range] for powspec in powspecs)
     std_power = std([powspec.power[in_range] for powspec in powspecs])
