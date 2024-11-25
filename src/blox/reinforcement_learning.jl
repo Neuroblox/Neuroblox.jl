@@ -102,7 +102,7 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
     const N_trials::Int
     const t_trial::Float64
     current_trial::Int
-
+    
     function ClassificationEnvironment(data::DataFrame; name, namespace=nothing, t_stimulus, t_pause)
         stim = ImageStimulus(
                         data; 
@@ -111,17 +111,32 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
                         t_stimulus,
                         t_pause
         )
-
-        category = data[!, :category]
+        
         N_trials = stim.N_stimuli
-        t_trial = t_stimulus + t_pause
 
-        new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, category, N_trials, t_trial, 1)
+        ClassificationEnvironment(stim, N_trials; name, namespace)
     end
 
+    function ClassificationEnvironment(data::DataFrame, N_trials; name, namespace=nothing, t_stimulus, t_pause)
+        stim = ImageStimulus(
+                        data; 
+                        name=:stim, 
+                        namespace=namespaced_name(namespace, name),
+                        t_stimulus,
+                        t_pause
+        )
+
+        ClassificationEnvironment(stim, N_trials; name, namespace)
+    end
+    
     function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
-        t_trial = stim.t_stimulus + stim.t_pause
         N_trials = stim.N_stimuli
+
+        ClassificationEnvironment(stim, N_trials; name, namespace)
+    end
+
+    function ClassificationEnvironment(stim::ImageStimulus, N_trials; name, namespace=nothing)
+        t_trial = stim.t_stimulus + stim.t_pause
 
         new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, stim.category, N_trials, t_trial, 1)
     end
