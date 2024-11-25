@@ -43,11 +43,15 @@ add_edge!(g, VAC => AC, weight=3, density=0.1, learning_rule = hebbian_cort) ## 
 agent = Agent(g; name=model_name); ## define agent
 env = ClassificationEnvironment(stim, N_trials; name=:env, namespace=model_name)
 
-adjacency(agent)
+fig = Figure(title="Adjacency matrix", size = (1600, 800))
+
+adjacency(fig[1,1], agent)
 
 run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
 
-adjacency(agent)
+adjacency(fig[1,2], agent)
+
+fig
 
 # ## Cortico-striatal circuit performing category learning 
 
@@ -64,7 +68,7 @@ model_name=:g
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-@named stim = ImageStimulus(image_set; namespace=global_namespace, t_stimulus=trial_dur, t_pause=0); 
+@named stim = ImageStimulus(image_set; namespace=model_name, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
 @named VAC = CorticalBlox(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
@@ -83,7 +87,7 @@ model_name=:g
 @named SNcb = SNc(; namespace=model_name) 
 
 hebbian_mod = HebbianModulationPlasticity(K=0.04, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
-hebbian_cort = HebbianPlasticity(K=5e-3, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
+hebbian_cort = HebbianPlasticity(K=5e-5, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 
 ## circuit 
 
@@ -107,5 +111,14 @@ add_edge!(g, STR1 => SNcb, weight = 1)
 add_edge!(g, STR2 => SNcb, weight = 1)  
 
 agent = Agent(g; name=model_name, t_block = time_block_dur); ## define agent
-env = ClassificationEnvironment(stim; name=:env, namespace=global_namespace)
-run_experiment!(agent, env)#;
+env = ClassificationEnvironment(stim, N_trials; name=:env, namespace=model_name)
+
+fig = Figure(title="Adjacency matrix", size = (1600, 800))
+
+adjacency(fig[1,1], agent)
+
+run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
+
+adjacency(fig[1,2], agent)
+
+fig
