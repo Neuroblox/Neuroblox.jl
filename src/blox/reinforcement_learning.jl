@@ -260,9 +260,16 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=
         weights[w] = defs[w]
     end
 
-    for _ in Base.OneTo(N_trials)
-        run_trial!(agent, env, weights, nothing; saveat = t_stops, kwargs...)
+    trace = NamedTuple{(:trial, :correct)}((Int[], Bool[]))
+
+    for t in Base.OneTo(N_trials)
+        _, iscorrect = run_trial!(agent, env, weights, nothing; saveat = t_stops, kwargs...)
+        
+        push!(trace.trial, t)
+        push!(trace.correct, iscorrect)
     end
+
+    return trace
 end
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String; t_warmup=0, kwargs...)
@@ -310,11 +317,18 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     save_idxs = union(idxs_V, idxs_learning)
     =#
 
+    trace = NamedTuple{(:trial, :correct)}((Int[], Bool[]))
+
     for trial in Base.OneTo(N_trials)
-        sol = run_trial!(agent, env, weights, nothing; kwargs...)
+        sol, iscorrect = run_trial!(agent, env, weights, nothing; kwargs...)
 
         save_voltages(sol, save_path, trial)
+
+        push!(trace.trial, trial)
+        push!(trace.correct, iscorrect)
     end
+
+    return trace
 end
 
 function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwargs...)
@@ -368,7 +382,7 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; k
 
     agent.problem = remake(prob; p = new_params)
 
-    return sol
+    return sol, feedback
 end
 
 function save_voltages(sol, filepath, numtrial)
