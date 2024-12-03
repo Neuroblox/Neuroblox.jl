@@ -476,50 +476,19 @@ function firing_rate(
     return fr
 end
 
-function mean_firing_rate(spikes::SparseMatrixCSC, sol; trim_transient = 0,
-                          Δt = last(sol.t) - trim_transient)
+function firing_rate(
+    blox, sols::SciMLBase.EnsembleSolution; 
+    transient = 0, win_size = last(sols[1].t) - transient, overlap = 0,
+    threshold = nothing, scheduler=:serial, kwargs...)
 
-    spikes = transpose(spikes)
-    t_fr = trim_transient:Δt:last(sol.t)
-    fr = _mean_firing_rate(spikes, unique(sol.t), t_fr)
-    
-    return t_fr, fr
-end
-
-function mean_firing_rate(blox, sols::SciMLBase.EnsembleSolution; trim_transient = 0,
-                          Δt = last(sols[1].t) - trim_transient, threshold = -35,
-                          scheduler=:serial, kwargs...)
-
-    t_fr = trim_transient:Δt:last(sols[1].t)
-    firing_rates = Vector{Float64}[]
-
-    for sol in sols
-        spikes = detect_spikes(blox, sol; threshold, scheduler, kwargs...)
-        spikes = transpose(spikes)
-        fr = _mean_firing_rate(spikes, unique(sol.t), t_fr)
-        push!(firing_rates, fr)
+    firing_rates = map(sols) do sol
+        firing_rate(blox, sol; transient, win_size, overlap, threshold, scheduler, kwargs...)
     end
 
     mean_fr = mean(firing_rates)
     std_fr = std(firing_rates)
 
-    return t_fr, mean_fr, std_fr
-end
-
-function _mean_firing_rate(spikes, t, t_fr)
-
-    counts = vec(sum(spikes, dims=1))
-    fr = fill(NaN64, length(t_fr) - 1)
-
-    for i in 2:length(t_fr)
-        idx = intersect(findall(t .<= t_fr[i]), findall(t .> t_fr[i-1]))
-        if ~isempty(idx)
-            fr[i-1] = sum(counts[idx])
-        end
-    end
-
-    # firing rate in spikes/s averaged over the population
-    fr = fr*1000 ./ (size(spikes, 1)*(t_fr[2] - t_fr[1]))
+    return mean_fr, std_fr
 end
 
 function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
