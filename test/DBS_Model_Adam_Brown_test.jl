@@ -54,6 +54,6 @@ end
     sys = structural_simplify(neuron_net)
     prob = SDEProblem(sys, [], (0.0, 2), [])
     sol = solve(prob)
-    @testsys isa ODESystem
+    @test sys isa ODESystem
     @test sol.retcode == ReturnCode.Success
 end
