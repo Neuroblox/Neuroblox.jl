@@ -56,6 +56,10 @@ function param_order(::Type{T}) where T
   return [k for k in keys(arguments(T))]
 end
 
+function plotdetail(::Type{T}) where T
+  return OrderedDict()
+end
+
 # methods
 
 const NUMBER = "number"
