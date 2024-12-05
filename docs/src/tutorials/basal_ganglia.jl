@@ -101,7 +101,7 @@ prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
 
-# Computing firing rates for comparison
+# Compute firing rates for comparison
 fr_msn = firing_rate(msn, ens_sol[1], threshold=-35, transient=200)
 fr_fsi = firing_rate(fsi, ens_sol[1], threshold=-35, transient=200)
 
