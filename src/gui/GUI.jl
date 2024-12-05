@@ -296,7 +296,7 @@ function arguments(::Type{Neuroblox.Thalamus})
 end
 
 function plotdetail(::Type{Neuroblox.Thalamus})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 function arguments(::Type{Neuroblox.Striatum})
@@ -309,7 +309,7 @@ function arguments(::Type{Neuroblox.Striatum})
 end
 
 function plotdetail(::Type{Neuroblox.Striatum})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 function arguments(::Type{Neuroblox.GPe})
@@ -322,7 +322,7 @@ function arguments(::Type{Neuroblox.GPe})
 end
 
 function plotdetail(::Type{Neuroblox.GPe})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 function arguments(::Type{Neuroblox.GPi})
@@ -335,7 +335,7 @@ function arguments(::Type{Neuroblox.GPi})
 end
 
 function plotdetail(::Type{Neuroblox.GPi})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 function arguments(::Type{Neuroblox.STN})
@@ -348,7 +348,7 @@ function arguments(::Type{Neuroblox.STN})
 end
 
 function plotdetail(::Type{Neuroblox.STN})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 function arguments(::Type{Neuroblox.SNc})
