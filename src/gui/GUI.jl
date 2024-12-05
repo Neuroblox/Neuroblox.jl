@@ -445,7 +445,7 @@ function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings f
 end
 
 function plotdetail(::Type{Neuroblox.CorticalBlox})
-  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack"])
 end
 
 # function arguments(::Type{Neuroblox.BandPassFilterBlox})
