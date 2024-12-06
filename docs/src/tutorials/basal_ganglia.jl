@@ -5,6 +5,8 @@
 
 # ![Full basal ganglia model in baseline condition](../assets/basal_ganglia_baseline.jpg)
 
+# In previous tutorials, we explored building neural circuits from individual neuron bloxs and creating networks using neural mass bloxs. Here, we'll demonstrate how Neuroblox enables modeling of complex brain structures using specialized composite bloxs that encapsulate entire neural populations. These composite bloxs represent distinct neuronal populations within the basal ganglia, each containing multiple Hodgkin-Huxley neurons with their characteristic properties and intrinsic connectivity patterns.
+
 # We'll start with simple components and gradually build up to the full basal ganglia circuit, demonstrating how to analyze the results at each stage.
 
 using Neuroblox
@@ -35,7 +37,11 @@ prob = SDEProblem(sys, [], tspan, [])
 sol = solve(prob, RKMil(), dt = dt, saveat = dt);
 
 # Plot voltage of a single neuron
-plot(sol, idxs=1, axis = (xlabel = "Time (ms)", ylabel = "Membrane potential (mV)"))
+v = voltage_timeseries(msn, sol)
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "Time (ms)", ylabel = "Voltage (mv)")
+lines!(ax, sol.t, v[:, 1])
+fig ## to display the figure
 
 # Plot mean field
 meanfield(msn, sol, title = "Mean Field Potential")
@@ -67,10 +73,12 @@ powerspectrumplot(fig[1,2], msn, sol, state = "G",
                   title = "Welch's method + Hanning window")
 fig
 
-# We can also run multiple simulations in parallel and compute the average power spectrum
+# We can leverage parallel computing using `EnsembleProblem()` to run multiple simulations simultaneously. This allows us to evaluate model outputs with multiple realizations of random physiological noise while utilizing all available computational threads (default) or processes.
+
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat=dt, trajectories = 3);
 
+# Compute average power spectrum
 powerspectrumplot(msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
                   ylims = (1e-5, 10),
@@ -79,6 +87,8 @@ powerspectrumplot(msn, ens_sol, state = "G",
                   beta_label_position = (22, 4),
                   gamma_label_position = (60, 4),
                   title = "Welch's method + Hanning window + Ensemble")
+
+# Note the peak at ~12 Hz in the MSN population's activity, representing an emergent beta-band oscillation characteristic of this circuit. We'll explore how this rhythm is altered by FSI inhibition next.
 
 # ## Core striatal network: MSN + FSI
 # Now we'll add Fast-Spiking Interneurons (FSIs) to our model
