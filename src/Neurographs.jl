@@ -25,7 +25,7 @@ function add_edge!(g::MetaDiGraph, p::Pair; kwargs...)
         add_blox!(g, dest)
         dest_idx = nv(g)
     end
-    
+
     add_edge!(g, src_idx, dest_idx, Dict(kwargs))
 end
 

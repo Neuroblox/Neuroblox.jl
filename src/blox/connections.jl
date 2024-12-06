@@ -70,7 +70,7 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     if typeof(weight) == Num   # Symbol
         w = weight
     else
-        w = only(@parameters $(w_name)=weight)
+        w = only(@parameters $(w_name)=weight [tunable=false])
     end    
 
     return w
@@ -351,7 +351,7 @@ function (bc::BloxConnector)(
     push!(bc.weights, r)
 
     eq = sys_in.jcn ~ sigmoid(x, r)*w
-    
+
     accumulate_equation!(bc, eq)
 end
 
@@ -410,28 +410,20 @@ end
 # additional dispatch to connect to hemodynamic observer blox
 function (bc::BloxConnector)(
     bloxout::NeuralMassBlox, 
-    bloxin::ObserverBlox; 
-    weight=1,
-    delay=0,
-    density=0.1
-)
-    # Need t for the delay term
-    @variables t
+    bloxin::ObserverBlox;
+    kwargs...)
 
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
     if typeof(bloxout.output) == Num
-        w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-        if typeof(weight) == Num # Symbol
-            w = weight
-        else
-            w = only(@parameters $(w_name)=weight [tunable=false])
-        end    
+        w = generate_weight_param(bloxout, bloxin; kwargs...)
         push!(bc.weights, w)
         x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))
         eq = sys_in.jcn ~ x*w
     else
+        # Need t for the delay term
+        @variables t
         # Define & accumulate delay parameter
         # Don't accumulate if zero
         τ_name = Symbol("τ_$(nameof(sys_out))_$(nameof(sys_in))")
@@ -453,18 +445,12 @@ end
 function (bc::BloxConnector)(
     bloxout::StimulusBlox,
     bloxin::NeuralMassBlox;
-    weight=1
-)
+    kwargs...)
 
     sys_out = get_namespaced_sys(bloxout)
     sys_in = get_namespaced_sys(bloxin)
 
-    w_name = Symbol("w_$(nameof(sys_out))_$(nameof(sys_in))")
-    if typeof(weight) == Num # Symbol
-        w = weight
-    else
-        w = only(@parameters $(w_name)=weight)
-    end    
+    w = generate_weight_param(bloxout, bloxin; kwargs...)
     push!(bc.weights, w)
 
     x = namespace_expr(bloxout.output, sys_out, nameof(sys_out))

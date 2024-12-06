@@ -1,8 +1,12 @@
-# # Spectral Dynamic Causal Modeling Tutorial
+# # Solving Inverse Problems with Spectral Dynamic Causal Modeling
 # # Introduction
 #
-# In this tutorial we will introduce how to perform a spectral Dynamic Causal Modeling analysis on simulated data [1,2].
-# To do so we roughly resemble the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
+# Neuroblox provides you with a comprehensive environment for simulations as we have explored previously, but its functionality doesn't stop there.
+# We will now pivot and turn our attention to a different kind of problem: 
+# inferring model parameters, that is solving inverse problems, from time series. 
+# The method of choice is one of the most widely spread in imaging neuroscience, spectral Dynamic Causal Modeling (spDCM)[1,2]. 
+# In this tutorial we will introduce how to perform a spDCM analysis on simulated data.
+# To do so we roughly reproduce the procedure in the [SPM12](https://www.fil.ion.ucl.ac.uk/spm/software/spm12/) script `DEM_demo_induced_fMRI.m` in [Neuroblox](https://www.neuroblox.org/).
 # This work was also presented in Hofmann et al.[2]
 #
 # In this tutorial we will define a circuit of three linear neuronal mass models, all driven by an Ornstein-Uhlenbeck process.
@@ -56,6 +60,8 @@ end
 # Next we define the between-region connectivity matrix and make sure that it is diagonally dominant to guarantee numerical stability (see Gershgorin theorem).
 A_true = 0.1*randn(nr, nr)
 A_true -= diagm(map(a -> sum(abs, a), eachrow(A_true)))    # ensure diagonal dominance of matrix
+# Instead of a random matrix use the same matrix as is defined in [3]
+A_true = [[-0.5 -2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
 for idx in CartesianIndices(A_true)
     add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => A_true[idx[1], idx[2]])
 end
@@ -127,7 +133,7 @@ for i = 1:nr
 end
 
 A_prior = 0.01*randn(nr, nr)
-A_prior -= diagm(diag(A_prior))    # ensure diagonal dominance of matrix
+A_prior -= diagm(diag(A_prior))    # remove the diagonal
 # Since we want to optimize these weights we turn them into symbolic parameters:
 # Add the symbolic weights to the edges and connect regions.
 A = []
@@ -137,7 +143,7 @@ for (i, a) in enumerate(vec(A_prior))
 end
 # With the function `untune!`` we can list indices of parameters whose tunable flag should be set to false.
 # For instance the first element in the second row:
-untune!(A, [4])
+untune!(A, [])
 for (i, idx) in enumerate(CartesianIndices(A_prior))
     if idx[1] == idx[2]
         add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => -exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed
@@ -201,4 +207,5 @@ ecbarplot(state, setup, A_true)
 
 # ## References
 # [1] [Novelli, Leonardo, Karl Friston, and Adeel Razi. “Spectral Dynamic Causal Modeling: A Didactic Introduction and Its Relationship with Functional Connectivity.” Network Neuroscience 8, no. 1 (April 1, 2024): 178–202.](https://doi.org/10.1162/netn_a_00348) \
-# [2] [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407)
+# [2] [Hofmann, David, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi, Karl J. Friston, Alan Edelman, and Helmut H. Strey. “Leveraging Julia’s Automated Differentiation and Symbolic Computation to Increase Spectral DCM Flexibility and Speed.” bioRxiv: The Preprint Server for Biology, 2023.](https://doi.org/10.1101/2023.10.27.564407) \
+# [3] [Friston, Karl J., Joshua Kahan, Bharat Biswal, and Adeel Razi. “A DCM for Resting State fMRI.” NeuroImage 94 (July 2014): 396–407.](https://linkinghub.elsevier.com/retrieve/pii/S1053811913012135)
