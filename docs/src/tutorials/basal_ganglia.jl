@@ -37,7 +37,11 @@ prob = SDEProblem(sys, [], tspan, [])
 sol = solve(prob, RKMil(), dt = dt, saveat = dt);
 
 # Plot voltage of a single neuron
-plot(sol, idxs=1, axis = (xlabel = "Time (ms)", ylabel = "Membrane potential (mV)"))
+v = voltage_timeseries(msn, sol)
+fig = Figure()
+ax = Axis(fig[1,1]; xlabel = "Time (ms)", ylabel = "Voltage (mv)")
+lines!(ax, sol.t, v[:, 1])
+fig ## to display the figure
 
 # Plot mean field
 meanfield(msn, sol, title = "Mean Field Potential")
