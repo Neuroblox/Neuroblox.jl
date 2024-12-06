@@ -53,23 +53,13 @@ fr = firing_rate(msn, sol, threshold=-35, transient=200)
 rasterplot(msn, sol, threshold = -35, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
 
 # Compute and plot the power spectrum of the GABAa current
-fig = Figure(size = (1500, 600))
+fig = Figure(size = (1500, 500))
 
 powerspectrumplot(fig[1,1], msn, sol, state = "G",
-                  ylims = (1e-5, 10),
-                  alpha_start = 5,
-                  alpha_label_position = (8.5, 5),
-                  beta_label_position = (22, 5),
-                  gamma_label_position = (60, 5),
                   title = "FFT with no window")
 
 powerspectrumplot(fig[1,2], msn, sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_start = 5,
-                  alpha_label_position = (8.5, 5),
-                  beta_label_position = (22, 5),
-                  gamma_label_position = (60, 5),
                   title = "Welch's method + Hanning window")
 fig
 
@@ -81,11 +71,6 @@ ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat=dt, trajectories = 3);
 # Compute average power spectrum
 powerspectrumplot(msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_start = 8,
-                  alpha_label_position = (8.5, 4),
-                  beta_label_position = (22, 4),
-                  gamma_label_position = (60, 4),
                   title = "Welch's method + Hanning window + Ensemble")
 
 # Note the peak at ~12 Hz in the MSN population's activity, representing an emergent beta-band oscillation characteristic of this circuit. We'll explore how this rhythm is altered by FSI inhibition next.
@@ -122,19 +107,13 @@ rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35, title = "FSI - Mean Firin
 
 powerspectrumplot(fig[2,1], msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims= (1e-5, 10),
-                  xlims= (8, 100),
-                  alpha_label_position = (8.5, 3),
-                  beta_label_position = (22, 3),
-                  gamma_label_position = (60, 3))
+                  ylims= (-35, 15),
+                  xlims= (8, 100))
 
 powerspectrumplot(fig[2,2], fsi, ens_sol, state = "G",
                   method=welch_pgram, window=hanning,
-                  ylims= (1e-5, 10),
-                  xlims= (8, 100),
-                  alpha_label_position = (8.5, 3),
-                  beta_label_position = (22, 3),
-                  gamma_label_position = (60, 3))
+                  ylims= (-35, 15),
+                  xlims= (8, 100))
 fig
 
 # FSIs exhibit a peak in gamma frequencies. Their inhibition onto MSNs suppresses the low beta-band activity seen in isolated MSN populations, without reducing MSN firing rates. This spectral shift reflects a change in MSN spiking dynamics under FSI influence, rather than a decrease in overall activity.
@@ -172,38 +151,26 @@ ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
 
 # Compute and plot power spectra for all components
-fig = Figure(size = (1500, 600))
+fig = Figure(size = (1600, 450))
 
 powerspectrumplot(fig[1,1], msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims=(1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "MSN (Baseline)")
 
 powerspectrumplot(fig[1,2], fsi, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "FSI (Baseline)")
 
 powerspectrumplot(fig[1,3], gpe, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "GPe (Baseline)")
 
 powerspectrumplot(fig[1,4], stn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "STN (Baseline)")
 
 fig
@@ -250,37 +217,25 @@ ens_sol = solve(ens_prob, RKMil(), dt = dt, saveat = dt, trajectories = 3);
 # Compute and compare power spectra for all neural populations in Parkinsonian condition against their counterparts in baseline conditions.
 powerspectrumplot(fig[2,1], msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "MSN (PD)")
 
 powerspectrumplot(fig[2,2], fsi, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "FSI (PD)")
 
 powerspectrumplot(fig[2,3], gpe, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_start = 5,
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "GPe (PD)")
 
 powerspectrumplot(fig[2,4], stn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
-                  ylims = (1e-5, 10),
-                  alpha_label_position = (8.5, 2),
-                  beta_label_position = (22, 2),
-                  gamma_label_position = (60, 2),
+                  ylims=(-40, 25),
                   title = "STN (PD)")
 
+resize!(fig.scene, (1600, 900))
 fig
 
 # We see the emergence of strong beta oscillations in the Parkinsonian condition compared to the baseline condition for all neural populations. This aligns with the findings of Adam et al. and reflects the pathological synchrony observed in Parkinson's disease.
