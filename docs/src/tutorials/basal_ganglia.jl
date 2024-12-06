@@ -40,12 +40,11 @@ plot(sol, idxs=1, axis = (xlabel = "Time (ms)", ylabel = "Membrane potential (mV
 # Plot mean field
 meanfield(msn, sol, title = "Mean Field Potential")
 
-# Detect spikes and compute firing rate
-spikes = detect_spikes(msn, sol, threshold=-55)
-t, fr = mean_firing_rate(spikes, sol)
+# Compute firing rate, discarding the first 200 ms
+fr = firing_rate(msn, sol, threshold=-35, transient=200)
 
 # Create a raster plot
-rasterplot(msn, sol, threshold = -55.0, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
+rasterplot(msn, sol, threshold = -35, title = "Neuron's Spikes - Mean Firing Rate: $(round(fr[1], digits=2)) spikes/s")
 
 # Compute and plot the power spectrum of the GABAa current
 fig = Figure(size = (1500, 600))
@@ -102,17 +101,14 @@ prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
 
-# Detect spikes and compute firing rates
-spikes_msn = detect_spikes(msn, ens_sol[1], threshold = -35)
-t, fr_msn = mean_firing_rate(spikes_msn, ens_sol[1])
-
-spikes_fsi = detect_spikes(fsi, ens_sol[1], threshold = -25)
-t, fr_fsi = mean_firing_rate(spikes_fsi, ens_sol[1])
+# Compute firing rates for comparison
+fr_msn = firing_rate(msn, ens_sol[1], threshold=-35, transient=200)
+fr_fsi = firing_rate(fsi, ens_sol[1], threshold=-35, transient=200)
 
 # Let's see their raster plots and power spectra
 fig = Figure(size = (1000, 800))
-rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35.0, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
-rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35.0, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
+rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
+rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
 
 powerspectrumplot(fig[2,1], msn, ens_sol, state = "G",
                   method = welch_pgram, window = hanning,
