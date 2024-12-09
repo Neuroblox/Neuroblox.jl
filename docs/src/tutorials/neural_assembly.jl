@@ -68,9 +68,9 @@ global_namespace=:g
 
 ## define three neurons, two excitatory and one inhibitory 
 
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.4,namespace=global_namespace)
-nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), I_bg=0.1,namespace=global_namespace)
-nn3 = HHNeuronExciBlox(name=Symbol("nrn3"), I_bg=1.4,namespace=global_namespace)
+nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.4, namespace=global_namespace)
+nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), I_bg=0.1, namespace=global_namespace)
+nn3 = HHNeuronExciBlox(name=Symbol("nrn3"), I_bg=1.4, namespace=global_namespace)
 
 ## defien graph and connect the nodes with the edges (synapses in this case), with the synaptic 'weights' specified as arguments
 g = MetaDiGraph()
@@ -85,7 +85,7 @@ sol = solve(prob, Vern7(), saveat=0.1);
 
 ## plotting membrane voltage activity of all neurons in a stacked form
 
-stackplot([nn1,nn2,nn3],sol)	## stackplot(<blox or array of blox>, sol)
+stackplot([nn1,nn2,nn3], sol)	## stackplot(<blox or array of blox>, sol)
 
 # Suggestion : Try different values of input currents 'I_bg' and connection weights. One can try different permutations of excitatory and inhibitory neurons.
 
@@ -117,7 +117,7 @@ end
 @named sys = system_from_graph(g)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
-stackplot(vcat(n_excis,n_inh),sol)
+stackplot(vcat(n_excis, n_inh), sol)
 
 # Suggestion : Instead of uniform random input current in each excitatory neuron, try different configurations (random or constant) of input currents I_bg for each neuron. 
 # One can vary the size of circuit by changing number of excitatory neurons. 
@@ -137,7 +137,7 @@ sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
-neuron_set = get_neurons([wta1,wta2]) ## extract neurons from a composite blocks 
+neuron_set = get_neurons([wta1, wta2]) ## extract neurons from a composite blocks 
 stackplot(neuron_set,sol)
 
 # ## Creating a single cortical superficial layer block by connecting multiple WTA circuits
@@ -189,7 +189,7 @@ prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
 neuron_set = get_neurons(vcat(wtas, n_ff_inh)) ## extract neurons from a composite blocks
-stackplot(neuron_set,sol)
+stackplot(neuron_set, sol)
 
 # Sugestion : try different connection densities and weights and see how it affects the population activity. 
 
@@ -205,7 +205,7 @@ global_namespace=:g
 
 ## define the superficial layer cortical block using inbuilt function
 ## Number if WTA circuits = N_wta=45; number of pyramidal neurons in each WTA circuit = N_exci = 5;
-@named CB = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1,I_bg_ar=7;namespace=global_namespace)
+@named CB = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1, I_bg_ar=7; namespace=global_namespace)
 
 ## define graph and connect ASC1->CB
 g = MetaDiGraph()
@@ -219,7 +219,7 @@ sol = solve(prob, Vern7(), saveat=0.1);
 # plot neuron time series
 neuron_set = get_neurons(CB) ## extract neurons from a composite block like CorticalBlox
 n_neurons = 50 ## set number nof neurons to display in the stackplot
-stackplot(neuron_set[1:n_neurons],sol)
+stackplot(neuron_set[1:n_neurons], sol)
 
 # plot the meanfield of all cortical block neurons (mean membrane voltage)
 mnv = meanfield_timeseries(CB, sol)
@@ -229,7 +229,7 @@ lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
 # plot power spectrum of the meanfield (average over membrane potentials)
-powerspectrumplot(CB,sol)
+powerspectrumplot(CB, sol)
 
 # Notice the peak at 16 Hz, representing beta oscillations.
 # Sugestion : try changing parameters of ASC1 to generate different cortical rhythms. See how the peak shifts in the powerspectrum
@@ -239,8 +239,8 @@ powerspectrumplot(CB,sol)
 # create cortical blocks for visual area cortex (VAC), anterior cortex (AC) and ascending system block (ASC1)
 global_namespace=:g
 ## cortical blox
-@named VAC = CorticalBlox(N_wta=10, N_exci=5,  density=0.01, weight=1,I_bg_ar=0;namespace=global_namespace) 
-@named AC = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1,I_bg_ar=0;namespace=global_namespace) 
+@named VAC = CorticalBlox(N_wta=10, N_exci=5,  density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
+@named AC = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
 ## ascending system blox, modulating frequency set to 16 Hz
 @named ASC1 = NextGenerationEIBlox(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
 
@@ -252,12 +252,12 @@ image_sample = 2 ## set which image to input (from 1 to 1000)
 ## define stimulus source blox
 ## t_stimulus: how long the stimulus is on (in msec)
 ## t_pause : how long th estimulus is off (in msec)
-@named stim = ImageStimulus(image_set[[image_sample],:]; namespace=global_namespace, t_stimulus=1000, t_pause=0); 
+@named stim = ImageStimulus(image_set[[image_sample], :]; namespace=global_namespace, t_stimulus=1000, t_pause=0); 
 
 
 # plot the image that the visual cortex 'sees'
-pixels=Array(image_set[image_sample,1:end-1])## access the desired image sample from respective row
-pixels=reshape(pixels,15,15)## reshape into 15 X 15 square image matrix
+pixels = Array(image_set[image_sample, 1:end-1])## access the desired image sample from respective row
+pixels = reshape(pixels, 15, 15)## reshape into 15 X 15 square image matrix
 heatmap(pixels,colormap = :gray1) #input image matrix seen as heatmap
 
 # assemble the blox into a graph and set connections with their keword arguments like connection weight and connection density
@@ -289,22 +289,22 @@ lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
 # Here is the powerspectrum from all neurons within VAC
-powerspectrumplot(VAC,sol)
+powerspectrumplot(VAC, sol)
 
 # Moving on to the AC blox, we first plot the voltage potential of its neurons
 AC_neuron_set = get_neurons(AC) ## extract neurons from VAC
 n_neurons = 40
-stackplot(AC_neuron_set[1:n_neurons],sol)
+stackplot(AC_neuron_set[1:n_neurons], sol)
 
 # followed by the meanfield activity 
-mnv = meanfield_timeseries(AC,sol)
+mnv = meanfield_timeseries(AC, sol)
 fig = Figure();
 ax = Axis(fig[1,1]; xlabel = "time (ms)", ylabel = "Voltage (mv)")
 lines!(ax, sol.t, mnv)
 fig ## to display the figure
 
 # and finally the AC powerspectrum
-powerspectrumplot(AC,sol)
+powerspectrumplot(AC, sol)
 
 # Sugestion : Try changing the image samples and notice the change in the spatial firing patterns in VAC and AC neurons. One can make multiple cortical blocks simillar to AC and connect them in various 
 # connection topologies. All of them can directly or indirectly get input from VAC.  
