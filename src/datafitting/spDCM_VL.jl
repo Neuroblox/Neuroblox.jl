@@ -507,7 +507,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     P = zeros(eltype(J), size(Q))
     PΣ = zeros(eltype(J), size(Q))
     JPJ = zeros(real(eltype(J)), size(J, 2), size(J, 2), size(Q, 3))
-    dFdλ = zeros(eltype(J), nh)
+    dFdλ = zeros(real(eltype(J)), nh)
     dFdλλ = zeros(real(eltype(J)), nh, nh)
     local iΣ, Σλ_po, Σθ_po, ϵ_λ
     for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM12 code.
@@ -519,18 +519,30 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         Pp = real(J' * iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why is this okay?
         Σθ_po = inv(Pp + Πθ_pr)
 
-        for i = 1:nh
-            P[:,:,i] = Q[:,:,i]*exp(λ[i])
-            PΣ[:,:,i] = iΣ \ P[:,:,i]
-            JPJ[:,:,i] = real(J'*P[:,:,i]*J)      # in MATLAB code 'real()' is applied (see also some lines above)
-        end
-        for i = 1:nh
-            dFdλ[i] = (tr(PΣ[:,:,i])*nq - real(dot(ϵ, P[:,:,i], ϵ)) - tr(Σθ_po * JPJ[:,:,i]))/2
-            for j = i:nh
-                dFdλλ[i, j] = -real(tr(PΣ[:,:,i] * PΣ[:,:,j]))*nq/2
-                dFdλλ[j, i] = dFdλλ[i, j]
+        if nh > 1
+            for i = 1:nh
+                P[:,:,i] = Q[:,:,i]*exp(λ[i])
+                PΣ[:,:,i] = iΣ \ P[:,:,i]
+                JPJ[:,:,i] = real(J'*P[:,:,i]*J)      # in MATLAB code 'real()' is applied (see also some lines above)
             end
+            for i = 1:nh
+                dFdλ[i] = (tr(PΣ[:,:,i])*nq - real(dot(ϵ, P[:,:,i], ϵ)) - tr(Σθ_po * JPJ[:,:,i]))/2
+                for j = i:nh
+                    dFdλλ[i, j] = -real(tr(PΣ[:,:,i] * PΣ[:,:,j]))*nq/2
+                    dFdλλ[j, i] = dFdλλ[i, j]
+                end
+            end
+        else
+            # if nh == 1, do the followng simplifications to improve computational speed:          
+            # 1. replace trace(PΣ[1]) * nq by ny
+            # 2. replace JPJ[1] by Pp
+            dFdλ[1, 1] = ny/2 - real(ϵ'*iΣ*ϵ)/2 - tr(Σθ_po * Pp)/2;
+
+            # 3. replace trace(PΣ[1],PΣ[1]) * nq by ny
+            dFdλλ[1, 1] = - ny/2;
         end
+
+        dFdλλ = dFdλλ + diagm(dFdλ);      # add second order terms; noting diΣ/dλ(i)dλ(i) = diΣ/dλ(i) = P{i}
 
         ϵ_λ = λ - μλ_pr
         dFdλ = dFdλ - Πλ_pr*ϵ_λ
