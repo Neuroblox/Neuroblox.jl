@@ -4,7 +4,7 @@ using MAT
 
 @testset "fMRI test" begin
     ### Load data ###
-    vars = matread(joinpath(@__DIR__, "spectralDCM_toydata.mat"));
+    vars = matread(joinpath(@__DIR__, "spm25_fMRI_toydata.mat"));
     data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
     x = vars["x"]                            # point around which expansion is computed
     nrr = ncol(data)                         # number of recorded regions
