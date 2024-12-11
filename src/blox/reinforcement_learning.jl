@@ -102,7 +102,7 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
     const N_trials::Int
     const t_trial::Float64
     current_trial::Int
-
+    
     function ClassificationEnvironment(data::DataFrame; name, namespace=nothing, t_stimulus, t_pause)
         stim = ImageStimulus(
                         data; 
@@ -111,17 +111,32 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
                         t_stimulus,
                         t_pause
         )
-
-        category = data[!, :category]
+        
         N_trials = stim.N_stimuli
-        t_trial = t_stimulus + t_pause
 
-        new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, category, N_trials, t_trial, 1)
+        ClassificationEnvironment(stim, N_trials; name, namespace)
     end
 
+    function ClassificationEnvironment(data::DataFrame, N_trials; name, namespace=nothing, t_stimulus, t_pause)
+        stim = ImageStimulus(
+                        data; 
+                        name=:stim, 
+                        namespace=namespaced_name(namespace, name),
+                        t_stimulus,
+                        t_pause
+        )
+
+        ClassificationEnvironment(stim, N_trials; name, namespace)
+    end
+    
     function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
-        t_trial = stim.t_stimulus + stim.t_pause
         N_trials = stim.N_stimuli
+
+        ClassificationEnvironment(stim, N_trials; name, namespace)
+    end
+
+    function ClassificationEnvironment(stim::ImageStimulus, N_trials; name, namespace=nothing)
+        t_trial = stim.t_stimulus + stim.t_pause
 
         new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, stim.category, N_trials, t_trial, 1)
     end
@@ -245,9 +260,16 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=
         weights[w] = defs[w]
     end
 
-    for _ in Base.OneTo(N_trials)
-        run_trial!(agent, env, weights, nothing; saveat = t_stops, kwargs...)
+    trace = NamedTuple{(:trial, :correct)}((Int[], Bool[]))
+
+    for t in Base.OneTo(N_trials)
+        _, iscorrect = run_trial!(agent, env, weights, nothing; saveat = t_stops, kwargs...)
+        
+        push!(trace.trial, t)
+        push!(trace.correct, iscorrect)
     end
+
+    return trace
 end
 
 function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String; t_warmup=0, kwargs...)
@@ -295,11 +317,18 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     save_idxs = union(idxs_V, idxs_learning)
     =#
 
+    trace = NamedTuple{(:trial, :correct)}((Int[], Bool[]))
+
     for trial in Base.OneTo(N_trials)
-        sol = run_trial!(agent, env, weights, nothing; kwargs...)
+        sol, iscorrect = run_trial!(agent, env, weights, nothing; kwargs...)
 
         save_voltages(sol, save_path, trial)
+
+        push!(trace.trial, trial)
+        push!(trace.correct, iscorrect)
     end
+
+    return trace
 end
 
 function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwargs...)
@@ -353,7 +382,7 @@ function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; k
 
     agent.problem = remake(prob; p = new_params)
 
-    return sol
+    return sol, feedback
 end
 
 function save_voltages(sol, filepath, numtrial)
