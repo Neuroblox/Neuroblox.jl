@@ -1,6 +1,8 @@
 abstract type AbstractEnvironment end
 abstract type AbstractLearningRule end
 
+struct NoLearningRule <: AbstractLearningRule end
+
 mutable struct HebbianPlasticity <:AbstractLearningRule
     const K::Float64
     const W_lim::Float64
@@ -94,6 +96,9 @@ function maybe_set_state_post!(lr::AbstractLearningRule, state)
     end
 end
 
+maybe_set_state_pre!(lr::NoLearningRule, state) = lr
+maybe_set_state_post!(lr::NoLearningRule, state) = lr
+
 mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
     const name::Symbol
     const namespace::Symbol
@@ -161,32 +166,21 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     return argmax(comp_vals)
 end
 
+function connect_action_selection!(as::AbstractActionSelection, str1::Striatum, str2::Striatum)
+    connect_action_selection!(as, get_matrisome(str1), get_matrisome(str2))
+end
+
+function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome, matr2::Matrisome)
+    sys1 = get_namespaced_sys(matr1)
+    sys2 = get_namespaced_sys(matr2)
+
+    as.competitor_states = [sys1.ρ_, sys2.ρ_] #HACK : accessing values of rho at a specific time after the simulation
+    #as.competitor_params = [sys1.H, sys2.H]
+end
+
 get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
 
 get_eval_states(gp::GreedyPolicy) = gp.competitor_states
-
-"""
-function (p::GreedyPolicy)(sys::ODESystem, prob::ODEProblem)
-    ps = parameters(sys)
-    params = prob.p
-    map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
-    comp_params = p.competitor_params
-    idxs_cp = Int64[]
-    for i in eachindex(comp_params)
-        idxs = findall(x -> x==comp_params[i], ps)
-        push!(idxs_cp,idxs)
-    end
-    comp_vals = params[map_idxs[idxs_cp]]
-    @info comp_vals
-    return argmax(comp_vals)
-end
-"""
-
-function narrowtype(d::Dict)
-    types = unique(typeof.(values(d)))
-    U = Union{types...}
-    Dict{Num, U}(d)
-end
 
 mutable struct Agent{S,P,A,LR,C}
     odesystem::S
@@ -197,7 +191,7 @@ mutable struct Agent{S,P,A,LR,C}
 
     function Agent(g::MetaDiGraph; name, kwargs...)
         bc = connector_from_graph(g)
-
+        
         t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
         # TODO: add another version that uses system_from_graph(g,bc,params;)
         sys = system_from_graph(g, bc; name, t_block, allow_parameter=false)
@@ -208,7 +202,7 @@ mutable struct Agent{S,P,A,LR,C}
         prob = ODEProblem(sys, u0, (0.,1.), p)
         
         policy = action_selection_from_graph(g)
-        learning_rules =  narrowtype(bc.learning_rules)  
+        learning_rules =  narrowtype(bc.learning_rule)  
 
         new{typeof(sys), typeof(prob), typeof(policy), typeof(learning_rules), typeof(bc)}(sys, prob, policy, learning_rules, bc)
     end

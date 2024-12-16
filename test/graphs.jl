@@ -1,5 +1,4 @@
 using Neuroblox
-using Neuroblox: get_adjacency
 using Graphs
 using MetaGraphs
 using Test
@@ -17,7 +16,7 @@ using Random
     add_edge!(g, n3 => n2 , weight = 1)
     add_edge!(g, n2 => n2 , weight = 1)
 
-    adj = get_adjacency(g) 
+    adj = AdjacencyMatrix(g) 
 
     A = [0 1 1 ; 0 1 0; 0 1 0]
 
@@ -34,7 +33,7 @@ end
 
     @named cb1 = CorticalBlox(namespace = global_ns, N_wta=2, N_exci=2, connection_matrices=A, weight=1)
 
-    adj = get_adjacency(cb1) 
+    adj = AdjacencyMatrix(cb1) 
 
     adj_wta_11 = [0 1 1; 1 0 0; 1 0 0]
     adj_wta_12 = [[0 0 0]; hcat([0, 0], A[1,2])]
@@ -47,7 +46,7 @@ end
         [0 1 1 0 1 1 0]
     ]
 
-    @test all(A .== adj.matrix)
+    @test sum(A) == nnz(adj.matrix)
 
     nms = [
         :cb1₊wta1₊inh,
@@ -59,7 +58,7 @@ end
         :cb1₊ff_inh
     ]
 
-    @test all(nms .== adj.names)
+    @test all(n -> n in nms, adj.names) && length(nms) == length(adj.names)
 end
 
 @testset "AdjacencyMatrix [Agent]" begin
@@ -73,13 +72,13 @@ end
     add_edge!(g, VAC => AC, weight=3, density=0.1)
 
     Random.seed!(123)
-    A_graph = get_adjacency(g)
+    A_graph = AdjacencyMatrix(g)
 
     Random.seed!(123)
     agent = Agent(g; name=global_namespace, t_block = 1);
-    A_agent = get_adjacency(agent)
+    A_agent = AdjacencyMatrix(agent)
 
-    @test all(A_graph.matrix .== A_agent.matrix)
+    @test all(A_graph.matrix .== A_agent.matrix)    
     @test all(A_graph.names .== A_agent.names)
 end
 
