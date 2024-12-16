@@ -166,6 +166,18 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     return argmax(comp_vals)
 end
 
+function connect_action_selection!(as::AbstractActionSelection, str1::Striatum, str2::Striatum)
+    connect_action_selection!(as, get_matrisome(str1), get_matrisome(str2))
+end
+
+function connect_action_selection!(as::AbstractActionSelection, matr1::Matrisome, matr2::Matrisome)
+    sys1 = get_namespaced_sys(matr1)
+    sys2 = get_namespaced_sys(matr2)
+
+    as.competitor_states = [sys1.ρ_, sys2.ρ_] #HACK : accessing values of rho at a specific time after the simulation
+    #as.competitor_params = [sys1.H, sys2.H]
+end
+
 get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
 
 get_eval_states(gp::GreedyPolicy) = gp.competitor_states
