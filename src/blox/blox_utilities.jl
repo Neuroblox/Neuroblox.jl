@@ -64,6 +64,7 @@ function get_neurons(vn::AbstractVector{<:AbstractBlox})
 end
 
 get_parts(blox::CompositeBlox) = blox.parts
+get_parts(blox::Union{AbstractBlox, ObserverBlox}) = blox
 
 get_components(blox::CompositeBlox) = mapreduce(x -> get_components(x), vcat, get_parts(blox))
 get_components(blox::Vector{<:AbstractBlox}) = mapreduce(x -> get_components(x), vcat, blox)
@@ -97,6 +98,7 @@ end
 get_namespaced_sys(sys::AbstractODESystem) = sys
 
 nameof(blox) = (nameof ∘ get_system)(blox)
+nameof(blox::AbstractActionSelection) = blox.name
 
 namespaceof(blox) = blox.namespace
 
@@ -104,7 +106,7 @@ namespaced_nameof(blox) = namespaced_name(inner_namespaceof(blox), nameof(blox))
 
 """
     Returns the complete namespace EXCLUDING the outermost (highest) level.
-    This is useful for manually preparing equations (e.g. connections, see BloxConnector),
+    This is useful for manually preparing equations (e.g. connections, see Connector),
     that will later be composed and will automatically get the outermost namespace.
 """ 
 function inner_namespaceof(blox)
@@ -119,7 +121,7 @@ end
 namespaced_name(parent_name, name) = Symbol(parent_name, :₊, name)
 namespaced_name(::Nothing, name) = Symbol(name)
 
-function find_eq(eqs::AbstractVector{<:Equation}, lhs)
+function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
     findfirst(eqs) do eq
         lhs_vars = get_variables(eq.lhs)
         length(lhs_vars) == 1 && isequal(only(lhs_vars), lhs)
@@ -136,7 +138,7 @@ end
     the higher-level namespaces will be added to them.
 
     If blox isa AbstractComponent, it is assumed that it contains a `connector` field,
-    which holds a `BloxConnector` object with all relevant connections 
+    which holds a `Connector` object with all relevant connections 
     from lower levels and this level.
 """
 function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
@@ -162,28 +164,28 @@ function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
 end
 
 get_connector(blox::Union{CompositeBlox, Agent}) = blox.connector
+get_connector(blox) = Connector(namespaced_nameof(blox), namespaced_nameof(blox))
 
-get_input_equations(bc::BloxConnector) = bc.eqs
-get_input_equations(blox::Union{CompositeBlox, AbstractComponent}) = (get_input_equations ∘ get_connector)(blox)
+get_input_equations(bc::Connector) = bc.equation
 get_input_equations(blox) = []
 
-get_weight_parameters(bc::BloxConnector) = bc.weights
+get_weight_parameters(bc::Connector) = bc.weights
 get_weight_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_parameters ∘ get_connector)(blox)
 get_weight_parameters(blox) = Num[]
 
-get_delay_parameters(bc::BloxConnector) = bc.delays
+get_delay_parameters(bc::Connector) = bc.delays
 get_delay_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_delay_parameters ∘ get_connector)(blox)
 get_delay_parameters(blox) = Num[]
 
-get_discrete_callbacks(bc::BloxConnector) = bc.discrete_callbacks
+get_discrete_callbacks(bc::Connector) = bc.discrete_callbacks
 get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
 get_discrete_callbacks(blox) = []
 
-get_spike_affects(bc::BloxConnector) = bc.spike_affects
+get_spike_affects(bc::Connector) = bc.spike_affects
 get_spike_affects(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affects ∘ get_connector)(blox)
 get_spike_affects(blox) = Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}()
 
-get_weight_learning_rules(bc::BloxConnector) = bc.learning_rules
+get_weight_learning_rules(bc::Connector) = bc.learning_rules
 get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
 get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
 
@@ -251,6 +253,14 @@ function get_connection_matrix(kwargs, name_out, name_in, N_out, N_in)
                             * "be an array of Bool, got $(eltype(connection_matrix)) instead."))
     end
     connection_matrix
+end
+
+function get_learning_rule(kwargs, name_src, name_dest)
+    if haskey(kwargs, :learning_rule)
+        return deepcopy(kwargs[:learning_rule])
+    else
+        return NoLearningRule()
+    end
 end
 
 function get_weights(agent::Agent, blox_out, blox_in)
@@ -621,4 +631,17 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
         sampling_rate = first_diff
         return nothing, 1000 / sampling_rate
     end
+end
+
+function narrowtype_union(d::Dict)
+    types = unique(typeof.(values(d)))
+    U = Union{types...}
+
+    return U
+end
+
+function narrowtype(d::Dict)
+    U = narrowtype_union(d)
+
+    return Dict{Num, U}(d)
 end
