@@ -76,13 +76,14 @@ end
 
 # Helper function to get delays from a graph
 function graph_delays(g::MetaDiGraph)
-    bc = connector_from_graph(g)
-    return bc.delays
+    conn = connector_from_graph(g)
+
+    return conn.delay
 end
 
-generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
+generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
 
-function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
     spike_affects = get_spike_affects(bc)
     name_blox = namespaced_nameof(blox)
     sys = get_namespaced_sys(blox)
@@ -123,7 +124,7 @@ function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, b
     return cb
 end
 
-function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::Connector; t_block = missing)
     if !ismissing(t_block)
         nn = get_namespaced_sys(blox)
         eq = nn.spikes_window ~ 0
@@ -135,7 +136,7 @@ function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_
     end
 end
 
-function generate_discrete_callbacks(bc::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(bc::Connector; t_block = missing)
     eqs_params = get_equations_with_parameter_lhs(bc)
 
     if !ismissing(t_block) && !isempty(eqs_params)
@@ -146,7 +147,7 @@ function generate_discrete_callbacks(bc::BloxConnector; t_block = missing)
     end 
 end
 
-function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector; t_block = missing)
     bloxs = flatten_graph(g)
 
     cbs = mapreduce(vcat, bloxs) do blox
@@ -182,29 +183,33 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
         isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
         GraphDynamicsInterop.graphsystem_from_graph(g; kwargs...)
     else
-        bc = connector_from_graph(g)
         if isnothing(name)
             throw(UndefKeywordError(:name))
         end
+        
+        bc = connector_from_graph(g)
+    
         return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
     end
 end
 
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}=Num[];
-                           name, t_block=missing, simplify=true, simplify_kwargs...)
-    blox_syss = get_system(g)
+function system_from_graph(g::MetaDiGraph, bc::Connector, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+    bloxs = get_bloxs(g)
+    blox_syss = get_system.(bloxs)
+
+    accumulate_equations!(bc, bloxs)
+
     connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
 
     sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
     if simplify
-        structural_simplify(sys; simplify_kwargs...)
+        structural_simplify(sys; kwargs...)
     else
         sys
     end
 end
-
 
 function system_from_parts(parts::AbstractVector; name)
     return compose(System(Equation[], t; name), get_system.(parts))
