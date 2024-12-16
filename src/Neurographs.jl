@@ -69,18 +69,9 @@ function connectors_from_graph(g::MetaDiGraph)
 end
 
 function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_bloxs(g)
-    link = BloxConnector(bloxs)
+    conns = connectors_from_graph(g)
 
-    for v in vertices(g)
-        b = get_prop(g, v, :blox)
-        for vn in inneighbors(g, v)
-            bn = get_prop(g, vn, :blox)
-            kwargs = props(g, vn, v)
-            link(bn, b; kwargs...)
-        end
-    end
-    return link
+    return isempty(conns) ? Connector(:none, :none) : reduce(merge!, conns)
 end
 
 # Helper function to get delays from a graph
