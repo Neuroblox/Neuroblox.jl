@@ -53,7 +53,7 @@ get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
 function connectors_from_graph(g::MetaDiGraph)
-    conns = reduce(vcat, get_connectors.(get_bloxs(g)))
+    conns = get_connector.(get_bloxs(g))
     for edge in edges(g)
 
         blox_src = get_prop(g, edge.src, :blox)
@@ -81,7 +81,15 @@ function graph_delays(g::MetaDiGraph)
     return conn.delay
 end
 
-function make_unique_param_pairs(params)
+generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
+
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
+    spike_affects = get_spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+    sys = get_namespaced_sys(blox)
+
+    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
+
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
     # affect states in the loop in LIF_spike_affect! .
@@ -213,9 +221,8 @@ function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::Connector; t_bloc
     end
 end
 
-function generate_discrete_callbacks(bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
-    eqs_params = get_equations_with_parameter_lhs(eqs)
-    dc = discrete_callbacks(bc)
+function generate_discrete_callbacks(bc::Connector; t_block = missing)
+    eqs_params = get_equations_with_parameter_lhs(bc)
 
     if !ismissing(t_block) && !isempty(eqs_params)
         cb_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
@@ -225,7 +232,7 @@ function generate_discrete_callbacks(bc::Connector, eqs::AbstractVector{<:Equati
     end 
 end
 
-function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
+function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector; t_block = missing)
     bloxs = flatten_graph(g)
 
     cbs = mapreduce(vcat, bloxs) do blox
@@ -265,23 +272,19 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
             throw(UndefKeywordError(:name))
         end
         
-        conns = connectors_from_graph(g)
+        bc = connector_from_graph(g)
     
-        return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
+        return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
     end
 end
 
-function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+function system_from_graph(g::MetaDiGraph, bc::Connector, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
     bloxs = get_bloxs(g)
     blox_syss = get_system.(bloxs)
 
-    bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)
+    accumulate_equations!(bc, bloxs)
 
-    eqs = equations(bc)
-    eqs_init = mapreduce(get_input_equations, vcat, bloxs)
-    accumulate_equations!(eqs_init, eqs)
-
-    connection_eqs = get_equations_with_state_lhs(eqs_init)
+    connection_eqs = get_equations_with_state_lhs(bc)
 
     discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs_init; t_block))
 

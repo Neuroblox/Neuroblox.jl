@@ -71,7 +71,7 @@ struct CorticalBlox <: CompositeBlox
             add_edge!(g, N_wta+1, i, Dict(:weight => 1))
         end
         
-        bc = connectors_from_graph(g)
+        bc = connector_from_graph(g)
         # If a namespace is not provided, assume that this is the highest level
         # and construct the ODEsystem from the graph.
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
@@ -154,7 +154,7 @@ struct LIFExciCircuitBlox <: CompositeBlox
             end
         end
 
-        bc = connectors_from_graph(g)
+        bc = connector_from_graph(g)
 
         if skip_system_creation
             sys = nothing
@@ -232,7 +232,7 @@ struct LIFInhCircuitBlox <: CompositeBlox
             end
         end
 
-        bc = connectors_from_graph(g)
+        bc = connector_from_graph(g)
 
         if skip_system_creation
             sys = nothing

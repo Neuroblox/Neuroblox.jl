@@ -56,7 +56,7 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
 
         parts = vcat(n_inh, n_excis)
         
-        bc = connectors_from_graph(g)
+        bc = connector_from_graph(g)
         # If a namespace is not provided, assume that this is the highest level
         # and construct the ODEsystem from the graph.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
