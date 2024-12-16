@@ -3,28 +3,33 @@ struct AdjacencyMatrix
     names::Vector{Symbol}
 end
 
-function AdjacencyMatrix(name)
-    return AdjacencyMatrix(spzeros(1,1), [name])
+function AdjacencyMatrix(names::AbstractVector)
+    return AdjacencyMatrix(spzeros(1,1), names)
 end
 
-function Base.merge(adj1::AdjacencyMatrix, adj2::AdjacencyMatrix)
-    return AdjacencyMatrix(
-        cat(adj1.matrix, adj2.matrix; dims=(1,2)), 
-        vcat(adj1.names, adj2.names)
-    )
+function AdjacencyMatrix(C::Connector)
+    weights = C.weight
+    srcs = C.source
+    dests = C.destination
+    names = unique(vcat(srcs, dests))
+    sort!(names)
+
+    ADJ = AdjacencyMatrix(spzeros(length(names), length(names)), names)
+    for i in eachindex(srcs)
+        add_adjacency_edge!(ADJ, srcs[i], dests[i], weights[i])
+    end
+
+    return ADJ
 end
 
-get_adjacency(bc::BloxConnector) = bc.adjacency
-get_adjacency(blox::CompositeBlox) = (get_adjacency ∘ get_connector)(blox)
-get_adjacency(blox) = AdjacencyMatrix(namespaced_nameof(blox))
+AdjacencyMatrix(blox::CompositeBlox) = AdjacencyMatrix(get_connector(blox))
 
-function get_adjacency(g::MetaDiGraph)
-    bc = connector_from_graph(g)
-    return get_adjacency(bc)
-end
+AdjacencyMatrix(blox) = AdjacencyMatrix(namespaced_nameof(blox))
 
-function get_adjacency(bc::BloxConnector, sys::AbstractODESystem, prob::ODEProblem)
-    A = get_adjacency(bc)
+AdjacencyMatrix(g::MetaDiGraph) = AdjacencyMatrix(connector_from_graph(g))
+
+function AdjacencyMatrix(bc::Connector, sys::AbstractODESystem, prob::ODEProblem)
+    A = AdjacencyMatrix(bc)
     names = A.names
     mat = A.matrix
 
@@ -43,12 +48,29 @@ function get_adjacency(bc::BloxConnector, sys::AbstractODESystem, prob::ODEProbl
     return AdjacencyMatrix(S, names)
 end
 
-function get_adjacency(agent::Agent)
+function AdjacencyMatrix(agent::Agent)
     prob = agent.problem
     sys = get_system(agent)
     bc = get_connector(agent)
 
-    return get_adjacency(bc, sys, prob)
+    return AdjacencyMatrix(bc, sys, prob)
+end
+
+function add_adjacency_edge!(ADJ::AdjacencyMatrix, name_src, name_dest, weight)
+    src_idx = findfirst(x -> isequal(name_src, x), ADJ.names)
+    dest_idx = findfirst(x -> isequal(name_dest, x), ADJ.names)
+
+    weight_def = ModelingToolkit.getdefault(weight)
+    weight_value = substitute(weight_def, map(x -> x => ModelingToolkit.getdefault(x), Symbolics.get_variables(weight_def)))
+    
+    ADJ.matrix[src_idx, dest_idx] = weight_value
+end
+
+function Base.merge(adj1::AdjacencyMatrix, adj2::AdjacencyMatrix)
+    return AdjacencyMatrix(
+        cat(adj1.matrix, adj2.matrix; dims=(1,2)), 
+        vcat(adj1.names, adj2.names)
+    )
 end
 
 function adjmatrixfromdigraph(g::MetaDiGraph)
