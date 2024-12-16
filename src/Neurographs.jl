@@ -52,6 +52,22 @@ get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
+function connectors_from_graph(g::MetaDiGraph)
+    conns = get_connector.(get_bloxs(g))
+    for edge in edges(g)
+
+        blox_src = get_prop(g, edge.src, :blox)
+        blox_dest = get_prop(g, edge.dst, :blox)
+
+        kwargs = props(g, edge)
+        push!(conns, Connector(blox_src, blox_dest; kwargs...))
+    end
+   
+    filter!(conn -> !isempty(conn), conns)
+
+    return conns
+end
+
 function connector_from_graph(g::MetaDiGraph)
     bloxs = get_bloxs(g)
     link = BloxConnector(bloxs)
