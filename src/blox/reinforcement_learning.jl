@@ -1,6 +1,8 @@
 abstract type AbstractEnvironment end
 abstract type AbstractLearningRule end
 
+struct NoLearningRule <: AbstractLearningRule end
+
 mutable struct HebbianPlasticity <:AbstractLearningRule
     const K::Float64
     const W_lim::Float64
@@ -93,6 +95,9 @@ function maybe_set_state_post!(lr::AbstractLearningRule, state)
         lr.state_post = state
     end
 end
+
+maybe_set_state_pre!(lr::NoLearningRule, state) = lr
+maybe_set_state_post!(lr::NoLearningRule, state) = lr
 
 mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
     const name::Symbol
