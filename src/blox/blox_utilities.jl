@@ -389,6 +389,10 @@ end
 to_vector(v::AbstractVector) = v
 to_vector(v) = [v]
 
+to_double_vector(v::AbstractVector{<:AbstractVector}) = v
+to_double_vector(v::AbstractVector) = [v]
+to_double_vector(v) = [[v]]
+
 nanmean(x) = mean(filter(!isnan,x))
 
 function replace_refractory!(V, blox::Union{LIFExciNeuron, LIFInhNeuron}, sol::SciMLBase.AbstractSolution)
