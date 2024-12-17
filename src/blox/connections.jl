@@ -1,22 +1,22 @@
 struct Connector
-    source::Vector{Symbol}
-    destination::Vector{Symbol}
-    equation::Vector{Equation}
-    weight::Vector{Num}
-    delay::Vector{Num}
+    source::Vector{Vector{Symbol}}
+    destination::Vector{Vector{Symbol}}
+    equation::Vector{Vector{Equation}}
+    weight::Vector{Vector{Num}}
+    delay::Vector{Vector{Num}}
     discrete_callbacks
     spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
     learning_rule::Dict{Num, AbstractLearningRule}
 end
 
 function Connector(
-    src::Symbol, 
-    dest::Symbol; 
+    src::Union{Symbol, Vector{Symbol}}, 
+    dest::Union{Symbol, Vector{Symbol}}; 
     equation=Equation[], 
     weight=Num[], 
     delay=Num[], 
     discrete_callbacks=[], 
-    spike_affects=Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}(), 
+    spike_affects=Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}(),
     learning_rule=Dict{Num, AbstractLearningRule}()
     )
 
@@ -25,19 +25,19 @@ function Connector(
     learning_rule = U <: NoLearningRule ? Dict{Num, NoLearningRule}() : learning_rule
 
     Connector(
-        [src], 
-        [dest], 
-        to_vector(equation), 
-        to_vector(weight), 
-        to_vector(delay), 
-        to_vector(discrete_callbacks), 
+        to_double_vector(src), 
+        to_double_vector(dest), 
+        to_double_vector(equation), 
+        to_double_vector(weight), 
+        to_double_vector(delay), 
+        to_double_vector(discrete_callbacks), 
         spike_affects, 
         learning_rule
     )
 end
 
 function Base.isempty(conn::Connector)
-    return isempty(conn.equation) && isempty(conn.weight) && isempty(conn.delay) && isempty(conn.discrete_callbacks) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
+    return all(isempty.(conn.equation)) && all(isempty.(conn.weight)) && all(isempty.(conn.delay)) && all(isempty.(conn.discrete_callbacks)) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
 end
 
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
@@ -921,14 +921,14 @@ function Connector(
                     (1 + sys_dest.Mg * exp(-0.062 * sys_dest.V) / 3.57)
     
     # Compare the unique namespaced names of both systems
-    spike_affects = if nameof(sys_src) == nameof(sys_dest)
+    sa = if nameof(sys_src) == nameof(sys_dest)
         # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        Dict(nameof(sys_src) => ([sys_dest.S_AMPA, sys_dest.x], [w, w]))
+        nameof(sys_src) => ([sys_dest.S_AMPA, sys_dest.x], [w, w])
     else
-        Dict(nameof(sys_src) => ([sys_dest.S_AMPA], [w]))
+        nameof(sys_src) => ([sys_dest.S_AMPA], [w])
     end
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation = eq, weight = [w], spike_affects = spike_affects)
+    return Connector(nameof(sys_src), nameof(sys_dest); equation = eq, weight = [w], spike_affects = Dict(sa))
 end
 
 function Connector(
@@ -941,9 +941,9 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    spike_affects = Dict(nameof(sys_src) => ([sys_dest.S_GABA], [w]))
+    sa = nameof(sys_src) => ([sys_dest.S_GABA], [w])
 
-    return Connector(nameof(sys_src), nameof(sys_dest); weight = w, spike_affects = spike_affects)
+    return Connector(nameof(sys_src), nameof(sys_dest); weight = w, spike_affects = Dict(sa))
 end
 
 function Connector(
