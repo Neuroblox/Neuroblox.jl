@@ -163,31 +163,10 @@ function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     end
 end
 
-get_connector(blox::Union{CompositeBlox, Agent}) = blox.connector
-get_connector(blox) = Connector(namespaced_nameof(blox), namespaced_nameof(blox))
-
-get_input_equations(bc::Connector) = bc.equation
 get_input_equations(blox) = []
 
-get_weight_parameters(bc::Connector) = bc.weights
-get_weight_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_parameters ∘ get_connector)(blox)
-get_weight_parameters(blox) = Num[]
-
-get_delay_parameters(bc::Connector) = bc.delays
-get_delay_parameters(blox::Union{CompositeBlox, AbstractComponent}) = (get_delay_parameters ∘ get_connector)(blox)
-get_delay_parameters(blox) = Num[]
-
-get_discrete_callbacks(bc::Connector) = bc.discrete_callbacks
-get_discrete_callbacks(blox::Union{CompositeBlox, AbstractComponent}) = (get_discrete_callbacks ∘ get_connector)(blox)
-get_discrete_callbacks(blox) = []
-
-get_spike_affects(bc::Connector) = bc.spike_affects
-get_spike_affects(blox::Union{CompositeBlox, AbstractComponent}) = (get_spike_affects ∘ get_connector)(blox)
-get_spike_affects(blox) = Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}()
-
-get_weight_learning_rules(bc::Connector) = bc.learning_rules
-get_weight_learning_rules(blox::Union{CompositeBlox, AbstractComponent}) = (get_weight_learning_rules ∘ get_connector)(blox)
-get_weight_learning_rules(blox) = Dict{Num, AbstractLearningRule}()
+get_connector(blox::Union{CompositeBlox, Agent}) = blox.connector
+get_connector(blox) = Connector(namespaced_nameof(blox), namespaced_nameof(blox))
 
 function get_weight(kwargs, name_blox1, name_blox2)
     get(kwargs, :weight) do
@@ -388,6 +367,10 @@ end
 
 to_vector(v::AbstractVector) = v
 to_vector(v) = [v]
+
+to_double_vector(v::AbstractVector{<:AbstractVector}) = v
+to_double_vector(v::AbstractVector) = [v]
+to_double_vector(v) = [[v]]
 
 nanmean(x) = mean(filter(!isnan,x))
 

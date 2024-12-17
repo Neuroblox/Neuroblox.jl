@@ -1,22 +1,22 @@
 struct Connector
-    source::Vector{Symbol}
-    destination::Vector{Symbol}
-    equation::Vector{Equation}
-    weight::Vector{Num}
-    delay::Vector{Num}
+    source::Vector{Vector{Symbol}}
+    destination::Vector{Vector{Symbol}}
+    equation::Vector{Vector{Equation}}
+    weight::Vector{Vector{Num}}
+    delay::Vector{Vector{Num}}
     discrete_callbacks
     spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
     learning_rule::Dict{Num, AbstractLearningRule}
 end
 
 function Connector(
-    src::Symbol, 
-    dest::Symbol; 
+    src::Union{Symbol, Vector{Symbol}}, 
+    dest::Union{Symbol, Vector{Symbol}}; 
     equation=Equation[], 
     weight=Num[], 
     delay=Num[], 
     discrete_callbacks=[], 
-    spike_affects=Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}(), 
+    spike_affects=Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}(),
     learning_rule=Dict{Num, AbstractLearningRule}()
     )
 
@@ -25,56 +25,72 @@ function Connector(
     learning_rule = U <: NoLearningRule ? Dict{Num, NoLearningRule}() : learning_rule
 
     Connector(
-        [src], 
-        [dest], 
-        to_vector(equation), 
-        to_vector(weight), 
-        to_vector(delay), 
-        to_vector(discrete_callbacks), 
+        to_double_vector(src), 
+        to_double_vector(dest), 
+        to_double_vector(equation), 
+        to_double_vector(weight), 
+        to_double_vector(delay), 
+        to_double_vector(discrete_callbacks), 
         spike_affects, 
         learning_rule
     )
 end
 
 function Base.isempty(conn::Connector)
-    return isempty(conn.equation) && isempty(conn.weight) && isempty(conn.delay) && isempty(conn.discrete_callbacks) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
+    return all(isempty.(conn.equation)) && all(isempty.(conn.weight)) && all(isempty.(conn.delay)) && all(isempty.(conn.discrete_callbacks)) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
 end
 
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
 
-connection_equation(blox_src, blox_dest; kwargs...) = get_single_element(Connector(blox_src, blox_dest; kwargs...).equation)
+Base.show(io::IO, c::Connector) = print(io, "$(c.source) => $(c.destination) with ", c.equation)
 
-get_single_element(v::Union{AbstractVector, Dict}) = length(v) == 1 ? only(v) : v
+function string_to_show(v, title)
+    s = string.(v)
 
-Base.show(io::IO, c::Connector) = print(io, "$(c.source) connects to $(c.destination) with ", c.equation)
-
-function Base.show(io::IO, ::MIME"text/plain", c::Connector)
-
-    lines = ["Connection from $(get_single_element(c.source)) to $(get_single_element(c.destination))"]
-
-    !isempty(c.equation) && push!(lines, "Equation : $(get_single_element(c.equation))")
-    !isempty(c.weight) && push!(lines, "Weight : $(get_single_element(c.weight))")
-    !isempty(c.delay) && push!(lines, "Delay : $(get_single_element(c.delay))")
-    !isempty(c.discrete_callbacks) && push!(lines, "Preset time events : $(get_single_element(c.discrete_callbacks))")
-
-    if !isempty(c.spike_affects)
-        push!(lines, "$(get_single_element(c.source)) spikes affect :")
-        for (k, v) in c.spike_affects
-            var, val = get_single_element.(v)
-            push!(lines, "\t $(var) += $(val)")
-        end
-    end
-
-    !isempty(c.learning_rule) && push!(lines, "Plasticity rule : $(get_single_element(c.learning_rule))")
-
-    print(io, join(lines, " \n "))
+    return string("\t $(title): ", "[", join(s, " , "), "]")
 end
 
-function accumulate_equations!(C::Connector, bloxs)
-    init_eqs = mapreduce(get_input_equations, vcat, bloxs)
-    accumulate_equations!(C.equation, init_eqs)
+function string_to_show(d::Dict, title)
+    s = [string(k, " => ", v) for (k,v) in d]
 
-    return C
+    return string("\t $(title): ", "[", join(s, " , "), "]")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", c::Connector)
+    N_conns = length(c.source)
+    
+    for i in Base.OneTo(N_conns)
+        println("Connection $(c.source[i]) => $(c.destination[i])")
+
+        !isempty(c.equation[i]) && println(string_to_show(c.equation[i], "Equation"))
+        !isempty(c.weight[i]) && println(string_to_show(c.weight[i], "Weight"))
+        !isempty(c.delay[i]) && println(string_to_show(c.delay[i], "Delay"))
+
+        d = Dict()
+        for w in c.weight[i]    
+            if haskey(c.learning_rule, w)
+                d[w] = c.learning_rule[w]
+            end
+        end
+        !isempty(d) && println(string_to_show(d, "Plasticity model"))
+
+        for s in c.source[i]
+            if haskey(c.spike_affects, s)
+                println("\t $(s) spikes affect :")
+                vars, vals = c.spike_affects[s]
+                for (var, val) in zip(vars, vals)
+                    println("\t \t $(var) += $(val)")
+                end
+            end
+        end
+    end 
+end
+
+function accumulate_equations!(eqs::AbstractVector{<:Equation}, bloxs)
+    init_eqs = mapreduce(get_input_equations, vcat, bloxs)
+    accumulate_equations!(eqs, init_eqs)
+
+    return eqs
 end
 
 function accumulate_equations!(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation})
@@ -92,6 +108,8 @@ function accumulate_equations!(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation
     return eqs1
 end
 
+ModelingToolkit.equations(c::Connector) = reduce(accumulate_equations!, c.equation)
+
 function tuple_append!(t1::Tuple, t2::Tuple)
     append!(first(t1), first(t2))
     append!(last(t1), last(t2))
@@ -99,9 +117,23 @@ function tuple_append!(t1::Tuple, t2::Tuple)
     return t1
 end
 
-get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.equation)
+discrete_callbacks(c::Connector) = reduce(append!, c.discrete_callbacks)
 
-get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.equation)
+sources(c::Connector) = reduce(append!, c.source)
+
+destinations(c::Connector) = reduce(append!, c.destination)
+
+weights(c::Connector) = reduce(append!, c.weight)
+
+delays(c::Connector) = reduce(append!, c.delay)
+
+spike_affects(c::Connector) = c.spike_affects
+
+learning_rules(c::Connector) = c.learning_rule
+
+get_equations_with_parameter_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> isparameter(eq.lhs), eqs)
+
+get_equations_with_state_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> !isparameter(eq.lhs), eqs)
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
@@ -137,21 +169,21 @@ end
     Helper to merge delay and weight into a single vector
 """
 function params(bc::Connector)
-    weight = []
-    for w in bc.weight
-        append!(weight, Symbolics.get_variables(w))
+    wt = map(weights(bc)) do w
+        Symbolics.get_variables(w)
     end
-    if isempty(weight)
-        return vcat(weight, bc.delay)
+
+    if isempty(wt)
+        return vcat(wt, delays(bc))
     else
-        return vcat(reduce(vcat, weight), bc.delay)
+        return vcat(reduce(vcat, wt), delays(bc))
     end
 end
 
 function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.source, c2.source)
     append!(c1.destination, c2.destination)
-    accumulate_equations!(c1.equation, c2.equation)
+    append!(c1.equation, c2.equation)
     append!(c1.weight, c2.weight)
     append!(c1.delay, c2.delay)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
@@ -921,14 +953,14 @@ function Connector(
                     (1 + sys_dest.Mg * exp(-0.062 * sys_dest.V) / 3.57)
     
     # Compare the unique namespaced names of both systems
-    spike_affects = if nameof(sys_src) == nameof(sys_dest)
+    sa = if nameof(sys_src) == nameof(sys_dest)
         # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        Dict(nameof(sys_src) => ([sys_dest.S_AMPA, sys_dest.x], [w, w]))
+        nameof(sys_src) => ([sys_dest.S_AMPA, sys_dest.x], [w, w])
     else
-        Dict(nameof(sys_src) => ([sys_dest.S_AMPA], [w]))
+        nameof(sys_src) => ([sys_dest.S_AMPA], [w])
     end
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation = eq, weight = [w], spike_affects = spike_affects)
+    return Connector(nameof(sys_src), nameof(sys_dest); equation = eq, weight = [w], spike_affects = Dict(sa))
 end
 
 function Connector(
@@ -941,9 +973,9 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    spike_affects = Dict(nameof(sys_src) => ([sys_dest.S_GABA], [w]))
+    sa = nameof(sys_src) => ([sys_dest.S_GABA], [w])
 
-    return Connector(nameof(sys_src), nameof(sys_dest); weight = w, spike_affects = spike_affects)
+    return Connector(nameof(sys_src), nameof(sys_dest); weight = w, spike_affects = Dict(sa))
 end
 
 function Connector(
