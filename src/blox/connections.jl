@@ -42,32 +42,48 @@ end
 
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
 
-connection_equation(blox_src, blox_dest; kwargs...) = get_single_element(Connector(blox_src, blox_dest; kwargs...).equation)
+Base.show(io::IO, c::Connector) = print(io, "$(c.source) => $(c.destination) with ", c.equation)
 
-get_single_element(v::Union{AbstractVector, Dict}) = length(v) == 1 ? only(v) : v
+function string_to_show(v, title)
+    s = string.(v)
 
-Base.show(io::IO, c::Connector) = print(io, "$(c.source) connects to $(c.destination) with ", c.equation)
+    return string("\t $(title): ", "[", join(s, " , "), "]")
+end
+
+function string_to_show(d::Dict, title)
+    s = [string(k, " => ", v) for (k,v) in d]
+
+    return string("\t $(title): ", "[", join(s, " , "), "]")
+end
 
 function Base.show(io::IO, ::MIME"text/plain", c::Connector)
+    N_conns = length(c.source)
+    
+    for i in Base.OneTo(N_conns)
+        println("Connection $(c.source[i]) => $(c.destination[i])")
 
-    lines = ["Connection from $(get_single_element(c.source)) to $(get_single_element(c.destination))"]
+        !isempty(c.equation[i]) && println(string_to_show(c.equation[i], "Equation"))
+        !isempty(c.weight[i]) && println(string_to_show(c.weight[i], "Weight"))
+        !isempty(c.delay[i]) && println(string_to_show(c.delay[i], "Delay"))
 
-    !isempty(c.equation) && push!(lines, "Equation : $(get_single_element(c.equation))")
-    !isempty(c.weight) && push!(lines, "Weight : $(get_single_element(c.weight))")
-    !isempty(c.delay) && push!(lines, "Delay : $(get_single_element(c.delay))")
-    !isempty(c.discrete_callbacks) && push!(lines, "Preset time events : $(get_single_element(c.discrete_callbacks))")
-
-    if !isempty(c.spike_affects)
-        push!(lines, "$(get_single_element(c.source)) spikes affect :")
-        for (k, v) in c.spike_affects
-            var, val = get_single_element.(v)
-            push!(lines, "\t $(var) += $(val)")
+        d = Dict()
+        for w in c.weight[i]    
+            if haskey(c.learning_rule, w)
+                d[w] = c.learning_rule[w]
+            end
         end
-    end
+        !isempty(d) && println(string_to_show(d, "Plasticity model"))
 
-    !isempty(c.learning_rule) && push!(lines, "Plasticity rule : $(get_single_element(c.learning_rule))")
-
-    print(io, join(lines, " \n "))
+        for s in c.source[i]
+            if haskey(c.spike_affects, s)
+                println("\t $(s) spikes affect :")
+                vars, vals = c.spike_affects[s]
+                for (var, val) in zip(vars, vals)
+                    println("\t \t $(var) += $(val)")
+                end
+            end
+        end
+    end 
 end
 
 function accumulate_equations!(C::Connector, bloxs)
