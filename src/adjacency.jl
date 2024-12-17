@@ -8,15 +8,16 @@ function AdjacencyMatrix(names::AbstractVector)
 end
 
 function AdjacencyMatrix(C::Connector)
-    weights = C.weight
-    srcs = C.source
-    dests = C.destination
+    w = weights(C)
+    srcs = sources(C)
+    dests = destinations(C)
     names = unique(vcat(srcs, dests))
+   
     sort!(names)
 
     ADJ = AdjacencyMatrix(spzeros(length(names), length(names)), names)
     for i in eachindex(srcs)
-        add_adjacency_edge!(ADJ, srcs[i], dests[i], weights[i])
+        add_adjacency_edge!(ADJ, srcs[i], dests[i], w[i])
     end
 
     return ADJ

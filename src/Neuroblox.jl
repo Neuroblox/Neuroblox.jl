@@ -40,7 +40,7 @@ using SciMLBase: SciMLBase, AbstractSolution, solve, remake
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
                     AbstractODESystem, VariableTunable, getp
-import ModelingToolkit: equations, inputs, outputs, unknowns, parameters, discrete_events, nameof, getdescription
+import ModelingToolkit: equations, inputs, nameof, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval, get_variables
 

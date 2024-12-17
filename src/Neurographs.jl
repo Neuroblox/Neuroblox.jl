@@ -84,11 +84,11 @@ end
 generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
 
 function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
-    spike_affects = get_spike_affects(bc)
+    sa = spike_affects(bc)
     name_blox = namespaced_nameof(blox)
     sys = get_namespaced_sys(blox)
 
-    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
+    states_affect, params_affect = get(sa, name_blox, (Num[], Num[]))
 
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
@@ -221,8 +221,9 @@ function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::Connector; t_bloc
     end
 end
 
-function generate_discrete_callbacks(bc::Connector; t_block = missing)
-    eqs_params = get_equations_with_parameter_lhs(bc)
+function generate_discrete_callbacks(bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
+    eqs_params = get_equations_with_parameter_lhs(eqs)
+    dc = discrete_callbacks(bc)
 
     if !ismissing(t_block) && !isempty(eqs_params)
         cb_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
@@ -232,7 +233,7 @@ function generate_discrete_callbacks(bc::Connector; t_block = missing)
     end 
 end
 
-function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector; t_block = missing)
+function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
     bloxs = flatten_graph(g)
 
     cbs = mapreduce(vcat, bloxs) do blox
@@ -282,11 +283,12 @@ function system_from_graph(g::MetaDiGraph, bc::Connector, p::Vector{Num}=Num[]; 
     bloxs = get_bloxs(g)
     blox_syss = get_system.(bloxs)
 
-    accumulate_equations!(bc, bloxs)
+    eqs = equations(bc)
+    accumulate_equations!(eqs, bloxs)
 
-    connection_eqs = get_equations_with_state_lhs(bc)
+    connection_eqs = get_equations_with_state_lhs(eqs)
 
-    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs_init; t_block))
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs; t_block))
 
     sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
     if simplify
