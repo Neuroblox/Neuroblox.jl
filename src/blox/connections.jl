@@ -86,11 +86,11 @@ function Base.show(io::IO, ::MIME"text/plain", c::Connector)
     end 
 end
 
-function accumulate_equations!(C::Connector, bloxs)
+function accumulate_equations!(eqs::AbstractVector{<:Equation}, bloxs)
     init_eqs = mapreduce(get_input_equations, vcat, bloxs)
-    accumulate_equations!(C.equation, init_eqs)
+    accumulate_equations!(eqs, init_eqs)
 
-    return C
+    return eqs
 end
 
 function accumulate_equations!(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation})
@@ -108,6 +108,8 @@ function accumulate_equations!(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation
     return eqs1
 end
 
+ModelingToolkit.equations(c::Connector) = reduce(accumulate_equations!, c.equation)
+
 function tuple_append!(t1::Tuple, t2::Tuple)
     append!(first(t1), first(t2))
     append!(last(t1), last(t2))
@@ -115,9 +117,23 @@ function tuple_append!(t1::Tuple, t2::Tuple)
     return t1
 end
 
-get_equations_with_parameter_lhs(bc) = filter(eq -> isparameter(eq.lhs), bc.equation)
+discrete_callbacks(c::Connector) = reduce(append!, c.discrete_callbacks)
 
-get_equations_with_state_lhs(bc) = filter(eq -> !isparameter(eq.lhs), bc.equation)
+sources(c::Connector) = reduce(append!, c.source)
+
+destinations(c::Connector) = reduce(append!, c.destination)
+
+weights(c::Connector) = reduce(append!, c.weight)
+
+delays(c::Connector) = reduce(append!, c.delay)
+
+spike_affects(c::Connector) = c.spike_affects
+
+learning_rules(c::Connector) = c.learning_rule
+
+get_equations_with_parameter_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> isparameter(eq.lhs), eqs)
+
+get_equations_with_state_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> !isparameter(eq.lhs), eqs)
 
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
@@ -153,21 +169,21 @@ end
     Helper to merge delay and weight into a single vector
 """
 function params(bc::Connector)
-    weight = []
-    for w in bc.weight
-        append!(weight, Symbolics.get_variables(w))
+    wt = map(weights(bc)) do w
+        Symbolics.get_variables(w)
     end
-    if isempty(weight)
-        return vcat(weight, bc.delay)
+
+    if isempty(wt)
+        return vcat(wt, delays(bc))
     else
-        return vcat(reduce(vcat, weight), bc.delay)
+        return vcat(reduce(vcat, wt), delays(bc))
     end
 end
 
 function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.source, c2.source)
     append!(c1.destination, c2.destination)
-    accumulate_equations!(c1.equation, c2.equation)
+    append!(c1.equation, c2.equation)
     append!(c1.weight, c2.weight)
     append!(c1.delay, c2.delay)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
