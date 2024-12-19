@@ -1,9 +1,9 @@
 struct Connector
-    source::Vector{Vector{Symbol}}
-    destination::Vector{Vector{Symbol}}
-    equation::Vector{Vector{Equation}}
-    weight::Vector{Vector{Num}}
-    delay::Vector{Vector{Num}}
+    source::Vector{Symbol}
+    destination::Vector{Symbol}
+    equation::Vector{Equation}
+    weight::Vector{Num}
+    delay::Vector{Num}
     discrete_callbacks
     spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
     learning_rule::Dict{Num, AbstractLearningRule}
@@ -25,19 +25,19 @@ function Connector(
     learning_rule = U <: NoLearningRule ? Dict{Num, NoLearningRule}() : learning_rule
 
     Connector(
-        to_double_vector(src), 
-        to_double_vector(dest), 
-        to_double_vector(equation), 
-        to_double_vector(weight), 
-        to_double_vector(delay), 
-        to_double_vector(discrete_callbacks), 
+        to_vector(src), 
+        to_vector(dest), 
+        to_vector(equation), 
+        to_vector(weight), 
+        to_vector(delay), 
+        to_vector(discrete_callbacks), 
         spike_affects, 
         learning_rule
     )
 end
 
 function Base.isempty(conn::Connector)
-    return all(isempty.(conn.equation)) && all(isempty.(conn.weight)) && all(isempty.(conn.delay)) && all(isempty.(conn.discrete_callbacks)) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
+    return isempty(conn.equation) && isempty(conn.weight) && isempty(conn.delay) && isempty(conn.discrete_callbacks) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
 end
 
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
@@ -108,7 +108,21 @@ function accumulate_equations!(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation
     return eqs1
 end
 
-ModelingToolkit.equations(c::Connector) = reduce(accumulate_equations!, c.equation)
+function accumulate_equations(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation})
+    eqs = copy(eqs1)
+    for eq in eqs2
+        lhs = eq.lhs
+        idx = find_eq(eqs1, lhs)
+        
+        if isnothing(idx)
+            push!(eqs, eq)
+        else
+            eqs[idx] = eqs[idx].lhs ~ eqs[idx].rhs + eq.rhs
+        end
+    end
+
+    return eqs
+end
 
 function tuple_append!(t1::Tuple, t2::Tuple)
     append!(first(t1), first(t2))
@@ -117,15 +131,17 @@ function tuple_append!(t1::Tuple, t2::Tuple)
     return t1
 end
 
-discrete_callbacks(c::Connector) = reduce(append!, c.discrete_callbacks)
+ModelingToolkit.equations(c::Connector) = c.equation
 
-sources(c::Connector) = reduce(append!, c.source)
+discrete_callbacks(c::Connector) = c.discrete_callbacks
 
-destinations(c::Connector) = reduce(append!, c.destination)
+sources(c::Connector) = c.source
 
-weights(c::Connector) = reduce(append!, c.weight)
+destinations(c::Connector) = c.destination
 
-delays(c::Connector) = reduce(append!, c.delay)
+weights(c::Connector) = c.weight
+
+delays(c::Connector) = c.delay
 
 spike_affects(c::Connector) = c.spike_affects
 
@@ -183,7 +199,7 @@ end
 function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.source, c2.source)
     append!(c1.destination, c2.destination)
-    append!(c1.equation, c2.equation)
+    accumulate_equations!(c1.equation, c2.equation)
     append!(c1.weight, c2.weight)
     append!(c1.delay, c2.delay)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
