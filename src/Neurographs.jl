@@ -53,7 +53,7 @@ get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
 function connectors_from_graph(g::MetaDiGraph)
-    conns = get_connector.(get_bloxs(g))
+    conns = reduce(vcat, get_connector.(get_bloxs(g)))
     for edge in edges(g)
 
         blox_src = get_prop(g, edge.src, :blox)
@@ -188,15 +188,17 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
             throw(UndefKeywordError(:name))
         end
         
-        bc = connector_from_graph(g)
+        conns = connectors_from_graph(g)
     
-        return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
+        return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
     end
 end
 
-function system_from_graph(g::MetaDiGraph, bc::Connector, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
     bloxs = get_bloxs(g)
     blox_syss = get_system.(bloxs)
+
+    bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)
 
     eqs = equations(bc)
     accumulate_equations!(eqs, bloxs)
