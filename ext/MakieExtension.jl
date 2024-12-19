@@ -4,7 +4,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, get_adjacency
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
@@ -28,7 +28,7 @@ argument_names(::Type{<: Adjacency}) = (:blox_or_graph)
 
 function Makie.plot!(p::Adjacency)
     blox_or_graph = p.blox_or_graph[]
-    adj = get_adjacency(blox_or_graph)
+    adj = AdjacencyMatrix(blox_or_graph)
 
     N = length(adj.names)
 
