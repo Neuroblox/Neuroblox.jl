@@ -60,7 +60,7 @@ struct Striatum <: CompositeBlox
             
             new(namespace, parts, sys, bc, m)
         else
-            bc = connector_from_graph(g)
+            bc = connectors_from_graph(g)
             sys = system_from_graph(g, bc; name, simplify=false)
 
             m = [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
@@ -119,7 +119,7 @@ struct GPi <: CompositeBlox
 
         parts = n_inh
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -175,7 +175,7 @@ struct GPe <: CompositeBlox
 
         parts = n_inh
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -231,7 +231,7 @@ struct Thalamus <: CompositeBlox
 
         parts = n_exci
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -286,7 +286,7 @@ struct STN <: CompositeBlox
 
         parts = n_exci
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         # TO DO : m is a subset of unknowns to be plotted in the GUI. 

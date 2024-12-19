@@ -106,7 +106,7 @@ struct Striatum_MSN_Adam <: CompositeBlox
         end
         parts = n_inh
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
 
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
@@ -185,7 +185,7 @@ struct Striatum_FSI_Adam  <: CompositeBlox
 
         parts = n_inh
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
 
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
@@ -255,7 +255,7 @@ struct GPe_Adam <: CompositeBlox
         end
         parts = n_inh
         
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
 
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
@@ -324,7 +324,7 @@ struct STN_Adam <: CompositeBlox
         end
         parts = n_exci
     
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
 
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
