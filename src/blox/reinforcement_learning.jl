@@ -202,7 +202,7 @@ mutable struct Agent{S,P,A,LR,C}
         prob = ODEProblem(sys, u0, (0.,1.), p)
         
         policy = action_selection_from_graph(g)
-        lr =  narrowtype(learning_rules(bc))  
+        lr =  narrowtype(learning_rules(conns))  
 
         new{typeof(sys), typeof(prob), typeof(policy), typeof(lr), typeof(conns)}(sys, prob, policy, lr, conns)
     end
