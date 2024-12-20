@@ -40,10 +40,6 @@ function Base.isempty(conn::Connector)
     return isempty(conn.equation) && isempty(conn.weight) && isempty(conn.delay) && isempty(conn.discrete_callbacks) && isempty(conn.spike_affects) && isempty(conn.learning_rule)
 end
 
-connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
-
-connection_equation(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
-
 Base.show(io::IO, c::Connector) = print(io, "$(c.source) => $(c.destination) with ", c.equation)
 
 function show_field(v::AbstractVector, title)
@@ -282,13 +278,19 @@ function indegree_constrained_connections(neurons_src, neurons_dst, name_src, na
     return reduce(merge!, C)
 end
 
-function Connector(blox_src::AbstractBlox, blox_dest::AbstractBlox; kwargs...)
+connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
+
+connection_equation(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...).equation
+
+function connection_equation(blox_src, blox_dest, w) end
+
+function Connector(blox_src, blox_dest::AbstractBlox; kwargs...)
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    eq = sys_dest.jcn ~ w*sys_src.v
+    eq = connection_equation(blox_src, blox_dest, w)
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
@@ -793,7 +795,9 @@ function Connector(
         push!(dc, cb_neuron_init)
     end
 
-    return Connector(namespaced_nameof(blox_src), namespaced_nameof(blox_dest); discrete_callbacks=dc)
+    w = generate_weight_param(blox_src, blox_dest; weight=1)
+
+    return Connector(namespaced_nameof(blox_src), namespaced_nameof(blox_dest); discrete_callbacks=dc, weight=w)
 end
 
 function Connector(
