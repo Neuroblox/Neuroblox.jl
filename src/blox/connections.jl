@@ -147,6 +147,8 @@ spike_affects(c::Connector) = c.spike_affects
 
 learning_rules(c::Connector) = c.learning_rule
 
+learning_rules(conns::AbstractVector{<:Connector}) = mapreduce(c -> c.learning_rule, merge!, conns)
+
 get_equations_with_parameter_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> isparameter(eq.lhs), eqs)
 
 get_equations_with_state_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> !isparameter(eq.lhs), eqs)
