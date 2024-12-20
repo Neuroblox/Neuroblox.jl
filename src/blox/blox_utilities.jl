@@ -166,7 +166,7 @@ end
 get_input_equations(blox) = []
 
 get_connector(blox::Union{CompositeBlox, Agent}) = blox.connector
-get_connector(blox) = Connector(namespaced_nameof(blox), namespaced_nameof(blox))
+get_connector(blox) = [Connector(namespaced_nameof(blox), namespaced_nameof(blox))]
 
 function get_weight(kwargs, name_blox1, name_blox2)
     get(kwargs, :weight) do
