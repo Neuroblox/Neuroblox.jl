@@ -51,7 +51,7 @@ struct Striatum <: CompositeBlox
         if !isnothing(namespace)
             add_blox!(g, matrisome)
             add_blox!(g, striosome)
-            bc = connector_from_graph(g)
+            bc = connectors_from_graph(g)
             sys = system_from_parts(parts; name)
 
             @variables t
