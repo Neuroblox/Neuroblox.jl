@@ -20,7 +20,7 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colormap = :vanimo
+        colormap = :grays
     )
 end
 
@@ -42,7 +42,7 @@ function Makie.plot!(p::Adjacency)
 
     X, Y, D = findnz(adj.matrix)
 
-    heatmap!(p, X, Y, D; colormap = p.colormap[], colorrange = (minimum(D), maximum(D)))
+    heatmap!(p, Y, X, D; colormap = p.colormap[])
 
     return p
 end
