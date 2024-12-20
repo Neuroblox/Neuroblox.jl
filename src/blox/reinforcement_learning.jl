@@ -190,7 +190,7 @@ mutable struct Agent{S,P,A,LR,C}
     connector::C
 
     function Agent(g::MetaDiGraph; name, kwargs...)
-        bc = connector_from_graph(g)
+        conns = connectors_from_graph(g)
         
         t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
         # TODO: add another version that uses system_from_graph(g,bc,params;)
@@ -202,9 +202,9 @@ mutable struct Agent{S,P,A,LR,C}
         prob = ODEProblem(sys, u0, (0.,1.), p)
         
         policy = action_selection_from_graph(g)
-        lr =  narrowtype(learning_rules(bc))  
+        lr =  narrowtype(learning_rules(conns))  
 
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(lr), typeof(bc)}(sys, prob, policy, lr, bc)
+        new{typeof(sys), typeof(prob), typeof(policy), typeof(lr), typeof(conns)}(sys, prob, policy, lr, conns)
     end
 end
 

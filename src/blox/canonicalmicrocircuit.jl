@@ -46,7 +46,7 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
         add_edge!(g, ii => dp; :weight => -400.0)
         add_edge!(g, dp => dp; :weight => -200.0)
 
-        bc = connector_from_graph(g)
+        bc = connectors_from_graph(g)
         # If a namespace is not provided, assume that this is the highest level
         # and construct the ODEsystem from the graph.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(sblox_parts; name)
