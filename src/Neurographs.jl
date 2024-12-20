@@ -201,11 +201,12 @@ function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p
     bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)
 
     eqs = equations(bc)
-    accumulate_equations!(eqs, bloxs)
+    eqs_init = mapreduce(get_input_equations, vcat, bloxs)
+    accumulate_equations!(eqs_init, eqs)
 
-    connection_eqs = get_equations_with_state_lhs(eqs)
+    connection_eqs = get_equations_with_state_lhs(eqs_init)
 
-    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs; t_block))
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs_init; t_block))
 
     sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
     if simplify
