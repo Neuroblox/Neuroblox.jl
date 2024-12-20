@@ -4,7 +4,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, get_adjacency
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
@@ -20,7 +20,7 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colormap = :vanimo
+        colormap = :grays
     )
 end
 
@@ -28,7 +28,7 @@ argument_names(::Type{<: Adjacency}) = (:blox_or_graph)
 
 function Makie.plot!(p::Adjacency)
     blox_or_graph = p.blox_or_graph[]
-    adj = get_adjacency(blox_or_graph)
+    adj = AdjacencyMatrix(blox_or_graph)
 
     N = length(adj.names)
 
@@ -42,7 +42,7 @@ function Makie.plot!(p::Adjacency)
 
     X, Y, D = findnz(adj.matrix)
 
-    heatmap!(p, X, Y, D; colormap = p.colormap[], colorrange = (minimum(D), maximum(D)))
+    heatmap!(p, Y, X, D; colormap = p.colormap[])
 
     return p
 end

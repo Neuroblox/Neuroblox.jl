@@ -53,7 +53,7 @@ get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
 function connectors_from_graph(g::MetaDiGraph)
-    conns = get_connector.(get_bloxs(g))
+    conns = reduce(vcat, get_connectors.(get_bloxs(g)))
     for edge in edges(g)
 
         blox_src = get_prop(g, edge.src, :blox)
@@ -188,22 +188,25 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
             throw(UndefKeywordError(:name))
         end
         
-        bc = connector_from_graph(g)
+        conns = connectors_from_graph(g)
     
-        return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
+        return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
     end
 end
 
-function system_from_graph(g::MetaDiGraph, bc::Connector, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
     bloxs = get_bloxs(g)
     blox_syss = get_system.(bloxs)
 
+    bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)
+
     eqs = equations(bc)
-    accumulate_equations!(eqs, bloxs)
+    eqs_init = mapreduce(get_input_equations, vcat, bloxs)
+    accumulate_equations!(eqs_init, eqs)
 
-    connection_eqs = get_equations_with_state_lhs(eqs)
+    connection_eqs = get_equations_with_state_lhs(eqs_init)
 
-    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs; t_block))
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs_init; t_block))
 
     sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
     if simplify
