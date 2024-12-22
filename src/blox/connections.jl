@@ -5,7 +5,7 @@ struct Connector
     weight::Vector{Num}
     delay::Vector{Num}
     discrete_callbacks
-    spike_affects::Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}
+    spike_affects::Dict{Symbol, Vector{Tuple{Num, Num}}}
     learning_rule::Dict{Num, AbstractLearningRule}
 end
 
@@ -16,7 +16,7 @@ function Connector(
     weight=Num[], 
     delay=Num[], 
     discrete_callbacks=[], 
-    spike_affects=Dict{Symbol, Tuple{Vector{Num}, Vector{Num}}}(),
+    spike_affects=Dict{Symbol, Vector{Tuple{Num, Num}}}(),
     learning_rule=Dict{Num, AbstractLearningRule}()
     )
 
@@ -82,8 +82,8 @@ function Base.show(io::IO, ::MIME"text/plain", c::Connector)
     for s in c.source
         if haskey(c.spike_affects, s)
             println("$(s) spikes affect :")
-            vars, vals = c.spike_affects[s]
-            for (var, val) in zip(vars, vals)
+            v = c.spike_affects[s]
+            for (var, val) in v
                 println("\t $(var) += $(val)")
             end
         end
@@ -126,13 +126,6 @@ function accumulate_equations(eqs1::Vector{<:Equation}, eqs2::Vector{<:Equation}
     end
 
     return eqs
-end
-
-function tuple_append!(t1::Tuple, t2::Tuple)
-    append!(first(t1), first(t2))
-    append!(last(t1), last(t2))
-
-    return t1
 end
 
 ModelingToolkit.equations(c::Connector) = c.equation
@@ -225,7 +218,7 @@ function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.weight, c2.weight)
     append!(c1.delay, c2.delay)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
-    mergewith!(tuple_append!, c1.spike_affects, c2.spike_affects)
+    mergewith!(append!, c1.spike_affects, c2.spike_affects)
     merge!(c1.learning_rule, c2.learning_rule)
 
     return c1
@@ -472,7 +465,7 @@ function Connector(
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
 
-    if typeof(blox_src.output) == Num
+    if blox_src.output isa Num
         x = namespace_expr(blox_src.output, sys_src)
         eq = sys_dest.jcn ~ x*w
 
@@ -1011,9 +1004,9 @@ function Connector(
     # Compare the unique namespaced names of both systems
     sa = if nameof(sys_src) == nameof(sys_dest)
         # x is the rise variable for NMDA synapses and it only applies to self-recurrent connections
-        nameof(sys_src) => ([sys_dest.S_AMPA, sys_dest.x], [w, w])
+        nameof(sys_src) => [(sys_dest.S_AMPA, w), (sys_dest.x, w)]
     else
-        nameof(sys_src) => ([sys_dest.S_AMPA], [w])
+        nameof(sys_src) => [(sys_dest.S_AMPA, w)]
     end
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation = eq, weight = [w], spike_affects = Dict(sa))
@@ -1029,7 +1022,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    sa = nameof(sys_src) => ([sys_dest.S_GABA], [w])
+    sa = nameof(sys_src) => [(sys_dest.S_GABA, w)]
 
     return Connector(nameof(sys_src), nameof(sys_dest); weight = w, spike_affects = Dict(sa))
 end
