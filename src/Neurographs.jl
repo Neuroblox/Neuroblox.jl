@@ -125,6 +125,8 @@ function LIF_spike_affect!(integ, u, p, ctx)
     end
 end
 
+generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
+
 function generate_discrete_callbacks(blox::AbstractNeuronBlox, bc::Connector; t_block = missing)
     sa = spike_affects(bc)
     name_blox = namespaced_nameof(blox)
