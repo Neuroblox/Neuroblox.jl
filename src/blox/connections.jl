@@ -299,7 +299,7 @@ function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractN
     return blox_dest.jcn ~ cr
 end
 
-connection_spike_affects(source, destination) = Tuple{Num, Num}[]
+connection_spike_affects(source, destination, w) = Tuple{Num, Num}[]
 
 function connection_learning_rule(source, destination, w; kwargs...)
     if haskey(kwargs, :learning_rule)
@@ -318,7 +318,7 @@ function Connector(blox_src::AbstractBlox, blox_dest::AbstractBlox; kwargs...)
     lr = connection_learning_rule(blox_src, blox_dest, w; kwargs...)  
     cb = connection_callbacks(blox_src, blox_dest; kwargs...)
 
-    affects_tuple = connection_spike_affects(blox_src, blox_dest)
+    affects_tuple = connection_spike_affects(blox_src, blox_dest, w)
     sa = Dict(namespaced_nameof(blox_src) => to_vector(affects_tuple))  
     
     return Connector(
