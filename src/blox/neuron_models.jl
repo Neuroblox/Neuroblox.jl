@@ -628,23 +628,6 @@ struct LIFNeuron <: AbstractNeuronBlox
 	end
 end
 
-function LIF_spike_affect!(integ, u, p, ctx)
-    integ.u[u[1]] = integ.p[p[1]]
-
-    t_refract_end = integ.t + integ.p[p[2]]
-    integ.p[p[3]] = t_refract_end
-
-    integ.p[p[4]] = 1
-
-    SciMLBase.add_tstop!(integ, t_refract_end)
-    
-    c = 1
-    for i in eachindex(u)[2:end]
-        integ.u[u[i]] += integ.p[p[c + 4]]
-        c += 1
-    end
-end
-
 struct LIFInhNeuron <: AbstractInhNeuronBlox
     odesystem
     namespace
