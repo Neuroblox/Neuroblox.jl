@@ -1,7 +1,7 @@
 function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
-    # TO DO : Some of the fields below besides `system` and `namespace` 
+    # TO DO : Some of the fields below besides `odesystem` and `namespace` 
     # are redundant and we should clean them up. 
-    if (name === :system) || (name === :namespace) || (name === :params)
+    if (name === :odesystem) || (name === :namespace) || (name === :params) || (name === :output) || (name === :voltage)
         return getfield(b, name)
     else
         return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
@@ -94,22 +94,13 @@ end
 
 get_system(blox) = blox.system
 get_system(sys::AbstractODESystem) = sys
-get_system(stim::AbstractSpikeSource) = System(Equation[], t, [], []; name=stim.name)
+get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
-function system(blox::CompositeBlox; simplify=true)
+function system(blox::AbstractBlox; simplify=true)
     sys = get_system(blox)
     eqs = get_input_equations(blox; namespaced=false)
 
     csys = System(vcat(equations(sys), eqs), t, unknowns(sys), parameters(sys); name = nameof(sys))
-
-    return simplify ? structural_simplify(csys) : csys
-end
-
-
-function system(blox::AbstractBlox; simplify=true, kwargs...)
-    sys = get_system(blox)
-    eqs = get_input_equations(blox; namespaced=true)
-    csys =  compose(System(eqs, t, [], []; name=namespaced_nameof(blox), kwargs...), sys)
 
     return simplify ? structural_simplify(csys) : csys
 end

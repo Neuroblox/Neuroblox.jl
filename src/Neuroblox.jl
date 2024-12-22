@@ -67,6 +67,8 @@ abstract type StimulusBlox <: AbstractBlox end
 abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
 abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
 
+const Neuron = AbstractNeuronBlox
+
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 # abstract type JansenRitCBlox <: NeuralMassBlox end
@@ -258,5 +260,5 @@ export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, fr
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color
-export AdjacencyMatrix, Connector, connection_rule, connection_equation
+export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 end

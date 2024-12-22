@@ -81,15 +81,7 @@ function graph_delays(g::MetaDiGraph)
     return conn.delay
 end
 
-generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
-
-function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
-    sa = spike_affects(bc)
-    name_blox = namespaced_nameof(blox)
-    sys = get_namespaced_sys(blox)
-
-    states_affect, params_affect = get(sa, name_blox, (Num[], Num[]))
-
+function make_unique_param_pairs(params)
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
     # affect states in the loop in LIF_spike_affect! .
@@ -134,27 +126,6 @@ function LIF_spike_affect!(integ, u, p, ctx)
 end
 
 generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
-
-function generate_discrete_callbacks(blox::AbstractSpikeSource, bc::Connector; t_block = missing)
-    sa = spike_affects(bc)
-    name_blox = namespaced_nameof(blox)
-  
-    if haskey(sa, name_blox)
-        eqs = sa[name_blox]
-
-        cb = map(eqs) do eq
-            # TO DO : Consider generating spikes during simulation
-            # to make PoissonSpikeTrain independent of `t_span` of the simulation.
-            # something like : 
-            # discrete_event = t > -Inf => (generate_spike, [sys_dest.S_AMPA], [stim.relevant_params...], [], nothing) 
-            # This way we need to resolve the case of multiple spikes potentially being generated within a single integrator step.
-            t_spikes = generate_spike_times(blox)
-            t_spikes => to_vector(eq)
-        end
-        
-        return cb
-    end
-end
 
 function generate_discrete_callbacks(blox::AbstractNeuronBlox, bc::Connector; t_block = missing)
     sa = spike_affects(bc)
