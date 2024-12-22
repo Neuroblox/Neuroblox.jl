@@ -965,24 +965,6 @@ end
 
 Connector(blox::AbstractBlox, as::AbstractActionSelection; kwargs...) = Connector(namespaced_nameof(blox), namespaced_nameof(as))
 
-# Connects spiking neuron to another spiking neuron
-# None of these neurons have delay yet
-function Connector(
-    blox_src::AbstractNeuronBlox, 
-    blox_dest::AbstractNeuronBlox; 
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-    cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
-    eq = sys_dest.jcn ~ cr
-    
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
-end
-
 # Connects a neural mass as a driving input to a spiking neuron
 # Should be used with care because units will be strange (NMM typically outputs voltage but neuron inputs are typically currents)
 function Connector(
