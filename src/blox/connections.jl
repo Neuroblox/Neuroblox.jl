@@ -280,19 +280,47 @@ end
 
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
 
-connection_equation(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...).equation
+connection_equations(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...).equation
 
-function connection_equation(blox_src, blox_dest, w) end
+connection_equations(source, destination, w; kwargs...) = Equation[]
 
-function Connector(blox_src, blox_dest::AbstractBlox; kwargs...)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
+function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractNeuronBlox, w; kwargs...)
+    cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
 
+    return sys_dest.jcn ~ cr
+end
+
+connection_spike_affects(source, destination) = Tuple{Num, Num}[]
+
+function connection_learning_rule(source, destination, w; kwargs...)
+    if haskey(kwargs, :learning_rule)
+        return Dict(w => deepcopy(kwargs[:learning_rule]))
+    else
+        return Dict{Num, AbstractLearningRule}()
+    end
+end
+    
+connection_callbacks(source, destination; kwargs...) = []
+
+function Connector(blox_src::AbstractBlox, blox_dest::AbstractBlox; kwargs...)
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    eq = connection_equation(blox_src, blox_dest, w)
+    eq = connection_equations(blox_src, blox_dest, w; kwargs...)
+    lr = connection_learning_rule(blox_src, blox_dest, w; kwargs...)  
+    cb = connection_callbacks(blox_src, blox_dest; kwargs...)
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+    affects_tuple = connection_spike_affects(blox_src, blox_dest)
+    sa = Dict(namespaced_nameof(blox_src) => to_vector(affects_tuple))  
+    
+    return Connector(
+        namespaced_nameof(blox_src), 
+        namespaced_nameof(blox_dest); 
+        equation = eq, 
+        weight = w,
+        spike_affects = sa,
+        discrete_callbacks = cb,
+        learning_rule = lr
+    )
 end
 
 function Connector(
