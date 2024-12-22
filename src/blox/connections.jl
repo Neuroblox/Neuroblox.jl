@@ -157,6 +157,22 @@ get_equations_with_parameter_lhs(eqs::AbstractVector{<:Equation}) = filter(eq ->
 
 get_equations_with_state_lhs(eqs::AbstractVector{<:Equation}) = filter(eq -> !isparameter(eq.lhs), eqs)
 
+function get_states_spikes_affect(sa, name) 
+    if haskey(sa, name)
+        return first.(sa[name])
+    else
+        Num[]
+    end
+end
+
+function get_params_spikes_affect(sa, name) 
+    if haskey(sa, name)
+        return last.(sa[name])
+    else
+        Num[]
+    end
+end
+
 function generate_weight_param(blox_out, blox_in; kwargs...)
     name_out = namespaced_nameof(blox_out)
     name_in = namespaced_nameof(blox_in)
