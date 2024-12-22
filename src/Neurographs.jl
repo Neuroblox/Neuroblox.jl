@@ -81,37 +81,91 @@ function graph_delays(g::MetaDiGraph)
     return conn.delay
 end
 
-generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
-
-function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
-    sa = spike_affects(bc)
-    name_blox = namespaced_nameof(blox)
-    sys = get_namespaced_sys(blox)
-
-    states_affect, params_affect = get(sa, name_blox, (Num[], Num[]))
-
+function make_unique_param_pairs(params)
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
     # affect states in the loop in LIF_spike_affect! .
     # Passing parameters with Symbol aliases bypasses this issue and allows for duplicates. 
-    affect_pairs = if unique(params_affect) == length(params_affect)
-        [p => Symbol(p) for p in params_affect]
+    param_pairs = if unique(params) == length(params)
+        [p => Symbol(p) for p in params]
     else
-        map(params_affect) do p
-            if count(pi -> Symbol(pi) == Symbol(p), params_affect) > 1
+        map(params) do p
+            if count(pi -> Symbol(pi) == Symbol(p), params) > 1
                 p => Symbol(p, "_$(rand(1:1000))")
             else
                 p => Symbol(p)
             end
         end
     end
+
+    return param_pairs
+end
+
+function generic_spike_affect!(integ, u, p, ctx)
+    N = length(u)
+    for i in Base.OneTo(N)
+        integ.u[u[i]] += integ.p[p[i]]
+    end
+end
+
+function LIF_spike_affect!(integ, u, p, ctx)
+    integ.u[u[1]] = integ.p[p[1]]
+
+    t_refract_end = integ.t + integ.p[p[2]]
+    integ.p[p[3]] = t_refract_end
+
+    integ.p[p[4]] = 1
+
+    SciMLBase.add_tstop!(integ, t_refract_end)
+    
+    c = 1
+    for i in eachindex(u)[2:end]
+        integ.u[u[i]] += integ.p[p[c + 4]]
+        c += 1
+    end
+end
+
+function generate_discrete_callbacks(blox::AbstractNeuronBlox, bc::Connector; t_block = missing)
+    sa = spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+    sys = get_namespaced_sys(blox)
+
+    states_affect = get_states_spikes_affect(sa, name_blox)
+    params_affect = get_params_spikes_affect(sa, name_blox)
+    
+    if isempty(states_affect) && isempty(params_affect)
+        return []
+    else
+        param_pairs = make_unique_param_pairs(params_affect)
+    
+        cb = (sys.V > sys.θ) => (
+            generic_spike_affect!, 
+            states_affect, 
+            param_pairs, 
+            [], 
+            nothing
+        )
+
+        return cb
+    end
+end
+
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
+    sa = spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+    sys = get_namespaced_sys(blox)
+
+    states_affect = get_states_spikes_affect(sa, name_blox)
+    params_affect = get_params_spikes_affect(sa, name_blox)
+   
+    param_pairs = make_unique_param_pairs(params_affect)
     
     ps = vcat([
         sys.V_reset => Symbol(sys.V_reset), 
         sys.t_refract_duration => Symbol(sys.t_refract_duration), 
         sys.t_refract_end => Symbol(sys.t_refract_end), 
         sys.is_refractory => Symbol(sys.is_refractory)
-    ], affect_pairs)
+    ], param_pairs)
     
     cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
