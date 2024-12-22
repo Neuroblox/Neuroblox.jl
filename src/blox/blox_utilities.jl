@@ -84,6 +84,15 @@ get_system(blox) = blox.odesystem
 get_system(sys::AbstractODESystem) = sys
 get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
+function system(blox::AbstractBlox; simplify=true)
+    sys = get_system(blox)
+    eqs = get_input_equations(blox; namespaced=false)
+
+    csys = System(vcat(equations(sys), eqs), t, unknowns(sys), parameters(sys); name = nameof(sys))
+
+    return simplify ? structural_simplify(csys) : csys
+end
+
 function get_namespaced_sys(blox)
     sys = get_system(blox)
     System(
