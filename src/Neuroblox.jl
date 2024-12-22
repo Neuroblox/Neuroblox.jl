@@ -8,9 +8,8 @@ using OhMyThreads: tmapreduce
 
 using Reexport
 @reexport using ModelingToolkit
-const t = ModelingToolkit.t_nounits
-const D = ModelingToolkit.D_nounits
-export t, D
+@reexport using ModelingToolkit: ModelingToolkit.t_nounits as t, ModelingToolkit.D_nounits as D
+
 @reexport using ModelingToolkitStandardLibrary.Blocks
 @reexport import Graphs: add_edge!
 @reexport using MetaGraphs: MetaDiGraph
