@@ -223,6 +223,7 @@ function __init__()
 end
 
 
+export Neuron
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, van_der_pol, Generic2dOscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
@@ -243,7 +244,7 @@ export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseang
 export learningrate, ControlError
 export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!, defaultprior
 export simulate, random_initials
-export system_from_graph, graph_delays
+export system_from_graph, system, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
@@ -256,5 +257,5 @@ export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, fr
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color
-export AdjacencyMatrix, Connector, connection_rule, connection_equation
+export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 end
