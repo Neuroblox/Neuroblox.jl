@@ -296,7 +296,7 @@ connection_equations(source, destination, w; kwargs...) = Equation[]
 function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractNeuronBlox, w; kwargs...)
     cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
 
-    return sys_dest.jcn ~ cr
+    return blox_dest.jcn ~ cr
 end
 
 connection_spike_affects(source, destination) = Tuple{Num, Num}[]
