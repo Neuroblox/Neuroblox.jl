@@ -1,3 +1,13 @@
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
+    # TO DO : Some of the fields below besides `odesystem` and `namespace` 
+    # are redundant and we should clean them up. 
+    if (name === :odesystem) || (name === :namespace) || (name === :params) || (name === :output) || (name === :voltage)
+        return getfield(b, name)
+    else
+        return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
+    end
+end
+
 """
     function paramscoping(;tunable=true, kwargs...)
     
@@ -150,7 +160,7 @@ end
     which holds a `Connector` object with all relevant connections 
     from lower levels and this level.
 """
-function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
+function get_input_equations(blox::Union{AbstractBlox, ObserverBlox}; namespaced=true)
     sys = get_system(blox)
     sys_eqs = equations(sys)
 
@@ -158,12 +168,18 @@ function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     filter!(inp -> isnothing(find_eq(sys_eqs, inp)), inps)
 
     if !isempty(inps)
-        eqs = map(inps) do inp
-            namespace_equation(
-                inp ~ 0, 
-                sys,
-                namespaced_name(inner_namespaceof(blox), nameof(blox))
-            ) 
+        eqs = if namespaced
+            map(inps) do inp
+                namespace_equation(
+                    inp ~ 0, 
+                    sys,
+                    namespaced_name(inner_namespaceof(blox), nameof(blox))
+                ) 
+            end
+        else
+            map(inps) do inp
+                inp ~ 0
+            end
         end
 
         return eqs
