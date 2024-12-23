@@ -1,7 +1,7 @@
 function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
-    # TO DO : Some of the fields below besides `odesystem` and `namespace` 
+    # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
-    if (name === :odesystem) || (name === :namespace) || (name === :params)
+    if (name === :system) || (name === :namespace) || (name === :params)
         return getfield(b, name)
     else
         return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
@@ -90,7 +90,7 @@ function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
 end
 
-get_system(blox) = blox.odesystem
+get_system(blox) = blox.system
 get_system(sys::AbstractODESystem) = sys
 get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
 
@@ -277,7 +277,7 @@ function get_learning_rule(kwargs, name_src, name_dest)
 end
 
 function get_weights(agent::Agent, blox_out, blox_in)
-    ps = parameters(agent.odesystem)
+    ps = parameters(agent.system)
     pv = agent.problem.p
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
 

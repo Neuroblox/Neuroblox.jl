@@ -15,7 +15,7 @@ mutable struct OUBlox <: NeuralMassBlox
     # all parameters are Num as to allow symbolic expressions
     namespace
     stochastic
-    odesystem
+    system
     function OUBlox(;name, namespace=nothing, μ=0.0, σ=1.0, τ=1.0)
         p = paramscoping(μ=μ, τ=τ, σ=σ)
         μ, τ, σ = p
@@ -51,7 +51,7 @@ end
 #     stochastic
 #     output
 #     input
-#     odesystem
+#     system
 #     function OUCouplingBlox(;name, namespace, μ=0.0, σ=1.0, τ=1.0)
 #         p = paramscoping(μ=μ, τ=τ, σ=σ)
 #         μ, τ, σ = p

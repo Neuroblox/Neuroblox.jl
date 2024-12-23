@@ -157,7 +157,7 @@ end
 # ╔═╡ d80b3bf7-24d8-4395-8903-de974e6445f9
 begin
 	#extract membrane voltages of every neuron
-    getsys=agent.odesystem;
+    getsys=agent.system;
 	st=unknowns(getsys)
 	vlist=Int64[]
 	for ii = 1:length(st)

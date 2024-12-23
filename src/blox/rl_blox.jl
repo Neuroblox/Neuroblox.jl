@@ -13,7 +13,7 @@ mutable struct LearningBlox
         NeuralMass = HarmonicOscillatorBlox(ω=ω, ζ=1.0, k=(ω)^2, h=d, name=Symbol(String(name)*"_NeuralMass"))
         # Create System
         blox  = [Phase, Cosine, NeuralMass]
-        sys   = [s.odesystem for s in blox]
+        sys   = [s.system for s in blox]
         # Set Internal Connections
         # Columns = Inputs (Sinks); Rows = Outputs (Sources)
                # P C NM

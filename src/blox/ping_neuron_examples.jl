@@ -37,7 +37,7 @@ Inputs:
 """
 struct PINGNeuronExci <: AbstractPINGNeuron
     params
-    odesystem
+    system
     namespace
 
     function PINGNeuronExci(;name,
@@ -111,7 +111,7 @@ Inputs:
 """
 struct PINGNeuronInhib <: AbstractPINGNeuron
     params
-    odesystem
+    system
     namespace
 
     function PINGNeuronInhib(;name,

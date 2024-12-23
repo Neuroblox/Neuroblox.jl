@@ -45,7 +45,7 @@ Citations:
 """
 struct BalloonModel <: ObserverBlox
     params
-    odesystem
+    system
     namespace
 
     function BalloonModel(;name, namespace=nothing, lnκ=0.0, lnτ=0.0, lnϵ=0.0)

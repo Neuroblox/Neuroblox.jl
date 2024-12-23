@@ -131,9 +131,9 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
 end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(blox.odesystem, u0, timespan, p)
+    prob = ODEProblem(blox.system, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
-    statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
+    statesV = [s for s in unknowns(blox.system) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
     df = DataFrame(sol)

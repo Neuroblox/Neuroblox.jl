@@ -21,7 +21,7 @@ sol = solve(prob, Vern7(), saveat=0.01)
 fss = powerspectrumplot(cb, sol)
 
 @named msn = Striatum_MSN_Adam();
-sys = structural_simplify(msn.odesystem)
+sys = structural_simplify(msn.system)
 prob = SDEProblem(sys, [], (0.0, 5500), [])
 sol = solve(prob, RKMil(), dt=0.05, saveat=0.01)
 

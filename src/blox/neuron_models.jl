@@ -2,7 +2,7 @@ abstract type AbstractInhNeuronBlox <: AbstractNeuronBlox end
 abstract type AbstractExciNeuronBlox <: AbstractNeuronBlox end
 
 struct HHNeuronExciBlox <: AbstractExciNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronExciBlox(;
@@ -89,7 +89,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 end	
 
 struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 	function HHNeuronInhibBlox(;
         name, 
@@ -168,7 +168,7 @@ end
 #These neurons were used in Adam et. al 2022 model for DBS
 
 struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_MSN_Adam_Blox(;
@@ -256,7 +256,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 end	
 
 struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_FSI_Adam_Blox(;
@@ -348,7 +348,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 end	
 
 struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronExci_STN_Adam_Blox(;
@@ -428,7 +428,7 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 end	
 
 struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_GPe_Adam_Blox(;
@@ -541,7 +541,7 @@ References:
 # Remember: synaptic weights need to be in μA/mV, so they're very small!
 struct IFNeuron <: AbstractNeuronBlox
     params
-    odesystem
+    system
     namespace
 
 	function IFNeuron(;name,
@@ -599,7 +599,7 @@ References:
 # I_in = [-2.5, 2.5] μA (you will cook real neurons with these currents)
 struct LIFNeuron <: AbstractNeuronBlox
     params
-    odesystem
+    system
     namespace
 
 	function LIFNeuron(;name,
@@ -627,7 +627,7 @@ struct LIFNeuron <: AbstractNeuronBlox
 end
 
 struct LIFInhNeuron <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
     function LIFInhNeuron(;
@@ -691,7 +691,7 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
 end
 
 struct LIFExciNeuron <: AbstractExciNeuronBlox
-    odesystem
+    system
     namespace
 
     function LIFExciNeuron(;
@@ -773,7 +773,7 @@ end
 # θ = [0, 50] mV
 struct QIFNeuron <: AbstractNeuronBlox
     params
-    odesystem
+    system
     namespace
 
 	function QIFNeuron(;name, 
@@ -817,7 +817,7 @@ end
 # This is largely the Chen and Campbell Izhikevich implementation, with synaptic dynamics adjusted to reflect the LIF/QIF implementations above
 struct IzhikevichNeuron <: AbstractNeuronBlox
     params
-    odesystem
+    system
     namespace
 
 	function IzhikevichNeuron(;name,

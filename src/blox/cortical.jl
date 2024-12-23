@@ -1,7 +1,7 @@
 struct CorticalBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 
@@ -86,7 +86,7 @@ end
 struct LIFExciCircuitBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 
@@ -168,7 +168,7 @@ end
 struct LIFInhCircuitBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 

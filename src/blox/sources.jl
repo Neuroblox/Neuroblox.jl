@@ -1,13 +1,13 @@
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
-    odesystem
+    system
 
     function ExternalInput(;name, I=1.0, namespace=nothing)
         sts = @variables u(t) [output=true, irreducible=true, description="ext_input"]
         eqs = [u ~ I]
         odesys = System(eqs, t, sts, []; name=name)
-        
+
         new(namespace, odesys)
     end
 end
@@ -20,7 +20,7 @@ mutable struct CosineSource
     offset::Num
     tstart::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function CosineSource(;name, f=18, a=10, phi=0, offset=0, tstart=0)
         @named source = Blocks.Cosine(frequency=f, amplitude=a, phase=phi, 		 
                         offset=offset, start_time=tstart, smooth=false)	
@@ -34,7 +34,7 @@ mutable struct CosineBlox
     frequency::Num
     phase::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function CosineBlox(;name, amplitude=1, frequency=20, phase=0)
 
         sts    = @variables jcn(t) u(t)=0.0
@@ -52,7 +52,7 @@ mutable struct NoisyCosineBlox
     amplitude::Num
     frequency::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
 
         sts    = @variables  u(t)=0.0 jcn(t)
@@ -68,7 +68,7 @@ end
 #PhaseBlox
 mutable struct PhaseBlox
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function PhaseBlox(;name, phase_range=0, phase_data=0) 
 
         data        = convert(Vector{Float64}, phase_data)
@@ -98,7 +98,7 @@ end
 
 mutable struct ImageStimulus <: StimulusBlox
     const namespace
-    const odesystem
+    const system
     const IMG # Matrix[pixels X stimuli]
     const stim_parameters
     const category

@@ -6,7 +6,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
     alpha_inv::Num
     k::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     namespace
     function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
@@ -29,7 +29,7 @@ mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
     alpha_inv::Num
     k::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     namespace
     function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
@@ -50,7 +50,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
     Cₑ::Num
     Cᵢ::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     namespace
     function NextGenerationEIBlox(;name,namespace=nothing, Cₑ=30.0,Cᵢ=30.0, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0, alpha_invₑᵢ=0.8, alpha_invᵢₑ=10.0, alpha_invᵢᵢ=0.8, kₑₑ=0, kₑᵢ=0.5, kᵢₑ=0.65, kᵢᵢ=0)
         params = @parameters Cₑ=Cₑ Cᵢ=Cᵢ Δₑ=Δₑ Δᵢ=Δᵢ η_0ₑ=η_0ₑ η_0ᵢ=η_0ᵢ v_synₑₑ=v_synₑₑ v_synₑᵢ=v_synₑᵢ v_synᵢₑ=v_synᵢₑ v_synᵢᵢ=v_synᵢᵢ alpha_invₑₑ=alpha_invₑₑ alpha_invₑᵢ=alpha_invₑᵢ alpha_invᵢₑ=alpha_invᵢₑ alpha_invᵢᵢ=alpha_invᵢᵢ kₑₑ=kₑₑ kₑᵢ=kₑᵢ kᵢₑ=kᵢₑ kᵢᵢ=kᵢᵢ
@@ -96,7 +96,7 @@ Arguments:
 """
 
 struct LinearNeuralMass <: NeuralMassBlox
-    odesystem
+    system
     namespace
 
     function LinearNeuralMass(;name, namespace=nothing)
@@ -130,7 +130,7 @@ Arguments:
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
@@ -176,7 +176,7 @@ Citations:
 """
 struct JansenRit <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
     function JansenRit(;name,
                         namespace=nothing,
@@ -238,7 +238,7 @@ Arguments:
 """
 struct WilsonCowan <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function WilsonCowan(;name,
@@ -286,7 +286,7 @@ Citations:
 """
 struct LarterBreakspear <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function LarterBreakspear(;
@@ -392,7 +392,7 @@ inhibitory neurons. PLoS Computational Biology, 4(11), 2008).
 """
 struct Generic2dOscillator <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function Generic2dOscillator(;
@@ -466,7 +466,7 @@ Citations:
 """
 struct KuramotoOscillator <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function KuramotoOscillator(;
@@ -496,7 +496,7 @@ end
 
 struct PYR_Izh <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function PYR_Izh(;
@@ -530,7 +530,7 @@ end
 
 struct QIF_PING_NGNMM <: NeuralMassBlox
     params
-    odesystem
+    system
     namespace
 
     function QIF_PING_NGNMM(;

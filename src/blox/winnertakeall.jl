@@ -8,7 +8,7 @@ and receive feedback inhibition from that interneuron.
 struct WinnerTakeAllBlox{P} <: CompositeBlox
     namespace
     parts::Vector{P}
-    odesystem
+    system
     connector
 
     function WinnerTakeAllBlox(; 

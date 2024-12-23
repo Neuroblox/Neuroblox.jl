@@ -1,7 +1,7 @@
 # Lead field function for LFPs
 struct LeadField <: ObserverBlox
     params
-    odesystem
+    system
     namespace
 
     function LeadField(;name, namespace=nothing, L=1.0)

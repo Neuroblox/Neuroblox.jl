@@ -35,7 +35,7 @@ function define_neurons()
                      (:pinhib, :PINGNeuronInhib)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
-        system = structural_simplify(sys.odesystem; fully_determined=false)
+        system = structural_simplify(sys.system; fully_determined=false)
         params = get_ps(system)
         t = Symbol(get_iv(system))
 
@@ -168,7 +168,7 @@ GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) 
 issupported(::KuramotoOscillator) = true
 function to_subsystem(o::KuramotoOscillator)
     states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.odesystem.ω), ζ=getdefault(o.odesystem.ζ)))
+    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
     Subsystem(states, params)
 end
 
@@ -238,8 +238,8 @@ function GraphDynamics.apply_subsystem_differential!(_, s::Subsystem{TAN}, jcn, 
 end
 GraphDynamics.subsystem_differential_requires_inputs(::Type{TAN}) = false
 function to_subsystem(s::TAN)
-    κ = getdefault(s.odesystem.κ)
-    λ = getdefault(s.odesystem.λ)
+    κ = getdefault(s.system.κ)
+    λ = getdefault(s.system.λ)
     states = SubsystemStates{TAN, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{TAN}((; κ, λ))
     #TODO: support observed variable R = min(κ, κ/(λ*jcn + sqrt(eps())))
@@ -259,8 +259,8 @@ GraphDynamics.subsystem_differential_requires_inputs(::Type{SNc}) = false
 function to_subsystem(s::SNc)
     (;N_time_blocks, κ_DA, DA_reward) = s
     
-    κ = getdefault(s.odesystem.κ)
-    λ = getdefault(s.odesystem.λ)
+    κ = getdefault(s.system.κ)
+    λ = getdefault(s.system.λ)
     states = SubsystemStates{SNc, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{TAN}((;κ_DA, N_time_blocks, DA_reward, λ_DA, t_event=t_event+sqrt(eps(t_event)), jcn_=0.0))
     #TODO: support observed variables R  ~ min(κ_DA, κ_DA/(λ_DA*jcn  + sqrt(eps())))
