@@ -518,9 +518,9 @@ struct PYR_Izh <: NeuralMassBlox
             p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
             Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
             sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-            eqs = [ D(r) ~ Δ/π + 2*r*v - (α+gₛ*s)*r,
-                    D(V) ~ v^2 - α*v - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - v) + jcn - (π*r)^2,
-                    D(w) ~ a*(b*v - w) + wⱼ*r,
+            eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+                    D(V) ~ v^2 - α*V - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
+                    D(w) ~ a*(b*V - w) + wⱼ*r,
                     D(s) ~ -s/τₛ + sⱼ*r
                 ]
             sys = System(eqs, t, sts, p; name=name)
@@ -547,8 +547,8 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
         Δ, τₘ, H, I_ext, J_internal = p
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
         @brownian ξ
-        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
-               D(V) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
+        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
+               D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
         sys = System(eqs, t, sts, p; name=name)
 
         new(p, sys, namespace)
