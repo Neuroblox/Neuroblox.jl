@@ -445,7 +445,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    x = namespace_expr(blox_src.output, sys_src)
+    x = only(outputs(blox_src))
     r = namespace_expr(blox_src.params[2], sys_src)
 
     eq = sys_dest.jcn ~ sigmoid(x, r)*w
@@ -464,9 +464,8 @@ function Connector(
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
-
-    if blox_src.output isa Num
-        x = namespace_expr(blox_src.output, sys_src)
+    x = only(outputs(blox_src))
+    if x isa Num
         eq = sys_dest.jcn ~ x*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
@@ -476,7 +475,6 @@ function Connector(
         τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
         τ = only(@parameters $(τ_name)=delay)
 
-        x = namespace_expr(blox_src.output, sys_src)
         eq = sys_dest.jcn ~ x(t-τ)*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ, learning_rule=Dict(w => lr))
@@ -493,8 +491,8 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    xₒ = namespace_expr(blox_src.output, sys_src)
-    xᵢ = namespace_expr(blox_dest.output, sys_dest) #needed because this is also the θ term of the block receiving the connection
+    xₒ = only(outputs(blox_src))
+    xᵢ = only(outputs(blox_dest)) #needed because this is also the θ term of the block receiving the connection
 
     eq = sys_dest.jcn ~ w*sin(xₒ - xᵢ)
     
@@ -510,9 +508,9 @@ function Connector(
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
 
-    if typeof(blox_src.output) == Num
+    x = only(outputs(blox_src))
+    if x isa Num
         w = generate_weight_param(blox_src, blox_dest; kwargs...)
-        x = namespace_expr(blox_src.output, sys_src, nameof(sys_src))
         eq = sys_dest.jcn ~ x*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -523,13 +521,10 @@ function Connector(
         # Don't accumulate if zero
         τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
         τ = only(@parameters $(τ_name)=delay)
-        push!(bc.delay, τ)
 
         w_name = Symbol("w_$(nameof(sys_src))_$(nameof(sys_dest))")
         w = only(@parameters $(w_name)=weight)
-        push!(bc.weight, w)
-
-        x = namespace_expr(blox_src.output, sys_src, nameof(sys_src))
+        
         eq = sys_dest.jcn ~ x(t-τ)*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ)
@@ -546,7 +541,7 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    x = namespace_expr(blox_src.output, sys_src, nameof(sys_src))
+    x = only(outputs(blox_src))
     eq = sys_dest.jcn ~ x*w
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -969,9 +964,8 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-    if typeof(blox_src.output) == Num
-        x = namespace_expr(blox_src.output, sys_src)
+    x = only(outputs(blox_src))
+    if x isa Num
         eq = sys_dest.jcn ~ x*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -981,7 +975,6 @@ function Connector(
         τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
         τ = only(@parameters $(τ_name)=delay)
 
-        x = namespace_expr(blox_src.output, sys_src)
         eq = sys_dest.jcn ~ x(t-τ)*w
 
         return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ)
@@ -1090,9 +1083,8 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    s_presyn = namespace_expr(blox_src.output, sys_src)
-    v_postsyn = namespace_expr(blox_dest.voltage, sys_dest)
-    eq = sys_dest.jcn ~ w*(1-sys_dest.κ)*sys_src.gₛ*s_presyn*(sys_dest.eᵣ-v_postsyn)
+    s_presyn = only(outputs(blox_src))
+    eq = sys_dest.jcn ~ w*(1-sys_dest.κ)*sys_src.gₛ*s_presyn*(sys_dest.eᵣ-sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
@@ -1107,7 +1099,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    x = namespace_expr(blox_src.output, sys_src)
+    x = only(outputs(blox_src))
     eq = sys_dest.jcn ~ w*x
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -1182,9 +1174,8 @@ function Connector(
 
     V_E = haskey(kwargs, :V_E) ? kwargs[:V_E] : 0.0
 
-    s    = namespace_expr(blox_src.output, sys_src)
-    v_in = namespace_expr(blox_dest.voltage, sys_dest)
-    eq = sys_dest.jcn ~ w*s*(V_E-v_in)
+    s = only(outputs(blox_src))
+    eq = sys_dest.jcn ~ w*s*(V_E - sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
@@ -1202,9 +1193,8 @@ function Connector(
 
     V_I = haskey(kwargs, :V_I) ? kwargs[:V_I] : -80.0    
 
-    s    = namespace_expr(blox_src.output, sys_src)
-    v_in = namespace_expr(blox_dest.voltage, sys_dest)
-    eq = sys_dest.jcn ~ w*s*(V_I-v_in)
+    s = only(outputs(blox_src))
+    eq = sys_dest.jcn ~ w*s*(V_I - sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
