@@ -519,7 +519,7 @@ struct PYR_Izh <: NeuralMassBlox
             Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
             sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
             eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
-                    D(V) ~ v^2 - α*V - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
+                    D(V) ~ V^2 - α*V - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
                     D(w) ~ a*(b*V - w) + wⱼ*r,
                     D(s) ~ -s/τₛ + sⱼ*r
                 ]
