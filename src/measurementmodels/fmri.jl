@@ -45,10 +45,9 @@ Citations:
 """
 struct BalloonModel <: ObserverBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function BalloonModel(;name, namespace=nothing, lnκ=0.0, lnτ=0.0, lnϵ=0.0)
         #= hemodynamic parameters
             H[1] - signal decay                                   d(ds/dt)/ds)
@@ -85,7 +84,7 @@ struct BalloonModel <: ObserverBlox
             bold   ~ B[2]*(k1 - k1*exp(lnq) + exp(lnϵ)*B[3]*B[5]*B[1] - exp(lnϵ)*B[3]*B[5]*B[1]*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
         ]
         sys = System(eqs, t; name=name)
-        new(p, Num(0), sts[5], sys, namespace)
+        new(p, sys, namespace)
     end
 end
 

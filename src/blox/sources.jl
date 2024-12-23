@@ -1,13 +1,14 @@
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
-    output::Num
-    odesystem::ODESystem
+    odesystem
+
     function ExternalInput(;name, I=1.0, namespace=nothing)
-        sts = @variables u(t) [irreducible=true, description="ext_input"]
+        sts = @variables u(t) [output=true, irreducible=true, description="ext_input"]
         eqs = [u ~ I]
         odesys = System(eqs, t, sts, []; name=name)
-        new(namespace, sts[1], odesys)
+        
+        new(namespace, odesys)
     end
 end
 

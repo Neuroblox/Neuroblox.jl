@@ -37,11 +37,9 @@ Inputs:
 """
 struct PINGNeuronExci <: AbstractPINGNeuron
     params
-    output
-    jcn
-    voltage
     odesystem
     namespace
+
     function PINGNeuronExci(;name,
                              namespace=nothing,
                              C=1.0,
@@ -72,7 +70,8 @@ struct PINGNeuronExci <: AbstractPINGNeuron
                D(s) ~ ((1+tanh(V/10.0))/2.0)*((1.0 - s)/τ_R) - s/τ_D
         ]
         sys = ODESystem(eqs, t, sts, p; name=name)
-        new(p, sts[4], sts[5], sts[1], sys, namespace)
+
+        new(p, sys, namespace)
     end
 end
 
@@ -112,11 +111,9 @@ Inputs:
 """
 struct PINGNeuronInhib <: AbstractPINGNeuron
     params
-    output
-    jcn
-    voltage
     odesystem
     namespace
+
     function PINGNeuronInhib(;name,
                              namespace=nothing,
                              C=1.0,
@@ -147,7 +144,8 @@ struct PINGNeuronInhib <: AbstractPINGNeuron
                D(s) ~ ((1+tanh(V/10.0))/2.0)*((1.0 - s)/τ_R) - s/τ_D
         ]
         sys = ODESystem(eqs, t, sts, p; name=name)
-        new(p, sts[4], sts[5], sts[1], sys, namespace)
+
+        new(p, sys, namespace)
         end
 end
 

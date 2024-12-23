@@ -5,7 +5,6 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
     v_syn::Num
     alpha_inv::Num
     k::Num
-    output
     connector::Num
     odesystem::ODESystem
     namespace
@@ -18,7 +17,7 @@ mutable struct NextGenerationBlox <: NeuralMassBlox
         eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, sts[1], odesys.Z, odesys, namespace)
+        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys, namespace)
     end
 end
 
@@ -29,13 +28,12 @@ mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
     v_syn::Num
     alpha_inv::Num
     k::Num
-    output
     connector::Num
     odesystem::ODESystem
     namespace
     function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 [output=true] g(t)=1.6
+        sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 g(t)=1.6
         #Z = a + ib
         
         eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
@@ -43,7 +41,7 @@ mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
                 D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
                ]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, sts[1], odesys.a, odesys, namespace)
+        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.a, odesys, namespace)
     end
 end
 
@@ -51,13 +49,12 @@ end
 mutable struct NextGenerationEIBlox <: NeuralMassBlox
     Cₑ::Num
     Cᵢ::Num
-    output
     connector::Num
     odesystem::ODESystem
     namespace
     function NextGenerationEIBlox(;name,namespace=nothing, Cₑ=30.0,Cᵢ=30.0, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0, alpha_invₑᵢ=0.8, alpha_invᵢₑ=10.0, alpha_invᵢᵢ=0.8, kₑₑ=0, kₑᵢ=0.5, kᵢₑ=0.65, kᵢᵢ=0)
         params = @parameters Cₑ=Cₑ Cᵢ=Cᵢ Δₑ=Δₑ Δᵢ=Δᵢ η_0ₑ=η_0ₑ η_0ᵢ=η_0ᵢ v_synₑₑ=v_synₑₑ v_synₑᵢ=v_synₑᵢ v_synᵢₑ=v_synᵢₑ v_synᵢᵢ=v_synᵢᵢ alpha_invₑₑ=alpha_invₑₑ alpha_invₑᵢ=alpha_invₑᵢ alpha_invᵢₑ=alpha_invᵢₑ alpha_invᵢᵢ=alpha_invᵢᵢ kₑₑ=kₑₑ kₑᵢ=kₑᵢ kᵢₑ=kᵢₑ kᵢᵢ=kᵢᵢ
-        sts    = @variables aₑ(t)=-0.6 [output=true] bₑ(t)=0.18 [output=true] aᵢ(t)=0.02 [output=true] bᵢ(t)=0.21 [output=true] gₑₑ(t)=0 gₑᵢ(t)=0.23 gᵢₑ(t)=0.26 gᵢᵢ(t)=0
+        sts    = @variables aₑ(t)=-0.6 [output=true] bₑ(t)=0.18 aᵢ(t)=0.02 bᵢ(t)=0.21 gₑₑ(t)=0 gₑᵢ(t)=0.23 gᵢₑ(t)=0.26 gᵢᵢ(t)=0
         
         #Z = a + ib
         
@@ -71,7 +68,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
                 D(gᵢᵢ) ~ alpha_invᵢᵢ*((kᵢᵢ/(Cᵢ*pi))*((1-aᵢ^2-bᵢ^2)/(1+2*aᵢ+aᵢ^2+bᵢ^2)) - gᵢᵢ)
                ]
         odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(Cₑ, Cᵢ, sts[1], odesys.aₑ, odesys, namespace)
+        new(Cₑ, Cᵢ, odesys.aₑ, odesys, namespace)
     end
 end
 # this assignment is temporary until all the code is changed to the new name
@@ -99,15 +96,14 @@ Arguments:
 """
 
 struct LinearNeuralMass <: NeuralMassBlox
-    output
-    jcn
     odesystem
     namespace
+
     function LinearNeuralMass(;name, namespace=nothing)
         sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
         eqs = [D(x) ~ jcn]
         sys = System(eqs, t, name=name)
-        new(sts[1], sts[2], sys, namespace)
+        new(sys, namespace)
     end
 end
 
@@ -134,10 +130,9 @@ Arguments:
 """
 struct HarmonicOscillator <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         # p = progress_scope(ω, ζ, k, h)
         p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
@@ -146,7 +141,8 @@ struct HarmonicOscillator <: NeuralMassBlox
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
                   D(y) ~ -(ω^2)*x]
         sys = System(eqs, t, name=name)
-        new(p, sts[1], sts[3], sys, namespace)
+
+        new(p, sys, namespace)
     end
 end
 
@@ -180,8 +176,6 @@ Citations:
 """
 struct JansenRit <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
     function JansenRit(;name,
@@ -208,7 +202,7 @@ struct JansenRit <: NeuralMassBlox
             sys = System(eqs, t, name=name)
             #can't use outputs because x(t) is Num by then
             #wrote inputs similarly to keep consistent
-            return new(p, sts[1], sts[3], sys, namespace)
+            return new(p, sys, namespace)
         else
             sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
             eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
@@ -216,7 +210,7 @@ struct JansenRit <: NeuralMassBlox
             sys = System(eqs, t, name=name)
             #can't use outputs because x(t) is Num by then
             #wrote inputs similarly to keep consistent
-            return new(p, sts[1], sts[3], sys, namespace)
+            return new(p, sys, namespace)
         end
         sys = System(eqs, t, name=name)
         #can't use outputs because x(t) is Num by then
@@ -244,10 +238,9 @@ Arguments:
 """
 struct WilsonCowan <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function WilsonCowan(;name,
                         namespace=nothing,
                         τ_E=1.0,
@@ -269,7 +262,8 @@ struct WilsonCowan <: NeuralMassBlox
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
         sys = System(eqs, t, name=name)
-        new(p, sts[1], sts[3], sys, namespace)
+
+        new(p, sys, namespace)
     end
 end
 
@@ -292,10 +286,9 @@ Citations:
 """
 struct LarterBreakspear <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function LarterBreakspear(;
                         name,
                         namespace=nothing,
@@ -348,7 +341,7 @@ struct LarterBreakspear <: NeuralMassBlox
                 m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
                 m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
         sys = System(eqs, t; name=name)
-        new(p, sts[5], sts[4], sys, namespace)
+        new(p, sys, namespace)
     end
 end
 
@@ -399,10 +392,9 @@ inhibitory neurons. PLoS Computational Biology, 4(11), 2008).
 """
 struct Generic2dOscillator <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function Generic2dOscillator(;
                         name,
                         namespace=nothing,
@@ -427,7 +419,7 @@ struct Generic2dOscillator <: NeuralMassBlox
         eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
                 D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * v]
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sts[1], sts[3], sys, namespace)
+        new(p, sys, namespace)
     end
 end
 
@@ -474,10 +466,9 @@ Citations:
 """
 struct KuramotoOscillator <: NeuralMassBlox
     params
-    output
-    jcn
     odesystem
     namespace
+
     function KuramotoOscillator(;
                         name,
                         namespace=nothing,
@@ -493,23 +484,21 @@ struct KuramotoOscillator <: NeuralMassBlox
             @brownian w
             eqs = [D(θ) ~ ω + ζ * w + jcn]
             sys = System(eqs, t, sts, p; name=name)
-            new(p, sts[1], sts[2], sys, namespace)
+            new(p, sys, namespace)
         else
             sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
             eqs = [D(θ) ~ ω + jcn]
             sys = System(eqs, t, sts, p; name=name)
-            new(p, sts[1], sts[2], sys, namespace)
+            new(p, sys, namespace)
         end
     end
 end
 
 struct PYR_Izh <: NeuralMassBlox
     params
-    output
-    voltage
-    jcn
     odesystem
     namespace
+
     function PYR_Izh(;
                 name,
                 namespace=nothing,
@@ -535,17 +524,15 @@ struct PYR_Izh <: NeuralMassBlox
                     D(s) ~ -s/τₛ + sⱼ*r
                 ]
             sys = System(eqs, t, sts, p; name=name)
-            new(p, sts[4], sts[2], sts[5], sys, namespace)
+            new(p, sys, namespace)
     end
 end
 
 struct QIF_PING_NGNMM <: NeuralMassBlox
     params
-    output
-    voltage
-    jcn
     odesystem
     namespace
+
     function QIF_PING_NGNMM(;
                             name,
                             namespace=nothing,
@@ -563,6 +550,7 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*v/τₘ,
                D(v) ~ (v^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sts[1], sts[2], sts[3], sys, namespace)
+
+        new(p, sys, namespace)
     end
 end
