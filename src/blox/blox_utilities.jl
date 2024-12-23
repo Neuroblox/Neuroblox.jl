@@ -1,7 +1,7 @@
 function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
     # TO DO : Some of the fields below besides `odesystem` and `namespace` 
     # are redundant and we should clean them up. 
-    if (name === :odesystem) || (name === :namespace) || (name === :params) || (name === :output) || (name === :voltage)
+    if (name === :odesystem) || (name === :namespace) || (name === :params)
         return getfield(b, name)
     else
         return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
@@ -146,6 +146,12 @@ function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
         length(lhs_vars) == 1 && isequal(only(lhs_vars), lhs)
     end
 end
+
+function ModelingToolkit.outputs(blox::AbstractBlox)
+    sys = get_namespaced_sys(blox)
+    
+    return namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))
+end 
 
 """
     Returns the equations for all input variables of a system, 
@@ -382,8 +388,14 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
 
      # Logic based on connection rule type
      if isequal(cr, "basic")
-        x = namespace_expr(bloxout.output, sys_out)
-        rhs = x*w
+        outs = outputs(bloxout)
+        if !isempty(outs)
+            x = first(outs)
+            rhs = x*w
+            length(outs) > 1 && @warn "Blox $name_blox1 has more than one outputs. Defaulting to output=$x"
+        else
+            error("Blox $name_blox1 has no outputs. Please assign [output=true] to the variables you want to use as outputs or write a dispatch for connection_equations.")
+        end
     elseif isequal(cr, "psp")
         rhs = w*sys_out.G*(sys_out.E_syn - sys_in.V)
     else
