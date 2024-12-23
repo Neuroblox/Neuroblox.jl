@@ -578,11 +578,12 @@ function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronB
     t_sampled, sampling_freq = get_sampling_info(sols[1]; sampling_rate=sampling_rate)
     powspecs = DSP.Periodograms.Periodogram[]
     
-    for sol in sols
-        s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
-        powspec = method(s, fs=sampling_freq, window=window)
-        push!(powspecs, powspec)
+    powspecs = tmap(eachindex(sols)) do i
+        sol = sols[i]
+        s = meanfield_timeseries(cb, sol, state; ts=t_sampled)
+        method(s, fs=sampling_freq, window=window)
     end
+    powspecs = collect(powspecs)
 
     return powspecs
 end

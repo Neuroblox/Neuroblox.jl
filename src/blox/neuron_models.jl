@@ -199,7 +199,14 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			I_asc(t)
 			[input=true]
 			G(t)=0.0 
-			[output = true] 
+			[output = true]
+
+			spikes_cumulative(t)=0.0
+			spikes_window(t)=0.0
+
+			# observables
+			I_syn_msn(t)=0.0
+			[input=true] 
 		end
 
 		ps = @parameters begin 
@@ -292,6 +299,13 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			[output = true] 
 			Gₛ(t)=0.0 
 			[output = true] 
+
+			spikes_cumulative(t)=0.0
+			spikes_window(t)=0.0
+
+			# observables
+			I_syn_fsi(t)=0.0
+			[input=true] 
 		end
 
 		ps = @parameters begin 
@@ -379,6 +393,9 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
+
+			spikes_cumulative(t)=0.0
+			spikes_window(t)=0.0
 		end
 
 		ps = @parameters begin 
@@ -458,6 +475,9 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			[input=true]
 			G(t)=0.0 
 			[output = true] 
+
+			spikes_cumulative(t)=0.0
+			spikes_window(t)=0.0
 		end
 
 		ps = @parameters begin 
