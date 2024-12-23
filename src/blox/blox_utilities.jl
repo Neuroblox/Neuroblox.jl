@@ -150,7 +150,8 @@ end
 function ModelingToolkit.outputs(blox::AbstractBlox)
     sys = get_namespaced_sys(blox)
     
-    return namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))
+    # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
+    return Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys)))
 end 
 
 """
