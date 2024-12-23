@@ -147,11 +147,11 @@ function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
     end
 end
 
-function ModelingToolkit.outputs(blox::AbstractBlox)
+function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=true)
     sys = get_namespaced_sys(blox)
     
     # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
-    return Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys)))
+    return namespaced ? Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))) : Num.(ModelingToolkit.outputs(sys))
 end 
 
 """

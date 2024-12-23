@@ -112,7 +112,7 @@ function define_neurons()
             end
         end
         
-        outs = Neuroblox.outputs(sys)
+        outs = Neuroblox.outputs(sys; namespaced=false)
         if length(outs) == 1
             out = only(outs)
             output_sym = hasproperty(out.val, :f) ? Symbol(out.val.f) : Symbol(out.val)
