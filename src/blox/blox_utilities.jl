@@ -105,12 +105,14 @@ end
 
 function get_namespaced_sys(blox)
     sys = get_system(blox)
+
     System(
         equations(sys), 
         only(independent_variables(sys)), 
         unknowns(sys), 
         parameters(sys); 
-        name = namespaced_nameof(blox)
+        name = namespaced_nameof(blox),
+        discrete_events = discrete_events(sys)
     ) 
 end
 
@@ -153,6 +155,21 @@ function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=false)
     # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
     return namespaced ? Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))) : Num.(ModelingToolkit.outputs(sys))
 end 
+
+function ModelingToolkit.inputs(blox::AbstractBlox; namespaced=false)
+    sys = get_system(blox)
+    
+    # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
+    return namespaced ? Num.(namespace_expr.(ModelingToolkit.inputs(sys), Ref(sys))) : Num.(ModelingToolkit.inputs(sys))
+end 
+
+ModelingToolkit.equations(blox::AbstractBlox) = ModelingToolkit.equations(get_system(blox))
+
+ModelingToolkit.discrete_events(blox::AbstractBlox) = ModelingToolkit.discrete_events(get_system(blox))
+
+ModelingToolkit.unknowns(blox::AbstractBlox) = ModelingToolkit.unknowns(get_system(blox))
+
+ModelingToolkit.parameters(blox::AbstractBlox) = ModelingToolkit.parameters(get_system(blox))
 
 """
     Returns the equations for all input variables of a system, 
