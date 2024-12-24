@@ -33,7 +33,7 @@ using ModelingToolkit: getp
     add_edge!(g, d[VAC], d[PFC], Dict(:weight => 1, :density => 0.1, :learning_rule => hebbian))
 
     agent = Agent(g; name=:ag);
-    ps = parameters(agent.odesystem)
+    ps = parameters(agent.system)
     init_params = agent.problem.p
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
     idxs_weight = findall(x -> occursin("w_", String(Symbol(x))), ps)
@@ -42,7 +42,7 @@ using ModelingToolkit: getp
     idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn))
 
 
-    params_at(idxs) = getp(agent.problem, parameters(agent.odesystem)[idxs])(agent.problem)
+    params_at(idxs) = getp(agent.problem, parameters(agent.system)[idxs])(agent.problem)
     init_params_all = params_at(:)
     init_params_idxs_weight = params_at(idxs_weight)
     init_params_idxs_other_params = params_at(idxs_other_params)

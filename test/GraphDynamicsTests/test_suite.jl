@@ -171,7 +171,7 @@ function neuron_and_neural_mass_comparison_tests()
                         JansenRit(name=:jr1)
                         JansenRit(name=:jr2)],
                        )
-            if length(unknowns(LIFNeuron(;name=:_).odesystem)) > 3
+            if length(unknowns(LIFNeuron(;name=:_).system)) > 3
                 @warn "excluding LIFNeurons from test"
                 filter!(x -> !(x isa LIFNeuron), neurons) # there was a bug in how LIFNeurons were implemented
             end

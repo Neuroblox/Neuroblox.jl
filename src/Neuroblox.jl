@@ -37,11 +37,10 @@ using Distributions
 
 using SciMLBase: SciMLBase, AbstractSolution, solve, remake
 
-
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
                     AbstractODESystem, VariableTunable, getp
-import ModelingToolkit: equations, inputs, nameof, getdescription
+import ModelingToolkit: equations, inputs, outputs, unknowns, parameters, discrete_events, nameof, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval, get_variables
 
@@ -132,9 +131,9 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
 end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(blox.odesystem, u0, timespan, p)
+    prob = ODEProblem(blox.system, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
-    statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
+    statesV = [s for s in unknowns(blox.system) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
     df = DataFrame(sol)
@@ -258,4 +257,5 @@ export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning,
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color
 export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
+export inputs, outputs, equations, unknowns, parameters, discrete_events
 end

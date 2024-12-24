@@ -1,7 +1,7 @@
 # Defines a DBS (Deep Brain Stimulation) stimulus that can be either continuous or burst protocol
 struct DBS <: StimulusBlox
     params::Vector{Num}
-    odesystem::ODESystem
+    system::ODESystem
     namespace::Union{Symbol, Nothing}
     stimulus::Function
 end

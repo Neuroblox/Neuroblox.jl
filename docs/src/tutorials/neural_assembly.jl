@@ -269,7 +269,7 @@ add_edge!(g, ASC1 => VAC, weight=44)
 add_edge!(g, ASC1 => AC, weight=44)
 add_edge!(g, VAC => AC, weight=3, density=0.08)
 
-## define odesystem and solve
+## define system and solve
 sys = system_from_graph(g, name=global_namespace)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1);

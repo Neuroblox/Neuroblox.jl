@@ -48,7 +48,7 @@ using ModelingToolkit: getp
     add_edge!(g, d[TAN_pop], d[STR_R], Dict(:weight => 1, :t_event => 0.1*t_trial))
 
     agent = Agent(g; name=:ag, t_block = t_trial/5);
-    ps = parameters(agent.odesystem)
+    ps = parameters(agent.system)
 
     
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
@@ -60,7 +60,7 @@ using ModelingToolkit: getp
     idx_I_bg = findall(x -> occursin("I_bg", String(Symbol(x))), ps)
     idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn, idx_spikes, idx_H, idx_I_bg))
 
-    params_at(idxs) = getp(agent.problem, parameters(agent.odesystem)[idxs])(agent.problem)
+    params_at(idxs) = getp(agent.problem, parameters(agent.system)[idxs])(agent.problem)
     init_params_all = params_at(:)
     init_params_idxs_weight = params_at(idxs_weight)
     init_params_idxs_other_params = params_at(idxs_other_params)
@@ -124,7 +124,7 @@ end
     add_edge!(g, d[TAN_pop], d[STR_R], Dict(:weight => 1, :t_event => 0.1*t_trial))
 
     agent = Agent(g; name=:ag, t_block = t_trial/5);
-    ps = parameters(agent.odesystem)
+    ps = parameters(agent.system)
 
     
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
@@ -136,7 +136,7 @@ end
     idx_I_bg = findall(x -> occursin("I_bg", String(Symbol(x))), ps)
     idxs_other_params = setdiff(eachindex(ps), vcat(idxs_weight, idx_stim, idx_jcn, idx_spikes, idx_H, idx_I_bg))
 
-    params_at(idxs) = getp(agent.problem, parameters(agent.odesystem)[idxs])(agent.problem)
+    params_at(idxs) = getp(agent.problem, parameters(agent.system)[idxs])(agent.problem)
     init_params_all = params_at(:)
     init_params_idxs_weight = params_at(idxs_weight)
     init_params_idxs_other_params = params_at(idxs_other_params)

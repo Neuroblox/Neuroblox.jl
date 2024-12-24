@@ -5,9 +5,7 @@ Jansen-Rit model block for canonical micro circuit, analogous to the implementat
 """
 mutable struct JansenRitSPM12 <: NeuralMassBlox
     params
-    output
-    jcn
-    odesystem
+    system
     namespace
     function JansenRitSPM12(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
         p = paramscoping(τ=τ, r=r)
@@ -18,14 +16,14 @@ mutable struct JansenRitSPM12 <: NeuralMassBlox
                   D(y) ~ -x/(τ*τ) + jcn/τ]
 
         sys = System(eqs, t, name=name)
-        new(p, sts[1], sts[3], sys, namespace)
+        new(p, sys, namespace)
     end
 end
 
 mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
 
     function CanonicalMicroCircuitBlox(;name, namespace=nothing, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
