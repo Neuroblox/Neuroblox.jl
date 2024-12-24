@@ -80,13 +80,13 @@ model_name=:g
 @named STR1 = Striatum(; namespace=model_name, N_inhib=5) 
 @named STR2 = Striatum(; namespace=model_name, N_inhib=5) 
 
-@named tan_pop1 = TAN(; namespace=model_name) 
-@named tan_pop2 = TAN(; namespace=model_name) 
+@named tan_pop1 = TAN(κ=10; namespace=model_name) 
+@named tan_pop2 = TAN(κ=10; namespace=model_name) 
 	
 @named AS = GreedyPolicy(; namespace=model_name, t_decision=2*time_block_dur) 
-@named SNcb = SNc(; namespace=model_name) 
+@named SNcb = SNc(κ_DA=1; namespace=model_name) 
 
-hebbian_mod = HebbianModulationPlasticity(K=0.04, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
+hebbian_mod = HebbianModulationPlasticity(K=0.05, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
 hebbian_cort = HebbianPlasticity(K=5e-4, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 
 ## circuit 
@@ -97,6 +97,8 @@ add_edge!(g, stim => VAC, weight=14)
 add_edge!(g, ASC1 => VAC, weight=44)
 add_edge!(g, ASC1 => AC, weight=44)
 add_edge!(g, VAC => AC, weight=3, density=0.1, learning_rule = hebbian_cort) 
+add_edge!(g, AC=>STR1, weight = 0.075, density =  0.04, learning_rule =  hebbian_mod)
+add_edge!(g, AC=>STR2, weight =  0.075, density =  0.04, learning_rule =  hebbian_mod) 
 add_edge!(g, tan_pop1 => STR1, weight = 1, t_event = time_block_dur)
 add_edge!(g, tan_pop2 => STR2, weight = 1, t_event = time_block_dur)
 add_edge!(g, STR1 => tan_pop1, weight = 1)
