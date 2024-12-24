@@ -29,7 +29,7 @@ function generate_gap_weight_param(blox_src, blox_dst, kwargs)
         name = nameof(w)
     else
         w_val = w
-        name = Symbol("g_w_$(nameof(blox_src.odesystem))_$(nameof(blox_dst.odesystem))")
+        name = Symbol("g_w_$(nameof(blox_src.system))_$(nameof(blox_dst.system))")
     end
     (;w_val, name)
 end
@@ -476,7 +476,7 @@ end
 #             name_presyn = namespaced_nameof(neuron_presyn)
 #             # Check names to avoid recurrent connections between the same neuron
 #             if (name_postsyn != name_presyn) && rand(rng, dist)
-#                 w_name = Symbol("w_$(nameof(neuron_presyn.odesystem))_$(nameof(neuron_postsyn.odesystem))")
+#                 w_name = Symbol("w_$(nameof(neuron_presyn.system))_$(nameof(neuron_postsyn.system))")
 #                 (; conn) = get_connection(neuron_presyn, neuron_postsyn, kwargs)
 #                 add_edge!(h, v_dst[j], v_src[i], Dict(:conn => conn, :names => [w_name]))
 #             end

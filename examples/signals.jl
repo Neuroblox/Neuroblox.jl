@@ -40,7 +40,7 @@ begin
 	@named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
 	@parameters phase_input=0 ampl=1
 
-	sys = [Str2.odesystem]
+	sys = [Str2.system]
 	eqs = [sys[1].jcn ~ ampl*phase_input]
 	@named phase_system = ODESystem(eqs,systems=sys)
 	phase_system_simpl = structural_simplify(phase_system)

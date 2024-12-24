@@ -183,7 +183,7 @@ get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
 get_eval_states(gp::GreedyPolicy) = gp.competitor_states
 
 mutable struct Agent{S,P,A,LR,C}
-    odesystem::S
+    system::S
     problem::P
     action_selection::A
     learning_rules::LR

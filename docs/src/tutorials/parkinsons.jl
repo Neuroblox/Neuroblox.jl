@@ -138,7 +138,7 @@ sol = solve(prob, Tsit5(), saveat=0.1); ## Solve the problem and save every 0.1m
 # Let's interrogate the solution to see what we have. For the purposes of this tutorial, we'll focus on the striatal oscillations.
 # In this simple model, we should see relatively sharp on/off transitions in the striatal populations. To test this, let's use [Symbolic Indexing](https://docs.sciml.ai/SymbolicIndexingInterface/stable/usage/) to access the states we're interested in: the ``y`` state of the D1 neuron population.
 
-idx_func = ModelingToolkit.getu(sol, D1.odesystem.y); ## gets the state index of the D1 neuron population in the solution object
+idx_func = ModelingToolkit.getu(sol, D1.system.y); ## gets the state index of the D1 neuron population in the solution object
 
 # Now use this indexing function to plot the solution in a Makie plot ([read more about Makie in the docs](https://docs.makie.org/stable/tutorials/getting-started)).
 

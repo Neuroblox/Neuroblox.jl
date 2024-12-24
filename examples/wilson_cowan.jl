@@ -39,7 +39,7 @@ end
 
 # ╔═╡ 9f3d6efd-a884-449c-b4b8-42b0b435e245
 begin
-	sys = [WC.odesystem]
+	sys = [WC.system]
 	eqs = [sys[1].jcn ~ 0.0, sys[1].P ~ 0.0]
 	@named WC_sys = ODESystem(eqs,systems=sys)
 end

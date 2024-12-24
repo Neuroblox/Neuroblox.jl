@@ -265,7 +265,7 @@ end
     """
     @named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
     sim_dur = 1000.0 
-    sol = simulate(structural_simplify(macroscopic_model.odesystem), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
+    sol = simulate(structural_simplify(macroscopic_model.system), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
 
     C=30
     W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
@@ -291,7 +291,7 @@ Test for OUBlox generator.
 
 @testset "OUBlox " begin
     @named ou1 = OUBlox()
-    sys = [ou1.odesystem]
+    sys = [ou1.system]
     eqs = [sys[1].jcn ~ 0.0]
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
     ousimpl = structural_simplify(ou1connected)
@@ -324,7 +324,7 @@ end
 @testset "OUBlox & Janset-Rit network" begin
     @named ou = OUBlox(σ=5.0)
     @named jr = JansenRit()    
-    sys = [ou.odesystem, jr.odesystem]
+    sys = [ou.system, jr.system]
     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
     @named ou1connected = compose(System(eqs, t; name=:connected),sys)
     sys = structural_simplify(ou1connected)
@@ -341,7 +341,7 @@ end
 #     @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
 #     g = MetaDiGraph()
 #     add_blox!.(Ref(g), [coupling, ou, oucp])
-#     add_edge!(g, 2, 1, Dict(:weight => ou.odesystem.x))
+#     add_edge!(g, 2, 1, Dict(:weight => ou.system.x))
 #     @named sys = system_from_graph(g)
 #     ousimpl = structural_simplify(sys)
 #     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
@@ -353,7 +353,7 @@ end
 # @testset "OUBlox-OUCouplingBlox network" begin
 #     @named ou1 = OUBlox()
 #     @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
-#     sys = [ou1.odesystem, oucp.odesystem]
+#     sys = [ou1.system, oucp.system]
 #     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
 #     @named ou1connected = compose(System(eqs, t;name=:connected),sys)
 #     ousimpl = structural_simplify(ou1connected)
@@ -368,7 +368,7 @@ end
 #     @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
 #     @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
 #     @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-#     sys = [ou1.odesystem, ou2.odesystem, oucp1.odesystem, oucp2.odesystem]
+#     sys = [ou1.system, ou2.system, oucp1.system, oucp2.system]
 #     eqs = [sys[1].jcn ~ oucp1.connector,
 #            sys[2].jcn ~ oucp2.connector,
 #            sys[3].jcn ~ ou2.connector,
@@ -393,7 +393,7 @@ end
 #     @named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
 #     @parameters phase_input = 0
 
-#     sys = [Str2.odesystem]
+#     sys = [Str2.system]
 #     eqs = [sys[1].jcn ~ phase_input]
 #     @named phase_system = ODESystem(eqs,systems=sys)
 #     phase_system_simpl = structural_simplify(phase_system)
@@ -471,7 +471,7 @@ end
 @testset "WinnerTakeAll" begin
     N_exci = 5
     @named wta= WinnerTakeAllBlox(;I_bg=5.0*rand(N_exci), N_exci)
-    sys = wta.odesystem
+    sys = wta.system
     wta_simp=structural_simplify(sys)
     prob = ODEProblem(wta_simp,[],(0,10))
     sol = solve(prob, Vern7(), saveat=0.1)
@@ -497,7 +497,7 @@ end
 
 @testset "Cortical" begin
     @named cb = CorticalBlox(N_wta=6, N_exci=5, density=0.1, weight=1)
-    cb_simpl = structural_simplify(cb.odesystem)
+    cb_simpl = structural_simplify(cb.system)
     prob = ODEProblem(cb_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -505,7 +505,7 @@ end
 
 @testset "Striatum" begin
     @named str_scb = Striatum(N_inhib=2)
-    str_simpl = structural_simplify(str_scb.odesystem)
+    str_simpl = structural_simplify(str_scb.system)
     prob = ODEProblem(str_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -513,7 +513,7 @@ end
 
 @testset "GPi" begin
     @named gpi_scb = GPi(N_inhib=2)
-    gpi_simpl = structural_simplify(gpi_scb.odesystem)
+    gpi_simpl = structural_simplify(gpi_scb.system)
     prob = ODEProblem(gpi_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -521,7 +521,7 @@ end
 
 @testset "GPe" begin
     @named gpe_scb = GPe(N_inhib=2)
-    gpe_simpl = structural_simplify(gpe_scb.odesystem)
+    gpe_simpl = structural_simplify(gpe_scb.system)
     prob = ODEProblem(gpe_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -529,7 +529,7 @@ end
 
 @testset "STN" begin
     @named stn_scb = STN(N_exci=2)
-    stn_simpl = structural_simplify(stn_scb.odesystem)
+    stn_simpl = structural_simplify(stn_scb.system)
     prob = ODEProblem(stn_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -537,7 +537,7 @@ end
 
 @testset "Thalamus" begin
     @named thal_scb = Thalamus(N_exci=2)
-    thal_simpl = structural_simplify(thal_scb.odesystem)
+    thal_simpl = structural_simplify(thal_scb.system)
     prob = ODEProblem(thal_simpl, [], (0, 2))
     sol = solve(prob, Vern7(), saveat=0.5)
     @test sol.retcode == ReturnCode.Success 
@@ -680,7 +680,7 @@ end
 @testset "LIFExciCircuitBlox" begin
     @named n = LIFExciCircuitBlox(; N_neurons = 10, weight=1)
 
-    sys_simpl = structural_simplify(n.odesystem)
+    sys_simpl = structural_simplify(n.system)
     prob = ODEProblem(sys_simpl, [], (0, 200.0))
     sol = solve(prob, Vern7())
     @test sol.retcode == ReturnCode.Success 

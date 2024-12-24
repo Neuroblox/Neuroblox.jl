@@ -3,7 +3,7 @@ abstract type AbstractDiscrete <: AbstractBlox end
 abstract type AbstractModulator <: AbstractDiscrete end
 
 struct Matrisome <: AbstractDiscrete
-    odesystem
+    system
     namespace
     t_event
     function Matrisome(; name, namespace=nothing, t_event=180.0)
@@ -33,7 +33,7 @@ end
 
 
 struct Striosome <: AbstractDiscrete
-    odesystem
+    system
     namespace
 
     function Striosome(; name, namespace=nothing)
@@ -54,7 +54,7 @@ struct Striosome <: AbstractDiscrete
 end
 
 struct TAN <: AbstractDiscrete
-    odesystem
+    system
     namespace
 
     function TAN(; name, namespace=nothing, κ=100, λ=1)
@@ -70,7 +70,7 @@ struct TAN <: AbstractDiscrete
 end
 
 struct SNc <: AbstractModulator
-    odesystem
+    system
     N_time_blocks
     κ_DA
     DA_reward
