@@ -445,7 +445,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     r = namespace_expr(blox_src.params[2], sys_src)
 
     eq = sys_dest.jcn ~ sigmoid(x, r)*w
@@ -464,7 +464,7 @@ function Connector(
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     if x isa Num
         eq = sys_dest.jcn ~ x*w
 
@@ -491,8 +491,8 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    xₒ = only(outputs(blox_src))
-    xᵢ = only(outputs(blox_dest)) #needed because this is also the θ term of the block receiving the connection
+    xₒ = only(outputs(blox_src; namespaced=true))
+    xᵢ = only(outputs(blox_dest; namespaced=true)) #needed because this is also the θ term of the block receiving the connection
 
     eq = sys_dest.jcn ~ w*sin(xₒ - xᵢ)
     
@@ -508,7 +508,7 @@ function Connector(
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
 
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     if x isa Num
         w = generate_weight_param(blox_src, blox_dest; kwargs...)
         eq = sys_dest.jcn ~ x*w
@@ -541,7 +541,7 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ x*w
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -964,7 +964,7 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     if x isa Num
         eq = sys_dest.jcn ~ x*w
 
@@ -1083,7 +1083,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    s_presyn = only(outputs(blox_src))
+    s_presyn = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ w*(1-sys_dest.κ)*sys_src.gₛ*s_presyn*(sys_dest.eᵣ-sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -1099,7 +1099,7 @@ function Connector(
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    x = only(outputs(blox_src))
+    x = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ w*x
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -1174,7 +1174,7 @@ function Connector(
 
     V_E = haskey(kwargs, :V_E) ? kwargs[:V_E] : 0.0
 
-    s = only(outputs(blox_src))
+    s = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ w*s*(V_E - sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -1193,7 +1193,7 @@ function Connector(
 
     V_I = haskey(kwargs, :V_I) ? kwargs[:V_I] : -80.0    
 
-    s = only(outputs(blox_src))
+    s = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ w*s*(V_I - sys_dest.V)
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)

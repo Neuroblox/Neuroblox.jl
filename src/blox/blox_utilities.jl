@@ -147,8 +147,8 @@ function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
     end
 end
 
-function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=true)
-    sys = get_namespaced_sys(blox)
+function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=false)
+    sys = get_system(blox)
     
     # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
     return namespaced ? Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))) : Num.(ModelingToolkit.outputs(sys))
