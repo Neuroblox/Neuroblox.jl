@@ -19,7 +19,7 @@ function Connector(
     spike_affects=Dict{Symbol, Vector{Tuple{Num, Num}}}(),
     learning_rule=Dict{Num, AbstractLearningRule}()
     )
-
+    filter!(x -> !isempty(last(x)), spike_affects)
     # Check if all weigths have NoLearningRule and if so don't keep them in the final Dict.
     U = narrowtype_union(learning_rule)
     learning_rule = U <: NoLearningRule ? Dict{Num, NoLearningRule}() : learning_rule
