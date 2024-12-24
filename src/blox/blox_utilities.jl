@@ -150,26 +150,26 @@ function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
 end
 
 function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=false)
-    sys = get_system(blox)
+    sys = get_namespaced_sys(blox)
     
     # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
     return namespaced ? Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))) : Num.(ModelingToolkit.outputs(sys))
 end 
 
 function ModelingToolkit.inputs(blox::AbstractBlox; namespaced=false)
-    sys = get_system(blox)
+    sys = get_namespaced_sys(blox)
     
     # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
     return namespaced ? Num.(namespace_expr.(ModelingToolkit.inputs(sys), Ref(sys))) : Num.(ModelingToolkit.inputs(sys))
 end 
 
-ModelingToolkit.equations(blox::AbstractBlox) = ModelingToolkit.equations(get_system(blox))
+ModelingToolkit.equations(blox::AbstractBlox) = ModelingToolkit.equations(get_namespaced_sys(blox))
 
-ModelingToolkit.discrete_events(blox::AbstractBlox) = ModelingToolkit.discrete_events(get_system(blox))
+ModelingToolkit.discrete_events(blox::AbstractBlox) = ModelingToolkit.discrete_events(get_namespaced_sys(blox))
 
-ModelingToolkit.unknowns(blox::AbstractBlox) = ModelingToolkit.unknowns(get_system(blox))
+ModelingToolkit.unknowns(blox::AbstractBlox) = ModelingToolkit.unknowns(get_namespaced_sys(blox))
 
-ModelingToolkit.parameters(blox::AbstractBlox) = ModelingToolkit.parameters(get_system(blox))
+ModelingToolkit.parameters(blox::AbstractBlox) = ModelingToolkit.parameters(get_namespaced_sys(blox))
 
 """
     Returns the equations for all input variables of a system, 
@@ -406,7 +406,7 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
 
      # Logic based on connection rule type
      if isequal(cr, "basic")
-        outs = outputs(bloxout)
+        outs = outputs(bloxout; namespaced=true)
         if !isempty(outs)
             x = first(outs)
             rhs = x*w
