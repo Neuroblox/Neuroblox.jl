@@ -1,7 +1,7 @@
 function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
-    # TO DO : Some of the fields below besides `odesystem` and `namespace` 
+    # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
-    if (name === :odesystem) || (name === :namespace) || (name === :params) || (name === :output) || (name === :voltage)
+    if (name === :system) || (name === :namespace) || (name === :params)
         return getfield(b, name)
     else
         return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
