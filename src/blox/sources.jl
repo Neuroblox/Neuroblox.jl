@@ -166,7 +166,7 @@ struct PoissonSpikeTrain{N} <: StimulusBlox
     rng
 end
 
-function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
+function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
     rate = to_vector(rate)
     tspan = to_vector(tspan)
 
@@ -175,7 +175,7 @@ function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{Abstr
     PoissonSpikeTrain(name, namespace, N_trains, rate, tspan, prob_dt, rng)
 end
 
-function PoissonSpikeTrain(rate_sampling::Pair{D, T}, tspan::Tuple; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {T <: Number, D <: UnivariateDistribution}    
+function PoissonSpikeTrain(rate_sampling::NamedTuple, tspan::Tuple; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234))     
     
     PoissonSpikeTrain(name, namespace, N_trains, rate_sampling, tspan, prob_dt, rng)
 end
@@ -208,7 +208,7 @@ function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: AbstractVe
     return t_spikes
 end
 
-function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: Pair{<: UnivariateDistribution}}
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: NamedTuple}
     # This could also change to a dispatch of Random.rand()
     dist_rate, dt = stim.rate
     rng = stim.rng
