@@ -727,8 +727,8 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     μ_B = μ_0 + ρ_B * coherence 
     σ = 4e-3 # standard deviation of stimulus spike rate [spikes / ms]
 
-    spike_rate_A = Normal(μ_A, σ) => dt_spike_rate # spike rate distribution for selective population A
-    spike_rate_B = Normal(μ_B, σ) => dt_spike_rate # spike rate distribution for selective population B
+    spike_rate_A = (distribution=Normal(μ_A, σ), dt=dt_spike_rate) # spike rate distribution for selective population A
+    spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
     # Blox definitions
     @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1);
