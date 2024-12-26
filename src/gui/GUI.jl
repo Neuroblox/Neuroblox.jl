@@ -84,6 +84,10 @@ function tab_parameters()
       :dt => NCAD(0.1, NUMBER, 1e-3, 10,[],true),
       :order => ["duration","reltol","abstol","solver","dt"],
     ),
+    "Plotsettings" => OrderedDict(
+      :spike_threshold => NCAD(20, NUMBER, -50, 200,[],true),
+      :max_neurons => NCAD(10, INTEGER, 1, 100,[],true)
+    ),
     "Parameter Fitting" => OrderedDict(
       :method => NCAD(1, DROPDOWN, 1, 2,["Laplace","MCMC"],true),
       :experiment => NCAD(1, DROPDOWN, 1, 2,["fMRI","LFP","EEG"],true),
