@@ -210,7 +210,9 @@ end
 
 function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: NamedTuple}
     # This could also change to a dispatch of Random.rand()
-    dist_rate, dt = stim.rate
+    
+    dist_rate = stim.rate.distribution
+    dt = stim.rate.dt
     rng = stim.rng
     tspan = stim.tspan
     prob_dt = stim.prob_dt
