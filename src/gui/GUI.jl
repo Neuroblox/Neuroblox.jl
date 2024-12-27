@@ -83,12 +83,8 @@ function tab_parameters()
       :solver => NCAD(1, DROPDOWN, 1, 2,["stiff","non-stiff"],true),
       :dt => NCAD(0.1, NUMBER, 1e-3, 10,[],true),
       :spike_threshold => NCAD(20, NUMBER, -50, 200,[],true),
-      :max_neurons => NCAD(10, INTEGER, 1, 100,[],true),
-      :order => ["duration","reltol","abstol","solver","dt","spike_threshold","max_neurons"]
-    ),
-    "Plotsettings" => OrderedDict(
-      :spike_threshold => NCAD(20, NUMBER, -50, 200,[],true),
       :max_neurons => NCAD(10, INTEGER, 1, 100,[],true)
+      :order => ["duration","reltol","abstol","solver","dt","spike_threshold","max_neurons"],
     ),
     "Parameter Fitting" => OrderedDict(
       :method => NCAD(1, DROPDOWN, 1, 2,["Laplace","MCMC"],true),
