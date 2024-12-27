@@ -5,7 +5,7 @@ struct Connector
     weight::Vector{Num}
     delay::Vector{Num}
     discrete_callbacks
-    spike_affects::Dict{Symbol, Vector{Tuple{Num, Num}}}
+    spike_affects::Dict{Symbol, Vector{Union{Tuple{Num, Num}, Equation}}}
     learning_rule::Dict{Num, AbstractLearningRule}
 end
 
@@ -60,6 +60,10 @@ function show_field(d::Dict, title)
     end
 end
 
+show_spike_affect(t::Tuple) = println("\t $(first(t)) += $(last(t))")
+
+show_spike_affect(eq::Equation) = println("\t $eq")
+
 function Base.show(io::IO, ::MIME"text/plain", c::Connector)
     
     println("Connections :")
@@ -82,9 +86,9 @@ function Base.show(io::IO, ::MIME"text/plain", c::Connector)
     for s in c.source
         if haskey(c.spike_affects, s)
             println("$(s) spikes affect :")
-            v = c.spike_affects[s]
-            for (var, val) in v
-                println("\t $(var) += $(val)")
+            sa = c.spike_affects[s]
+            for x in sa
+               show_spike_affect(x)
             end
         end
     end
@@ -1027,16 +1031,9 @@ function Connector(
 )
     sys_dest = get_namespaced_sys(neuron)
 
-    t_spikes = generate_spike_times(stim)
-
-    cb = t_spikes => [sys_dest.S_AMPA_ext ~ sys_dest.S_AMPA_ext + 1]
-    # TO DO : Consider generating spikes during simulation
-    # to make PoissonSpikeTrain independent of `t_span` of the simulation.
-    # something like : 
-    # discrete_event = t > -Inf => (generate_spike, [sys_dest.S_AMPA], [stim.relevant_params...], [], nothing) 
-    # This way we need to resolve the case of multiple spikes potentially being generated within a single integrator step.
-
-    return Connector(namespaced_nameof(stim), nameof(sys_dest); discrete_callbacks = cb)
+    sa = namespaced_nameof(stim) => [sys_dest.S_AMPA_ext ~ sys_dest.S_AMPA_ext + 1]
+    
+    return Connector(namespaced_nameof(stim), nameof(sys_dest); spike_affects = Dict(sa))
 end
 
 function Connector(
