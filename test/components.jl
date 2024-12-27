@@ -712,7 +712,7 @@ end
     global_ns = :g # global namespace
 
     tspan = (0, 200) # ms
-    spike_rate = Normal(1, 0.1) => 10
+    spike_rate = (distribution=Normal(3, 0.1), dt=10)
 
     @named s = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns)
     @named n1 = LIFExciNeuron(; namespace = global_ns)
