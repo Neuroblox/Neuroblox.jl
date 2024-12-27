@@ -5,61 +5,49 @@ using Statistics
 using Optimization
 using OptimizationOptimJL
 using ModelingToolkit: setp, getp
+using DSP
+using AbstractFFTs
 
-
-struct PopConfig
+@kwdef struct PopConfig{BLOX}
     name::Symbol
-    blox
-    firing_rate_target::Union{Nothing, Float64}
-    firing_rate_weight::Float64
-    freq_target::Union{Nothing, Float64}
-    freq_weight::Float64
-    freq_min::Union{Nothing, Float64}
-    freq_max::Union{Nothing, Float64}
-    freq_aggregate_state::Union{Nothing, String}
-    tunable::Bool
+    blox::BLOX
+    firing_rate_target::Union{Nothing, Float64} = nothing
+    firing_rate_weight::Float64 = 1.0
+    freq_target::Union{Nothing, Float64} = nothing
+    freq_weight::Float64 = 1.0
+    freq_min::Union{Nothing, Float64} = nothing
+    freq_max::Union{Nothing, Float64} = nothing
+    freq_aggregate_state::Union{Nothing, String} = nothing
+    tunable::Bool = false
 end
 
-function PopConfig(
-    name, 
-    blox; 
-    firing_rate_target=nothing,
-    firing_rate_weight=0.0,
-    freq_target=nothing,
-    freq_weight=0.0,
-    freq_min=nothing,
-    freq_max=nothing,
-    freq_aggregate_state=nothing,
-    tunable=false
-)
-    PopConfig(
-        name, 
-        blox, 
-        firing_rate_target, 
-        firing_rate_weight, 
-        freq_target, 
-        freq_weight, 
-        freq_min, 
-        freq_max, 
-        freq_aggregate_state,
-        tunable
-    )
+const PopIndexNT = NamedTuple{(:I_bg_ind, :σ_ind), Tuple{Vector{Int}, Vector{Int}}}
+
+@kwdef struct Args{GetterT,SetterT,BLOXTuple,ProblemT,SolverT,DiffeqkargsT,PopT,PopparamsT}
+    dt::Float64 = 0.05
+    saveat::Float64 = 0.05
+    solver::SolverT = RKMil()
+    seed::Int = 1234
+    other_diffeq_kwargs::DiffeqkargsT = (abstol=1e-3, reltol=1e-6, maxiters=1e10)
+    ensemblealg::EnsembleThreads = EnsembleThreads()
+    trajectories::Int = 3
+    threshold::Float64 = -35
+    transient::Float64 = 200
+    populations::PopT
+    pop_params::PopparamsT
+    prob::ProblemT
+    get_ps::GetterT
+    set_ps!::SetterT
 end
 
-function get_peak_freq(powspec, freq_min, freq_max;
-                        freq_ind = findall(x -> x > freq_min && x < freq_max, powspec.freq))
 
+function get_peak_freq(
+    powspecs,
+    freq_min,
+    freq_max)
+    freq_ind = get_freq_inds(powspecs[1].freq, freq_min, freq_max)
     if isempty(freq_ind)
-        return NaN
-    end
-    ind = argmax(powspec.power[freq_ind])
-    return powspec.freq[freq_ind][ind]
-end
-
-function get_peak_freq(powspecs::Vector, freq_min, freq_max)
-    freq_ind = findall(x -> x > freq_min && x < freq_max, powspecs[1].freq)
-    if isempty(freq_ind)
-        return NaN
+            return NaN64, NaN64
     end
 
     # peak_freqs = [get_peak_freq(powspec, freq_min, freq_max, freq_ind=freq_ind) for powspec in powspecs]
@@ -70,7 +58,10 @@ function get_peak_freq(powspecs::Vector, freq_min, freq_max)
     ind = argmax(mean_power)
 
     return powspecs[1].freq[freq_ind][ind], NaN64
-    # return mean_peak_freq, std_peak_freq
+end
+
+function get_freq_inds(freq, freq_min, freq_max)
+    return findall(x -> x > freq_min && x < freq_max, freq)
 end
 
 function get_inds(params_str::Vector{String}, pattern::Vector{String})
@@ -112,7 +103,7 @@ function create_problem(size, T)
 
     @named msn = Striatum_MSN_Adam(namespace=global_ns, N_inhib=N_MSN, I_bg=1.153064742988923*ones(N_MSN), σ=0.17256774881503584)
     @named fsi = Striatum_FSI_Adam(namespace=global_ns, N_inhib=N_FSI, I_bg=6.196201739395473*ones(N_FSI), σ=0.9548801242101033)
-    @named gpe = GPe_Adam(namespace=global_ns, N_inhib=N_GPe, I_bg=3.272893843123162, σ=1.0959782801317943)
+    @named gpe = GPe_Adam(namespace=global_ns, N_inhib=N_GPe, I_bg=3.272893843123162*ones(N_GPe), σ=1.0959782801317943)
     @named stn = STN_Adam(namespace=global_ns, N_exci=N_STN, I_bg=2.2010777359961953*ones(N_STN), σ=2.9158528502583545)
 
     g = MetaDiGraph()
@@ -131,37 +122,39 @@ function create_problem(size, T)
 
     tspan = (0.0, T)
     @info "Creating SDEProblem"
-    prob = SDEProblem(sys, [], tspan, [])
+    prob = SDEProblem{true}(sys, [], tspan, [])
 
     return prob, sys, msn, fsi, gpe, stn
 end
 
-function build_pop_param_indices(params_str::Vector{String}, populations)
-    indices = NamedTuple{keys(populations)}(map(pop -> begin
-        pop_str = string(pop.name)
+function build_pop_param_indices(params_str::Vector{String},
+                                 populations::Tuple{Vararg{PopConfig}})
+    idxs = map(popconfig -> begin
+        pop_str = string(popconfig.name)
         I_bg_inds = get_inds(params_str, ["I_bg", pop_str])
-        σ_inds   = get_inds(params_str, ["σ", pop_str])
+        σ_inds    = get_inds(params_str, ["σ", pop_str])
         if isempty(I_bg_inds)
-            error("No I_bg parameters found for population $(pop.name). Check naming.")
+            error("No I_bg parameters found for population $(popconfig.name). Check naming.")
         end
         if isempty(σ_inds)
-            error("No σ parameters found for population $(pop.name). Check naming.")
+            error("No σ parameters found for population $(popconfig.name). Check naming.")
         end
         (I_bg_ind = I_bg_inds, σ_ind = σ_inds)
-    end, populations))
-    return indices
+    end, populations)
+
+    return collect(idxs)
 end
+
 
 function remake_prob!(prob, args, p)
     @unpack populations, pop_params, get_ps, set_ps! = args
     ps_new = get_ps(prob)
 
     offset = 1
-    for (popname, popconfig) in pairs(populations)
+    for (i, popconfig) in enumerate(populations)
         if popconfig.tunable
-            # This population is tuned: assign parameters from p
-            I_bg_inds = pop_params[popname].I_bg_ind
-            σ_inds    = pop_params[popname].σ_ind
+            I_bg_inds = pop_params[i][:I_bg_ind]
+            σ_inds    = pop_params[i][:σ_ind]
 
             ps_new[I_bg_inds] .= abs(p[offset])
             offset += 1
@@ -171,44 +164,48 @@ function remake_prob!(prob, args, p)
     end
 
     set_ps!(prob, ps_new)
+    return nothing
 end
 
 function loss(p, args)
-    @unpack dt, saveat, solver, seed, other_diffeq_kwargs, threshold, transient, populations, prob, pop_params = args
-    @unpack trajectories, ensemblealg = args
+    @unpack dt, saveat, solver, seed, other_diffeq_kwargs, threshold, transient = args
+    @unpack populations, prob, pop_params, trajectories, ensemblealg = args
     Random.seed!(seed)
+
+    # Update prob in-place
     remake_prob!(prob, args, p)
 
     ens_prob = EnsembleProblem(prob)
-    sol = solve(ens_prob, solver, ensemblealg, trajectories=trajectories, dt=dt, saveat=saveat; other_diffeq_kwargs...)
+    sol = solve(ens_prob, solver, ensemblealg;
+                trajectories=trajectories,
+                dt=dt,
+                saveat=saveat,
+                other_diffeq_kwargs...)
 
     total_err = 0.0
 
     # Compute firing rates and frequencies
-    for (popname, popconfig) in pairs(populations)
+    for popconfig in populations
         if popconfig.firing_rate_target !== nothing
-            fr_res = firing_rate(popconfig.blox, sol, threshold=threshold, transient=transient, scheduler=:dynamic)
-            fr, fr_std = fr_res
+            fr, fr_std = firing_rate(popconfig.blox, sol;
+                                     threshold=threshold,
+                                     transient=transient,
+                                     scheduler=:dynamic)
             err_fr = (fr[1] - popconfig.firing_rate_target)^2 * popconfig.firing_rate_weight
             total_err += err_fr
-            @info "[$popname] FR = $(fr[1]), FR std = $(fr_std[1]), FR Error = $err_fr"
+            @info "[$(popconfig.name)] FR = $(fr[1]), FR std = $(fr_std[1]), FR Error = $err_fr"
         end
 
         if popconfig.freq_target !== nothing
-            powspecs = powerspectrum(popconfig.blox, sol, popconfig.freq_aggregate_state, method=welch_pgram, window=hamming)
-
-            # peak_freqs = Float64[]
-            # for powspec in powspecs
-            #     peak_freq = get_peak_freq(powspec, popconfig.freq_min, popconfig.freq_max)
-            #     @show peak_freq
-            #     push!(peak_freqs, peak_freq)
-            # end
-            # @show mean(peak_freqs)
-
+            powspecs = powerspectrum(popconfig.blox, sol,
+                                     popconfig.freq_aggregate_state;
+                                     method=welch_pgram,
+                                     window=hamming)
             peak_freq, peak_freq_std = get_peak_freq(powspecs, popconfig.freq_min, popconfig.freq_max)
+
             err_freq = abs(peak_freq - popconfig.freq_target) * popconfig.freq_weight
             total_err += err_freq
-            @info "[$popname] Peak freq = $peak_freq, Freq std = $peak_freq_std, Freq Error = $err_freq"
+            @info "[$(popconfig.name)] Peak freq = $peak_freq, Freq std = $peak_freq_std, Freq Error = $err_freq"
         end
     end
 
@@ -216,7 +213,7 @@ function loss(p, args)
 end
 
 function run_optimization()
-    prob, sys, msn, fsi, gpe, stn = create_problem(1.0, 5500.0)
+    prob, sys, msn, fsi, gpe, stn = create_problem(0.1, 5500.0)
     params_str = string.(tunable_parameters(sys))
     get_ps = getp(prob, tunable_parameters(sys))
     set_ps! = setp(prob, tunable_parameters(sys))
@@ -225,9 +222,9 @@ function run_optimization()
 
         ## only MSN
 
-        # msn = PopConfig(
-        #     :msn,
-        #     msn,
+        # PopConfig(
+        #     name=:msn,
+        #     blox=msn,
         #     firing_rate_target=1.46,
         #     firing_rate_weight=3.0,
         #     freq_target=17.53,
@@ -240,16 +237,16 @@ function run_optimization()
 
         ## MSN - FSI
 
-        # msn = PopConfig(
-        #     :msn,
-        #     msn,
+        # PopConfig(
+        #     name=:msn,
+        #     blox=msn,
         #     firing_rate_target=1.88,
         #     firing_rate_weight=3.0,
         #     tunable=false
         # ),
-        # fsi = PopConfig(
-        #     :fsi,
-        #     fsi,
+        # PopConfig(
+        #     name=:fsi,
+        #     blox=fsi,
         #     firing_rate_target=10.66,
         #     firing_rate_weight=3.0,
         #     freq_target=58.63,
@@ -262,21 +259,21 @@ function run_optimization()
 
         ## full model in baseline conditions
 
-        msn = PopConfig(
-            :msn,
-            msn,
+        PopConfig(
+            name=:msn,
+            blox=msn,
             firing_rate_target=1.21,
             firing_rate_weight=60.0,
-            freq_target=10,
+            freq_target=10.0,
             freq_weight=0.5,   
             freq_min=3.0,
             freq_max=20.0,
             freq_aggregate_state="I_syn_msn",
             tunable=false
         ),
-        fsi = PopConfig(
-            :fsi,
-            fsi,
+        PopConfig(
+            name=:fsi,
+            blox=fsi,
             firing_rate_target=13.00,
             firing_rate_weight=10.0,
             freq_target=61.14,
@@ -286,9 +283,9 @@ function run_optimization()
             freq_aggregate_state="I_syn_fsi",
             tunable=false
         ),
-        gpe = PopConfig(
-            :gpe,
-            gpe,
+        PopConfig(
+            name=:gpe,
+            blox=gpe,
             freq_target=85.0,
             freq_weight=0.5,
             freq_min=40.0,
@@ -296,18 +293,18 @@ function run_optimization()
             freq_aggregate_state="V",
             tunable=true
         ),
-        stn = PopConfig(
-            :stn,
-            stn,
+        PopConfig(
+            name=:stn,
+            blox=stn,
             tunable=true
         ),
 
 
         ## full model PD conditions
 
-        # msn = PopConfig(
-        #     :msn,
-        #     msn,
+        # PopConfig(
+        #     name=:msn,
+        #     blox=msn,
         #     firing_rate_target=4.85,
         #     firing_rate_weight=60.0,
         #     freq_target=15.80,
@@ -317,9 +314,9 @@ function run_optimization()
         #     freq_aggregate_state="I_syn_msn",
         #     tunable=true
         # ),
-        # fsi = PopConfig(
-        #     :fsi,
-        #     fsi,
+        # PopConfig(
+        #     name=:fsi,
+        #     blox=fsi,
         #     freq_target=15.80,
         #     freq_weight=1.0,
         #     freq_min=3.0,
@@ -327,9 +324,9 @@ function run_optimization()
         #     freq_aggregate_state="I_syn_fsi",
         #     tunable=false
         # ),
-        # gpe = PopConfig(
-        #     :gpe,
-        #     gpe,
+        # PopConfig(
+        #     name=:gpe,
+        #     blox=gpe,
         #     firing_rate_target=50.0,
         #     firing_rate_weight=1.0,
         #     freq_target=15.80,
@@ -339,12 +336,13 @@ function run_optimization()
         #     freq_aggregate_state="V",
         #     tunable=false
         # ),
-        # stn = PopConfig(
-        #     :stn,
-        #     stn,
+        # PopConfig(
+        #     name=:stn,
+        #     blox=stn,
         #     freq_target=15.80,
         #     freq_weight=1.0,
         #     freq_min=3.0,
+        #     freq_aggregate_state="V",
         #     freq_max=50.0,
         #     firing_rate_target=42.30,
         #     firing_rate_weight=1.0,
@@ -354,19 +352,21 @@ function run_optimization()
 
     pop_params = build_pop_param_indices(params_str, populations)
 
-    args = (
+    other_diffeq_kwargs = (abstol=1e-3, reltol=1e-6, maxiters=1e10)
+    solver =  RKMil()
+    args = Args{typeof(get_ps), typeof(set_ps!), typeof(populations), typeof(prob), typeof(solver), typeof(other_diffeq_kwargs), typeof(populations), typeof(pop_params)}(
         dt = 0.05,
         saveat = 0.05,
-        solver = RKMil(),
+        solver = solver,
         seed = 1234,
-        other_diffeq_kwargs = (abstol=1e-3, reltol=1e-6, maxiters=1e10),
+        other_diffeq_kwargs = other_diffeq_kwargs,
         ensemblealg = EnsembleThreads(),
         trajectories = 3,
-        threshold = -35,
-        transient = 200,
-        populations = populations,
-        pop_params = pop_params,
-        prob = prob,
+        threshold = -35.0,
+        transient = 200.0,
+        populations = populations,  # the tuple
+        pop_params = pop_params,    # the vector of indices
+        prob = prob,                # the SDEProblem
         get_ps = get_ps,
         set_ps! = set_ps!
     )
@@ -375,15 +375,16 @@ function run_optimization()
         @info "Iteration: $(state.iter)"
         @info "Parameters: $(state.u)"
         @info "Loss: $l"
+        println("\n")
         return false
     end
 
     # Starting guess
-    p = [3.272893843123162, 1.0959782801317943, 2.2010777359961953, 2.9158528502583545]
+    u = [3.272893843123162, 1.0959782801317943, 2.2010777359961953, 2.9158528502583545]
 
     # Solve optimization
     result = solve(
-        Optimization.OptimizationProblem(loss, p, args),
+        Optimization.OptimizationProblem(loss, u, args),
         Optim.NelderMead();
         callback=callback,
         maxiters=200
