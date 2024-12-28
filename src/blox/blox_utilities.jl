@@ -469,7 +469,8 @@ function firing_rate(
         1000.0 * (nnz(spikes[idx_start:idx_end, :]) / N_neurons) / win_size
     end
 
-    return fr
+    T = eltype(sol)
+    return fr::Vector{T}
 end
 
 function firing_rate(
