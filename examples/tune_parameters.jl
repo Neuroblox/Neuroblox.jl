@@ -5,10 +5,68 @@ using Statistics
 using Optimization
 using OptimizationOptimJL
 using ModelingToolkit: setp, getp
-using Unrolled
 
-# Abstract type for all metrics
 abstract type AbstractPopulationMetric end
+
+struct Population{B,N,MT<:NTuple{N,AbstractPopulationMetric}}
+    name::Symbol
+    blox::B
+    metrics::MT
+    tuning::Dict{String, Vector{Int}}
+    tunable::Bool
+end
+
+function Population(
+    name,
+    blox;
+    frm=nothing,
+    freqm=nothing,
+    tuning_params=String[],
+    prob=nothing,
+    tunable::Bool=false
+)
+    mt = ()
+    if frm !== nothing
+        fr_target, fr_weight, fr_threshold, fr_transient = frm
+        mt = (FiringRateMetric(fr_target, fr_weight, fr_threshold, fr_transient),)
+    end
+    if freqm !== nothing
+        freq_target, freq_weight, fmin, fmax, agg = freqm
+        freq = FrequencyMetric(freq_target, freq_weight, fmin, fmax, agg)
+        mt = tuple(mt..., freq)
+    end
+
+    tspec = isempty(tuning_params) || prob === nothing ? 
+        Dict() : build_tuning_spec(prob, string(name), tuning_params)
+
+    local N = length(mt)
+    return Population{typeof(blox), N, typeof(mt)}(name, blox, mt, tspec, tunable)
+end
+
+# Find indexes of the parameters to be tuned
+function build_tuning_spec(prob, pop_name::String, param_names::Vector{String})
+    paramlist = string.(tunable_parameters(prob.f.sys)) 
+    param_map = Dict{String,Vector{Int}}()
+    for pname in param_names
+        inds = findall(str -> occursin(pname, str) && occursin(pop_name, str),
+                       paramlist)
+        param_map[pname] = inds
+    end
+    return param_map
+end
+
+struct OptimizationConfig{P,PopT,GetterT,SetterT,SolverT,EnsembleAlgT,dtT,DiffeqkargsT}
+    prob::P
+    populations::PopT
+    get_ps::GetterT
+    set_ps!::SetterT
+    solver::SolverT
+    ensemblealg::EnsembleAlgT
+    dt::dtT
+    other_diffeq_kwargs::DiffeqkargsT
+    trajectories::Int
+    seed::Int
+end
 
 ###########
 # Metrics #
@@ -27,11 +85,7 @@ struct FrequencyMetric{T} <: AbstractPopulationMetric
     aggregate_state::String
 end
 
-#######################
-# Metric Computations #
-#######################
-
-function compute_metric(m::FiringRateMetric, pop, sol; logging::Bool=false)
+function compute_error(m::FiringRateMetric, pop, sol; logging::Bool=false)
     fr, fr_std = firing_rate(pop.blox, sol;
                              threshold=m.threshold,
                              transient=m.transient,
@@ -45,7 +99,7 @@ function compute_metric(m::FiringRateMetric, pop, sol; logging::Bool=false)
     return val
 end
 
-function compute_metric(m::FrequencyMetric, pop, sol; logging::Bool=false)
+function compute_error(m::FrequencyMetric, pop, sol; logging::Bool=false)
     powspecs = powerspectrum(pop.blox, sol, m.aggregate_state;
                              method=welch_pgram,
                              window=hamming)
@@ -85,93 +139,55 @@ function get_freq_inds(freq, freq_min, freq_max)
     return findall(x -> x > freq_min && x < freq_max, freq)
 end
 
-struct TuningSpec
-    param_map::Dict{String, Vector{Int}}
-end
-
-# Find indexes of the parameters to be tuned
-function build_tuning_spec(prob, pop_name::String, param_names::Vector{String})
-    paramlist = string.(tunable_parameters(prob.f.sys)) 
-    param_map = Dict{String,Vector{Int}}()
-    for pname in param_names
-        inds = findall(str -> occursin(pname, str) && occursin(pop_name, str),
-                       paramlist)
-        param_map[pname] = inds
+# Mason's unroll macro, from https://github.com/Neuroblox/GraphDynamics.jl/blob/6c0bbb81abf1981c52a4605dc32d7073fea2ff0d/src/utils.jl#L10
+macro unroll(N::Int, loop)
+    Base.isexpr(loop, :for) || error("only works on for loops")
+    Base.isexpr(loop.args[1], :(=)) || error("This loop pattern isn't supported")
+    val, itr = esc.(loop.args[1].args)
+    body = esc(loop.args[2])
+    @gensym loopend
+    label = :(@label $loopend)
+    goto = :(@goto $loopend)
+    out = Expr(:block, :(itr = $itr), :(next = iterate(itr)))
+    unrolled = map(1:N) do _
+        quote
+            isnothing(next) && @goto loopend
+            $val, state = next
+            $body
+            next = iterate(itr, state)
+        end
     end
-    return TuningSpec(param_map)
+    append!(out.args, unrolled)
+    remainder = quote
+        while !isnothing(next)
+            $val, state = next
+            $body
+            next = iterate(itr, state)
+        end
+        @label loopend
+    end
+    push!(out.args, remainder)
+    out
 end
 
-################
-#  Populations #
-################
-
-struct Population{B,N,MT<:NTuple{N,AbstractPopulationMetric}}
-    name::Symbol
-    blox::B
-    metrics::MT
-    tuning::TuningSpec
-    tunable::Bool
-end
-
-"""
-    compute_metrics(pop, sol; logging=false)
-
-Sum the contributions of all metrics in `pop.metrics`, optionally logging.
-"""
-function compute_metrics(pop::Population, sol; logging::Bool=false)
+function compute_errors(pop::Population, sol; logging::Bool=false)
     total = zero(eltype(sol))
     for m in pop.metrics
-        total += compute_metric(m, pop, sol; logging=logging)
+        total += compute_error(m, pop, sol; logging=logging)
     end
     return total
 end
 
-function Population(
-    name,
-    blox;
-    frm=nothing,
-    freqm=nothing,
-    tuning_params=String[],
-    prob=nothing,
-    tunable::Bool=false
-)
-    mt = ()
-    if frm !== nothing
-        fr_target, fr_weight, fr_threshold, fr_transient = frm
-        mt = (FiringRateMetric(fr_target, fr_weight, fr_threshold, fr_transient),)
-    end
-    if freqm !== nothing
-        freq_target, freq_weight, fmin, fmax, agg = freqm
-        freq = FrequencyMetric(freq_target, freq_weight, fmin, fmax, agg)
-        mt = tuple(mt..., freq)
-    end
-
-    tspec = isempty(tuning_params) || prob === nothing ? 
-        TuningSpec(Dict()) : 
-        build_tuning_spec(prob, string(name), tuning_params)
-
-    local N = length(mt)
-    return Population{typeof(blox), N, typeof(mt)}(name, blox, mt, tspec, tunable)
-end
-
-"""
-    update_parameters!(prob, populations, p, get_ps, set_ps!)
-
-Update the `prob` in place, assigning the parameter values from `p` 
-according to each population's `tuning` spec.
-"""
 function update_parameters!(prob, populations, p, get_ps, set_ps!)
     ps_new = get_ps(prob)
     offset = 1
 
-    for pop in populations
-        if !pop.tunable
-            continue
-        end
-
-        for (param_name, inds) in pop.tuning.param_map
-            ps_new[inds] .= abs.(p[offset]) 
-            offset += 1
+    @unroll 16 for pop in populations
+        if pop.tunable
+            for (param_name, inds) in pop.tuning
+                ps_new[inds] .= abs.(p[offset]) 
+                offset += 1
+            end
         end
     end
 
@@ -179,44 +195,21 @@ function update_parameters!(prob, populations, p, get_ps, set_ps!)
     return nothing
 end
 
-#############################
-# OptimizationConfig + Loss #
-#############################
-
-struct OptimizationConfig{P,PopT,GetterT,SetterT,SolverT,EnsembleAlgT,dtT,DiffeqkargsT}
-    prob::P
-    populations::PopT
-    get_ps::GetterT
-    set_ps!::SetterT
-    solver::SolverT
-    ensemblealg::EnsembleAlgT
-    dt::dtT
-    other_diffeq_kwargs::DiffeqkargsT
-    trajectories::Int
-    seed::Int
-end
-
-@unroll function sum_metrics_unrolled(pops, sol; logging=false)
+function sum_errors(pops, sol; logging=false)
     total_err = zero(eltype(sol))
-    for pop in pops
-        total_err += compute_metrics(pop, sol; logging=logging)
+    @unroll 16 for pop in pops
+        total_err += compute_errors(pop, sol; logging=logging)
     end
     return total_err
 end
 
-"""
-    loss(p, config::OptimizationConfig; logging=false)
-
-Update parameters, solve the ensemble problem, 
-compute total error, and optionally log each metric's value.
-"""
 function loss(p, config::OptimizationConfig; logging::Bool=false)
     # Set random seed
     Random.seed!(config.seed)
 
     # Update prob in-place
     update_parameters!(config.prob, config.populations, p, config.get_ps, config.set_ps!)
-
+    
     # Solve
     ens_prob = EnsembleProblem(config.prob)
     sol = solve(ens_prob, config.solver, config.ensemblealg;
@@ -226,7 +219,7 @@ function loss(p, config::OptimizationConfig; logging::Bool=false)
                 config.other_diffeq_kwargs...)
 
     # Sum errors from each population
-    total_err = sum_metrics_unrolled(config.populations, sol; logging=logging)
+    total_err = sum_errors(config.populations, sol; logging=logging)
     return total_err
 end
 
@@ -358,7 +351,8 @@ config = OptimizationConfig(
     1234             
 )
 
-u = [3.272893843123162, 1.0959782801317943, 2.2010777359961953, 2.9158528502583545]
+p0 = [3.272893843123162, 1.0959782801317943, 2.2010777359961953, 2.9158528502583545]
+
 # optprob = Optimization.OptimizationProblem(loss, p0, config)
 optprob = Optimization.OptimizationProblem((p, config)->loss(p, config; logging=true), p0, config)
 callback = function (state, l)
