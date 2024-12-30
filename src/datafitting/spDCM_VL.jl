@@ -600,7 +600,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     if t > exp(16)
         dθ = - inv(dFdθθ) * dFdθ     # -inv(dfdx)*f
     else
-        dθ = exponential!(t * dFdθθ) * inv(dFdθθ) * dFdθ - inv(dFdθθ) * dFdθ     # (expm(dfdx*t) - I)*inv(dfdx)*f
+        dθ = exp(t * dFdθθ) * inv(dFdθθ) * dFdθ - inv(dFdθθ) * dFdθ     # (expm(dfdx*t) - I)*inv(dfdx)*f
     end
 
     ϵ_θ += dθ
