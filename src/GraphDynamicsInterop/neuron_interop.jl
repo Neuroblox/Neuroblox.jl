@@ -146,7 +146,6 @@ function define_neurons()
 
             
             ev_condition = Expr(:call, cb_eq.f, toexpr.(r.(cb_eq.arguments))...)
-            dump(ev_condition)
             cb_affects = map(r, cb.affects)
             
             
