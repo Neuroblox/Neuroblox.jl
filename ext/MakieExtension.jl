@@ -241,8 +241,6 @@ function Makie.plot!(p::FRPlot)
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
     ax.title = p.title[]
-
-    hideydecorations!(ax)
     
     fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[], threshold = p.threshold[])
 

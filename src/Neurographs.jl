@@ -127,10 +127,10 @@ end
 
 generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
 
-function generate_discrete_callbacks(blox::PoissonSpikeTrain, bc::Connector; t_block = missing)
+function generate_discrete_callbacks(blox::AbstractSpikeSource, bc::Connector; t_block = missing)
     sa = spike_affects(bc)
     name_blox = namespaced_nameof(blox)
-
+  
     if haskey(sa, name_blox)
         eqs = sa[name_blox]
 
@@ -143,7 +143,7 @@ function generate_discrete_callbacks(blox::PoissonSpikeTrain, bc::Connector; t_b
             t_spikes = generate_spike_times(blox)
             t_spikes => to_vector(eq)
         end
-
+        
         return cb
     end
 end

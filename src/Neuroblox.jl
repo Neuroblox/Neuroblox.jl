@@ -67,8 +67,6 @@ abstract type StimulusBlox <: AbstractBlox end
 abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
 abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
 
-const Neuron = AbstractNeuronBlox
-
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 # abstract type JansenRitCBlox <: NeuralMassBlox end
@@ -123,6 +121,9 @@ include("blox/blox_utilities.jl")
 include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
 include("Neurographs.jl")
 include("adjacency.jl")
+
+const Neuron = AbstractNeuronBlox
+const SpikeSource = AbstractSpikeSource
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -233,7 +234,8 @@ export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain, DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, ExternalInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
+export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
 export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
