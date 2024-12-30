@@ -1,3 +1,13 @@
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
+    # TO DO : Some of the fields below besides `system` and `namespace` 
+    # are redundant and we should clean them up. 
+    if (name === :system) || (name === :namespace) || (name === :params)
+        return getfield(b, name)
+    else
+        return Base.getproperty(Neuroblox.get_namespaced_sys(b), name)
+    end
+end
+
 """
     function paramscoping(;tunable=true, kwargs...)
     
@@ -80,18 +90,38 @@ function get_discrete_parts(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_discrete_parts(x), vcat, b.parts)
 end
 
-get_system(blox) = blox.odesystem
+get_system(blox) = blox.system
 get_system(sys::AbstractODESystem) = sys
-get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
+get_system(stim::AbstractSpikeSource) = System(Equation[], t, [], []; name=stim.name)
+
+function system(blox::CompositeBlox; simplify=true)
+    sys = get_system(blox)
+    eqs = get_input_equations(blox; namespaced=false)
+
+    csys = System(vcat(equations(sys), eqs), t, unknowns(sys), parameters(sys); name = nameof(sys))
+
+    return simplify ? structural_simplify(csys) : csys
+end
+
+
+function system(blox::AbstractBlox; simplify=true, kwargs...)
+    sys = get_system(blox)
+    eqs = get_input_equations(blox; namespaced=true)
+    csys =  compose(System(eqs, t, [], []; name=namespaced_nameof(blox), kwargs...), sys)
+
+    return simplify ? structural_simplify(csys) : csys
+end
 
 function get_namespaced_sys(blox)
     sys = get_system(blox)
+
     System(
         equations(sys), 
         only(independent_variables(sys)), 
         unknowns(sys), 
         parameters(sys); 
-        name = namespaced_nameof(blox)
+        name = namespaced_nameof(blox),
+        discrete_events = discrete_events(sys)
     ) 
 end
 
@@ -128,6 +158,28 @@ function find_eq(eqs::Union{AbstractVector{<:Equation}, Equation}, lhs)
     end
 end
 
+function ModelingToolkit.outputs(blox::AbstractBlox; namespaced=false)
+    sys = get_namespaced_sys(blox)
+    
+    # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
+    return namespaced ? Num.(namespace_expr.(ModelingToolkit.outputs(sys), Ref(sys))) : Num.(ModelingToolkit.outputs(sys))
+end 
+
+function ModelingToolkit.inputs(blox::AbstractBlox; namespaced=false)
+    sys = get_namespaced_sys(blox)
+    
+    # Wrap in Num for convenience when checking `isa Num` to resolve delay or no delay connection.
+    return namespaced ? Num.(namespace_expr.(ModelingToolkit.inputs(sys), Ref(sys))) : Num.(ModelingToolkit.inputs(sys))
+end 
+
+ModelingToolkit.equations(blox::AbstractBlox) = ModelingToolkit.equations(get_namespaced_sys(blox))
+
+ModelingToolkit.discrete_events(blox::AbstractBlox) = ModelingToolkit.discrete_events(get_namespaced_sys(blox))
+
+ModelingToolkit.unknowns(blox::AbstractBlox) = ModelingToolkit.unknowns(get_namespaced_sys(blox))
+
+ModelingToolkit.parameters(blox::AbstractBlox) = ModelingToolkit.parameters(get_namespaced_sys(blox))
+
 """
     Returns the equations for all input variables of a system, 
     assuming they have a form like : `sys.input_variable ~ ...`
@@ -141,7 +193,7 @@ end
     which holds a `Connector` object with all relevant connections 
     from lower levels and this level.
 """
-function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
+function get_input_equations(blox::Union{AbstractBlox, ObserverBlox}; namespaced=true)
     sys = get_system(blox)
     sys_eqs = equations(sys)
 
@@ -149,12 +201,18 @@ function get_input_equations(blox::Union{AbstractBlox, ObserverBlox})
     filter!(inp -> isnothing(find_eq(sys_eqs, inp)), inps)
 
     if !isempty(inps)
-        eqs = map(inps) do inp
-            namespace_equation(
-                inp ~ 0, 
-                sys,
-                namespaced_name(inner_namespaceof(blox), nameof(blox))
-            ) 
+        eqs = if namespaced
+            map(inps) do inp
+                namespace_equation(
+                    inp ~ 0, 
+                    sys,
+                    namespaced_name(inner_namespaceof(blox), nameof(blox))
+                ) 
+            end
+        else
+            map(inps) do inp
+                inp ~ 0
+            end
         end
 
         return eqs
@@ -246,7 +304,7 @@ function get_learning_rule(kwargs, name_src, name_dest)
 end
 
 function get_weights(agent::Agent, blox_out, blox_in)
-    ps = parameters(agent.odesystem)
+    ps = parameters(agent.system)
     pv = agent.problem.p
     map_idxs = Int.(ModelingToolkit.varmap_to_vars([ps[i] => i for i in eachindex(ps)], ps))
 
@@ -357,8 +415,14 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
 
      # Logic based on connection rule type
      if isequal(cr, "basic")
-        x = namespace_expr(bloxout.output, sys_out)
-        rhs = x*w
+        outs = outputs(bloxout; namespaced=true)
+        if !isempty(outs)
+            x = first(outs)
+            rhs = x*w
+            length(outs) > 1 && @warn "Blox $name_blox1 has more than one outputs. Defaulting to output=$x"
+        else
+            error("Blox $name_blox1 has no outputs. Please assign [output=true] to the variables you want to use as outputs or write a dispatch for connection_equations.")
+        end
     elseif isequal(cr, "psp")
         rhs = w*sys_out.G*(sys_out.E_syn - sys_in.V)
     else
@@ -402,7 +466,7 @@ replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 function find_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}    
     spike_idxs = argmaxima(x)
     peakheights!(spike_idxs, x[spike_idxs]; minheight = threshold)
-
+    
     spikes = sparsevec(spike_idxs, ones(length(spike_idxs)), length(x))
 
     return spikes
@@ -431,7 +495,6 @@ function detect_spikes(
     end
     
     V = voltage_timeseries(blox, sol; ts)
-    
     spikes = find_spikes(V; threshold = thrs_value - tolerance)
 
     return spikes

@@ -4,7 +4,7 @@ using CairoMakie # due to a bug in CairoMakie, we need to use CairoMakie@0.11
 
 
 @named msn = Striatum_MSN_Adam(I_bg = 1.172*ones(100), σ = 0.11);
-sys = structural_simplify(msn.odesystem)
+sys = structural_simplify(msn.system)
 prob = SDEProblem(sys, [], (0.0, 5500.0), [])
 sol = solve(prob, RKMil(); dt=0.05, saveat=0.05)
 

@@ -298,7 +298,7 @@ begin
 end
 
 # ╔═╡ 84410723-dcb4-46eb-bac4-871aac88cf8c
-#construct odesystems for each neuron and then construct the composite odesystem for entire network using function synaptic_network() 
+#construct odesystems for each neuron and then construct the composite system for entire network using function synaptic_network() 
 begin
 
 	nrn_network=[]
@@ -328,7 +328,7 @@ prob = ODEProblem(syn_net, [], (0, simtime));
 sol = solve(prob,Vern7(),saveat = 0.1)#,saveat = 0.1,reltol=1e-4,abstol=1e-4);
 
 # ╔═╡ 263b26c2-b19b-4889-8e8c-fa3aef952649
-# this extracts indices for input current amplitudes I_in and for weight matrix elements adj from the parameters of the entire odesystem. These are usefull for
+# this extracts indices for input current amplitudes I_in and for weight matrix elements adj from the parameters of the entire system. These are usefull for
 #changing the input currents and weights of already existing connections by remaking #the odeprob 
 begin
 indexof(sym,syms) = findfirst(isequal(sym),syms)

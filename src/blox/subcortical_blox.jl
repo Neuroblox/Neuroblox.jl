@@ -6,7 +6,7 @@
 struct Striatum <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
 
@@ -83,7 +83,7 @@ end
 struct GPi <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
 
@@ -139,7 +139,7 @@ end
 struct GPe <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
 
@@ -195,7 +195,7 @@ end
 struct Thalamus <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
 
@@ -250,7 +250,7 @@ end
 struct STN <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
 

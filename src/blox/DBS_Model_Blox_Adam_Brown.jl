@@ -54,7 +54,7 @@ end
 struct Striatum_MSN_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -124,7 +124,7 @@ end
 struct Striatum_FSI_Adam  <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -205,7 +205,7 @@ end
 struct GPe_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -274,7 +274,7 @@ end
 struct STN_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix

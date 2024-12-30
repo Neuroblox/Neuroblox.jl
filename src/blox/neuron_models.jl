@@ -2,8 +2,7 @@ abstract type AbstractInhNeuronBlox <: AbstractNeuronBlox end
 abstract type AbstractExciNeuronBlox <: AbstractNeuronBlox end
 
 struct HHNeuronExciBlox <: AbstractExciNeuronBlox
-    odesystem
-    output
+    system
     namespace
 
 	function HHNeuronExciBlox(;
@@ -28,6 +27,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			I_asc(t)
 			[input=true]
 			G(t)=0.0 
+            [output=true]
 			z(t)=0.0
 			Gₛₜₚ(t)=0.0 
             spikes_cumulative(t)=0.0
@@ -84,12 +84,12 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			name = Symbol(name)
 			)
 
-		new(sys, spikes, namespace)
+		new(sys, namespace)
 	end
 end	
 
 struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 	function HHNeuronInhibBlox(;
         name, 
@@ -113,7 +113,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			I_in(t)
 			[input=true]
             G(t)=0.0 
-			[output = true] 
+			[output=true] 
 			z(t)=0.0
             spikes_cumulative(t)=0.0
             spikes_window(t)=0.0
@@ -168,7 +168,7 @@ end
 #These neurons were used in Adam et. al 2022 model for DBS
 
 struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_MSN_Adam_Blox(;
@@ -263,7 +263,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 end	
 
 struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_FSI_Adam_Blox(;
@@ -296,7 +296,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			I_asc(t)
 			[input=true]
 			G(t)=0.0 
-			[output = true] 
+			[output=true] 
 			Gₛ(t)=0.0 
 			[output = true] 
 
@@ -362,7 +362,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 end	
 
 struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronExci_STN_Adam_Blox(;
@@ -445,7 +445,7 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 end	
 
 struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
 	function HHNeuronInhib_GPe_Adam_Blox(;
@@ -560,12 +560,10 @@ References:
 # I_in = [-2.5, 2.5] μA
 # Remember: synaptic weights need to be in μA/mV, so they're very small!
 struct IFNeuron <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
+    params
+    system
     namespace
+
 	function IFNeuron(;name,
 					   namespace=nothing, 
 					   C=1.0,
@@ -574,11 +572,12 @@ struct IFNeuron <: AbstractNeuronBlox
 					   I_in=0)
 		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
 		C, θ, Eₘ, I_in = p
-		sts = @variables V(t) = -70.00 jcn(t) [input=true]
+		sts = @variables V(t)=-70.00 [output=true] jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
 		ev = [V~θ] => [V~Eₘ]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[1], sts[2], sts[1], sys, namespace)
+
+		new(p, sys, namespace)
 	end
 end
 
@@ -619,12 +618,10 @@ References:
 # G_syn = [0.001, 0.01] μA/mV (bastardized μS - off by factor of 1000)
 # I_in = [-2.5, 2.5] μA (you will cook real neurons with these currents)
 struct LIFNeuron <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
+    params
+    system
     namespace
+
 	function LIFNeuron(;name,
 					   namespace=nothing, 
 					   C=1.0,
@@ -637,36 +634,20 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   I_in=0.0)
 		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
 		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
-		sts = @variables V(t) = -70.00 G(t)=0.0 jcn(t) [input=true]
+		sts = @variables V(t)=-70.00 G(t)=0.0 [output=true] jcn(t) [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G,
 			  ]
 
 		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[2], sts[3], sts[1], sys, namespace)
+
+		new(p, sys, namespace)
 	end
 end
 
-function LIF_spike_affect!(integ, u, p, ctx)
-    integ.u[u[1]] = integ.p[p[1]]
-
-    t_refract_end = integ.t + integ.p[p[2]]
-    integ.p[p[3]] = t_refract_end
-
-    integ.p[p[4]] = 1
-
-    SciMLBase.add_tstop!(integ, t_refract_end)
-    
-    c = 1
-    for i in eachindex(u)[2:end]
-        integ.u[u[i]] += integ.p[p[c + 4]]
-        c += 1
-    end
-end
-
 struct LIFInhNeuron <: AbstractInhNeuronBlox
-    odesystem
+    system
     namespace
 
     function LIFInhNeuron(;
@@ -713,7 +694,7 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=-52 S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] jcn_external(t) [input=true]
+        sts = @variables V(t)=-52 [output=true] S_AMPA(t)=0 S_GABA(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] jcn_external(t) [input=true]
         eqs = [
             D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - S_AMPA_ext * g_AMPA_ext * (V - V_E) - S_GABA * g_GABA * (V - V_I) - S_AMPA * g_AMPA * (V - V_E) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
@@ -730,7 +711,7 @@ struct LIFInhNeuron <: AbstractInhNeuronBlox
 end
 
 struct LIFExciNeuron <: AbstractExciNeuronBlox
-    odesystem
+    system
     namespace
 
     function LIFExciNeuron(;
@@ -781,7 +762,7 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
             is_refractory=0
         end
 
-        sts = @variables V(t)=-52 S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
+        sts = @variables V(t)=-52 [output=true] S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
         eqs = [ 
             D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - S_AMPA_ext * g_AMPA_ext * (V - V_E) - S_GABA * g_GABA * (V - V_I) - S_AMPA * g_AMPA * (V - V_E) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
@@ -811,12 +792,10 @@ end
 # Vᵣₑₛ = [-100, -55] mV
 # θ = [0, 50] mV
 struct QIFNeuron <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
+    params
+    system
     namespace
+
 	function QIFNeuron(;name, 
 						namespace=nothing,
 						C=1.0,
@@ -831,14 +810,16 @@ struct QIFNeuron <: AbstractNeuronBlox
 						θ=25.0)
 		p = paramscoping(C=C, Rₘ=Rₘ, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
 		C, Rₘ, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
-		sts = @variables V(t) = -70.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
+		sts = @variables V(t)=-70.0 G(t)=0.0 [output=true] z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ ((V-Eₘ)^2/(Rₘ^2)+I_in+jcn)/C,
 		 		D(G)~(-1/τ₂)*G + z,
 	        	D(z)~(-1/τ₁)*z
 	    	  ]
-   		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
+			  
+		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[2], sts[4], sts[1], sys, namespace)
+
+		new(p, sys, namespace)
 	end
 end
 
@@ -856,12 +837,10 @@ end
 # τ = [1, 10]
 # This is largely the Chen and Campbell Izhikevich implementation, with synaptic dynamics adjusted to reflect the LIF/QIF implementations above
 struct IzhikevichNeuron <: AbstractNeuronBlox
-	params
-    output
-    jcn
-	voltage
-    odesystem
+    params
+    system
     namespace
+
 	function IzhikevichNeuron(;name,
 							   namespace=nothing,
 							   α=0.6215,
@@ -877,7 +856,7 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 							   τ=2.6)
 		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
 		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
-		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 z(t)=0.0 jcn(t) [input=true]
+		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 [output=true] z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
 				D(w) ~ a*(b*V - w),
 				D(G) ~ (-1/τ)*G + z,
@@ -885,6 +864,7 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 			  ]
 		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~sⱼ]
 		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
-		new(p, sts[2], sts[5], sts[1], sys, namespace)
+
+		new(p, sys, namespace)
 	end
 end

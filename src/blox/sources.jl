@@ -1,13 +1,30 @@
+abstract type AbstractSpikeSource <: StimulusBlox end
+
+struct ConstantInput <: StimulusBlox
+    namespace
+    system
+
+    function ConstantInput(; name, namespace=nothing, I=1)
+        @variables u(t) [output=true, description="ext_input"]
+        @parameters I=I
+        eqs = [u ~ I]
+        sys = System(eqs, t, [u], [I]; name=name)
+
+        new(namespace, sys)
+    end
+end
+
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
-    output::Num
-    odesystem::ODESystem
+    system
+
     function ExternalInput(;name, I=1.0, namespace=nothing)
-        sts = @variables u(t) [irreducible=true, description="ext_input"]
+        sts = @variables u(t) [output=true, irreducible=true, description="ext_input"]
         eqs = [u ~ I]
         odesys = System(eqs, t, sts, []; name=name)
-        new(namespace, sts[1], odesys)
+
+        new(namespace, odesys)
     end
 end
 
@@ -19,7 +36,7 @@ mutable struct CosineSource
     offset::Num
     tstart::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function CosineSource(;name, f=18, a=10, phi=0, offset=0, tstart=0)
         @named source = Blocks.Cosine(frequency=f, amplitude=a, phase=phi, 		 
                         offset=offset, start_time=tstart, smooth=false)	
@@ -33,7 +50,7 @@ mutable struct CosineBlox
     frequency::Num
     phase::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function CosineBlox(;name, amplitude=1, frequency=20, phase=0)
 
         sts    = @variables jcn(t) u(t)=0.0
@@ -51,7 +68,7 @@ mutable struct NoisyCosineBlox
     amplitude::Num
     frequency::Num
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
 
         sts    = @variables  u(t)=0.0 jcn(t)
@@ -67,7 +84,7 @@ end
 #PhaseBlox
 mutable struct PhaseBlox
     connector::Num
-    odesystem::ODESystem
+    system::ODESystem
     function PhaseBlox(;name, phase_range=0, phase_data=0) 
 
         data        = convert(Vector{Float64}, phase_data)
@@ -97,7 +114,7 @@ end
 
 mutable struct ImageStimulus <: StimulusBlox
     const namespace
-    const odesystem
+    const system
     const IMG # Matrix[pixels X stimuli]
     const stim_parameters
     const category
@@ -155,7 +172,7 @@ end
 
 increment_pixel!(stim::ImageStimulus) = stim.current_pixel = mod(stim.current_pixel, stim.N_pixels) + 1
 
-struct PoissonSpikeTrain{N} <: StimulusBlox
+struct PoissonSpikeTrain{N} <: AbstractSpikeSource
     name
     namespace
     N_trains
@@ -165,7 +182,7 @@ struct PoissonSpikeTrain{N} <: StimulusBlox
     rng
 end
 
-function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
+function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
     rate = to_vector(rate)
     tspan = to_vector(tspan)
 
@@ -174,7 +191,7 @@ function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{Abstr
     PoissonSpikeTrain(name, namespace, N_trains, rate, tspan, prob_dt, rng)
 end
 
-function PoissonSpikeTrain(rate_sampling::Pair{D, T}, tspan::Tuple; name, namespace, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {T <: Number, D <: UnivariateDistribution}    
+function PoissonSpikeTrain(rate_sampling::NamedTuple, tspan::Tuple; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234))     
     
     PoissonSpikeTrain(name, namespace, N_trains, rate_sampling, tspan, prob_dt, rng)
 end
@@ -207,9 +224,11 @@ function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: AbstractVe
     return t_spikes
 end
 
-function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: Pair{<: UnivariateDistribution}}
+function generate_spike_times(stim::PoissonSpikeTrain{N}) where {N <: NamedTuple}
     # This could also change to a dispatch of Random.rand()
-    dist_rate, dt = stim.rate
+    
+    dist_rate = stim.rate.distribution
+    dt = stim.rate.dt
     rng = stim.rng
     tspan = stim.tspan
     prob_dt = stim.prob_dt
