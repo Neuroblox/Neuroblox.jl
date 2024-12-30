@@ -42,38 +42,38 @@ end
 
 Base.show(io::IO, c::Connector) = print(io, "$(c.source) => $(c.destination) with ", c.equation)
 
-function show_field(v::AbstractVector, title)
+function show_field(io::IO, v::AbstractVector, title)
     if !isempty(v)
-        println(title, " :")
+        println(io, title, " :")
         for val in v
-            println("\t $(val)")
+            println(io, "\t $(val)")
         end
     end
 end
 
-function show_field(d::Dict, title)
+function show_field(io::IO, d::Dict, title)
     if !isempty(d)
-        println(title, " :")
+        println(io, title, " :")
         for (k, v) in d
-            println("\t ", k, " => ", v)
+            println(io, "\t ", k, " => ", v)
         end
     end
 end
 
-show_spike_affect(t::Tuple) = println("\t $(first(t)) += $(last(t))")
+show_spike_affect(io::IO, t::Tuple) = println(io, "\t $(first(t)) += $(last(t))")
 
-show_spike_affect(eq::Equation) = println("\t $eq")
+show_spike_affect(io::IO, eq::Equation) = println(io, "\t $eq")
 
 function Base.show(io::IO, ::MIME"text/plain", c::Connector)
     
-    println("Connections :")
+    println(io, "Connections :")
     for (s, d) in zip(c.source, c.destination)
-        println("\t $(s) => $(d)")
+        println(io, "\t $(s) => $(d)")
     end
 
-    show_field(c.equation, "Equations")
-    show_field(c.weight, "Weights")
-    show_field(c.delay, "Delays")
+    show_field(io, c.equation, "Equations")
+    show_field(io, c.weight, "Weights")
+    show_field(io, c.delay, "Delays")
 
     d = Dict()
     for w in c.weight  
@@ -81,14 +81,14 @@ function Base.show(io::IO, ::MIME"text/plain", c::Connector)
             d[w] = c.learning_rule[w]
         end
     end
-    show_field(d, "Plasticity model")
+    show_field(io, d, "Plasticity model")
 
     for s in c.source
         if haskey(c.spike_affects, s)
-            println("$(s) spikes affect :")
+            println(io, "$(s) spikes affect :")
             sa = c.spike_affects[s]
             for x in sa
-               show_spike_affect(x)
+               show_spike_affect(io, x)
             end
         end
     end
