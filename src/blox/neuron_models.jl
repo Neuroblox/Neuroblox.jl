@@ -796,8 +796,8 @@ struct QIFNeuron <: AbstractNeuronBlox
 	        	D(z)~(-1/τ₁)*z
 	    	  ]
 			  
-		ev = [V~θ] => [V~Vᵣₑₛ,z~G_syn]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V > θ) => [V~Vᵣₑₛ,z~G_syn]
+		sys = ODESystem(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end

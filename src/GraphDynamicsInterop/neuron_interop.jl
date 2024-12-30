@@ -137,9 +137,35 @@ function define_neurons()
                 end
             end
         end
+        if !isempty(get_discrete_events(system)) && T ∉ (:LIFExciNeuron, :LIFInhNeuron)
+            cb = only(collect(get_discrete_events(system))) # currently only support single events
+            cb_eq = r(cb.condition)
+            if cb_eq.f ∉ (<, >, <=, >=)
+                error("unsupported callback condition $cb_eq")
+            end
+
+            
+            ev_condition = Expr(:call, cb_eq.f, toexpr.(r.(cb_eq.arguments))...)
+            dump(ev_condition)
+            cb_affects = map(r, cb.affects)
+            
+            
+            ev_affect = :(NamedTuple{$(Expr(:tuple, map(x -> QuoteNode(Symbol(r(x.lhs))), cb_affects)...))}(
+                $(Expr(:tuple, map(x -> toexpr(r(x.rhs)), cb_affects)...))
+            ))
+
+            @eval begin
+                GraphDynamics.has_discrete_events(::Type{$T}) = true
+                GraphDynamics.discrete_event_condition((; $(p_and_s_syms...))::Subsystem{$T}, t, _) = $ev_condition
+                function GraphDynamics.apply_discrete_event!(integrator, sview, pview, neuron::Subsystem{$T}, _)
+                    (; $(p_and_s_syms...)) = neuron
+                    sview[] = SubsystemStates{$T}(merge(NamedTuple(get_states(neuron)), $ev_affect))
+                end
+            end
+        end
     end
 end
-define_neurons() # it's useful when developing this module to have these in a function
+#define_neurons() # it's useful when developing this module to have these in a function
 
 #Maybe should just encorporate this into define_neurons()
 # for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
