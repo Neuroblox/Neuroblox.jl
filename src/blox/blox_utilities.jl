@@ -92,13 +92,22 @@ end
 
 get_system(blox) = blox.system
 get_system(sys::AbstractODESystem) = sys
-get_system(stim::PoissonSpikeTrain) = System(Equation[], t, [], []; name=stim.name)
+get_system(stim::AbstractSpikeSource) = System(Equation[], t, [], []; name=stim.name)
 
-function system(blox::AbstractBlox; simplify=true)
+function system(blox::CompositeBlox; simplify=true)
     sys = get_system(blox)
     eqs = get_input_equations(blox; namespaced=false)
 
     csys = System(vcat(equations(sys), eqs), t, unknowns(sys), parameters(sys); name = nameof(sys))
+
+    return simplify ? structural_simplify(csys) : csys
+end
+
+
+function system(blox::AbstractBlox; simplify=true, kwargs...)
+    sys = get_system(blox)
+    eqs = get_input_equations(blox; namespaced=true)
+    csys =  compose(System(eqs, t, [], []; name=namespaced_nameof(blox), kwargs...), sys)
 
     return simplify ? structural_simplify(csys) : csys
 end
@@ -457,7 +466,7 @@ replace_refractory!(V, blox, sol::SciMLBase.AbstractSolution) = V
 function find_spikes(x::AbstractVector{T}; threshold=zero(T)) where {T}    
     spike_idxs = argmaxima(x)
     peakheights!(spike_idxs, x[spike_idxs]; minheight = threshold)
-
+    
     spikes = sparsevec(spike_idxs, ones(length(spike_idxs)), length(x))
 
     return spikes
@@ -486,7 +495,6 @@ function detect_spikes(
     end
     
     V = voltage_timeseries(blox, sol; ts)
-    
     spikes = find_spikes(V; threshold = thrs_value - tolerance)
 
     return spikes
