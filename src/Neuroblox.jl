@@ -67,8 +67,6 @@ abstract type StimulusBlox <: AbstractBlox end
 abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
 abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
 
-const Neuron = AbstractNeuronBlox
-
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
 # abstract type JansenRitCBlox <: NeuralMassBlox end
