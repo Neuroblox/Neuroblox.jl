@@ -165,7 +165,7 @@ function define_neurons()
         end
     end
 end
-#define_neurons() # it's useful when developing this module to have these in a function
+define_neurons() # it's useful when developing this module to have these in a function
 
 #Maybe should just encorporate this into define_neurons()
 # for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
