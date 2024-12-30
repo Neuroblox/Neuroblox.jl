@@ -1,3 +1,19 @@
+abstract type AbstractSpikeSource <: StimulusBlox end
+
+struct ConstantInput <: StimulusBlox
+    namespace
+    system
+
+    function ConstantInput(; name, namespace=nothing, I=1)
+        @variables u(t) [output=true, description="ext_input"]
+        @parameters I=I
+        eqs = [u ~ I]
+        sys = System(eqs, t, [u], [I]; name=name)
+
+        new(namespace, sys)
+    end
+end
+
 # Simple input blox
 mutable struct ExternalInput <: StimulusBlox
     namespace
@@ -156,7 +172,7 @@ end
 
 increment_pixel!(stim::ImageStimulus) = stim.current_pixel = mod(stim.current_pixel, stim.N_pixels) + 1
 
-struct PoissonSpikeTrain{N} <: StimulusBlox
+struct PoissonSpikeTrain{N} <: AbstractSpikeSource
     name
     namespace
     N_trains
