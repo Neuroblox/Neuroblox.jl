@@ -328,22 +328,22 @@ end
 function integration_step(dfdx, f, v, solenoid=false)
     if solenoid
         # add solenoidal mixing as is present in the later versions of SPM, in particular SPM25
-        L  = tril(dFdθθ);
+        L  = tril(dfdx);
         Q  = L - L';
         Q  = Q/matlab_norm(Q, 2)/8;
         f  = f  - Q*f;
         dfdx = dfdx - Q*dfdx;
-    end    
+    end
 
     # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
     # could also be done with exponential! but isn't numerically stable
     n = length(f)
-    t = exp(v - logdet(dfdx)/n)
+    t = exp(v - spm_logdet(dfdx)/n)
 
     if t > exp(16)
         dx = - dfdx \ f   # -inv(dfdx)*f
     else
-        dx = (exponential!(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
+        dx = (exp(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
     end
 
     return dx
@@ -385,7 +385,7 @@ function defaultprior(model, nrr)
     paramvariance[:lnβ] = ones(Float64, length(parammean[:lnβ]))./64.0;
     for (k, v) in paramvariance
         if occursin("A", string(k))
-            paramvariance[k] = ones(length(v))
+            paramvariance[k] = ones(length(v))./64.0;
         elseif occursin("κ", string(k))
             paramvariance[k] = ones(length(v))./256.0;
         elseif occursin("ϵ", string(k))
@@ -609,7 +609,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     end
 
     # E-Step: update
-    dθ = integration_step(dFdθθ, dFdθ, v, true)
+    dθ = integration_step(dFdθθ, dFdθ, v)
 
     ϵ_θ += dθ
     state.μθ_po = μθ_pr + ϵ_θ
