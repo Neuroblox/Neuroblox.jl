@@ -325,6 +325,30 @@ function vecparam(param::OrderedDict)
     return flatparam
 end
 
+function integration_step(dfdx, f, v, solenoid=false)
+    if solenoid
+        # add solenoidal mixing as is present in the later versions of SPM, in particular SPM25
+        L  = tril(dFdθθ);
+        Q  = L - L';
+        Q  = Q/matlab_norm(Q, 2)/8;
+        f  = f  - Q*f;
+        dfdx = dfdx - Q*dfdx;
+    end    
+
+    # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
+    # could also be done with exponential! but isn't numerically stable
+    n = length(f)
+    t = exp(v - logdet(dfdx)/n)
+
+    if t > exp(16)
+        dx = - dfdx \ f   # -inv(dfdx)*f
+    else
+        dx = (exponential!(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
+    end
+
+    return dx
+end
+
 function defaultprior(model, nrr)
     _, idx_sts = get_dynamic_states(model)
     idx_u = get_idx_tagged_vars(model, "ext_input")                  # get index of external input state
@@ -476,14 +500,9 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         for i = 1:4
             # reset expansion point and increase regularization
             v = min(v - 2, -4);
-            t = exp(v - logdet(dFdθθ)/np)
 
             # E-Step: update
-            if t > exp(16)
-                ϵ_θ = ϵ_θ - dFdθθ \ dFdθ    # -inv(dfdx)*f
-            else
-                ϵ_θ = ϵ_θ + expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ   # (expm(dfdx*t) - I)*inv(dfdx)*f
-            end
+            ϵ_θ += integration_step(dFdθθ, dFdθ, v)
 
             μθ_po = μθ_pr + ϵ_θ
 
@@ -549,14 +568,8 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         dFdλλ = dFdλλ - Πλ_pr
         Σλ_po = inv(-dFdλλ)
 
-        t = exp(4 - spm_logdet(dFdλλ)/length(λ))
         # E-Step: update
-        if t > exp(16)
-            dλ = -real(dFdλλ \ dFdλ)
-        else
-            idFdλλ = inv(dFdλλ)
-            dλ = real(exponential!(t * dFdλλ) * idFdλλ*dFdλ - idFdλλ*dFdλ)   # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv but doesn't work with Dual.
-        end
+        dλ = real(integration_step(dFdλλ, dFdλ, 4))
 
         dλ = [min(max(x, -1.0), 1.0) for x in dλ]      # probably precaution for numerical instabilities?
         λ = λ + dλ
@@ -596,12 +609,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     end
 
     # E-Step: update
-    t = exp(v - spm_logdet(dFdθθ)/np)
-    if t > exp(16)
-        dθ = - inv(dFdθθ) * dFdθ     # -inv(dfdx)*f
-    else
-        dθ = exp(t * dFdθθ) * inv(dFdθθ) * dFdθ - inv(dFdθθ) * dFdθ     # (expm(dfdx*t) - I)*inv(dfdx)*f
-    end
+    dθ = integration_step(dFdθθ, dFdθ, v, true)
 
     ϵ_θ += dθ
     state.μθ_po = μθ_pr + ϵ_θ
