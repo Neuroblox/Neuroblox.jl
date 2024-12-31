@@ -10,64 +10,56 @@ g = MetaDiGraph()
 add_blox!.(Ref(g), assembly)
 add_edge!(g,1,2, :weight, 44)
 neuron_net = system_from_graph(g; name=global_ns)
-prob = ODEProblem(structural_simplify(neuron_net), [], (0.0, 600), [])
+prob = ODEProblem(neuron_net, [], (0.0, 5000), [])
 sol = solve(prob, Vern7())
 
 fss = powerspectrumplot(cb, sol)
 fss = powerspectrumplot(cb, sol, show_bands = false)
 fss = powerspectrumplot(cb, sol; sampling_rate=0.01, method=welch_pgram)
 
-sol = solve(prob, Vern7(), saveat=0.05)
+sol = solve(prob, Vern7(), saveat=0.01)
 fss = powerspectrumplot(cb, sol)
 
-
-
 @named msn = Striatum_MSN_Adam();
-sys = structural_simplify(msn.odesystem)
+sys = structural_simplify(msn.system)
 prob = SDEProblem(sys, [], (0.0, 5500), [])
-sol = solve(prob, RKMil(), dt=0.05, saveat=0.05)
+sol = solve(prob, RKMil(), dt=0.05, saveat=0.01)
 
-fig = powerspectrumplot(msn, sol, ylims=(1e-5, 10),
-                        alpha_label_position = (8.5, 4.0),
-                        beta_label_position = (22, 4.0),
-                        gamma_label_position = (60, 4.0))
+fig = powerspectrumplot(msn, sol)
 
 fig = powerspectrumplot(msn, sol; state = "G",
                         method=welch_pgram,
-                        ylims=(1e-5, 10),
+                        window=hamming,
                         axis=(xlabel="My axis name", backgroundcolor = :purple),
-                        figure = (; size=(800, 300)))
+                        figure = (; size=(800, 600)))
                         
 fig = Figure(resolution = (1500, 600))
 powerspectrumplot(fig[1,1], msn, sol; state = "G",
-                        ylims=(1e-5, 10),
-                        alpha_start = 5,
-                        alpha_label_position = (8.5, 4),
-                        beta_label_position = (22, 4),
-                        gamma_label_position = (60, 4),
+                        beta_start = 14,
                         axis = (; title = "Periodogram with no window"))
 
 
 powerspectrumplot(fig[1,2], msn, sol; state = "G",
                         method=welch_pgram, window=hanning,
-                        ylims=(1e-5, 10),
-                        alpha_start = 5,
-                        alpha_label_position = (8.5, 4),
-                        beta_label_position = (22, 4),
-                        gamma_label_position = (60, 4),
+                        gamma_start = 40,
                         axis = (; title = "Welch's method with Hanning window"))
 
 fig
+
+powspec1 = powerspectrum(msn, sol, "G", method=welch_pgram, window=hanning)
+powspec2 = powerspectrum(msn, sol, "V", method=welch_pgram, window=hanning)
+
+powerspectrumplot(powspec1)
+
+p = [powspec1, powspec2]
+powerspectrumplot(p)
+powerspectrumplot(p, show_bands=true, ylims = (-30, 20), band_labels_vertical_position="bottom", band_labels_vertical_offset = 0.01)
 
 
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(); dt=0.05, saveat=0.05, trajectories=5)
 
 powerspectrumplot(msn, ens_sol; state = "G",
+                    ylims=(-25, 10),
                     method=welch_pgram, window=hanning,
-                    ylims=(1e-5, 10),
-                    alpha_start = 5,
-                    alpha_label_position = (8.5, 4),
-                    beta_label_position = (22, 4),
-                    gamma_label_position = (60, 4),
                     axis = (; title = "Welch's method with Hanning window"))

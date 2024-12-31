@@ -35,7 +35,7 @@ function define_neurons()
                      (:pinhib, :PINGNeuronInhib)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
-        system = structural_simplify(sys.odesystem; fully_determined=false)
+        system = structural_simplify(sys.system; fully_determined=false)
         params = get_ps(system)
         t = Symbol(get_iv(system))
 
@@ -112,8 +112,10 @@ function define_neurons()
             end
         end
         
-        if hasproperty(sys, :output)
-            output_sym = hasproperty(sys.output.val, :f) ? Symbol(sys.output.val.f) : Symbol(sys.output.val)
+        outs = Neuroblox.outputs(sys; namespaced=false)
+        if length(outs) == 1
+            out = only(outs)
+            output_sym = hasproperty(out.val, :f) ? Symbol(out.val.f) : Symbol(out.val)
             @eval output(s::Subsystem{$T}) = s.$output_sym
         end
         
@@ -130,6 +132,31 @@ function define_neurons()
                 GraphDynamics.has_continuous_events(::Type{$T}) = true
                 GraphDynamics.continuous_event_condition((; $(p_and_s_syms...))::Subsystem{$T}, t, _) = $ev_condition
                 function GraphDynamics.apply_continuous_event!(integrator, sview, pview, neuron::Subsystem{$T}, _)
+                    (; $(p_and_s_syms...)) = neuron
+                    sview[] = SubsystemStates{$T}(merge(NamedTuple(get_states(neuron)), $ev_affect))
+                end
+            end
+        end
+        if !isempty(get_discrete_events(system)) && T ∉ (:LIFExciNeuron, :LIFInhNeuron)
+            cb = only(collect(get_discrete_events(system))) # currently only support single events
+            cb_eq = r(cb.condition)
+            if cb_eq.f ∉ (<, >, <=, >=)
+                error("unsupported callback condition $cb_eq")
+            end
+
+            
+            ev_condition = Expr(:call, cb_eq.f, toexpr.(r.(cb_eq.arguments))...)
+            cb_affects = map(r, cb.affects)
+            
+            
+            ev_affect = :(NamedTuple{$(Expr(:tuple, map(x -> QuoteNode(Symbol(r(x.lhs))), cb_affects)...))}(
+                $(Expr(:tuple, map(x -> toexpr(r(x.rhs)), cb_affects)...))
+            ))
+
+            @eval begin
+                GraphDynamics.has_discrete_events(::Type{$T}) = true
+                GraphDynamics.discrete_event_condition((; $(p_and_s_syms...))::Subsystem{$T}, t, _) = $ev_condition
+                function GraphDynamics.apply_discrete_event!(integrator, sview, pview, neuron::Subsystem{$T}, _)
                     (; $(p_and_s_syms...)) = neuron
                     sview[] = SubsystemStates{$T}(merge(NamedTuple(get_states(neuron)), $ev_affect))
                 end
@@ -168,7 +195,7 @@ GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) 
 issupported(::KuramotoOscillator) = true
 function to_subsystem(o::KuramotoOscillator)
     states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.odesystem.ω), ζ=getdefault(o.odesystem.ζ)))
+    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
     Subsystem(states, params)
 end
 
@@ -238,8 +265,8 @@ function GraphDynamics.apply_subsystem_differential!(_, s::Subsystem{TAN}, jcn, 
 end
 GraphDynamics.subsystem_differential_requires_inputs(::Type{TAN}) = false
 function to_subsystem(s::TAN)
-    κ = getdefault(s.odesystem.κ)
-    λ = getdefault(s.odesystem.λ)
+    κ = getdefault(s.system.κ)
+    λ = getdefault(s.system.λ)
     states = SubsystemStates{TAN, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{TAN}((; κ, λ))
     #TODO: support observed variable R = min(κ, κ/(λ*jcn + sqrt(eps())))
@@ -259,8 +286,8 @@ GraphDynamics.subsystem_differential_requires_inputs(::Type{SNc}) = false
 function to_subsystem(s::SNc)
     (;N_time_blocks, κ_DA, DA_reward) = s
     
-    κ = getdefault(s.odesystem.κ)
-    λ = getdefault(s.odesystem.λ)
+    κ = getdefault(s.system.κ)
+    λ = getdefault(s.system.λ)
     states = SubsystemStates{SNc, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{TAN}((;κ_DA, N_time_blocks, DA_reward, λ_DA, t_event=t_event+sqrt(eps(t_event)), jcn_=0.0))
     #TODO: support observed variables R  ~ min(κ_DA, κ_DA/(λ_DA*jcn  + sqrt(eps())))

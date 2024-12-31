@@ -56,6 +56,10 @@ function param_order(::Type{T}) where T
   return [k for k in keys(arguments(T))]
 end
 
+function plotdetail(::Type{T}) where T
+  return OrderedDict()
+end
+
 # methods
 
 const NUMBER = "number"
@@ -78,7 +82,9 @@ function tab_parameters()
       :abstol => NCAD(1e-6, NUMBER, 1e-1, 1e-10,[],true),
       :solver => NCAD(1, DROPDOWN, 1, 2,["stiff","non-stiff"],true),
       :dt => NCAD(0.1, NUMBER, 1e-3, 10,[],true),
-      :order => ["duration","reltol","abstol","solver","dt"],
+      :spike_threshold => NCAD(20, NUMBER, -50, 200,[],true),
+      :max_neurons => NCAD(10, INTEGER, 1, 100,[],true),
+      :order => ["duration","reltol","abstol","solver","dt","spike_threshold","max_neurons"]
     ),
     "Parameter Fitting" => OrderedDict(
       :method => NCAD(1, DROPDOWN, 1, 2,["Laplace","MCMC"],true),
@@ -290,7 +296,7 @@ function arguments(::Type{Neuroblox.Thalamus})
 end
 
 function plotdetail(::Type{Neuroblox.Thalamus})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
 function arguments(::Type{Neuroblox.Striatum})
@@ -303,7 +309,7 @@ function arguments(::Type{Neuroblox.Striatum})
 end
 
 function plotdetail(::Type{Neuroblox.Striatum})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
 function arguments(::Type{Neuroblox.GPe})
@@ -316,7 +322,7 @@ function arguments(::Type{Neuroblox.GPe})
 end
 
 function plotdetail(::Type{Neuroblox.GPe})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
 function arguments(::Type{Neuroblox.GPi})
@@ -329,7 +335,7 @@ function arguments(::Type{Neuroblox.GPi})
 end
 
 function plotdetail(::Type{Neuroblox.GPi})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
 function arguments(::Type{Neuroblox.STN})
@@ -342,7 +348,7 @@ function arguments(::Type{Neuroblox.STN})
 end
 
 function plotdetail(::Type{Neuroblox.STN})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
 function arguments(::Type{Neuroblox.SNc})
@@ -439,27 +445,27 @@ function arguments(::Type{Neuroblox.CorticalBlox}) #TODO: add correct settings f
 end
 
 function plotdetail(::Type{Neuroblox.CorticalBlox})
-  OrderedDict(:mean => "V", :detail => ["V"])
+  OrderedDict(:mean => "V", :detail => ["V"], :plots =>["raster","stack","adj"])
 end
 
-function arguments(::Type{Neuroblox.BandPassFilterBlox})
-  OrderedDict(
-    :lb => NCAD(10, NUMBER, 0, 500,[],true),
-    :ub => NCAD(10, NUMBER, 0, 500,[],true),
-    :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
-    :order => NCAD(4, INTEGER, 1, 2000,[],true)
-  )
-end
+# function arguments(::Type{Neuroblox.BandPassFilterBlox})
+#   OrderedDict(
+#     :lb => NCAD(10, NUMBER, 0, 500,[],true),
+#     :ub => NCAD(10, NUMBER, 0, 500,[],true),
+#     :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
+#     :order => NCAD(4, INTEGER, 1, 2000,[],true)
+#   )
+# end
 
-function arguments(::Type{Neuroblox.PowerSpectrumBlox})
-  OrderedDict(
-    :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
-  )
-end
+# #function arguments(::Type{Neuroblox.PowerSpectrumBlox})
+#   OrderedDict(
+#     :fs => NCAD(1000, NUMBER, 1, 10000,[],true),
+#   )
+# end
 
-function arguments(::Type{Neuroblox.PhaseAngleBlox})
-  OrderedDict(
-  )
-end
+# function arguments(::Type{Neuroblox.PhaseAngleBlox})
+#   OrderedDict(
+#   )
+# end
 
 end

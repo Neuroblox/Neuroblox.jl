@@ -54,7 +54,7 @@ end
 struct Striatum_MSN_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -105,9 +105,9 @@ struct Striatum_MSN_Adam <: CompositeBlox
             end
         end
         parts = n_inh
+        
+        bc = connectors_from_graph(g)
 
-        bc = connector_from_graph(g)
-    
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -124,7 +124,7 @@ end
 struct Striatum_FSI_Adam  <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -184,9 +184,9 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         end
 
         parts = n_inh
+        
+        bc = connectors_from_graph(g)
 
-        bc = connector_from_graph(g)
-    
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -205,7 +205,7 @@ end
 struct GPe_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -254,9 +254,9 @@ struct GPe_Adam <: CompositeBlox
             end
         end
         parts = n_inh
+        
+        bc = connectors_from_graph(g)
 
-        bc = connector_from_graph(g)
-    
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -274,7 +274,7 @@ end
 struct STN_Adam <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     mean
     connection_matrix
@@ -323,9 +323,9 @@ struct STN_Adam <: CompositeBlox
             end
         end
         parts = n_exci
-
-        bc = connector_from_graph(g)
     
+        bc = connectors_from_graph(g)
+
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
         m = if isnothing(namespace) 
@@ -334,6 +334,7 @@ struct STN_Adam <: CompositeBlox
             sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
+
         new(namespace, parts, sys, bc, m, connection_matrix)
     end
 

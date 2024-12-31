@@ -1,7 +1,7 @@
 struct CorticalBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 
@@ -70,13 +70,12 @@ struct CorticalBlox <: CompositeBlox
             end
             add_edge!(g, N_wta+1, i, Dict(:weight => 1))
         end
-        # Construct a BloxConnector object from the graph
-        # containing all connection equations from lower levels and this level.
-        bc = connector_from_graph(g)
+        
+        bc = connectors_from_graph(g)
         # If a namespace is not provided, assume that this is the highest level
         # and construct the ODEsystem from the graph.
         # If there is a higher namespace, construct only a subsystem containing the parts of this level
-        # and propagate the BloxConnector object `bc` to the higher level 
+        # and propagate the Connector object `bc` to the higher level 
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
@@ -87,7 +86,7 @@ end
 struct LIFExciCircuitBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 
@@ -155,11 +154,11 @@ struct LIFExciCircuitBlox <: CompositeBlox
             end
         end
 
+        bc = connectors_from_graph(g)
+
         if skip_system_creation
-            bc = nothing
             sys = nothing
         else
-            bc = connector_from_graph(g)
             sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
         end
         new(namespace, neurons, sys, bc, kwargs)
@@ -169,7 +168,7 @@ end
 struct LIFInhCircuitBlox <: CompositeBlox
     namespace
     parts
-    odesystem
+    system
     connector
     kwargs
 
@@ -233,11 +232,11 @@ struct LIFInhCircuitBlox <: CompositeBlox
             end
         end
 
+        bc = connectors_from_graph(g)
+
         if skip_system_creation
-            bc = nothing
             sys = nothing
         else
-            bc = connector_from_graph(g)
             sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(neurons; name)
         end
         

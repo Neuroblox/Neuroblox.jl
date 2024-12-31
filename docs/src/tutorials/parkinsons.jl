@@ -138,7 +138,7 @@ sol = solve(prob, Tsit5(), saveat=0.1); ## Solve the problem and save every 0.1m
 # Let's interrogate the solution to see what we have. For the purposes of this tutorial, we'll focus on the striatal oscillations.
 # In this simple model, we should see relatively sharp on/off transitions in the striatal populations. To test this, let's use [Symbolic Indexing](https://docs.sciml.ai/SymbolicIndexingInterface/stable/usage/) to access the states we're interested in: the ``y`` state of the D1 neuron population.
 
-idx_func = ModelingToolkit.getu(sol, D1.odesystem.y); ## gets the state index of the D1 neuron population in the solution object
+idx_func = ModelingToolkit.getu(sol, D1.system.y); ## gets the state index of the D1 neuron population in the solution object
 
 # Now use this indexing function to plot the solution in a Makie plot ([read more about Makie in the docs](https://docs.makie.org/stable/tutorials/getting-started)).
 
@@ -157,10 +157,7 @@ sol = solve(prob, Tsit5(), saveat=0.1); ## Solve the new problem
 # Let's use this new solution to plot the power spectrum of the D1 neuron population. This is using a built-in Neuroblox function ``powerspectrumplot`` that's discussed at length in the next tutorial, so we won't delve into the details of the arguments here.
 
 powerspectrumplot(D1, sol, state = "y", ## specify the block to plot, the solution object, and the state of the block to plot
-                  method = welch_pgram, window = hanning, ylims = (1e-6, 1e6), ## additional parameters to make the plot pretty
-                  alpha_label_position = (8.5, 1e5),
-                  beta_label_position = (22, 1e5),
-                  gamma_label_position = (60, 1e5),
+                  method = welch_pgram, window = hanning, ## power spectrum estimation method
                   title="D1 Population Power Spectrum")
 
 # You should see two prominent β-band peaks: one in low β (around 15 Hz) and one in high β (around 35 Hz). You should also see their resonances in the γ-band.
