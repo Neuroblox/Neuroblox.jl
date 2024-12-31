@@ -609,7 +609,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     end
 
     # E-Step: update
-    dθ = integration_step(dFdθθ, dFdθ, v)
+    dθ = integration_step(dFdθθ, dFdθ, v, true)
 
     ϵ_θ += dθ
     state.μθ_po = μθ_pr + ϵ_θ
