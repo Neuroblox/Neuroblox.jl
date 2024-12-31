@@ -35,7 +35,8 @@ using MAT
         symb = Symbol("A$(i)")
         push!(A, only(@parameters $symb = a))
     end
-    untune!(A, [])   # list indices of parameters that should be set to tunable=false
+
+    # untune!(A, untunelist)   # list indices of parameters that should be set to tunable=false
     for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
         if idx[1] == idx[2]
             add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12, likely to avoid instabilities of the linear model
@@ -45,7 +46,13 @@ using MAT
     end
 
     # compose model
-    @named neuronmodel = system_from_graph(g; split=false)
+    @named neuronmodel = system_from_graph(g, simplify=false)
+    untunelist = Dict()
+    for (i, v) in enumerate(diag(vars["pC"])[1:nrr^2])
+        untunelist[A[i]] = v == 0 ? false : true
+    end
+    neuronmodel = changetune(neuronmodel, untunelist)
+    neuronmodel = structural_simplify(neuronmodel, split=false)
 
     # attribute initial conditions to states
     _, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
