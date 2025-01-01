@@ -8,7 +8,6 @@ csd_approx       : approximates CSD based on transfer functions
 csd_fmri_mtf     :
 diff             : computes Jacobian of model
 csd_Q            : computes precision component prior (which erroneously is not used in the SPM12 code for fMRI signals, it is used for other modalities)
-matlab_norm      : computes norm consistent with MATLAB's norm function (Julia's is different, at lest for matrices. Haven't tested vectors)
 spm_logdet       : mimick SPM12's way to compute the logarithm of the determinant. Sometimes Julia's logdet won't work.
 variationalbayes : main routine that computes the variational Bayes estimate of model parameters
 """
@@ -249,27 +248,6 @@ end
     return y
 end
 
-"""
-    function matlab_norm(A, p)
-
-    Simple helper function to implement the norm of a matrix that is equivalent to the one given in MATLAB for order=1, 2, Inf. 
-    This is needed for the reproduction of the exact same results of SPM12.
-
-    Arguments:
-    - `A`: matrix
-    - `p`: order of norm
-"""
-function matlab_norm(M, p)
-    if p == 1
-        return maximum(sum(abs, M, dims=1))
-    elseif p == Inf
-        return maximum(sum(abs, M, dims=2))
-    elseif p == 2
-        print("Not implemented yet!\n")
-        return NaN
-    end
-end
-
 function csd_Q(csd)
     s = size(csd)
     Qn = length(csd)
@@ -282,7 +260,7 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q + matlab_norm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q + opnorm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
     return Q
 end
 
@@ -330,9 +308,10 @@ function integration_step(dfdx, f, v, solenoid=false)
         # add solenoidal mixing as is present in the later versions of SPM, in particular SPM25
         L  = tril(dfdx);
         Q  = L - L';
-        Q  = Q/matlab_norm(Q, 2)/8;
+        Q  = Q/opnorm(Q, 2)/8;
+
         f  = f  - Q*f;
-        dfdx = dfdx - Q*dfdx;
+        dfdx = dfdx - Q*dfdx;        
     end
 
     # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
@@ -493,7 +472,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
     dfdp = jacobian(f, μθ_po)
 
-    norm_dfdp = matlab_norm(dfdp, Inf);
+    norm_dfdp = opnorm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
     if revert && state.iter > 1
@@ -509,7 +488,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
             dfdp = jacobian(f, μθ_po)
 
             # check for stability
-            norm_dfdp = matlab_norm(dfdp, Inf);
+            norm_dfdp = opnorm(dfdp, Inf);
             revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
             # break
