@@ -1,4 +1,4 @@
-# # Synaptic plasticity
+# # Synaptic plasticity and Reinforcement Learning
 
 using Neuroblox 
 using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
@@ -47,7 +47,7 @@ fig = Figure(title="Adjacency matrix", size = (1600, 800))
 
 adjacency(fig[1,1], agent)
 
-run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
+run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(), verbose=true)
 
 adjacency(fig[1,2], agent)
 
@@ -124,28 +124,8 @@ fig = Figure(title="Adjacency matrix", size = (1600, 800))
 
 adjacency(fig[1,1], agent)
 
-# run a single trial
-tspan=(0,env.t_trial)
-sys = get_system(agent)
-defs = ModelingToolkit.get_defaults(sys)
-learning_rules = agent.learning_rules
-weights = Dict{Num, Float64}()
-for w in keys(learning_rules)
-    weights[w] = defs[w]
-end
-
-agent.problem = remake(agent.problem; tspan=tspan)
-sol, iscorrect, action= run_trial!(agent, env, weights, nothing;alg=Vern7())
-
-# plot the activities of VAC and AC neurons
-neuron_set1 = get_neurons(VAC) ## extract neurons from a composite block like CorticalBlox
-stackplot(neuron_set1, sol)
-
-neuron_set2 = get_neurons(AC) ## extract neurons from a composite block like CorticalBlox
-stackplot(neuron_set2, sol)
-
 # run the whole experiment with N_trials number of trials
-t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
+t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(), verbose=true)
 
 #t contains the outcomes of the experiment: 
 #  trials: trial number
