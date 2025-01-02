@@ -30,6 +30,7 @@ using DataFrames
 using OrderedCollections
 using CairoMakie
 using ModelingToolkit
+using Random
 
 # # Model simulation
 # ## Define the model
@@ -41,6 +42,7 @@ using ModelingToolkit
 # We want to simulate fMRI signals thus we will need to also add a BalloonModel per region.
 # Note that the Ornstein-Uhlenbeck block will feed into the linear neural mass which in turn will feed into the BalloonModel blox.
 # This needs to be represented by the way we define the edges.
+Random.seed!(17)   # set seed for reproducibility
 nr = 3             # number of regions
 g = MetaDiGraph()
 regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
@@ -69,12 +71,12 @@ end
 # finally we compose the simulation model
 @named simmodel = system_from_graph(g, split=false)
 
-# ## Run th e simulation and plot the results
+# ## Run the simulation and plot the results
 
-# setup simulation of the model, time in seconds
+# setup simulation of the model, time in milliseconds
 tspan = (0.0, 512.0)
 prob = SDEProblem(simmodel, [], tspan)
-dt = 2000   # 2 seconds (units are milliseconds) as measurement interval for fMRI
+dt = 2   # 2 seconds (units are milliseconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # plot bold signal time series
@@ -151,7 +153,7 @@ for (i, idx) in enumerate(CartesianIndices(A_prior))
 end
 # we avoid simplification of the model in order to exclude some parameters from fitting
 @named fitmodel = system_from_graph(g, simplify=false)
-# With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
+# With the function `changetune` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
 # For instance the the effective connections that are set to zero in the simulation:
 untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
