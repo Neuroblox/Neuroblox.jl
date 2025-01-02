@@ -55,10 +55,10 @@ rasterplot(msn, sol, threshold = -35, title = "Neuron's Spikes - Mean Firing Rat
 # Compute and plot the power spectrum of the GABAa current
 fig = Figure(size = (1500, 500))
 
-powerspectrumplot(fig[1,1], msn, sol, state = "G",
+powerspectrumplot(fig[1,1], msn, sol, state = "I_syn_msn",
                   title = "FFT with no window")
 
-powerspectrumplot(fig[1,2], msn, sol, state = "G",
+powerspectrumplot(fig[1,2], msn, sol, state = "I_syn_msn",
                   method = welch_pgram, window = hanning,
                   title = "Welch's method + Hanning window")
 fig
@@ -105,12 +105,12 @@ fig = Figure(size = (1000, 800))
 rasterplot(fig[1,1], msn, ens_sol[1], threshold = -35, title = "MSN - Mean Firing Rate: $(round(fr_msn[1], digits=2)) spikes/s")
 rasterplot(fig[1,2], fsi, ens_sol[1], threshold = -35, title = "FSI - Mean Firing Rate: $(round(fr_fsi[1], digits=2)) spikes/s")
 
-powerspectrumplot(fig[2,1], msn, ens_sol, state = "G",
+powerspectrumplot(fig[2,1], msn, ens_sol, state = "I_syn_msn",
                   method = welch_pgram, window = hanning,
                   ylims= (-35, 15),
                   xlims= (8, 100))
 
-powerspectrumplot(fig[2,2], fsi, ens_sol, state = "G",
+powerspectrumplot(fig[2,2], fsi, ens_sol, state = "I_syn_fsi",
                   method=welch_pgram, window=hanning,
                   ylims= (-35, 15),
                   xlims= (8, 100))
@@ -153,22 +153,22 @@ ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
 # Compute and plot power spectra for all components
 fig = Figure(size = (1600, 450))
 
-powerspectrumplot(fig[1,1], msn, ens_sol, state = "G",
+powerspectrumplot(fig[1,1], msn, ens_sol, state = "I_syn_msn",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "MSN (Baseline)")
 
-powerspectrumplot(fig[1,2], fsi, ens_sol, state = "G",
+powerspectrumplot(fig[1,2], fsi, ens_sol, state = "I_syn_fsi",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "FSI (Baseline)")
 
-powerspectrumplot(fig[1,3], gpe, ens_sol, state = "G",
+powerspectrumplot(fig[1,3], gpe, ens_sol, state = "V",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "GPe (Baseline)")
 
-powerspectrumplot(fig[1,4], stn, ens_sol, state = "G",
+powerspectrumplot(fig[1,4], stn, ens_sol, state = "V",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "STN (Baseline)")
@@ -215,22 +215,22 @@ ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt = dt, saveat = dt, trajectories = 3);
 
 # Compute and compare power spectra for all neural populations in Parkinsonian condition against their counterparts in baseline conditions.
-powerspectrumplot(fig[2,1], msn, ens_sol, state = "G",
+powerspectrumplot(fig[2,1], msn, ens_sol, state = "I_syn_msn",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "MSN (PD)")
 
-powerspectrumplot(fig[2,2], fsi, ens_sol, state = "G",
+powerspectrumplot(fig[2,2], fsi, ens_sol, state = "I_syn_fsi",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "FSI (PD)")
 
-powerspectrumplot(fig[2,3], gpe, ens_sol, state = "G",
+powerspectrumplot(fig[2,3], gpe, ens_sol, state = "V",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "GPe (PD)")
 
-powerspectrumplot(fig[2,4], stn, ens_sol, state = "G",
+powerspectrumplot(fig[2,4], stn, ens_sol, state = "V",
                   method = welch_pgram, window = hanning,
                   ylims=(-40, 25),
                   title = "STN (PD)")
