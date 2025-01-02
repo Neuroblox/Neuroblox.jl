@@ -55,6 +55,11 @@ fig
 
 # ## Cortico-striatal circuit performing category learning 
 
+# ##  It is one simplified biological instantiation of a reinforcement-learning system; 
+# ##  It is carrying out simple RL learning behavior but not faithfully simulating physiology. 
+# ## The experiment it is trying to simulate is the category learning experiment [Antzoulatos2014] which was successfully modeled through a detailed corticostriatal model (Pathak et. al.)
+
+
 time_block_dur = 90.0 ## ms (size of discrete time blocks)
 N_trials = 100 ##number of trials
 trial_dur = 1000 ##ms
@@ -119,8 +124,30 @@ fig = Figure(title="Adjacency matrix", size = (1600, 800))
 
 adjacency(fig[1,1], agent)
 
+# run a single trial
+tspan=(0,env.t_trial)
+sys = get_system(agent)
+defs = ModelingToolkit.get_defaults(sys)
+learning_rules = agent.learning_rules
+weights = Dict{Num, Float64}()
+for w in keys(learning_rules)
+    weights[w] = defs[w]
+end
+
+agent.problem = remake(agent.problem; tspan=tspan)
+sol, iscorrect, action= run_trial!(agent, env, weights, nothing;alg=Vern7())
+
+neuron_set1 = get_neurons(VAC) ## extract neurons from a composite block like CorticalBlox
+n_neurons = 50 ## set number nof neurons to display in the stackplot
+stackplot(neuron_set1, sol)
+
+# run the whole experiment with N_trials number of trials
 t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
 
+#t contains the outcomes of the experiment: 
+#  trials: trial number
+#  correct: whether the response was correct or not
+#  action: what was the responce choice, choice 1 (left saccade) or choice 2 (right saccade)
 adjacency(fig[1,2], agent)
 
 fig
