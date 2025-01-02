@@ -40,7 +40,7 @@ end
 # ╔═╡ 9f3d6efd-a884-449c-b4b8-42b0b435e245
 begin
 	blox = [WC1,WC2]
-	sys = [b.odesystem for b in blox]
+	sys = [b.system for b in blox]
 	connect = [b.connector for b in blox]
 end
 

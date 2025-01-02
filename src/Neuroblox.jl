@@ -8,9 +8,8 @@ using OhMyThreads: tmapreduce
 
 using Reexport
 @reexport using ModelingToolkit
-const t = ModelingToolkit.t_nounits
-const D = ModelingToolkit.D_nounits
-export t, D
+@reexport using ModelingToolkit: ModelingToolkit.t_nounits as t, ModelingToolkit.D_nounits as D
+
 @reexport using ModelingToolkitStandardLibrary.Blocks
 @reexport import Graphs: add_edge!
 @reexport using MetaGraphs: MetaDiGraph
@@ -38,11 +37,10 @@ using Distributions
 
 using SciMLBase: SciMLBase, AbstractSolution, solve, remake
 
-
 using ModelingToolkit: get_namespace, get_systems, isparameter,
                     renamespace, namespace_equation, namespace_parameters, namespace_expr,
                     AbstractODESystem, VariableTunable, getp
-import ModelingToolkit: inputs, nameof, outputs, getdescription
+import ModelingToolkit: equations, inputs, outputs, unknowns, parameters, discrete_events, nameof, getdescription
 
 using Symbolics: @register_symbolic, getdefaultval, get_variables
 
@@ -68,7 +66,6 @@ abstract type CompositeBlox <: AbstractBlox end
 abstract type StimulusBlox <: AbstractBlox end
 abstract type ObserverBlox end # not AbstractBlox since it should not show up in the GUI
 abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
-
 
 # we define these in neural_mass.jl
 # abstract type HarmonicOscillatorBlox <: NeuralMassBlox end
@@ -116,14 +113,17 @@ include("blox/winnertakeall.jl")
 include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
 include("blox/discrete.jl")
+include("blox/ping_neuron_examples.jl")
 include("blox/reinforcement_learning.jl")
 include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
-include("blox/ping_neuron_examples.jl")
 include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
 include("Neurographs.jl")
 include("adjacency.jl")
+
+const Neuron = AbstractNeuronBlox
+const SpikeSource = AbstractSpikeSource
 
 function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
     prob = ODEProblem(sys, u0, timespan, p)
@@ -132,9 +132,9 @@ function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4());
 end
 
 function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(blox.odesystem, u0, timespan, p)
+    prob = ODEProblem(blox.system, u0, timespan, p)
     sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
-    statesV = [s for s in unknowns(blox.odesystem) if contains(string(s),"V")]
+    statesV = [s for s in unknowns(blox.system) if contains(string(s),"V")]
     vsol = sol[statesV]
     vmean = vec(mean(hcat(vsol...),dims=2))
     df = DataFrame(sol)
@@ -223,6 +223,7 @@ function __init__()
 end
 
 
+export Neuron
 export JansenRitSPM12, next_generation, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, van_der_pol, Generic2dOscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
@@ -233,7 +234,8 @@ export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ExternalInput, PoissonSpikeTrain, DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, ExternalInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
+export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
 export BandPassFilterBlox
 export OUBlox, OUCouplingBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
@@ -243,11 +245,11 @@ export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseang
 export learningrate, ControlError
 export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!, defaultprior
 export simulate, random_initials
-export system_from_graph, graph_delays
+export system_from_graph, system, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
-export addnontunableparams, untune!
+export addnontunableparams, changetune
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
@@ -256,4 +258,6 @@ export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, fr
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color
+export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
+export inputs, outputs, equations, unknowns, parameters, discrete_events
 end

@@ -8,7 +8,6 @@ csd_approx       : approximates CSD based on transfer functions
 csd_fmri_mtf     :
 diff             : computes Jacobian of model
 csd_Q            : computes precision component prior (which erroneously is not used in the SPM12 code for fMRI signals, it is used for other modalities)
-matlab_norm      : computes norm consistent with MATLAB's norm function (Julia's is different, at lest for matrices. Haven't tested vectors)
 spm_logdet       : mimick SPM12's way to compute the logarithm of the determinant. Sometimes Julia's logdet won't work.
 variationalbayes : main routine that computes the variational Bayes estimate of model parameters
 """
@@ -249,27 +248,6 @@ end
     return y
 end
 
-"""
-    function matlab_norm(A, p)
-
-    Simple helper function to implement the norm of a matrix that is equivalent to the one given in MATLAB for order=1, 2, Inf. 
-    This is needed for the reproduction of the exact same results of SPM12.
-
-    Arguments:
-    - `A`: matrix
-    - `p`: order of norm
-"""
-function matlab_norm(M, p)
-    if p == 1
-        return maximum(sum(abs, M, dims=1))
-    elseif p == Inf
-        return maximum(sum(abs, M, dims=2))
-    elseif p == 2
-        print("Not implemented yet!\n")
-        return NaN
-    end
-end
-
 function csd_Q(csd)
     s = size(csd)
     Qn = length(csd)
@@ -282,7 +260,7 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q + matlab_norm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q + opnorm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
     return Q
 end
 
@@ -325,6 +303,31 @@ function vecparam(param::OrderedDict)
     return flatparam
 end
 
+function integration_step(dfdx, f, v, solenoid=false)
+    if solenoid
+        # add solenoidal mixing as is present in the later versions of SPM, in particular SPM25
+        L  = tril(dfdx);
+        Q  = L - L';
+        Q  = Q/opnorm(Q, 2)/8;
+
+        f  = f  - Q*f;
+        dfdx = dfdx - Q*dfdx;        
+    end
+
+    # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
+    # could also be done with exponential! but isn't numerically stable
+    n = length(f)
+    t = exp(v - spm_logdet(dfdx)/n)
+
+    if t > exp(16)
+        dx = - dfdx \ f   # -inv(dfdx)*f
+    else
+        dx = (exp(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
+    end
+
+    return dx
+end
+
 function defaultprior(model, nrr)
     _, idx_sts = get_dynamic_states(model)
     idx_u = get_idx_tagged_vars(model, "ext_input")                  # get index of external input state
@@ -361,7 +364,7 @@ function defaultprior(model, nrr)
     paramvariance[:lnβ] = ones(Float64, length(parammean[:lnβ]))./64.0;
     for (k, v) in paramvariance
         if occursin("A", string(k))
-            paramvariance[k] = ones(length(v))
+            paramvariance[k] = ones(length(v))./64.0;
         elseif occursin("κ", string(k))
             paramvariance[k] = ones(length(v))./256.0;
         elseif occursin("ϵ", string(k))
@@ -469,28 +472,23 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
     dfdp = jacobian(f, μθ_po)
 
-    norm_dfdp = matlab_norm(dfdp, Inf);
+    norm_dfdp = opnorm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
     if revert && state.iter > 1
         for i = 1:4
             # reset expansion point and increase regularization
             v = min(v - 2, -4);
-            t = exp(v - logdet(dFdθθ)/np)
 
             # E-Step: update
-            if t > exp(16)
-                ϵ_θ = ϵ_θ - dFdθθ \ dFdθ    # -inv(dfdx)*f
-            else
-                ϵ_θ = ϵ_θ + expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ   # (expm(dfdx*t) - I)*inv(dfdx)*f
-            end
+            ϵ_θ += integration_step(dFdθθ, dFdθ, v)
 
             μθ_po = μθ_pr + ϵ_θ
 
             dfdp = jacobian(f, μθ_po)
 
             # check for stability
-            norm_dfdp = matlab_norm(dfdp, Inf);
+            norm_dfdp = opnorm(dfdp, Inf);
             revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
 
             # break
@@ -507,7 +505,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     P = zeros(eltype(J), size(Q))
     PΣ = zeros(eltype(J), size(Q))
     JPJ = zeros(real(eltype(J)), size(J, 2), size(J, 2), size(Q, 3))
-    dFdλ = zeros(eltype(J), nh)
+    dFdλ = zeros(real(eltype(J)), nh)
     dFdλλ = zeros(real(eltype(J)), nh, nh)
     local iΣ, Σλ_po, Σθ_po, ϵ_λ
     for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM12 code.
@@ -519,32 +517,38 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
         Pp = real(J' * iΣ * J)    # in MATLAB code 'real()' is applied to the resulting matrix product, why is this okay?
         Σθ_po = inv(Pp + Πθ_pr)
 
-        for i = 1:nh
-            P[:,:,i] = Q[:,:,i]*exp(λ[i])
-            PΣ[:,:,i] = iΣ \ P[:,:,i]
-            JPJ[:,:,i] = real(J'*P[:,:,i]*J)      # in MATLAB code 'real()' is applied (see also some lines above)
-        end
-        for i = 1:nh
-            dFdλ[i] = (tr(PΣ[:,:,i])*nq - real(dot(ϵ, P[:,:,i], ϵ)) - tr(Σθ_po * JPJ[:,:,i]))/2
-            for j = i:nh
-                dFdλλ[i, j] = -real(tr(PΣ[:,:,i] * PΣ[:,:,j]))*nq/2
-                dFdλλ[j, i] = dFdλλ[i, j]
+        if nh > 1
+            for i = 1:nh
+                P[:,:,i] = Q[:,:,i]*exp(λ[i])
+                PΣ[:,:,i] = iΣ \ P[:,:,i]
+                JPJ[:,:,i] = real(J'*P[:,:,i]*J)      # in MATLAB code 'real()' is applied (see also some lines above)
             end
+            for i = 1:nh
+                dFdλ[i] = (tr(PΣ[:,:,i])*nq - real(dot(ϵ, P[:,:,i], ϵ)) - tr(Σθ_po * JPJ[:,:,i]))/2
+                for j = i:nh
+                    dFdλλ[i, j] = -real(tr(PΣ[:,:,i] * PΣ[:,:,j]))*nq/2
+                    dFdλλ[j, i] = dFdλλ[i, j]
+                end
+            end
+        else
+            # if nh == 1, do the followng simplifications to improve computational speed:          
+            # 1. replace trace(PΣ[1]) * nq by ny
+            # 2. replace JPJ[1] by Pp
+            dFdλ[1, 1] = ny/2 - real(ϵ'*iΣ*ϵ)/2 - tr(Σθ_po * Pp)/2;
+
+            # 3. replace trace(PΣ[1],PΣ[1]) * nq by ny
+            dFdλλ[1, 1] = - ny/2;
         end
+
+        dFdλλ = dFdλλ + diagm(dFdλ);      # add second order terms; noting diΣ/dλ(i)dλ(i) = diΣ/dλ(i) = P{i}
 
         ϵ_λ = λ - μλ_pr
         dFdλ = dFdλ - Πλ_pr*ϵ_λ
         dFdλλ = dFdλλ - Πλ_pr
         Σλ_po = inv(-dFdλλ)
 
-        t = exp(4 - spm_logdet(dFdλλ)/length(λ))
         # E-Step: update
-        if t > exp(16)
-            dλ = -real(dFdλλ \ dFdλ)
-        else
-            idFdλλ = inv(dFdλλ)
-            dλ = real(exponential!(t * dFdλλ) * idFdλλ*dFdλ - idFdλλ*dFdλ)   # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv but doesn't work with Dual.
-        end
+        dλ = real(integration_step(dFdλλ, dFdλ, 4))
 
         dλ = [min(max(x, -1.0), 1.0) for x in dλ]      # probably precaution for numerical instabilities?
         λ = λ + dλ
@@ -584,12 +588,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     end
 
     # E-Step: update
-    t = exp(v - spm_logdet(dFdθθ)/np)
-    if t > exp(16)
-        dθ = - inv(dFdθθ) * dFdθ     # -inv(dfdx)*f
-    else
-        dθ = exponential!(t * dFdθθ) * inv(dFdθθ) * dFdθ - inv(dFdθθ) * dFdθ     # (expm(dfdx*t) - I)*inv(dfdx)*f
-    end
+    dθ = integration_step(dFdθθ, dFdθ, v, true)
 
     ϵ_θ += dθ
     state.μθ_po = μθ_pr + ϵ_θ

@@ -52,58 +52,143 @@ get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
 
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
-function connector_from_graph(g::MetaDiGraph)
-    bloxs = get_bloxs(g)
-    link = BloxConnector(bloxs)
+function connectors_from_graph(g::MetaDiGraph)
+    conns = reduce(vcat, get_connectors.(get_bloxs(g)))
+    for edge in edges(g)
 
-    for v in vertices(g)
-        b = get_prop(g, v, :blox)
-        for vn in inneighbors(g, v)
-            bn = get_prop(g, vn, :blox)
-            kwargs = props(g, vn, v)
-            link(bn, b; kwargs...)
-        end
+        blox_src = get_prop(g, edge.src, :blox)
+        blox_dest = get_prop(g, edge.dst, :blox)
+
+        kwargs = props(g, edge)
+        push!(conns, Connector(blox_src, blox_dest; kwargs...))
     end
-    return link
+   
+    filter!(conn -> !isempty(conn), conns)
+
+    return conns
+end
+
+function connector_from_graph(g::MetaDiGraph)
+    conns = connectors_from_graph(g)
+
+    return isempty(conns) ? Connector(:none, :none) : reduce(merge!, conns)
 end
 
 # Helper function to get delays from a graph
 function graph_delays(g::MetaDiGraph)
-    bc = connector_from_graph(g)
-    return bc.delays
+    conn = connector_from_graph(g)
+
+    return conn.delay
 end
 
-generate_discrete_callbacks(blox, ::BloxConnector; t_block = missing) = []
-
-function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::BloxConnector; t_block = missing)
-    spike_affects = get_spike_affects(bc)
-    name_blox = namespaced_nameof(blox)
-    sys = get_namespaced_sys(blox)
-
-    states_affect, params_affect = get(spike_affects, name_blox, (Num[], Num[]))
-
+function make_unique_param_pairs(params)
     # HACK : MTK will complain if the parameter vector passed to a functional affect
     # contains non-unique parameters. Here we sometimes need to pass duplicate parameters that 
     # affect states in the loop in LIF_spike_affect! .
     # Passing parameters with Symbol aliases bypasses this issue and allows for duplicates. 
-    affect_pairs = if unique(params_affect) == length(params_affect)
-        [p => Symbol(p) for p in params_affect]
+    param_pairs = if unique(params) == length(params)
+        [p => Symbol(p) for p in params]
     else
-        map(params_affect) do p
-            if count(pi -> Symbol(pi) == Symbol(p), params_affect) > 1
+        map(params) do p
+            if count(pi -> Symbol(pi) == Symbol(p), params) > 1
                 p => Symbol(p, "_$(rand(1:1000))")
             else
                 p => Symbol(p)
             end
         end
     end
+
+    return param_pairs
+end
+
+function generic_spike_affect!(integ, u, p, ctx)
+    N = length(u)
+    for i in Base.OneTo(N)
+        integ.u[u[i]] += integ.p[p[i]]
+    end
+end
+
+function LIF_spike_affect!(integ, u, p, ctx)
+    integ.u[u[1]] = integ.p[p[1]]
+
+    t_refract_end = integ.t + integ.p[p[2]]
+    integ.p[p[3]] = t_refract_end
+
+    integ.p[p[4]] = 1
+
+    SciMLBase.add_tstop!(integ, t_refract_end)
+    
+    c = 1
+    for i in eachindex(u)[2:end]
+        integ.u[u[i]] += integ.p[p[c + 4]]
+        c += 1
+    end
+end
+
+generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
+
+function generate_discrete_callbacks(blox::AbstractSpikeSource, bc::Connector; t_block = missing)
+    sa = spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+  
+    if haskey(sa, name_blox)
+        eqs = sa[name_blox]
+
+        cb = map(eqs) do eq
+            # TO DO : Consider generating spikes during simulation
+            # to make PoissonSpikeTrain independent of `t_span` of the simulation.
+            # something like : 
+            # discrete_event = t > -Inf => (generate_spike, [sys_dest.S_AMPA], [stim.relevant_params...], [], nothing) 
+            # This way we need to resolve the case of multiple spikes potentially being generated within a single integrator step.
+            t_spikes = generate_spike_times(blox)
+            t_spikes => to_vector(eq)
+        end
+        
+        return cb
+    end
+end
+
+function generate_discrete_callbacks(blox::AbstractNeuronBlox, bc::Connector; t_block = missing)
+    sa = spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+    sys = get_namespaced_sys(blox)
+
+    states_affect = get_states_spikes_affect(sa, name_blox)
+    params_affect = get_params_spikes_affect(sa, name_blox)
+    
+    if isempty(states_affect) && isempty(params_affect)
+        return []
+    else
+        param_pairs = make_unique_param_pairs(params_affect)
+    
+        cb = (sys.V > sys.θ) => (
+            generic_spike_affect!, 
+            states_affect, 
+            param_pairs, 
+            [], 
+            nothing
+        )
+
+        return cb
+    end
+end
+
+function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, bc::Connector; t_block = missing)
+    sa = spike_affects(bc)
+    name_blox = namespaced_nameof(blox)
+    sys = get_namespaced_sys(blox)
+
+    states_affect = get_states_spikes_affect(sa, name_blox)
+    params_affect = get_params_spikes_affect(sa, name_blox)
+   
+    param_pairs = make_unique_param_pairs(params_affect)
     
     ps = vcat([
         sys.V_reset => Symbol(sys.V_reset), 
         sys.t_refract_duration => Symbol(sys.t_refract_duration), 
         sys.t_refract_end => Symbol(sys.t_refract_end), 
         sys.is_refractory => Symbol(sys.is_refractory)
-    ], affect_pairs)
+    ], param_pairs)
     
     cb = (sys.V > sys.θ) => (
         LIF_spike_affect!, 
@@ -116,7 +201,7 @@ function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, b
     return cb
 end
 
-function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::Connector; t_block = missing)
     if !ismissing(t_block)
         nn = get_namespaced_sys(blox)
         eq = nn.spikes_window ~ 0
@@ -128,27 +213,28 @@ function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::BloxConnector; t_
     end
 end
 
-function generate_discrete_callbacks(bc::BloxConnector; t_block = missing)
-    eqs_params = get_equations_with_parameter_lhs(bc)
+function generate_discrete_callbacks(bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
+    eqs_params = get_equations_with_parameter_lhs(eqs)
+    dc = discrete_callbacks(bc)
 
     if !ismissing(t_block) && !isempty(eqs_params)
         cb_params = (t_block - sqrt(eps(float(t_block)))) => eqs_params
-        return vcat(cb_params, bc.discrete_callbacks)
+        return vcat(cb_params, dc)
     else
-        return bc.discrete_callbacks
+        return dc
     end 
 end
 
-function generate_discrete_callbacks(g::MetaDiGraph, bc::BloxConnector; t_block = missing)
+function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::AbstractVector{<:Equation}; t_block = missing)
     bloxs = flatten_graph(g)
 
     cbs = mapreduce(vcat, bloxs) do blox
         generate_discrete_callbacks(blox, bc; t_block)
     end
     
-    cbs_params = generate_discrete_callbacks(bc; t_block)
+    cbs_connections = generate_discrete_callbacks(bc, eqs; t_block)
 
-    return vcat(cbs, cbs_params)
+    return vcat(cbs, cbs_connections)
 end
 
 
@@ -175,29 +261,37 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
         isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
         GraphDynamicsInterop.graphsystem_from_graph(g; kwargs...)
     else
-        bc = connector_from_graph(g)
         if isnothing(name)
             throw(UndefKeywordError(:name))
         end
-        return system_from_graph(g, bc, p; name, t_block, simplify, kwargs...)
+        
+        conns = connectors_from_graph(g)
+    
+        return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
     end
 end
 
-function system_from_graph(g::MetaDiGraph, bc::BloxConnector, p::Vector{Num}=Num[];
-                           name, t_block=missing, simplify=true, simplify_kwargs...)
-    blox_syss = get_system(g)
-    connection_eqs = get_equations_with_state_lhs(bc)
+function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
+    bloxs = get_bloxs(g)
+    blox_syss = get_system.(bloxs)
 
-    discrete_cbs = identity.(generate_discrete_callbacks(g, bc; t_block))
+    bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)
+
+    eqs = equations(bc)
+    eqs_init = mapreduce(get_input_equations, vcat, bloxs)
+    accumulate_equations!(eqs_init, eqs)
+
+    connection_eqs = get_equations_with_state_lhs(eqs_init)
+
+    discrete_cbs = identity.(generate_discrete_callbacks(g, bc, eqs_init; t_block))
 
     sys = compose(System(connection_eqs, t, [], vcat(params(bc), p); name, discrete_events = discrete_cbs), blox_syss)
     if simplify
-        structural_simplify(sys; simplify_kwargs...)
+        structural_simplify(sys; kwargs...)
     else
         sys
     end
 end
-
 
 function system_from_parts(parts::AbstractVector; name)
     return compose(System(Equation[], t; name), get_system.(parts))

@@ -4,7 +4,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
 using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
-using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, get_adjacency
+using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
@@ -20,7 +20,7 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colormap = :vanimo
+        colormap = :grays
     )
 end
 
@@ -28,7 +28,7 @@ argument_names(::Type{<: Adjacency}) = (:blox_or_graph)
 
 function Makie.plot!(p::Adjacency)
     blox_or_graph = p.blox_or_graph[]
-    adj = get_adjacency(blox_or_graph)
+    adj = AdjacencyMatrix(blox_or_graph)
 
     N = length(adj.names)
 
@@ -42,7 +42,7 @@ function Makie.plot!(p::Adjacency)
 
     X, Y, D = findnz(adj.matrix)
 
-    heatmap!(p, X, Y, D; colormap = p.colormap[], colorrange = (minimum(D), maximum(D)))
+    heatmap!(p, Y, X, D; colormap = p.colormap[])
 
     return p
 end
@@ -241,8 +241,6 @@ function Makie.plot!(p::FRPlot)
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
     ax.title = p.title[]
-
-    hideydecorations!(ax)
     
     fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[], threshold = p.threshold[])
 
@@ -275,19 +273,23 @@ end
 @recipe(PowerSpectrumPlot, blox, sol) do scene
     Theme(
         xlabel = "Frequency (Hz)",
-        ylabel = "Power Spectrum",
+        ylabel = "Power Spectrum (dB)",
         xticks = [8,12,20,30, 40, 50,60,70,80,90],
-        yscale = log10,
+        yscale = identity,
         title = "",
         xlims = (8, 100),
-        ylims = (1e-3, 10),
+        ylims = nothing,
         alpha_start = 8,
         beta_start = 12,
         gamma_start = 35,
         gamma_end = 100,
-        alpha_label_position = (8.5, 5.0),
-        beta_label_position = (22, 5.0),
-        gamma_label_position = (60, 5.0),
+
+        alpha_label_position = 8.5,
+        beta_label_position = 22,
+        gamma_label_position = 60,
+        band_labels_vertical_position = "top",
+        band_labels_vertical_offset = 0.065,
+
         show_bands = true,
         sampling_rate = nothing,
         method = nothing,
@@ -299,35 +301,14 @@ end
 argument_names(::Type{<: PowerSpectrumPlot}) = (:blox, :sol)
 
 function Makie.plot!(p::PowerSpectrumPlot)
+    set_powerplot_axis(p)
+
     sol = p.sol[]
     blox = p.blox[]
 
-    ax = current_axis()
-    xlims!(ax, p.xlims[][1], p.xlims[][2])
-    ylims!(ax, p.ylims[][1], p.ylims[][2])
-    ax.xlabel = p.xlabel[]
-    ax.ylabel = p.ylabel[]
-    ax.xticks = p.xticks[]
-    ax.yscale = p.yscale[]
-    ax.title = p.title[]
-
-    if p.show_bands[]
-        y1 = p.ylims[][1]
-        y2 = p.ylims[][2]
-
-        poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
-        poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
-        poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
-        
-        text!(p, p.alpha_label_position[]...; text=L"\alpha", fontsize=24)
-        text!(p, p.beta_label_position[]...; text=L"\beta", fontsize=24)
-        text!(p, p.gamma_label_position[]...; text=L"\gamma", fontsize=24)
-    end
-
-
     powspec_kwargs = (sampling_rate = p.sampling_rate[],
-    method = p.method[],
-    window = p.window[])
+                        method = p.method[],
+                        window = p.window[])
 
     powspec_kwargs = filter_nothing(powspec_kwargs)
     _powerspectrumplot(p, blox, sol, powspec_kwargs)
@@ -335,30 +316,113 @@ function Makie.plot!(p::PowerSpectrumPlot)
     return p
 end
 
+function filter_data_within_limits(x, y, xlims)
+    mask = (x .>= xlims[1]) .& (x .<= xlims[2])
+    return x[mask], y[mask]
+end
+
 filter_nothing(kwargs::NamedTuple) = NamedTuple(k => v for (k, v) in pairs(kwargs) if v !== nothing)
+
+const PreComputedPowerSpectrums = PowerSpectrumPlot{<:Tuple{<:Vector{<:DSP.Periodograms.Periodogram}}}
+
+function Makie.plot!(p::PreComputedPowerSpectrums)
+    spectra = p[1][]
+    
+    # plot only within x-limits so that Makie computes the right limits
+    xlims = p.xlims[]
+    in_range = findall(xlims[1]-1 .<= spectra[1].freq .<= xlims[2]+1)
+
+    for powspec in spectra
+        power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
+        power_db .-= power_db[1]
+        lines!(p, powspec.freq[in_range], power_db)
+    end
+
+    set_powerplot_axis(p)
+    return p
+end
+
+const PreComputedPowerSpectrum = PowerSpectrumPlot{<:Tuple{<:DSP.Periodograms.Periodogram}}
+
+function Makie.plot!(p::PreComputedPowerSpectrum)
+    spectra = p[1][]
+    # plot only within x-limits so that Makie computes the right limits
+    xlims = p.xlims[]
+    in_range = findall(xlims[1]-1 .<= spectra.freq .<= xlims[2]+1)
+
+    power_db = 10 * log10.(spectra.power[in_range]) # convert to dB scale
+    power_db .-= power_db[1]
+    lines!(p, spectra.freq[in_range], power_db)
+    set_powerplot_axis(p)
+    return p
+end
+
+function set_powerplot_axis(p)
+
+    ax = current_axis()
+    xlims!(ax, p.xlims[][1], p.xlims[][2])
+    !isnothing(p.ylims[]) && ylims!(ax, p.ylims[][1], p.ylims[][2])
+
+    ax.xlabel = p.xlabel[]
+    ax.ylabel = p.ylabel[]
+    ax.xticks = p.xticks[]
+    ax.yscale = p.yscale[]
+    ax.title = p.title[]
+
+    if p.show_bands[]
+        # if the y-limits are not provided by the user, Makie computes them but only after the plot has been displayed
+        if isnothing(p.ylims[])
+            on(ax.finallimits) do lims
+                y1, y2 = minimum(lims)[2], maximum(lims)[2]
+                show_bands!(p, y1, y2)
+            end
+        else
+            y1, y2 = p.ylims[][1], p.ylims[][2]
+            show_bands!(p, y1, y2)
+        end
+    end
+end
+
+function show_bands!(p, y1, y2)
+    poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+    poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+    poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+
+    labels_y = p.band_labels_vertical_position[] == "top" ? y2 - (y2-y1)*p.band_labels_vertical_offset[] : y1 + (y2-y1)*p.band_labels_vertical_offset[]
+    text!(p, (p.alpha_label_position[], labels_y); text=L"\alpha", fontsize=24)
+    text!(p, (p.beta_label_position[], labels_y); text=L"\beta", fontsize=24)
+    text!(p, (p.gamma_label_position[], labels_y); text=L"\gamma", fontsize=24)
+end
 
 function _powerspectrumplot(p, blox, sol::AbstractSolution, powspec_kwargs)
     powspec = powerspectrum(blox, sol, p.state[]; powspec_kwargs...)
-    powerfirst = powspec.power[2]
-    lines!(p, powspec.freq[2:end], powspec.power[2:end]/powerfirst)
+    xlims = p.xlims[]
+    in_range = findall(xlims[1]-1 .<= powspec.freq .<= xlims[2]+1)
+
+    power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
+    power_db .-= power_db[1]
+    lines!(p, powspec.freq[in_range], power_db)
 end
 
 function _powerspectrumplot(p, blox, sols::EnsembleSolution, powspec_kwargs)
 
     powspecs = powerspectrum(blox, sols, p.state[]; powspec_kwargs...)
-    mean_power = mean(powspec.power[2:end] for powspec in powspecs)
 
-    freq = powspecs[1].freq[2:end]
-    std_power = std([powspec.power[2:end] for powspec in powspecs])
+    xlims = p.xlims[]
+    in_range = findall(xlims[1]-1 .<= powspecs[1].freq .<= xlims[2]+1)
 
-    y_lower = mean_power - std_power
-    y_upper = mean_power + std_power
-    mean_power_norm = mean_power / mean_power[1]
-    y_lower = y_lower / mean_power[1]
-    y_upper = y_upper / mean_power[1]
+    mean_power = mean(powspec.power[in_range] for powspec in powspecs)
+    std_power = std([powspec.power[in_range] for powspec in powspecs])
+
+    power_db = 10 * log10.(mean_power)
+    power_db .-= power_db[1]
+    ribbon_dB = 10*log10.(1 .+ std_power ./ mean_power)
+    y_lower = power_db - ribbon_dB
+    y_upper = power_db + ribbon_dB
+    freq = powspecs[1].freq[in_range]
 
     band!(p, freq, y_lower, y_upper, color=(:purple,0.2))
-    lines!(p,freq, mean_power_norm, color=:purple)
+    lines!(p,freq, power_db, color=:purple)
 end
 
 end

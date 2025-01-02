@@ -8,7 +8,7 @@ and receive feedback inhibition from that interneuron.
 struct WinnerTakeAllBlox{P} <: CompositeBlox
     namespace
     parts::Vector{P}
-    odesystem
+    system
     connector
 
     function WinnerTakeAllBlox(; 
@@ -55,14 +55,10 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
         end
 
         parts = vcat(n_inh, n_excis)
-        # Construct a BloxConnector object from the graph
-        # containing all connection equations from lower levels and this level.
-        bc = connector_from_graph(g)
+        
+        bc = connectors_from_graph(g)
         # If a namespace is not provided, assume that this is the highest level
         # and construct the ODEsystem from the graph.
-        # If there is a higher namespace, construct only a subsystem containing the parts of this level
-        # and propagate the BloxConnector object `bc` to the higher level 
-        # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
 
         new{Union{eltype(n_excis), typeof(n_inh)}}(namespace, parts, sys, bc)
