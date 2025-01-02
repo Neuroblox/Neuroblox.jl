@@ -43,7 +43,7 @@ using ModelingToolkit
 # This needs to be represented by the way we define the edges.
 nr = 3             # number of regions
 g = MetaDiGraph()
-regions = [];   # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
+regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
 # Now add the different blocks to each region and connect the blocks within each region:
 for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
@@ -69,12 +69,12 @@ end
 # finally we compose the simulation model
 @named simmodel = system_from_graph(g, split=false)
 
-# ## Run the simulation and plot the results
+# ## Run th e simulation and plot the results
 
-# setup simulation of the model, time in seconds
-tspan = (0.0, 612.0)
+# setup simulation of the model, time in milliseconds
+tspan = (0.0, 612000.0)
 prob = SDEProblem(simmodel, [], tspan)
-dt = 2.0   # two seconds as measurement interval for fMRI
+dt = 2000   # 2 seconds (units are milliseconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # plot bold signal time series
@@ -82,7 +82,7 @@ idx_m = get_idx_tagged_vars(simmodel, "measurement")    # get index of bold sign
 f = Figure()
 ax = Axis(f[1, 1],
     title = "fMRI time series",
-    xlabel = "Time [s]",
+    xlabel = "Time [ms]",
     ylabel = "BOLD",
 )
 lines!(ax, sol, idxs=idx_m)
@@ -143,7 +143,7 @@ for (i, a) in enumerate(vec(A_prior))
 end
 # With the function `untune!`` we can list indices of parameters whose tunable flag should be set to false.
 # For instance the first element in the second row:
-untune!(A, [])
+changetune!(A, [])
 for (i, idx) in enumerate(CartesianIndices(A_prior))
     if idx[1] == idx[2]
         add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=-exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed
