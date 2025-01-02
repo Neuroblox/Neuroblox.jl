@@ -27,10 +27,12 @@ function paramscoping(;tunable=true, kwargs...)
     return paramlist
 end
 
-function untune!(parlist, nontunable)
-    for i in nontunable
-        parlist[i] = setmetadata(parlist[i], ModelingToolkit.VariableTunable, false)
+function changetune(model, parlist)
+    parstochange = keys(parlist)
+    p_new = map(parameters(model)) do p
+        p in parstochange ? setmetadata(p, ModelingToolkit.VariableTunable, parlist[p]) : p
     end
+    System(equations(model), ModelingToolkit.get_iv(model), unknowns(model), p_new; name=model.name)
 end
 
 get_HH_exci_neurons(n::HHNeuronExciBlox) = [n]

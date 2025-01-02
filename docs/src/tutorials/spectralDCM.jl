@@ -51,11 +51,11 @@ for i = 1:nr
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
     input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.1)
-    add_edge!(g, input => region; :weight => 1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
+    add_edge!(g, input => region, weight=1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
 
     ## simulate fMRI signal with BalloonModel which includes the BOLD signal on top of the balloon model dynamics
     measurement = BalloonModel(;name=Symbol("r$(i)₊bm"))
-    add_edge!(g, region => measurement; :weight => 1.0)
+    add_edge!(g, region => measurement, weight=1.0)
 end
 # Next we define the between-region connectivity matrix and make sure that it is diagonally dominant to guarantee numerical stability (see Gershgorin theorem).
 A_true = 0.1*randn(nr, nr)
@@ -63,7 +63,7 @@ A_true -= diagm(map(a -> sum(abs, a), eachrow(A_true)))    # ensure diagonal dom
 # Instead of a random matrix use the same matrix as is defined in [3]
 A_true = [[-0.5 -2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
 for idx in CartesianIndices(A_true)
-    add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => A_true[idx[1], idx[2]])
+    add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=A_true[idx[1], idx[2]])
 end
 
 # finally we compose the simulation model
@@ -72,7 +72,7 @@ end
 # ## Run the simulation and plot the results
 
 # setup simulation of the model, time in seconds
-tspan = (0.0, 612.0)
+tspan = (0.0, 512.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2.0   # two seconds as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
@@ -125,11 +125,11 @@ for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
     push!(regions, region)
     input = ExternalInput(;name=Symbol("r$(i)₊ei"))
-    add_edge!(g, input => region; :weight => C)
+    add_edge!(g, input => region, weight=C)
 
     ## we assume fMRI signal and model them with a BalloonModel
     measurement = BalloonModel(;name=Symbol("r$(i)₊bm"), lnτ=lnτ, lnκ=lnκ, lnϵ=lnϵ)
-    add_edge!(g, region => measurement; :weight => 1.0)
+    add_edge!(g, region => measurement, weight=1.0)
 end
 
 A_prior = 0.01*randn(nr, nr)
@@ -141,18 +141,21 @@ for (i, a) in enumerate(vec(A_prior))
     symb = Symbol("A$(i)")
     push!(A, only(@parameters $symb = a))
 end
-# With the function `untune!`` we can list indices of parameters whose tunable flag should be set to false.
-# For instance the first element in the second row:
-untune!(A, [])
+
 for (i, idx) in enumerate(CartesianIndices(A_prior))
     if idx[1] == idx[2]
-        add_edge!(g, regions[idx[1]] => regions[idx[2]]; :weight => -exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed
+        add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=-exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed
     else
-        add_edge!(g, regions[idx[2]] => regions[idx[1]]; :weight => A[i])
+        add_edge!(g, regions[idx[2]] => regions[idx[1]], weight=A[i])
     end
 end
-
-@named fitmodel = system_from_graph(g, split=false)
+# we avoid simplification of the model in order to exclude some parameters from fitting
+@named fitmodel = system_from_graph(g, simplify=false)
+# With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
+# For instance the the effective connections that are set to zero in the simulation:
+untune = Dict(A[3] => false, A[7] => false)
+fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
+fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations
 
 # ## Setup spectral DCM
 max_iter = 128;            # maximum number of iterations
