@@ -311,7 +311,7 @@ function integration_step(dfdx, f, v, solenoid=false)
         Q  = Q/opnorm(Q, 2)/8;
 
         f  = f  - Q*f;
-        dfdx = dfdx - Q*dfdx;
+        dfdx = dfdx - Q*dfdx;        
     end
 
     # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
@@ -320,9 +320,9 @@ function integration_step(dfdx, f, v, solenoid=false)
     t = exp(v - spm_logdet(dfdx)/n)
 
     if t > exp(16)
-        dx = - dfdx \ f    # -inv(dfdx)*f
+        dx = - dfdx \ f   # -inv(dfdx)*f
     else
-        dx = (exp(t * dfdx) - I) * inv(dfdx)*f    # (expm(dfdx*t) - I)*inv(dfdx)*f
+        dx = (exp(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
     end
 
     return dx

@@ -72,7 +72,7 @@ end
 
 # ## Run the simulation and plot the results
 
-# setup simulation of the model, time in milliseconds
+# setup simulation of the model, time in seconds
 tspan = (0.0, 512.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2   # 2 seconds (units are milliseconds) as measurement interval for fMRI
@@ -155,7 +155,7 @@ for (i, idx) in enumerate(CartesianIndices(A_prior))
 end
 # we avoid simplification of the model in order to exclude some parameters from fitting
 @named fitmodel = system_from_graph(g, simplify=false)
-# With the function `changetune` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
+# With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
 # For instance the the effective connections that are set to zero in the simulation:
 untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
