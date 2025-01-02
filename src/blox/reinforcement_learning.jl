@@ -223,7 +223,7 @@ mutable struct Agent{S,P,A,LR,C}
     end
 end
 
-function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=0, kwargs...)
+function run_experiment!(agent::Agent, env::ClassificationEnvironment; verbose=false, t_warmup=0, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
@@ -262,12 +262,15 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; t_warmup=
         push!(trace.trial, trial)
         push!(trace.correct, iscorrect)
         push!(trace.action, action)
-    end
 
+        if verbose
+            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "False")")
+        end
+    end
     return trace
 end
 
-function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String; t_warmup=0, kwargs...)
+function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String; verbose=false, t_warmup=0, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
@@ -322,6 +325,10 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
         push!(trace.trial, trial)
         push!(trace.correct, iscorrect)
         push!(trace.action, action)
+
+        if verbose
+            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "False")")
+        end
     end
 
     return trace
