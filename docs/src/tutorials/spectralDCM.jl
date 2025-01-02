@@ -71,8 +71,8 @@ end
 
 # ## Run th e simulation and plot the results
 
-# setup simulation of the model, time in milliseconds
-tspan = (0.0, 612000.0)
+# setup simulation of the model, time in seconds
+tspan = (0.0, 512.0)
 prob = SDEProblem(simmodel, [], tspan)
 dt = 2000   # 2 seconds (units are milliseconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
@@ -141,9 +141,7 @@ for (i, a) in enumerate(vec(A_prior))
     symb = Symbol("A$(i)")
     push!(A, only(@parameters $symb = a))
 end
-# With the function `untune!`` we can list indices of parameters whose tunable flag should be set to false.
-# For instance the first element in the second row:
-changetune!(A, [])
+
 for (i, idx) in enumerate(CartesianIndices(A_prior))
     if idx[1] == idx[2]
         add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=-exp(A[i])/2)  # -exp(A[i])/2: treatement of diagonal elements in SPM12 to make diagonal dominance (see Gershgorin Theorem) more likely but it is not guaranteed
@@ -151,8 +149,13 @@ for (i, idx) in enumerate(CartesianIndices(A_prior))
         add_edge!(g, regions[idx[2]] => regions[idx[1]], weight=A[i])
     end
 end
-
-@named fitmodel = system_from_graph(g, split=false)
+# we avoid simplification of the model in order to exclude some parameters from fitting
+@named fitmodel = system_from_graph(g, simplify=false)
+# With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
+# For instance the the effective connections that are set to zero in the simulation:
+untune = Dict(A[3] => false, A[7] => false)
+fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
+fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations
 
 # ## Setup spectral DCM
 max_iter = 128;            # maximum number of iterations
