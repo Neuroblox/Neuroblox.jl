@@ -43,13 +43,15 @@ using Random
 # Note that the Ornstein-Uhlenbeck block will feed into the linear neural mass which in turn will feed into the BalloonModel blox.
 # This needs to be represented by the way we define the edges.
 Random.seed!(17)   # set seed for reproducibility
+
 nr = 3             # number of regions
 g = MetaDiGraph()
 regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
-# Now add the different blocks to each region and connect the blocks within each region:
+# Now add the different blocks to each region and connect the blocks within each region. 
+# For convenience we use a for loop since the type of blocks belonging to a each region repeat over regions but you could also approach building the system the same way as was shown in previous tutorials:
 for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
-    push!(regions, region)          # store neural mass model for connection of regions
+    push!(regions, region)          # store neural mass model in list. We need this list below. If you haven't seen the Julia command `push!` before [see here](http://jlhub.com/julia/manual/en/function/push-exclamation).
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
     input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.1)
@@ -59,10 +61,7 @@ for i = 1:nr
     measurement = BalloonModel(;name=Symbol("r$(i)₊bm"))
     add_edge!(g, region => measurement, weight=1.0)
 end
-# Next we define the between-region connectivity matrix and make sure that it is diagonally dominant to guarantee numerical stability (see Gershgorin theorem).
-A_true = 0.1*randn(nr, nr)
-A_true -= diagm(map(a -> sum(abs, a), eachrow(A_true)))    # ensure diagonal dominance of matrix
-# Instead of a random matrix use the same matrix as is defined in [3]
+# Next we define the between-region connectivity matrix and connect regions; we use the same matrix as is defined in [3]
 A_true = [[-0.5 -2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
 for idx in CartesianIndices(A_true)
     add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=A_true[idx[1], idx[2]])
@@ -79,8 +78,11 @@ prob = SDEProblem(simmodel, [], tspan)
 dt = 2   # 2 seconds (units are milliseconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
-# plot bold signal time series
+# we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
+# the observable quantity in our model is the BOLD signal, the variable of the Blox `BalloonModel` that represents the BOLD signal is tagged with "measurement" tag.
+# other tags that are defined are "input" which denotes variables representing a stimulus, like for instance an `OUBlox`.
 idx_m = get_idx_tagged_vars(simmodel, "measurement")    # get index of bold signal
+# plot bold signal time series
 f = Figure()
 ax = Axis(f[1, 1],
     title = "fMRI time series",
