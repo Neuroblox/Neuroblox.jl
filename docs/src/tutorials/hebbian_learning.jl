@@ -137,9 +137,12 @@ end
 agent.problem = remake(agent.problem; tspan=tspan)
 sol, iscorrect, action= run_trial!(agent, env, weights, nothing;alg=Vern7())
 
+# plot the activities of VAC and AC neurons
 neuron_set1 = get_neurons(VAC) ## extract neurons from a composite block like CorticalBlox
-n_neurons = 50 ## set number nof neurons to display in the stackplot
 stackplot(neuron_set1, sol)
+
+neuron_set2 = get_neurons(AC) ## extract neurons from a composite block like CorticalBlox
+stackplot(neuron_set2, sol)
 
 # run the whole experiment with N_trials number of trials
 t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7())
