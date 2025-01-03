@@ -82,30 +82,31 @@ end
 argument_names(::Type{<: ECBarPlot}) = (:spDCMresults, :spDCMsetup, :groundtruth)
 
 function Makie.plot!(p::ECBarPlot)
-    nr = p.spDCMsetup[].systemnums[1]  # number of regions
-    diagidx = 1:(nr+1):nr^2
     modelparam = p.spDCMsetup[].modelparam
-    idx = collect(1:nr^2)
-    deleteat!(idx, diagidx)
-    xlabels = string.(collect(keys(modelparam))[idx])
+    xlabels = string.(collect(keys(modelparam)))
+    idx = []
+    for l in xlabels
+        if l[1] == 'A'
+            push!(idx, parse(Int64, l[2:end]))
+        end
+    end
+    np = length(idx)
+
     ax = current_axis()
-    ax.xticks = (1:(nr^2-nr), xlabels)
+    ax.xticks = (1:np, xlabels[1:np])
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
     ax.title = p.title[]
 
     gt = copy(vec(p.groundtruth[]))   # get ground truth values
-    deleteat!(gt, diagidx)
     state = p.spDCMresults[]
-    μA = state.μθ_po[1:nr^2]    # get estimated means of effective connectivity
-    deleteat!(μA, diagidx)
-    var_A = diag(state.Σθ_po[1:nr^2, 1:nr^2])  # get variance of effective connectivity
-    deleteat!(var_A, diagidx)
+    μA = state.μθ_po[1:length(idx)]    # get estimated means of effective connectivity
+    var_A = diag(state.Σθ_po[1:np, 1:np])  # get variance of effective connectivity
 
-    x = 1:(nr^2-nr)
+    x = 1:np
     barplot!(p, x, μA)
     errorbars!(p, x, μA, sqrt.(var_A), color = :red)
-    scatter!(p, x, gt)
+    scatter!(p, x, gt[idx])
     return p
 end
 
