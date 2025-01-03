@@ -677,7 +677,7 @@ function get_sampling_info(sol::SciMLBase.AbstractSolution; sampling_rate=nothin
     first_diff = dt[1]
 
     # check if the solution was saved at regular time steps
-    if !isapprox(dt_std, 0, atol=1e-10 * first_diff)
+    if !isapprox(dt_std, 0, atol=1e-2 * first_diff)
         if isnothing(sampling_rate)
             @warn("Solution not saved at fixed time steps. Provide 'sampling_rate' in milliseconds.")
             sampling_rate = first_diff

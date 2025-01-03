@@ -366,83 +366,134 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
     namespace
 
 	function HHNeuronExci_STN_Adam_Blox(;
-        name, 
-        namespace=nothing,
-        E_syn=0.0, 
-        I_bg=1.8,
-        freq=0,
-        phase=0,
-        τ=2,
-        Cₘ=1.0,
+		name, 
+		namespace=nothing,
+		E_syn=0.0, 
+		I_bg=1.8,
+		freq=0,
+		phase=0,
+		τ=2,
+		Cₘ=1.0,
 		σ=1.7,
 		a=5,
-		b=4
-    )
+		b=4,
+		# Cortical input parameters
+		g_ctx_max = 13.494093261718753, # 11.154
+		g_ctx0=0.00226, # 0.025212
+		D_ctx=0.00011,
+		E_ctx=0.0,
+		τ_ctx=2.0,
+		a_ctx=0.06, # how much does DBS affect cortical conductance?
+		b_ctx=4
+	)
+
 		sts = @variables begin 
 			V(t)=-67.00 
 			n(t)=0.032 
 			m(t)=0.05 
 			h(t)=0.059 
+			G_ctx(t)=0.005   # Cortical conductance gating variable
 			I_syn(t)
 			[input=true] 
-            I_in(t)
-            [input=true]
+			I_in(t)
+			[input=true]
 			I_asc(t)
 			[input=true]
 			DBS_in(t)
 			[input=true]
-			G(t)=0.0 
-			[output = true] 
+			G(t)=0.0
+			[output = true]
 
 			spikes_cumulative(t)=0.0
 			spikes_window(t)=0.0
-		end
 
+			# Observed variables
+			I_total(t)
+			I_ctx(t)
+			g_ctx(t)
+			DBS_modulation(t)
+			G_ctx_rhs(t)
+		end
+		# Parameters
 		ps = @parameters begin 
 			E_syn=E_syn 
 			G_Na = 100 
-			G_K  = 80 
+			G_K = 80 
 			G_L = 0.1 
 			E_Na = 50 
 			E_K = -100 
 			E_L = -67 
-			I_bg=I_bg
+			I_bg = I_bg
 			freq = freq 
 			phase = phase
-           	Cₘ = Cₘ
+			Cₘ = Cₘ
 			σ = σ
 			a = a
 			b = b
+			τ = τ
+			# Cortical input parameters
+			g_ctx_max = g_ctx_max
+			g_ctx0 = g_ctx0
+			D_ctx = D_ctx
+			E_ctx = E_ctx
+			τ_ctx = τ_ctx
+			a_ctx = a_ctx
+			b_ctx = b_ctx
 		end
-        
-        @brownian χ
+		
+		@brownian χ η  # η for cortical OU process, χ for original noise
 
-		αₙ(v) = 0.032*(v+52)/(1-exp(-(v+52)/5))
-	    βₙ(v) = 0.5*exp(-(v+57)/40)
-	    αₘ(v) = 0.32*(v+54)/(1-exp(-(v+54)/4))
-	    βₘ(v) = 0.28*(v+27)/(exp((v+27)/5)-1)
-		αₕ(v) = 0.128*exp(-(v+50)/18)
-	    βₕ(v) = 4/(1+exp(-(v+27)/5))
+		# Channel dynamics helper functions
+		αₙ(v) = 0.032*(v + 52)/(1 -exp(-(v + 52)/5))
+		βₙ(v) = 0.5*exp(-(v + 57)/40)
+		αₘ(v) = 0.32*(v + 54)/(1 - exp(-(v + 54)/4))
+		βₘ(v) = 0.28*(v + 27)/(exp((v + 27)/5) - 1)
+		αₕ(v) = 0.128*exp(-(v + 50)/18)
+		βₕ(v) = 4/(1 + exp(-(v + 27)/5))
 		
-		G_asymp(v,a,b) = a*(1+tanh(v/b + DBS_in))
-		
-		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
-			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
-			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
-			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
-			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G)
-			  
+		G_asymp(v,a,b) = a*(1 + tanh(v/b + DBS_in)) # We should create a different function for the DBS effect in cortical input.
+													# Currently, it is tuned for when the DBS stimulus is included because in that case, the v/b term cancel out.
+													# We should rethink all this part and maybe include the tanh behavior directly in the stimutus
+
+		eqs = [
+			# Membrane voltage dynamics
+			D(V) ~ (1/Cₘ)*(
+				I_total
+				+ σ*χ
+			), 
+			I_total ~ (- G_Na*m^3*h*(V - E_Na)
+					- G_K*n^4*(V - E_K)
+					- G_L*(V - E_L)
+					# + I_bg*(sin(t*freq*2*pi/1000) + 1)
+					+ I_syn + I_asc + I_in
+					# Cortical synaptic current with gating
+					+ I_ctx),
+			I_ctx ~ g_ctx*(V - E_ctx),
+			# Channel dynamics
+			D(n) ~ (αₙ(V)*(1-n) - βₙ(V)*n),
+			D(m) ~ (αₘ(V)*(1-m) - βₘ(V)*m), 
+			D(h) ~ (αₕ(V)*(1-h) - βₕ(V)*h),
+			# AMPA conductance gating
+			D(G) ~ (-1/τ)*G + G_asymp(V, a, b)*(1 - G),
+			# Cortical conductance as OU process with gating
+			D(G_ctx) ~ G_ctx_rhs,
+			# D(G_ctx) ~ (-1/τ_ctx)*(G_ctx - g_ctx0) + sqrt(D_ctx)*η + G_asymp(V, a_ctx, b_ctx)*(1 - G_ctx),
+
+			# Observed variables
+			# G_ctx_rhs ~ (-1/τ_ctx)*G_ctx, # 1 + pulses at 4-5 Hz at random poissonian times. Amplitude = 1. Width = very short
+			# G_ctx_rhs ~ (-1/τ_ctx)*(G_ctx - g_ctx0), # 2
+			# G_ctx_rhs ~ (-1/τ_ctx)*(G_ctx - g_ctx0) + sqrt(D_ctx)*η, # 3
+			G_ctx_rhs ~ (-1/τ_ctx)*(G_ctx - g_ctx0) + sqrt(D_ctx)*η + DBS_modulation, # 4
+
+			g_ctx ~ - g_ctx_max*G_ctx,
+			DBS_modulation ~  G_asymp(V, a_ctx, b_ctx)*(1 - G_ctx),
 		]
-        
-		sys = System(
-            eqs, t, sts, ps; 
-			name = Symbol(name)
-			)
 
+		sys = System(eqs, t, sts, ps; name=name)
+	
 		new(sys, namespace)
 	end
-end	
+end
 
 struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
     system

@@ -291,6 +291,14 @@ struct STN_Adam <: CompositeBlox
         σ=2.9158528502583545,
         density=0.0,
         weight=0.0,
+		g_ctx_max = 13.494093261718753,
+		g_ctx0=0.00226,
+		D_ctx=0.00011,
+		E_ctx=0.0,
+		τ_ctx=2.0,
+		a_ctx=0.5*0.00226*2,
+		b_ctx=4,
+
         connection_matrix=nothing
     )
         n_exci = [
@@ -302,7 +310,14 @@ struct STN_Adam <: CompositeBlox
                     I_bg = I_bg[i],
                     freq = freq[i],
                     phase = phase[i],
-                    σ=σ
+                    σ=σ,
+                    g_ctx_max=g_ctx_max,
+                    g_ctx0=g_ctx0,
+                    D_ctx=D_ctx,
+                    E_ctx=E_ctx,
+                    τ_ctx=τ_ctx,
+                    a_ctx=a_ctx,
+                    b_ctx=b_ctx
             ) 
             for i in Base.OneTo(N_exci)
         ]
