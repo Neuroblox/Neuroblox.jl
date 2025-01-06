@@ -242,7 +242,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; verbose=f
         agent.problem = remake(agent.problem; tspan, p=init_params)
     end
 
-    t_stops = mapreduce(get_eval_times, union, values(learning_rules))
+    t_stops = mapreduce(get_eval_times, union, values(learning_rules); init=Float64[])
 
     action_selection = agent.action_selection 
     if !isnothing(action_selection)
