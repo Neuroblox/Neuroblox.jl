@@ -20,7 +20,8 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colormap = :grays
+        colormap = :grays,
+        colorrange = nothing
     )
 end
 
@@ -41,8 +42,14 @@ function Makie.plot!(p::Adjacency)
     hideydecorations!(ax, ticklabels = false, ticks = false)
 
     X, Y, D = findnz(adj.matrix)
+    
+    colorrange = if isnothing(p.colorrange[])
+        (minimum(D), maximum(D))
+    else
+        p.colorrange[]
+    end
 
-    heatmap!(p, Y, X, D; colormap = p.colormap[])
+    heatmap!(p, Y, X, D; colormap = p.colormap[], colorrange)
 
     return p
 end
