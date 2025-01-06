@@ -61,7 +61,7 @@ fig
 
 
 time_block_dur = 90.0 ## ms (size of discrete time blocks)
-N_trials = 100 ##number of trials
+N_trials = 250 ##number of trials
 trial_dur = 1000 ##ms
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
@@ -91,7 +91,7 @@ model_name=:g
 @named AS = GreedyPolicy(; namespace=model_name, t_decision=2*time_block_dur) 
 @named SNcb = SNc(κ_DA=1; namespace=model_name) 
 
-hebbian_mod = HebbianModulationPlasticity(K=0.05, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
+hebbian_mod = HebbianModulationPlasticity(K=0.06, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
 hebbian_cort = HebbianPlasticity(K=5e-4, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 
 ## circuit 
