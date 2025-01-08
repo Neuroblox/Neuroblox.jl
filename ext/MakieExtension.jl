@@ -11,7 +11,7 @@ using LinearAlgebra: diag
 using SparseArrays
 using DSP
 using Statistics: mean, std
-
+using Colors: colormap
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, 
                 frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!,
@@ -20,8 +20,8 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colormap = :grays,
-        colorrange = nothing
+        colorrange = nothing,
+        title = ""
     )
 end
 
@@ -37,6 +37,7 @@ function Makie.plot!(p::Adjacency)
     ax.xticks = (Base.OneTo(N), String.(adj.names))
     ax.yticks = (Base.OneTo(N), String.(adj.names))
     ax.xticklabelrotation = pi/2
+    ax.title = p.title[]
 
     hidexdecorations!(ax, ticklabels = false, ticks = false)
     hideydecorations!(ax, ticklabels = false, ticks = false)
@@ -48,8 +49,8 @@ function Makie.plot!(p::Adjacency)
     else
         p.colorrange[]
     end
-
-    heatmap!(p, Y, X, D; colormap = p.colormap[], colorrange)
+    cm = colormap("Grays")
+    heatmap!(p, Y, X, D; colormap = cm, colorrange)
 
     return p
 end
