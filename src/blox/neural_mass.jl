@@ -274,9 +274,9 @@ end
     If you need to modify the parameters, see Chesebro et al. and van Nieuwenhuizen et al. for physiological ranges.
 
 Arguments:
-- name: Name given to ODESystem object within the blox.
+- params: Parameters used by the ODESystem. See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+- system: ODESystem with all states.
 - namespace: Additional namespace above name if needed for inheritance.
-- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citations:
 1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091.
@@ -366,9 +366,9 @@ end
     ```
 
 Arguments:
-- name: Name given to ODESystem object within the blox.
+- params: Parameters used by the ODESystem. See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+- system: ODESystem with all states.
 - namespace: Additional namespace above name if needed for inheritance.
-- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citations:
 FitzHugh, R., Impulses and physiological states in theoretical
@@ -449,10 +449,11 @@ end
     where \$W_i\$ is a Wiener process and \$\\zeta_i\$ is the noise strength.
 
 Arguments:
-- name: Name given to ODESystem object within the blox.
-- namespace: Additional namespace above name if needed for inheritance.
-- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+- params: Parameters used internally by the ODESystem. Defined in the constructor and used as shown in the equations. 
+                    Note that parameters are scaled so that units of time are in milliseconds.
                     Default parameter values are taken from [2].
+- system: ODESystem with all states.
+- namespace: Additional namespace above name if needed for inheritance.
 
 Citations:
 1. Kuramoto, Y. (1975). Self-entrainment of a population of coupled non-linear oscillators. 
