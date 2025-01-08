@@ -20,7 +20,8 @@ import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
     Theme(
-        colorrange = nothing
+        colorrange = nothing,
+        title = ""
     )
 end
 
@@ -36,6 +37,7 @@ function Makie.plot!(p::Adjacency)
     ax.xticks = (Base.OneTo(N), String.(adj.names))
     ax.yticks = (Base.OneTo(N), String.(adj.names))
     ax.xticklabelrotation = pi/2
+    ax.title = p.title[]
 
     hidexdecorations!(ax, ticklabels = false, ticks = false)
     hideydecorations!(ax, ticklabels = false, ticks = false)
