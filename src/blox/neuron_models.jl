@@ -589,7 +589,7 @@ Arguments:
 References:
 1. Sterratt, D., Graham, B., Gillies, A., & Willshaw, D. (2011). Principles of Computational Modelling in Neuroscience. Cambridge University Press.
 """
-struct LIFNeuron <: Neuron
+struct LIFNeuron <: AbstractNeuronBlox
     params
     system
     namespace
