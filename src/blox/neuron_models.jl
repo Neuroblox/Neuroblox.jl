@@ -589,19 +589,18 @@ Arguments:
 References:
 1. Sterratt, D., Graham, B., Gillies, A., & Willshaw, D. (2011). Principles of Computational Modelling in Neuroscience. Cambridge University Press.
 """
-# C = [1.0, 10.0] μF
-# Eₘ = [-100, -55] mV
-# Rₘ = [1, 100] kΩ
-# τ = [1.0, 100.0] ms
-# θ = [-65, -45] mV
-# E_syn = [-100, -55] mV
-# G_syn = [0.001, 0.01] μA/mV (bastardized μS - off by factor of 1000)
-# I_in = [-2.5, 2.5] μA (you will cook real neurons with these currents)
-struct LIFNeuron <: AbstractNeuronBlox
+struct LIFNeuron <: Neuron
     params
     system
     namespace
-
+    # C = [1.0, 10.0] μF
+    # Eₘ = [-100, -55] mV
+    # Rₘ = [1, 100] kΩ
+    # τ = [1.0, 100.0] ms
+    # θ = [-65, -45] mV
+    # E_syn = [-100, -55] mV
+    # G_syn = [0.001, 0.01] μA/mV (bastardized μS - off by factor of 1000)
+    # I_in = [-2.5, 2.5] μA (you will cook real neurons with these currents)
 	function LIFNeuron(;name,
 					   namespace=nothing, 
 					   C=1.0,
@@ -616,11 +615,10 @@ struct LIFNeuron <: AbstractNeuronBlox
 		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
 		sts = @variables V(t)=-70.00 G(t)=0.0 [output=true] jcn(t) [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
-				D(G)~(-1/τ)*G,
-			  ]
+				D(G)~(-1/τ)*G]
 
 		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		sys = System(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
