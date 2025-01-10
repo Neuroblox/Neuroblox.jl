@@ -298,6 +298,13 @@ end
         gamma_label_position = 60,
         band_labels_vertical_position = "top",
         band_labels_vertical_offset = 0.065,
+        bands_generated = false,
+        poly_alpha = nothing,
+        poly_beta = nothing,
+        poly_gamma = nothing,
+        alpha_label = nothing,
+        beta_label = nothing,
+        gamma_label = nothing,
 
         show_bands = true,
         sampling_rate = nothing,
@@ -393,14 +400,28 @@ function set_powerplot_axis(p)
 end
 
 function show_bands!(p, y1, y2)
-    poly!(p, Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)], color = (:red,0.2), strokecolor = :black, strokewidth = 1)
-    poly!(p, Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)], color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
-    poly!(p, Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)], color = (:green,0.2), strokecolor = :black, strokewidth = 1)
-
+    alpha_band_position = Point2f[(p.alpha_start[], y1), (p.alpha_start[], y2), (p.beta_start[], y2), (p.beta_start[], y1)]
+    beta_band_position = Point2f[(p.beta_start[], y1), (p.beta_start[], y2), (p.gamma_start[], y2), (p.gamma_start[], y1)]
+    gamma_band_position = Point2f[(p.gamma_start[], y1), (p.gamma_start[], y2), (p.gamma_end[], y2), (p.gamma_end[], y1)]
     labels_y = p.band_labels_vertical_position[] == "top" ? y2 - (y2-y1)*p.band_labels_vertical_offset[] : y1 + (y2-y1)*p.band_labels_vertical_offset[]
-    text!(p, (p.alpha_label_position[], labels_y); text=L"\alpha", fontsize=24)
-    text!(p, (p.beta_label_position[], labels_y); text=L"\beta", fontsize=24)
-    text!(p, (p.gamma_label_position[], labels_y); text=L"\gamma", fontsize=24)
+
+    if !p.bands_generated[]
+        p.poly_alpha[] = poly!(p, alpha_band_position, color = (:red,0.2), strokecolor = :black, strokewidth = 1)
+        p.poly_beta[] = poly!(p, beta_band_position, color = (:blue,0.2), strokecolor = :black, strokewidth = 1)
+        p.poly_gamma[] = poly!(p, gamma_band_position, color = (:green,0.2), strokecolor = :black, strokewidth = 1)
+
+        p.alpha_label[] = text!(p, (p.alpha_label_position[], labels_y); text=L"\alpha", fontsize=24)
+        p.beta_label[] = text!(p, (p.beta_label_position[], labels_y); text=L"\beta", fontsize=24)
+        p.gamma_label[] = text!(p, (p.gamma_label_position[], labels_y); text=L"\gamma", fontsize=24)
+        p.bands_generated[] = true
+    else
+        p.poly_alpha[][1] = alpha_band_position
+        p.poly_beta[][1] = beta_band_position
+        p.poly_gamma[][1] = gamma_band_position
+        p.alpha_label[][1] = (p.alpha_label_position[], labels_y)
+        p.beta_label[][1] = (p.beta_label_position[], labels_y)
+        p.gamma_label[][1] = (p.gamma_label_position[], labels_y)
+    end
 end
 
 function _powerspectrumplot(p, blox, sol::AbstractSolution, powspec_kwargs)
