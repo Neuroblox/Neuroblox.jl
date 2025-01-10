@@ -31,7 +31,7 @@ model_name=:g
 @named ASC1 = NextGenerationEIBlox(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
 
 ## define learning rule
-hebbian_cort = HebbianPlasticity(K=5e-5, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
+hebbian_cort = HebbianPlasticity(K=5e-4, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 	
 g = MetaDiGraph()
 
@@ -45,11 +45,11 @@ env = ClassificationEnvironment(stim, N_trials; name=:env, namespace=model_name)
 
 fig = Figure(title="Adjacency matrix", size = (1600, 800))
 
-adjacency(fig[1,1], agent)
+adjacency(fig[1,1], agent, colorrange=(0,7)) # 7 is the maximum synaptic weight W_lim
 
 run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(), verbose=true)
 
-adjacency(fig[1,2], agent)
+adjacency(fig[1,2], agent, colorrange=(0,7))
 
 fig
 
@@ -61,7 +61,7 @@ fig
 
 
 time_block_dur = 90.0 ## ms (size of discrete time blocks)
-N_trials = 250 ##number of trials
+N_trials = 100 ##number of trials
 trial_dur = 1000 ##ms
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
@@ -91,7 +91,7 @@ model_name=:g
 @named AS = GreedyPolicy(; namespace=model_name, t_decision=2*time_block_dur) 
 @named SNcb = SNc(κ_DA=1; namespace=model_name) 
 
-hebbian_mod = HebbianModulationPlasticity(K=0.06, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
+hebbian_mod = HebbianModulationPlasticity(K=0.03, decay=0.01, α=2.5, θₘ=1, modulator=SNcb, t_pre=trial_dur, t_post=trial_dur, t_mod=time_block_dur)
 hebbian_cort = HebbianPlasticity(K=5e-4, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
 
 ## circuit 
@@ -102,8 +102,8 @@ add_edge!(g, stim => VAC, weight=14)
 add_edge!(g, ASC1 => VAC, weight=44)
 add_edge!(g, ASC1 => AC, weight=44)
 add_edge!(g, VAC => AC, weight=3, density=0.1, learning_rule = hebbian_cort) 
-add_edge!(g, AC=>STR1, weight = 0.075, density =  0.04, learning_rule =  hebbian_mod)
-add_edge!(g, AC=>STR2, weight =  0.075, density =  0.04, learning_rule =  hebbian_mod) 
+add_edge!(g, AC=>STR1, weight = 0.075, density =  0.04, learning_rule =  hebbian_mod) 
+add_edge!(g, AC=>STR2, weight = 0.075, density =  0.04, learning_rule =  hebbian_mod) 
 add_edge!(g, tan_pop1 => STR1, weight = 1, t_event = time_block_dur)
 add_edge!(g, tan_pop2 => STR2, weight = 1, t_event = time_block_dur)
 add_edge!(g, STR1 => tan_pop1, weight = 1)
@@ -122,7 +122,7 @@ env = ClassificationEnvironment(stim, N_trials; name=:env, namespace=model_name)
 
 fig = Figure(title="Adjacency matrix", size = (1600, 800))
 
-adjacency(fig[1,1], agent)
+adjacency(fig[1,1], agent, colorrange=(0,0.2))
 
 # run the whole experiment with N_trials number of trials
 t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(), verbose=true)
@@ -131,6 +131,6 @@ t=run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(), verbose=true)
 #  trials: trial number
 #  correct: whether the response was correct or not
 #  action: what was the responce choice, choice 1 (left saccade) or choice 2 (right saccade)
-adjacency(fig[1,2], agent)
+adjacency(fig[1,2], agent, colorrange=(0,0.2))
 
-fig
+ fig

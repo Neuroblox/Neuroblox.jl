@@ -264,7 +264,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; verbose=f
         push!(trace.action, action)
 
         if verbose
-            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "False")")
+            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "Incorrect")")
         end
     end
     return trace
@@ -327,7 +327,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
         push!(trace.action, action)
 
         if verbose
-            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "False")")
+            println("Trial = $(trial), Category choice = $(action), Response = $(iscorrect==1 ? "Correct" : "Incorrect")")
         end
     end
 
