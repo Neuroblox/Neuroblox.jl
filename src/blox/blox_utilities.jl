@@ -233,7 +233,7 @@ get_connector(blox) = Connector(namespaced_nameof(blox), namespaced_nameof(blox)
 
 function get_weight(kwargs, name_blox1, name_blox2)
     get(kwargs, :weight) do
-        @warn "Connection weight from $name_blox1 to $name_blox2 is not specified. Assuming weight=1" 
+        @info "Connection weight from $name_blox1 to $name_blox2 is not specified. Assuming weight=1" 
         return 1.0
     end
 end
@@ -408,7 +408,7 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
     cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
         name_blox2 = nameof(bloxin)
-        @warn "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
+        @info "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
         cr = "basic"
     end
 
@@ -421,7 +421,7 @@ function get_connection_rule(kwargs, bloxout, bloxin, w)
         if !isempty(outs)
             x = first(outs)
             rhs = x*w
-            length(outs) > 1 && @warn "Blox $name_blox1 has more than one outputs. Defaulting to output=$x"
+            length(outs) > 1 && @info "Blox $name_blox1 has more than one outputs. Defaulting to output=$x"
         else
             error("Blox $name_blox1 has no outputs. Please assign [output=true] to the variables you want to use as outputs or write a dispatch for connection_equations.")
         end
