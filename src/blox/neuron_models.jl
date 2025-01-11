@@ -10,7 +10,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
         namespace=nothing,
         E_syn=0.0, 
         G_syn=3, 
-        I_bg=0,
+        I_bg=0.0,
         freq=0,
         phase=0,
         τ=5
@@ -96,7 +96,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
         namespace = nothing, 
         E_syn=-70.0,
         G_syn=11.5,
-        I_bg=0,
+        I_bg=0.0,
         freq=0,
         phase=0,
         τ=70
