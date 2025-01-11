@@ -618,7 +618,7 @@ struct LIFNeuron <: AbstractNeuronBlox
 				D(G)~(-1/τ)*G]
 
 		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
-		sys = System(eqs, t, sts, p, discrete_events=[ev]; name=name)
+		sys = System(eqs, t, sts, p, continuous_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
