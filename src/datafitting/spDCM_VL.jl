@@ -460,7 +460,15 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     return (vlstate, vlsetup)
 end
 
+with_stack(f, n) = fetch(schedule(Task(f, n)));
+
 function run_sDCM_iteration!(state::VLState, setup::VLSetup)
+    with_stack(5_000_000) do
+        _run_sDCM_iteration!(state, setup)
+    end
+end
+
+function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (;μθ_po, λ, v, ϵ_θ, dFdθ, dFdθθ) = state
 
     f = setup.model_at_x0
