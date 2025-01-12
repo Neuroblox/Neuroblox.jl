@@ -408,19 +408,22 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     data = Matrix(data[:, String.(Symbol.(vars))])           # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
     mar = mar_ml(data, mar_order);         # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, freq, dt^-1);     # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-    jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
-
+    f = generate_function(model; expression=Val{false})[1]
     statevals = [v for v in values(initcond)]
-    derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
+    f_at(params) = states -> f(states, params, 0.0)
+    derivatives = params -> jacobian(f_at(addnontunableparams(params, model)), statevals)
+    Main.foo[] = f, f_at, statevals, model
+    # jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
+    # derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
-    μθ_pr = vecparam(priors.μθ_pr)   # note: μθ_po is posterior and μθ_pr is prior
+    μθ_pr = vecparam(priors.μθ_pr)        # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(priors.Σθ_pr))
 
     ### Collect prior means and covariances ###
     if haskey(hyperpriors, :Q)
         Q = hyperpriors.Q;
     else
-        Q = csd_Q(y_csd);                 # compute functional connectivity prior Q. See Friston etal. 2007 Appendix A
+        Q = csd_Q(y_csd);             # compute functional connectivity prior Q. See Friston etal. 2007 Appendix A
     end
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
