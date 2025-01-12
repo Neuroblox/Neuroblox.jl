@@ -91,7 +91,7 @@ function make_unique_param_pairs(params)
     else
         map(params) do p
             if count(pi -> Symbol(pi) == Symbol(p), params) > 1
-                p => Symbol(p, "_$(rand(1:1000))")
+                p => Symbol(p, "_$(rand(1:1000000))")
             else
                 p => Symbol(p)
             end
