@@ -572,12 +572,46 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
     end
 end
 
+function van_der_pol(;name, 
+                      namespace=nothing,
+                      θ=1.0,
+                      ϕ=0.1,
+                      noise=false)
+    if noise
+        return VanderPolNoise(name=name, namespace=namespace, θ=θ, ϕ=ϕ)
+    else
+        return VanderPol(name=name, namespace=namespace, θ=θ)
+    end
+end
+
+
 struct VanderPol <: NeuralMassBlox
     params
     system
     namespace
 
     function VanderPol(;
+                        name,
+                        namespace=nothing,
+                        θ=1.0)
+        p = paramscoping(θ=θ, ϕ=ϕ)
+        θ, ϕ = p
+        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
+
+        eqs = [D(x) ~ y,
+               D(y) ~ θ*(1-x^2)*y - x + jcn]
+
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+    end
+end
+
+struct VanderPolNoise <: NeuralMassBlox
+    params
+    system
+    namespace
+
+    function VanderPolNoise(;
                         name,
                         namespace=nothing,
                         θ=1.0,
