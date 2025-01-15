@@ -571,3 +571,26 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
         new(p, sys, namespace)
     end
 end
+
+struct VanderPol <: NeuralMassBlox
+    params
+    system
+    namespace
+
+    function VanderPol(;
+                        name,
+                        namespace=nothing,
+                        θ=1.0,
+                        ϕ=0.1)
+        p = paramscoping(θ=θ, ϕ=ϕ)
+        θ, ϕ = p
+        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
+        @brownian ξ
+
+        eqs = [D(x) ~ y,
+               D(y) ~ θ*(1-x^2)*y - x + ϕ*ξ + jcn]
+
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+    end
+end
