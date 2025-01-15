@@ -534,7 +534,8 @@ function firing_rate(
         1000.0 * (nnz(spikes[idx_start:idx_end, :]) / N_neurons) / win_size
     end
 
-    return fr
+    T = eltype(sol)
+    return fr::Vector{T}
 end
 
 function firing_rate(
@@ -637,16 +638,23 @@ function powerspectrum(blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution
 end
 
 function powerspectrum(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
-                       sols::SciMLBase.EnsembleSolution, state::String; sampling_rate=nothing,
-                       method=periodogram, window=nothing)::Vector{DSP.Periodograms.Periodogram}
-
-    t_sampled, sampling_freq = get_sampling_info(sols[1]; sampling_rate=sampling_rate)
-    powspecs = DSP.Periodograms.Periodogram[]
+                        sols::SciMLBase.EnsembleSolution{T},
+                        state::String;
+                        sampling_rate=nothing,
+                        method=periodogram,
+                        window=nothing
+                        ) where {T}
     
-    for sol in sols
-        s = meanfield_timeseries(cb, sol, state; ts = t_sampled)
-        powspec = method(s, fs=sampling_freq, window=window)
-        push!(powspecs, powspec)
+    t_sampled, sampling_freq = get_sampling_info(sols[1]; sampling_rate=sampling_rate)
+
+    # Pre-allocate concretely typed array
+    powspecs = Vector{DSP.Periodograms.Periodogram{T, 
+                                                   DSP.Frequencies{T}, 
+                                                   Vector{T}}}(undef, length(sols))
+    tforeach(eachindex(sols)) do i
+        sol = sols[i]
+        s = meanfield_timeseries(cb, sol, state; ts=t_sampled)
+        powspecs[i] = method(s, fs=sampling_freq, window=window)
     end
 
     return powspecs

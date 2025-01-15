@@ -4,7 +4,7 @@ import Base: merge
 
 using Base.Threads: nthreads
 
-using OhMyThreads: tmapreduce
+using OhMyThreads: tmapreduce, tforeach
 
 using Reexport
 @reexport using ModelingToolkit

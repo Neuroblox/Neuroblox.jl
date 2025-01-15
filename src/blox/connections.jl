@@ -357,27 +357,14 @@ function Connector(
         sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn)
     end
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
-end
-
-function Connector(
-    blox_src::Union{HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
-    blox_dest::Union{HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-        
-    STA = get_sta(kwargs, nameof(blox_src), nameof(blox_dest))
-    eq = if STA
-        sys_dest.I_syn ~ -w * sys_dest.Gₛₜₚ * sys_src.G * (sys_dest.V - sys_src.E_syn)
+    if blox_src isa HHNeuronInhib_MSN_Adam_Blox && blox_dest isa HHNeuronInhib_MSN_Adam_Blox
+        eq2 = sys_dest.I_syn_msn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn)
+        eqs = [eq, eq2]
     else
-        sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn)
+        eqs = eq
     end
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eqs, weight=w, learning_rule=Dict(w => lr))
 end
 
 function Connector(
@@ -406,6 +393,7 @@ function Connector(
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
     eq = sys_dest.I_syn ~ -w * sys_src.Gₛ * (sys_dest.V - sys_src.E_syn)
+    eq4 = sys_dest.I_syn_fsi ~ -w * sys_src.Gₛ * (sys_dest.V - sys_src.E_syn)
 
     GAP = get_gap(kwargs, nameof(blox_src), nameof(blox_dest))
     if GAP
@@ -413,9 +401,9 @@ function Connector(
         eq2 = sys_dest.I_gap ~ -w_gap * (sys_dest.V - sys_src.V)
         eq3 = sys_src.I_gap ~ -w_gap * (sys_src.V - sys_dest.V)
 
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=[eq, eq2, eq3], weight=[w, w_gap])
+        return Connector(nameof(sys_src), nameof(sys_dest); equation=[eq, eq2, eq3, eq4], weight=[w, w_gap])
     else
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+        return Connector(nameof(sys_src), nameof(sys_dest); equation=[eq, eq4], weight=w)
     end
 end
 
