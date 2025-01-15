@@ -594,8 +594,8 @@ struct VanderPol <: NeuralMassBlox
                         name,
                         namespace=nothing,
                         θ=1.0)
-        p = paramscoping(θ=θ, ϕ=ϕ)
-        θ, ϕ = p
+        p = paramscoping(θ=θ)
+        θ = p[1]
         sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
 
         eqs = [D(x) ~ y,
