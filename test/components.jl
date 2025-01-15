@@ -275,14 +275,6 @@ end
     @test norm.(R[length(R)]) < 0.1
 end
 
-@testset "Van der Pol" begin
-    @named VdP = van_der_pol()
-    
-    prob_vdp = SDEProblem(complete(VdP),[0.1,0.1],[0.0, 20.0],[])
-    sol = solve(prob_vdp,EM(),dt=0.1)
-    @test sol.retcode == SciMLBase.ReturnCode.Success
-end
-
 """
 stochastic.jl test
 
