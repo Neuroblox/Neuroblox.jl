@@ -786,6 +786,25 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
+@testset "VdP" begin
+    Random.seed!(1234)
+    @named vdp = van_der_pol()
+    g = MetaDiGraph()
+    add_blox!(g, vdp)
+    @named sys = system_from_graph(g)
+    prob = ODEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
+    sol = solve(prob,Tsit5())
+    @test sol.retcode == ReturnCode.Success
+
+    @named vdp = van_der_pol(noise=true)
+    g = MetaDiGraph()
+    add_blox!(g, vdp)
+    @named sys = system_from_graph(g)
+    prob = SDEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
+    sol = solve(prob, RKMil())
+    @test sol.retcode == ReturnCode.Success
+end
+
 @testset "DBS circuit firing rates" begin
     @testset "Striatum_MSN_Adam" begin
         Random.seed!(1234)
