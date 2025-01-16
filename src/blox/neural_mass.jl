@@ -490,7 +490,9 @@ function kuramoto_oscillator(; name,
     noise ? KuramotoOscillatorNoise(name=name, namespace=namespace, ω=ω, ζ=ζ) : KuramotoOscillator(name=name, namespace=namespace, ω=ω) 
 end
 
-struct KuramotoOscillator <: NeuralMassBlox
+abstract type AbstractKuramotoOscillator <: NeuralMassBlox end
+
+struct KuramotoOscillator <: AbstractKuramotoOscillator
     params
     system
     namespace
@@ -510,7 +512,7 @@ struct KuramotoOscillator <: NeuralMassBlox
     end
 end
 
-struct KuramotoOscillatorNoise <: NeuralMassBlox
+struct KuramotoOscillatorNoise <: AbstractKuramotoOscillator
     params
     system
     namespace

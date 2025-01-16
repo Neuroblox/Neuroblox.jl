@@ -486,8 +486,8 @@ function Connector(
 end
 
 function Connector(
-    blox_src::KuramotoOscillator, 
-    blox_dest::KuramotoOscillator; 
+    blox_src::AbstractKuramotoOscillator, 
+    blox_dest::AbstractKuramotoOscillator; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)
