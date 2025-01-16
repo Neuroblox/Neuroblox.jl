@@ -23,6 +23,7 @@ using Base.Iterators: map as imap
 using GraphDynamics.SymbolicIndexingInterface
 
 function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
+                                  u0map=[], param_map=[],
                                   rtol,
                                   parallel=true, mtk=true, alg=nothing)
     if g isa Tuple
@@ -34,7 +35,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
     @named gsys = system_from_graph(gl; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp = let sys = gsys
-        prob = ODEProblem(sys, [], tspan)
+        prob = ODEProblem(sys, u0map, tspan, param_map)
         (; f, u0, p) = prob
         du = similar(u0)
         f(du, u0, p, 1.0)
@@ -52,7 +53,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
    
     if mtk
         sol_mtk, du_mtk = let @named sys = system_from_graph(gr)
-            prob = ODEProblem(sys, [], tspan)
+            prob = ODEProblem(sys, u0map, tspan, param_map)
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
@@ -80,7 +81,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
     end
     if parallel
         sol_grp_p, du_grp_p = let sys = gsys
-            prob = ODEProblem(sys, [], tspan, scheduler=StaticScheduler())
+            prob = ODEProblem(sys, u0map, tspan, param_map, scheduler=StaticScheduler())
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
@@ -169,7 +170,7 @@ function neuron_and_neural_mass_comparison_tests()
                         HarmonicOscillator(name=:ho1)
                         HarmonicOscillator(name=:ho2)
                         JansenRit(name=:jr1)
-                        JansenRit(name=:jr2)],
+                        JansenRit(name=:jr2)]
                        )
             if length(unknowns(LIFNeuron(;name=:_).system)) > 3
                 @warn "excluding LIFNeurons from test"
@@ -183,15 +184,17 @@ function neuron_and_neural_mass_comparison_tests()
                 add_blox!.((g,), neurons)
                 for i ∈ eachindex(neurons)
                     for j ∈ eachindex(neurons)
-                        if (neurons[i] isa NeuralMassBlox && neurons[j] isa AbstractNeuronBlox)
-                            nothing # Neuroblox doesn't support this currently
-                        elseif neurons[i] isa QIFNeuron && neurons[j] isa QIFNeuron
-                            add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "psp"))
-                        elseif neurons[i] isa IFNeuron || neurons[j] isa IFNeuron
-                            add_edge!(g, i, j, Dict(:weight => -rand(), :connection_rule => "basic"))
-                        else
-                            add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "basic"))
-                        end
+                        if i != j
+                            if (neurons[i] isa NeuralMassBlox && neurons[j] isa AbstractNeuronBlox)
+                                nothing # Neuroblox doesn't support this currently
+                            elseif neurons[i] isa QIFNeuron && neurons[j] isa QIFNeuron
+                                add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "psp"))
+                            elseif neurons[i] isa IFNeuron || neurons[j] isa IFNeuron
+                                add_edge!(g, i, j, Dict(:weight => -rand(), :connection_rule => "basic"))
+                            else
+                                add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "basic"))
+                            end
+                        end 
                     end
                 end
                 
@@ -221,6 +224,28 @@ function basic_hh_network_tests()
         test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); rtol=1e-10, alg=Vern7())
     end
 end
+
+function vdp_test()
+    @testset "VdP" begin
+        Random.seed!(1234)
+        @named vdp = van_der_pol()
+        g = MetaDiGraph()
+        add_blox!(g, vdp)
+        test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); u0map=[vdp.x => 0.0, vdp.y=>0.1], rtol=1e-10, alg=Vern7())
+
+        @named vdpn = van_der_pol(noise=true)
+        @named vdpn2 = van_der_pol(noise=true)
+        g = MetaDiGraph()
+        add_blox!(g, vdpn)
+        add_blox!(g, vdpn2)
+        add_edge!(g, 1, 2, :weight, 1.0)
+        
+        prob = test_compare_du_and_sols(SDEProblem, g, (0.0, 1.0);
+                                        u0map=[vdpn.x => 0.0, vdpn.y=>1.1], rtol=1e-10, alg=RKMil(), seed=123)
+    end
+end
+
+
 
 function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, trajectories=50_000)
     Random.seed!(1234)
@@ -295,6 +320,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
 end
 
 function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, seed=1234,
+                                  u0map=[], param_map=[],
                                   sol_comparison_broken=false, f_comparison_broken=false, g_comparison_broken=false)
     Random.seed!(seed)
     if graph isa Tuple
@@ -306,7 +332,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     @named gsys = system_from_graph(graph_l; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp, dnoise_grp = let sys = gsys
-        prob = SDEProblem(sys, [], tspan, [], seed=seed)
+        prob = SDEProblem(sys, u0map, tspan, param_map, seed=seed)
         (; f, g, u0, p) = prob
         du = similar(u0)
         f(du, u0, p, 1.1)
@@ -324,7 +350,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     end
     if mtk
         sol_mtk, du_mtk, dnoise_mtk = let neuron_net = system_from_graph(graph_r; name=:neuron_net)
-            prob = SDEProblem(neuron_net, [], tspan, [], seed=seed)
+            prob = SDEProblem(neuron_net, u0map, tspan, param_map, seed=seed)
             (; f, g, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.1)

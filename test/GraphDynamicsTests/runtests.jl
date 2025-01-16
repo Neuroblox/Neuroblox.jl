@@ -12,6 +12,7 @@ if GROUP == "All" || GROUP == "GraphDynamics1"
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics2"
+    vdp_test()
     kuramato_test()
     wta_tests()
     dbs_circuit_components()
