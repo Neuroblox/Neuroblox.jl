@@ -578,14 +578,14 @@ function van_der_pol(;name,
                       ϕ=0.1,
                       noise=false)
     if noise
-        return VanderPolNoise(name=name, namespace=namespace, θ=θ, ϕ=ϕ)
+        return VanDerPolNoise(name=name, namespace=namespace, θ=θ, ϕ=ϕ)
     else
-        return VanderPol(name=name, namespace=namespace, θ=θ)
+        return VanDerPol(name=name, namespace=namespace, θ=θ)
     end
 end
 
 
-struct VanderPol <: NeuralMassBlox
+struct VanDerPol <: NeuralMassBlox
     params
     system
     namespace
@@ -606,12 +606,12 @@ struct VanderPol <: NeuralMassBlox
     end
 end
 
-struct VanderPolNoise <: NeuralMassBlox
+struct VanDerPolNoise <: NeuralMassBlox
     params
     system
     namespace
 
-    function VanderPolNoise(;
+    function VanDerPolNoise(;
                         name,
                         namespace=nothing,
                         θ=1.0,
