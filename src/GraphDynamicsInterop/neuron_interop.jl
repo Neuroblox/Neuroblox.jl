@@ -33,6 +33,8 @@ function define_neurons()
                      (:lif_inh, :LIFInhNeuron)
                      (:pexci, :PINGNeuronExci)
                      (:pinhib, :PINGNeuronInhib)
+                     (:VdP, :VanDerPol)
+                     (:VdPN, :VanDerPolNoise)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
         system = structural_simplify(sys.system; fully_determined=false)
@@ -41,9 +43,6 @@ function define_neurons()
 
         states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
         inputs = [s for s ∈ unknowns(system) if  MTK.isinput(s)]
-
-        # states_unwrapped = map(x -> x.f, states)
-        # inputs_unwrapped = map(x -> x.f, inputs)
 
         p_syms = map(Symbol, params)
         s_syms = map(x -> tosymbol(x; escape=false), states)

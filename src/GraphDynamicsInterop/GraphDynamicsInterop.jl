@@ -47,7 +47,10 @@ using ..Neuroblox:
     LIFInhCircuitBlox,
     PINGNeuronExci,
     PINGNeuronInhib,
-    AbstractPINGNeuron
+    AbstractPINGNeuron,
+    VanDerPol,
+    VanDerPolNoise,
+    van_der_pol
 
 using GraphDynamics:
     GraphDynamics,
