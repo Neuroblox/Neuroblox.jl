@@ -195,8 +195,8 @@ end
 end
 
 @testset "Kuramoto Oscillator" begin
-    @named K01 = KuramotoOscillator(ω=2.0)
-    @named K02 = KuramotoOscillator(ω=5.0)
+    @named K01 = kuramoto_oscillator(ω=2.0)
+    @named K02 = kuramoto_oscillator(ω=5.0)
 
     adj = [0 1; 1 0]
     g = MetaDiGraph()
@@ -208,6 +208,21 @@ end
     sim_dur = 1e2
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+    @test sol.retcode == ReturnCode.Success
+
+    @named K01 = kuramoto_oscillator(ω=2.0, noise=true)
+    @named K02 = kuramoto_oscillator(ω=5.0, noise=true)
+
+    adj = [0 1; 1 0]
+    g = MetaDiGraph()
+    add_blox!.(Ref(g), [K01, K02])
+    create_adjacency_edges!(g, adj)
+
+    @named sys = system_from_graph(g)
+
+    sim_dur = 1e2
+    prob = SDEProblem(sys, [], (0.0, sim_dur), [])
+    sol = solve(prob, RKMil(), saveat=0.1)
     @test sol.retcode == ReturnCode.Success
 end
 
