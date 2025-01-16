@@ -35,6 +35,8 @@ function define_neurons()
                      (:pinhib, :PINGNeuronInhib)
                      (:VdP, :VanDerPol)
                      (:VdPN, :VanDerPolNoise)
+                     (:ko, :KuramotoOscillator)
+                     (:kon, :KuramotoOscillatorNoise)
                      ]
         sys = getproperty(Neuroblox, T)(;name)
         system = structural_simplify(sys.system; fully_determined=false)
@@ -165,18 +167,6 @@ function define_neurons()
 end
 define_neurons() # it's useful when developing this module to have these in a function
 
-#Maybe should just encorporate this into define_neurons()
-# for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
-#     @eval begin
-#         GraphDynamics.has_discrete_events(::Type{$T}) = true
-#         GraphDynamics.discrete_event_condition((; t_refract_end)::Subsystem{$T}, t) = t_refract_end == t
-#         function GraphDynamics.apply_discrete_event!(integrator, _, pview, neuron::Subsystem{$T}, _)
-#             params = get_params(neuron)
-#             pview[] = @set params.is_refractory = 0
-#         end
-#     end
-# end
-
 issupported(::PoissonSpikeTrain) = true
 components(p::PoissonSpikeTrain) = (p,)
 function to_subsystem(s::PoissonSpikeTrain)
@@ -189,24 +179,37 @@ GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
 
 
-#-------------------------
-# Kuramoto
-issupported(::KuramotoOscillator) = true
-function to_subsystem(o::KuramotoOscillator)
-    states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
-    Subsystem(states, params)
-end
+# #-------------------------
+# # Kuramoto
+# issupported(::KuramotoOscillator) = true
+# function to_subsystem(o::KuramotoOscillator)
+#     states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
+#     params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω)))
+#     Subsystem(states, params)
+# end
 
-GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillator}) = 0.0
-function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillator}, jcn, t)
-    SubsystemStates{KuramotoOscillator}((; #=D=#θ= s.ω + jcn))
-end
-GraphDynamics.isstochastic(::Type{KuramotoOscillator}) = true
-function GraphDynamics.apply_subsystem_noise!(vstates, (;ζ,)::Subsystem{KuramotoOscillator}, t)
-    vstates[1] = ζ
-    nothing
-end
+# GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillator}) = (;jcn = 0.0)
+# function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillator}, (; jcn), t)
+#     SubsystemStates{KuramotoOscillator}((; #=D=#θ= s.ω + jcn))
+# end
+
+
+# issupported(::KuramotoOscillatorNoise) = true
+# function to_subsystem(o::KuramotoOscillatorNoise)
+#     states = SubsystemStates{KuramotoOscillatorNoise}((;θ=0.0,))
+#     params = SubsystemParams{KuramotoOscillatorNoise}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
+#     Subsystem(states, params)
+# end
+
+# GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillatorNoise}) = (;jcn=0.0)
+# function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillatorNoise}, (;jcn), t)
+#     SubsystemStates{KuramotoOscillatorNoise}((; #=D=#θ= s.ω + jcn))
+# end
+# GraphDynamics.isstochastic(::Type{KuramotoOscillatorNoise}) = true
+# function GraphDynamics.apply_subsystem_noise!(vstates, (;ζ,)::Subsystem{KuramotoOscillatorNoise}, t)
+#     vstates[1] = ζ
+#     nothing
+# end
 
 
 #-------------------------
