@@ -441,7 +441,7 @@ struct Generic2dOscillator <: NeuralMassBlox
 end
 
 """
-    KuramotoOscillator(name, namespace, ...)
+    kuramoto_oscillator(name, namespace, ...)
 
     Simple implementation of the Kuramoto oscillator as described in the original paper [1].
     Useful for general models of synchronization and oscillatory behavior.
@@ -481,6 +481,14 @@ Citations:
    2024 Jun 14;199:106565. doi: 10.1016/j.nbd.2024.106565. Epub ahead of print. PMID: 38880431.
 
 """
+function kuramoto_oscillator(; name, 
+                               namespace=nothing, 
+                               ω=249.0, 
+                               ζ=5.92, 
+                               noise=false)
+    noise ? return KuramotoOscillatorNoise(name=name, namespace=namespace, ω=ω, ζ=ζ) : return KuramotoOscillator(name=name, namespace=namespace, ω=ω) 
+end
+
 struct KuramotoOscillator <: NeuralMassBlox
     params
     system
@@ -489,25 +497,39 @@ struct KuramotoOscillator <: NeuralMassBlox
     function KuramotoOscillator(;
                         name,
                         namespace=nothing,
-                        ω=249.0,
-                        ζ=5.92,
-                        include_noise=false
+                        ω=249.0
             )
+        p = paramscoping(ω=ω)
+        ω = p[1]
+        
+        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
+        eqs = [D(θ) ~ ω + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+    end
+end
+
+struct KuramotoOscillatorNoise <: NeuralMassBlox
+    params
+    system
+    namespace
+
+    function KuramotoOscillatorNoise(;
+                        name,
+                        namespace=nothing,
+                        ω=249.0,
+                        ζ=5.92
+            )
+            
         p = paramscoping(ω=ω, ζ=ζ)
         ω, ζ = p
         
-        if include_noise
-            sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
-            @brownian w
-            eqs = [D(θ) ~ ω + ζ * w + jcn]
-            sys = System(eqs, t, sts, p; name=name)
-            new(p, sys, namespace)
-        else
-            sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
-            eqs = [D(θ) ~ ω + jcn]
-            sys = System(eqs, t, sts, p; name=name)
-            new(p, sys, namespace)
-        end
+        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
+        @brownian w
+        eqs = [D(θ) ~ ω + ζ * w + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+            
     end
 end
 
