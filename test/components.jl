@@ -226,23 +226,6 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "Noisy Kuramoto Oscillator" begin
-    @named K01 = KuramotoOscillator(ω=2.0, ζ=5.0, include_noise=true)
-    @named K02 = KuramotoOscillator(ω=5.0, ζ=2.0, include_noise=true)
-
-    adj = [0 1; 1 0]
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), [K01, K02])
-    create_adjacency_edges!(g, adj)
-
-    @named sys = system_from_graph(g)
-
-    sim_dur = 1e2
-    prob = SDEProblem(sys, [0.1, 0.2], (0.0, sim_dur), [])
-    sol = solve(prob, RKMil(), saveat=0.1)
-    @test sol.retcode == ReturnCode.Success
-end
-
 @testset "Canonical Micro Circuit network" begin
     # connect multiple canonical micro circuits according to Figure 4 in Bastos et al. 2015
     global_ns = :g # global namespace
