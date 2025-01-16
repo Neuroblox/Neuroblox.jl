@@ -590,7 +590,7 @@ struct VanDerPol <: NeuralMassBlox
     system
     namespace
 
-    function VanderPol(;
+    function VanDerPol(;
                         name,
                         namespace=nothing,
                         θ=1.0)
