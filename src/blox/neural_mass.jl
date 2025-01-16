@@ -486,7 +486,8 @@ function kuramoto_oscillator(; name,
                                ω=249.0, 
                                ζ=5.92, 
                                noise=false)
-    noise ? return KuramotoOscillatorNoise(name=name, namespace=namespace, ω=ω, ζ=ζ) : return KuramotoOscillator(name=name, namespace=namespace, ω=ω) 
+
+    noise ? KuramotoOscillatorNoise(name=name, namespace=namespace, ω=ω, ζ=ζ) : KuramotoOscillator(name=name, namespace=namespace, ω=ω) 
 end
 
 struct KuramotoOscillator <: NeuralMassBlox
@@ -520,7 +521,7 @@ struct KuramotoOscillatorNoise <: NeuralMassBlox
                         ω=249.0,
                         ζ=5.92
             )
-            
+
         p = paramscoping(ω=ω, ζ=ζ)
         ω, ζ = p
         

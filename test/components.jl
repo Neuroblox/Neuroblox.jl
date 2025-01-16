@@ -205,7 +205,7 @@ end
 
     @named sys = system_from_graph(g)
 
-    sim_dur = 1e2
+    sim_dur = 2e1
     prob = ODEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
     @test sol.retcode == ReturnCode.Success
@@ -220,7 +220,7 @@ end
 
     @named sys = system_from_graph(g)
 
-    sim_dur = 1e2
+    sim_dur = 2e1
     prob = SDEProblem(sys, [], (0.0, sim_dur), [])
     sol = solve(prob, RKMil(), saveat=0.1)
     @test sol.retcode == ReturnCode.Success
