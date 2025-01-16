@@ -213,16 +213,17 @@ end
 
 #----------------------------------------------
 # Kuramoto
-function get_connection(src::KuramotoOscillator, dst::KuramotoOscillator, kwargs)
+function get_connection(src::AbstractKuramotoOscillator, dst::AbstractKuramotoOscillator, kwargs)
     (;w_val, name) = generate_weight_param(src, dst, kwargs)
     (;conn=BasicConnection(w_val), names=[name])
 end
 
-function (c::BasicConnection)(src::Subsystem{KuramotoOscillator}, dst::Subsystem{KuramotoOscillator})
+function (c::BasicConnection)(src::Subsystem{<:AbstractKuramotoOscillator},
+                              dst::Subsystem{<:AbstractKuramotoOscillator})
     w = c.weight
     x₀ = src.θ
     xᵢ = dst.θ
-    w * sin(x₀ - xᵢ)
+    (;jcn = w * sin(x₀ - xᵢ))
 end
 
 #----------------------------------------------

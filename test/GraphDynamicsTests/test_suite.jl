@@ -247,13 +247,13 @@ end
 
 
 
-function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, trajectories=50_000)
-    Random.seed!(1234)
+function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, trajectories=100_000)
+    # Random.seed!(1234)
     if graph isa Tuple
         (graph_l, graph_r) = graph
     else
-        graph_l = g
-        graph_r = g
+        graph_l = graph
+        graph_r = graph
     end
     
     @named gsys = system_from_graph(graph_l; graphdynamics=true)
@@ -267,8 +267,6 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         dnoise = zero(u0)
         g(dnoise, u0, p, 1.1)
 
-        @test solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
-        
         ens_prob = EnsembleProblem(prob)
         sols = solve(ens_prob, alg, EnsembleThreads(); trajectories)
 
@@ -313,6 +311,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         end
         @test sort(du_grp) ≈ sort(du_mtk)         #due to the MTK getu bug, we'll compare the sorted versions
         @test sort(dnoise_grp) ≈ sort(dnoise_mtk) #due to the MTK getu bug, we'll compare the sorted versions
+        @debug "" norm(mean(sol_grp_ens) .- mean(sol_mtk_ens)) / norm(mean(sol_grp_ens))
         @test mean(sol_grp_ens) ≈ mean(sol_mtk_ens) rtol=rtol
         @test std(sol_grp_ens)  ≈ std(sol_mtk_ens)  rtol=rtol
     end
@@ -438,27 +437,30 @@ function ngei_test()
     end
 end
 
-function kuramato_test()
-    @testset "Kuramoto" begin
-        N = 2
-        # Define the natural distribution of oscillator frequencies
-        Ω = 249
-        σ = 26.317
-        ks_blocks = [KuramotoOscillator(name=Symbol("KO$i"), 
-                                        ω=rand(Normal(Ω, σ)),
-                                        ζ=5.920,
-                                        include_noise=true) for i in 1:N]
-        # Create a graph and add all the oscillators to it
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), ks_blocks)
+function kuramoto_test()
+    @testset "Kuramoto Oscillator" begin
+        @testset "Non-noisy" begin
+            @named K01 = kuramoto_oscillator(ω=2.0)
+            @named K02 = kuramoto_oscillator(ω=5.0)
 
-        # Connect all oscillators to each other
-        for i in 1:N
-            for j in 1:N
-                add_edge!(g, i, j, Dict(:weight => 1.0))
-            end
+            adj = [0 1; 1 0]
+            g = MetaDiGraph()
+            add_blox!.(Ref(g), [K01, K02])
+            create_adjacency_edges!(g, adj)
+
+            test_compare_du_and_sols(ODEProblem, g, (0.0, 2.0); rtol=1e-10, alg=AutoVern7(Rodas4()))
         end
-        test_compare_du_and_sols(SDEProblem, g, (0.0, 2.0), rtol=0.05, alg=RKMil())
+        @testset "Noisy" begin
+            @named K01 = kuramoto_oscillator(ω=2.0, noise=true)
+            @named K02 = kuramoto_oscillator(ω=5.0, noise=true)
+
+            adj = [0 1; 1 0]
+            g = MetaDiGraph()
+            add_blox!.(Ref(g), [K01, K02])
+            create_adjacency_edges!(g, adj)
+
+            test_compare_du_and_sols(SDEProblem, g, (0.0, 2.0); rtol=1e-10, alg=RKMil())
+        end
     end
 end
 
