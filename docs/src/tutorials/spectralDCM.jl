@@ -68,14 +68,14 @@ for idx in CartesianIndices(A_true)
 end
 
 # finally we compose the simulation model
-@named simmodel = system_from_graph(g, split=false)
+@named simmodel = system_from_graph(g)
 
 # ## Run the simulation and plot the results
 
 # setup simulation of the model, time in seconds
 tspan = (0.0, 512.0)
 prob = SDEProblem(simmodel, [], tspan)
-dt = 2   # 2 seconds (units are milliseconds) as measurement interval for fMRI
+dt = 2   # 2 seconds (units are seconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
@@ -166,12 +166,28 @@ untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
 fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations; the `split` parameter is necessary for some ModelingToolkit peculiarities and will soon be removed. So don't lose time with it ;)
 
+# using DifferentiationInterface
+# using Enzyme: Enzyme
+# relevant post: https://discourse.julialang.org/t/enzyme-autodiff-functor-which-contains-cache/121105/2
+# other stuff: https://github.com/EnzymeAD/Enzyme.jl/issues/1719, https://discourse.julialang.org/t/enzyme-autodiff-readonly-error-and-working-with-batches-of-data/123012 
+
+# v =  0.001*randn(21)
+# f = generate_function(fitmodel; expression=Val{false})[1]
+# f_at(params, t) = states -> f(states, params, t)
+# derivatives = params -> jacobian(f_at(addnontunableparams(params, fitmodel), 0.0), AutoEnzyme(function_annotation=Enzyme.Duplicated), v)
+# derivatives(ones(22))
+
+# jac = generate_jacobian(fitmodel; expression=Val{false})[1]
+# jac(statevals, addnontunableparams(rand(10), fitmodel), 0.0)
+
 # ## Setup spectral DCM
 max_iter = 128;            # maximum number of iterations
 ## attribute initial conditions to states
 sts, _ = get_dynamic_states(fitmodel);
+sts = unknowns(fitmodel)
+rv = rand(length(sts))
 # the following step is needed if the model's Jacobian would give degenerate eigenvalues when expanded around the fixed point 0 (which is the default expansion). We simply add small random values to avoid this degeneracy:
-perturbedfp = Dict(sts .=> abs.(0.001*rand(length(sts))))     # slight noise to avoid issues with Automatic Differentiation.
+perturbedfp = OrderedDict(sts .=> abs.(0.001*rv[1:length(sts)]))     # slight noise to avoid issues with Automatic Differentiation.
 # For convenience we can use the default prior function to use standardized prior values as given in SPM:
 pmean, pcovariance, indices = defaultprior(fitmodel, nr)
 

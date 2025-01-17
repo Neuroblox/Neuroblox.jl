@@ -408,11 +408,12 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     data = Matrix(data[:, String.(Symbol.(vars))])           # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
     mar = mar_ml(data, mar_order);         # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, freq, dt^-1);     # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-    f = generate_function(model; expression=Val{false})[1]
+
     statevals = [v for v in values(initcond)]
-    f_at(params) = states -> f(states, params, 0.0)
-    derivatives = params -> jacobian(f_at(addnontunableparams(params, model)), statevals)
-    Main.foo[] = f, f_at, statevals, model
+    f_model = generate_function(model; expression=Val{false})[1]
+    f_at(params, t) = states -> f_model(states, params, t)
+    derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), AutoEnzyme(function_annotation=Enzyme.Const), statevals)
+
     # jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
     # derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
 
@@ -481,7 +482,7 @@ function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
     Q = setup.Q
 
-    dfdp = jacobian(f, μθ_po)
+    dfdp = ForwardDiff.jacobian(f, μθ_po)
 
     norm_dfdp = opnorm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);
@@ -496,7 +497,7 @@ function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
             μθ_po = μθ_pr + ϵ_θ
 
-            dfdp = jacobian(f, μθ_po)
+            dfdp = ForwardDiff.jacobian(f, μθ_po)
 
             # check for stability
             norm_dfdp = opnorm(dfdp, Inf);
