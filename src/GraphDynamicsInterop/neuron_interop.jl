@@ -13,7 +13,6 @@ function recursive_getdefault(x::Union{MTK.Num, MTK.BasicSymbolic})
     substitute(def_x, defs)
 end
 
-
 function define_neurons()
     for (name, T) ∈ [(:hhne, HHNeuronExciBlox)
                      (:hhni, HHNeuronInhibBlox)
@@ -176,40 +175,6 @@ end
 GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
 GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
-
-
-# #-------------------------
-# # Kuramoto
-# issupported(::KuramotoOscillator) = true
-# function to_subsystem(o::KuramotoOscillator)
-#     states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-#     params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω)))
-#     Subsystem(states, params)
-# end
-
-# GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillator}) = (;jcn = 0.0)
-# function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillator}, (; jcn), t)
-#     SubsystemStates{KuramotoOscillator}((; #=D=#θ= s.ω + jcn))
-# end
-
-
-# issupported(::KuramotoOscillatorNoise) = true
-# function to_subsystem(o::KuramotoOscillatorNoise)
-#     states = SubsystemStates{KuramotoOscillatorNoise}((;θ=0.0,))
-#     params = SubsystemParams{KuramotoOscillatorNoise}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
-#     Subsystem(states, params)
-# end
-
-# GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillatorNoise}) = (;jcn=0.0)
-# function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillatorNoise}, (;jcn), t)
-#     SubsystemStates{KuramotoOscillatorNoise}((; #=D=#θ= s.ω + jcn))
-# end
-# GraphDynamics.isstochastic(::Type{KuramotoOscillatorNoise}) = true
-# function GraphDynamics.apply_subsystem_noise!(vstates, (;ζ,)::Subsystem{KuramotoOscillatorNoise}, t)
-#     vstates[1] = ζ
-#     nothing
-# end
-
 
 #-------------------------
 # Matrisome
