@@ -1,3 +1,6 @@
+struct Noisy end
+struct NonNoisy end
+
 mutable struct NextGenerationBlox <: NeuralMassBlox
     C::Num
     Δ::Num
@@ -441,7 +444,7 @@ struct Generic2dOscillator <: NeuralMassBlox
 end
 
 """
-    kuramoto_oscillator(name, namespace, ...)
+    KuramotoOscillator(name, namespace, ...)
 
     Simple implementation of the Kuramoto oscillator as described in the original paper [1].
     Useful for general models of synchronization and oscillatory behavior.
@@ -465,9 +468,10 @@ end
     
     where \$W_i\$ is a Wiener process and \$\\zeta_i\$ is the noise strength.
 
-Arguments:
+Keyword arguments:
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
+- `include_noise` (default `false`) determines if brownian noise is included in the dynamics of the blox.
 - Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
                     Default parameter values are taken from [2].
 
@@ -481,58 +485,38 @@ Citations:
    2024 Jun 14;199:106565. doi: 10.1016/j.nbd.2024.106565. Epub ahead of print. PMID: 38880431.
 
 """
-function kuramoto_oscillator(; name, 
-                               namespace=nothing, 
-                               ω=249.0, 
-                               ζ=5.92, 
-                               noise=false)
-
-    noise ? KuramotoOscillatorNoise(name=name, namespace=namespace, ω=ω, ζ=ζ) : KuramotoOscillator(name=name, namespace=namespace, ω=ω) 
-end
-
-abstract type AbstractKuramotoOscillator <: NeuralMassBlox end
-
-struct KuramotoOscillator <: AbstractKuramotoOscillator
+struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
 
-    function KuramotoOscillator(;
-                        name,
-                        namespace=nothing,
-                        ω=249.0
-            )
+    function KuramotoOscillator(; name,
+                                  namespace=nothing,
+                                  ω=249.0,
+                                  ζ=5.92,
+                                  include_noise=false)
+        if include_noise
+            KuramotoOscillator{Noisy}(;name, namespace, ω, ζ)
+        else
+            KuramotoOscillator{NonNoisy}(;name, namespace, ω)
+        end
+    end
+    function KuramotoOscillator{Noisy}(;name, namespace=nothing, ω=249.0, ζ=5.92)
+        p = paramscoping(ω=ω, ζ=ζ)
+        ω, ζ = p
+        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
+        @brownian w
+        eqs = [D(θ) ~ ω + jcn + ζ*w]
+        sys = System(eqs, t, sts, p; name=name)
+        new{Noisy}(p, sys, namespace)
+    end
+    function KuramotoOscillator{NonNoisy}(;name, namespace=nothing, ω=249.0)
         p = paramscoping(ω=ω)
         ω = p[1]
-        
         sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
         eqs = [D(θ) ~ ω + jcn]
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
-    end
-end
-
-struct KuramotoOscillatorNoise <: AbstractKuramotoOscillator
-    params
-    system
-    namespace
-
-    function KuramotoOscillatorNoise(;
-                        name,
-                        namespace=nothing,
-                        ω=249.0,
-                        ζ=5.92
-            )
-
-        p = paramscoping(ω=ω, ζ=ζ)
-        ω, ζ = p
-        
-        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
-        @brownian w
-        eqs = [D(θ) ~ ω + ζ * w + jcn]
-        sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
-            
+        new{NonNoisy}(p, sys, namespace)
     end
 end
 
@@ -597,50 +581,19 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
     end
 end
 
-function van_der_pol(;name, 
-                      namespace=nothing,
-                      θ=1.0,
-                      ϕ=0.1,
-                      noise=false)
-    if noise
-        return VanDerPolNoise(name=name, namespace=namespace, θ=θ, ϕ=ϕ)
-    else
-        return VanDerPol(name=name, namespace=namespace, θ=θ)
-    end
-end
-
-
-struct VanDerPol <: NeuralMassBlox
+struct VanDerPol{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
 
-    function VanDerPol(;
-                        name,
-                        namespace=nothing,
-                        θ=1.0)
-        p = paramscoping(θ=θ)
-        θ = p[1]
-        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
-
-        eqs = [D(x) ~ y,
-               D(y) ~ θ*(1-x^2)*y - x + jcn]
-
-        sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+    function VanDerPol(; name, namespace=nothing, θ=1.0, ϕ=0.1, include_noise=false)
+        if include_noise
+            VanDerPol{Noisy}(;name, namespace, θ, ϕ)
+        else
+            VanDerPol{NonNoisy}(;name, namespace, θ)
+        end
     end
-end
-
-struct VanDerPolNoise <: NeuralMassBlox
-    params
-    system
-    namespace
-
-    function VanDerPolNoise(;
-                        name,
-                        namespace=nothing,
-                        θ=1.0,
-                        ϕ=0.1)
+    function VanDerPol{Noisy}(; name, namespace=nothing, θ=1.0, ϕ=0.1)
         p = paramscoping(θ=θ, ϕ=ϕ)
         θ, ϕ = p
         sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
@@ -650,6 +603,17 @@ struct VanDerPolNoise <: NeuralMassBlox
                D(y) ~ θ*(1-x^2)*y - x + ϕ*ξ + jcn]
 
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+        new{Noisy}(p, sys, namespace)
+    end
+    function VanDerPol{NonNoisy}(; name, namespace=nothing, θ=1.0)
+        p = paramscoping(θ=θ)
+        θ = p[1]
+        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
+        
+        eqs = [D(x) ~ y,
+               D(y) ~ θ*(1-x^2)*y - x + jcn]
+
+        sys = System(eqs, t, sts, p; name=name)
+        new{NonNoisy}(p, sys, namespace)
     end
 end

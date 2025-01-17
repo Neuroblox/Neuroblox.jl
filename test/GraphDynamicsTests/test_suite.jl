@@ -228,13 +228,13 @@ end
 function vdp_test()
     @testset "VdP" begin
         Random.seed!(1234)
-        @named vdp = van_der_pol()
+        @named vdp = VanDerPol()
         g = MetaDiGraph()
         add_blox!(g, vdp)
         test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); u0map=[vdp.x => 0.0, vdp.y=>0.1], rtol=1e-10, alg=Vern7())
 
-        @named vdpn = van_der_pol(noise=true)
-        @named vdpn2 = van_der_pol(noise=true)
+        @named vdpn = VanDerPol(include_noise=true)
+        @named vdpn2 = VanDerPol(include_noise=true)
         g = MetaDiGraph()
         add_blox!(g, vdpn)
         add_blox!(g, vdpn2)
@@ -440,8 +440,8 @@ end
 function kuramoto_test()
     @testset "Kuramoto Oscillator" begin
         @testset "Non-noisy" begin
-            @named K01 = kuramoto_oscillator(ω=2.0)
-            @named K02 = kuramoto_oscillator(ω=5.0)
+            @named K01 = KuramotoOscillator(ω=2.0)
+            @named K02 = KuramotoOscillator(ω=5.0)
 
             adj = [0 1; 1 0]
             g = MetaDiGraph()
@@ -451,8 +451,8 @@ function kuramoto_test()
             test_compare_du_and_sols(ODEProblem, g, (0.0, 2.0); rtol=1e-10, alg=AutoVern7(Rodas4()))
         end
         @testset "Noisy" begin
-            @named K01 = kuramoto_oscillator(ω=2.0, noise=true)
-            @named K02 = kuramoto_oscillator(ω=5.0, noise=true)
+            @named K01 = KuramotoOscillator(ω=2.0, include_noise=true)
+            @named K02 = KuramotoOscillator(ω=5.0, include_noise=true)
 
             adj = [0 1; 1 0]
             g = MetaDiGraph()
