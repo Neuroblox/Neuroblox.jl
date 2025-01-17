@@ -290,6 +290,7 @@ end
         band_labels_vertical_position = "top",
         band_labels_vertical_offset = 0.065,
 
+        average = false,
         show_bands = true,
         sampling_rate = nothing,
         method = nothing,
@@ -332,10 +333,25 @@ function Makie.plot!(p::PreComputedPowerSpectrums)
     xlims = p.xlims[]
     in_range = findall(xlims[1]-1 .<= spectra[1].freq .<= xlims[2]+1)
 
-    for powspec in spectra
-        power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
+    if p.average[]
+        mean_power = mean(powspec.power[in_range] for powspec in spectra)
+        std_power = std([powspec.power[in_range] for powspec in spectra])
+
+        power_db = 10 * log10.(mean_power)
         power_db .-= power_db[1]
-        lines!(p, powspec.freq[in_range], power_db)
+        ribbon_dB = 10*log10.(1 .+ std_power ./ mean_power)
+        y_lower = power_db - ribbon_dB
+        y_upper = power_db + ribbon_dB
+        freq = spectra[1].freq[in_range]
+    
+        band!(p, freq, y_lower, y_upper, color=(:purple,0.2))
+        lines!(p,freq, power_db, color=:purple)
+    else
+        for powspec in spectra
+            power_db = 10 * log10.(powspec.power[in_range]) # convert to dB scale
+            power_db .-= power_db[1]
+            lines!(p, powspec.freq[in_range], power_db)
+        end
     end
 
     set_powerplot_axis(p)
