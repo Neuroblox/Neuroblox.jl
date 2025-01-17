@@ -849,9 +849,48 @@ end
 
 struct MetabolicHHNeuron <: AbstractNeuronBlox
 	"""
-	
-	Hodgkin-Huxley model expanded with dynamic ion concentrations and ATPase kinetic rate.
-	Based on: https://www.nature.com/articles/s41467-023-40437-0
+	MetabolicHHNeuron(name, namespace, neurontype,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
+
+	Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
+	dynamic ion concentrations, oxygen consumption and astrocytic buffering.
+
+	Arguments:
+	- name: Name given to ODESystem object within the blox.
+	- namespace: Additional namespace above name if needed for inheritance.
+	- neurontype: excitatory or inhibitory.
+	- Naᵢᵧ: Intracellular Na+ concentration (mM).
+	- ρₘₐₓ: Maximum pump rate (mM/s).
+	- α: Conversion factor from pump current to O2 consumption rate (g/mol).
+	- λ: Relative cell density.
+	- ϵ₀: O2 diffusion rate (s^-1).
+	- O₂ᵦ: O2 buffer concentration (mg/L).
+	- γ: Conversion factor from current to concentration (mM/s)/(uA/cm2).
+	- β: Ratio of intracellular vs extracellular volume.
+	- ϵₖ: K+ diffusion rate (1/s).
+	- Kₒᵦ: K+ buffer concentration (mM).
+	- Gᵧ: Glia uptake strength of K+ (mM/s).
+	- Clᵢ: Intracellular Cl- concentration (mM).
+	- Clₒ: Extracellular Cl- concentration (mM).
+	- R: Ideal gas constant (J/(mol*K)).
+	- T: Temperature (K).
+	- F: Faraday's constant (C/mol).
+	- Gₙₐ: Na+ maximum conductance (mS/cm^2).
+	- Gₖ: K+ maximum conductance (mS/cm^2).
+	- Gₙₐ_L: Na+ leak conductance (mS/cm^2).
+	- Gₖ_L: K+ leak conductance (mS/cm^2).
+	- G_cl_L: Cl- leak conductance (mS/cm^2).
+	- C_m: Membrane capacitance (uF/cm^2).
+	- I_in: External current input (uA/cm^2).
+	- G_exc: Conductance of excitatory synapses (mS/cm^2).
+	- G_inh: Conductance of inhibitory synapses (mS/cm^2).
+	- E_syn_exc: Excitatory synaptic reversal potential (mV).
+	- E_syn_inh: Inhibitory synaptic reversal potential (mV).
+
+	References:
+	1. Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+
 	"""
 	system
     output
@@ -918,7 +957,6 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			E_syn_exc=E_syn_exc
 			E_syn_inh=E_syn_inh
 			τ=τ
-			I_in_act=0.0
 		end
 		# State variables
 		sts = @variables begin
@@ -967,15 +1005,7 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		
 		# Depolarization factor, as continuous variable
 		η = 0.4/(1.0 + exp(-10.0*(V + 30.0)))/(1.0 + exp(10.0*(V + 10.0)))
-		
-		# Depolarization factor, as event
-		# ev1 = [(V > -30) && (V < -10)] => [η ~ 0.4]
-		# ev2 = [(V <= -30) || (V >= -10)] => [η ~ 0.0]
-		# add as arg to sys: continuous_events=[ev1, ev2]
-		# Input current based on time: TODO: this needs to be a callback:
-		# example 1 here: https://docs.sciml.ai/DiffEqDocs/stable/features/callback_functions/
-		ev = (t == 20.0) => [I_in_act~I_in]
-	
+
 		# Differential equations
 		eqs = [
 			D(O₂) ~ -α*λ*(I_pump + I_gliapump) + ϵ₀*(O₂ᵦ - O₂),
@@ -984,12 +1014,13 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			D(m) ~ aₘ * (1.0 - m) - bₘ*m,
 			D(h) ~ aₕ * (1.0 - h) - bₕ*h,
 			D(n) ~ aₙ * (1.0 - n) - bₙ*n,
-			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in_act)/C_m,
+			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in)/C_m,
 			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
 			D(χ) ~ η*(V + 50.0) - 0.4*χ
 			]
 		# Define the ODE system
-		sys = ODESystem(eqs, t, sts, ps; discrete_events=ev, name=name)
+		sys = ODESystem(eqs, t, sts, ps; name=name)
+
 		# Construct the neuron
 		new(sys, sts[1], namespace, neurontype)
 	end
