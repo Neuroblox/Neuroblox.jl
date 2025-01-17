@@ -195,35 +195,37 @@ end
 end
 
 @testset "Kuramoto Oscillator" begin
-    @named K01 = kuramoto_oscillator(ω=2.0)
-    @named K02 = kuramoto_oscillator(ω=5.0)
-
     adj = [0 1; 1 0]
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), [K01, K02])
-    create_adjacency_edges!(g, adj)
-
-    @named sys = system_from_graph(g)
-
     sim_dur = 2e1
-    prob = ODEProblem(sys, [], (0.0, sim_dur), [])
-    sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
-    @test sol.retcode == ReturnCode.Success
+    @testset "Non-noisy" begin
+        @named K01 = KuramotoOscillator(ω=2.0)
+        @named K02 = KuramotoOscillator(ω=5.0)
 
-    @named K01 = kuramoto_oscillator(ω=2.0, noise=true)
-    @named K02 = kuramoto_oscillator(ω=5.0, noise=true)
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), [K01, K02])
+        create_adjacency_edges!(g, adj)
 
-    adj = [0 1; 1 0]
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), [K01, K02])
-    create_adjacency_edges!(g, adj)
+        @named sys = system_from_graph(g)
 
-    @named sys = system_from_graph(g)
+        prob = ODEProblem(sys, [], (0.0, sim_dur), [])
+        sol = solve(prob, AutoVern7(Rodas4()), saveat=0.1)
+        @test sol.retcode == ReturnCode.Success
+    end
 
-    sim_dur = 2e1
-    prob = SDEProblem(sys, [], (0.0, sim_dur), [])
-    sol = solve(prob, RKMil(), saveat=0.1)
-    @test sol.retcode == ReturnCode.Success
+    @testset "Noisy" begin
+        @named K01 = KuramotoOscillator(ω=2.0, include_noise=true)
+        @named K02 = KuramotoOscillator(ω=5.0, include_noise=true)
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), [K01, K02])
+        create_adjacency_edges!(g, adj)
+
+        @named sys = system_from_graph(g)
+
+        prob = SDEProblem(sys, [], (0.0, sim_dur), [])
+        sol = solve(prob, RKMil(), saveat=0.1)
+        @test sol.retcode == ReturnCode.Success
+    end
 end
 
 @testset "Canonical Micro Circuit network" begin
@@ -778,21 +780,25 @@ end
 
 @testset "VdP" begin
     Random.seed!(1234)
-    @named vdp = van_der_pol()
-    g = MetaDiGraph()
-    add_blox!(g, vdp)
-    @named sys = system_from_graph(g)
-    prob = ODEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
-    sol = solve(prob,Tsit5())
-    @test sol.retcode == ReturnCode.Success
+    @testset "Non-noisy" begin
+        @named vdp = VanDerPol()
+        g = MetaDiGraph()
+        add_blox!(g, vdp)
+        @named sys = system_from_graph(g)
+        prob = ODEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
+        sol = solve(prob,Tsit5())
+        @test sol.retcode == ReturnCode.Success
+    end
 
-    @named vdp = van_der_pol(noise=true)
-    g = MetaDiGraph()
-    add_blox!(g, vdp)
-    @named sys = system_from_graph(g)
-    prob = SDEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
-    sol = solve(prob, RKMil())
-    @test sol.retcode == ReturnCode.Success
+    @testset "Noisy" begin
+        @named vdp = VanDerPol(include_noise=true)
+        g = MetaDiGraph()
+        add_blox!(g, vdp)
+        @named sys = system_from_graph(g)
+        prob = SDEProblem(sys, [0.0, 0.1], (0.0, 20.0), [])
+        sol = solve(prob, RKMil())
+        @test sol.retcode == ReturnCode.Success
+    end
 end
 
 @testset "DBS circuit firing rates" begin
