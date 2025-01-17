@@ -849,12 +849,12 @@ end
 
 struct MetabolicHHNeuron <: AbstractNeuronBlox
 	"""
-	MetabolicHHNeuron(name, namespace, neurontype,
-		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
-		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
+		MetabolicHHNeuron(name, namespace, neurontype,
+			Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+			Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
 
-	Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
-	dynamic ion concentrations, oxygen consumption and astrocytic buffering.
+		Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
+		dynamic ion concentrations, oxygen consumption and astrocytic buffering.
 
 	Arguments:
 	- name: Name given to ODESystem object within the blox.
@@ -975,13 +975,14 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			[output = true] 
 		end
 		
-	
 		# Pump currents
 		ρ = ρₘₐₓ / (1.0 + exp((20.0 - O₂)/3.0))
 		I_pump = ρ / (1.0 + exp((25.0 - Naᵢ)/3.0)*(1.0 + exp(5.5 - Kₒ)))
 		I_gliapump = ρ / (3.0*(1.0 + exp((25.0 - Naᵢᵧ)/3.0))*(1.0 + exp(5.5 - Kₒ)))
+
 		# Glia current
 		I_glia = Gᵧ / (1.0 + exp((18.0 - Kₒ)/2.5))
+
 		# Ion concentrations
 		Kᵢ = 140.0 + (18.0 - Naᵢ)
 		Naₒ = 144.0 - β*(Naᵢ - 18.0)
@@ -995,6 +996,7 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		Iₙₐ = Gₙₐ*m^3.0*h*(V - Eₙₐ) + Gₙₐ_L*(V - Eₙₐ)
 		Iₖ = Gₖ*n^4.0*(V - Eₖ) + Gₖ_L*(V - Eₖ)
 		I_cl = G_cl_L*(V - E_cl)
+
 		# Ion channel gating rate equations
 		aₘ = 0.32*(V + 54.0)/(1.0 - exp(-0.25*(V + 54.0)))
 		bₘ = 0.28*(V + 27.0)/(exp(0.2*(V + 27.0)) - 1.0)
@@ -1018,6 +1020,7 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
 			D(χ) ~ η*(V + 50.0) - 0.4*χ
 			]
+
 		# Define the ODE system
 		sys = ODESystem(eqs, t, sts, ps; name=name)
 
