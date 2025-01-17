@@ -3,6 +3,7 @@ Subcortical Blox used for DBS model in Adam et al,2021
 """
 
 function adam_connection_matrix(density, N, weight)
+    @show "Collateral connections scaled"
     connection_matrix = zeros(N, N)
     in_degree = Int(ceil(density*(N)))
     idxs = 1:N
@@ -10,7 +11,7 @@ function adam_connection_matrix(density, N, weight)
         source_set = setdiff(idxs, i)
         source = sample(source_set, in_degree; replace=false)
         for j in source
-            connection_matrix[j, i] = weight / in_degree
+            connection_matrix[j, i] = weight / sqrt(density*N)
         end
     end
     connection_matrix
@@ -298,6 +299,8 @@ struct STN_Adam <: CompositeBlox
 		τ_ctx=2.0,
 		a_ctx=0.5*0.00226*2,
 		b_ctx=4,
+        a=5,
+        b=4,
 
         connection_matrix=nothing
     )
