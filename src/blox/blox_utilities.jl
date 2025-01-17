@@ -586,6 +586,23 @@ function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:Abstract
     return vec(mapslices(nanmean, s; dims = 2))
 end
 
+function meanfield_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}},
+                                sols::SciMLBase.EnsembleSolution{T}, state::String; ts=nothing, compute_std=false) where {T}
+
+    ms = Vector{Vector{Float64}}(undef, length(sols))
+
+    tforeach(eachindex(sols)) do i
+        sol = sols[i]
+        ms[i] = meanfield_timeseries(cb, sol, state; ts=ts)
+    end
+
+    if compute_std
+        return (mean(ms), std(ms))
+    else
+        return mean(ms)
+    end
+end
+
 voltage_timeseries(blox, sol::SciMLBase.AbstractSolution; ts=nothing) = 
     state_timeseries(blox, sol, "V"; ts)
 
