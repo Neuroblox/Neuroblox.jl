@@ -409,6 +409,7 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 
 			# Observed variables
 			I_total(t)
+			I_presynaptic(t)
 			I_ctx(t)
 			g_ctx(t)
 			DBS_modulation(t)
@@ -457,17 +458,12 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 
 		eqs = [
 			# Membrane voltage dynamics
-			D(V) ~ (1/Cₘ)*(
-				I_total
-				+ σ*χ
-			), 
+			D(V) ~ (1/Cₘ)*(I_total + σ*χ), 
 			I_total ~ (- G_Na*m^3*h*(V - E_Na)
 					- G_K*n^4*(V - E_K)
 					- G_L*(V - E_L)
-					# + I_bg*(sin(t*freq*2*pi/1000) + 1)
-					+ I_syn + I_asc + I_in
-					# Cortical synaptic current with gating
-					+ I_ctx),
+					+ I_presynaptic),
+			I_presynaptic ~ + I_syn + I_asc + I_in + I_ctx,
 			I_ctx ~ g_ctx*(V - E_ctx),
 			# Channel dynamics
 			D(n) ~ (αₙ(V)*(1-n) - βₙ(V)*n),
@@ -529,6 +525,9 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 
 			spikes_cumulative(t)=0.0
 			spikes_window(t)=0.0
+
+			# observables
+			I_presynaptic(t)
 		end
 
 		ps = @parameters begin 
@@ -563,7 +562,8 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L) + I_presynaptic + σ*χ),
+			   I_presynaptic ~ I_bg*(sin(t*freq*2*pi/1000)+1) + I_syn + I_asc + I_in, 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
