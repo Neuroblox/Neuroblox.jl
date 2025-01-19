@@ -847,51 +847,51 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 	end
 end
 
+"""
+	MetabolicHHNeuron(name, namespace, neurontype,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
+
+	Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
+	dynamic ion concentrations, oxygen consumption and astrocytic buffering.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- neurontype: excitatory or inhibitory.
+- Naᵢᵧ: Intracellular Na+ concentration (mM).
+- ρₘₐₓ: Maximum pump rate (mM/s).
+- α: Conversion factor from pump current to O2 consumption rate (g/mol).
+- λ: Relative cell density.
+- ϵ₀: O2 diffusion rate (s^-1).
+- O₂ᵦ: O2 buffer concentration (mg/L).
+- γ: Conversion factor from current to concentration (mM/s)/(uA/cm2).
+- β: Ratio of intracellular vs extracellular volume.
+- ϵₖ: K+ diffusion rate (1/s).
+- Kₒᵦ: K+ buffer concentration (mM).
+- Gᵧ: Glia uptake strength of K+ (mM/s).
+- Clᵢ: Intracellular Cl- concentration (mM).
+- Clₒ: Extracellular Cl- concentration (mM).
+- R: Ideal gas constant (J/(mol*K)).
+- T: Temperature (K).
+- F: Faraday's constant (C/mol).
+- Gₙₐ: Na+ maximum conductance (mS/cm^2).
+- Gₖ: K+ maximum conductance (mS/cm^2).
+- Gₙₐ_L: Na+ leak conductance (mS/cm^2).
+- Gₖ_L: K+ leak conductance (mS/cm^2).
+- G_cl_L: Cl- leak conductance (mS/cm^2).
+- C_m: Membrane capacitance (uF/cm^2).
+- I_in: External current input (uA/cm^2).
+- G_exc: Conductance of excitatory synapses (mS/cm^2).
+- G_inh: Conductance of inhibitory synapses (mS/cm^2).
+- E_syn_exc: Excitatory synaptic reversal potential (mV).
+- E_syn_inh: Inhibitory synaptic reversal potential (mV).
+
+References:
+1. Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+
+"""
 struct MetabolicHHNeuron <: AbstractNeuronBlox
-	"""
-		MetabolicHHNeuron(name, namespace, neurontype,
-			Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
-			Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
-
-		Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
-		dynamic ion concentrations, oxygen consumption and astrocytic buffering.
-
-	Arguments:
-	- name: Name given to ODESystem object within the blox.
-	- namespace: Additional namespace above name if needed for inheritance.
-	- neurontype: excitatory or inhibitory.
-	- Naᵢᵧ: Intracellular Na+ concentration (mM).
-	- ρₘₐₓ: Maximum pump rate (mM/s).
-	- α: Conversion factor from pump current to O2 consumption rate (g/mol).
-	- λ: Relative cell density.
-	- ϵ₀: O2 diffusion rate (s^-1).
-	- O₂ᵦ: O2 buffer concentration (mg/L).
-	- γ: Conversion factor from current to concentration (mM/s)/(uA/cm2).
-	- β: Ratio of intracellular vs extracellular volume.
-	- ϵₖ: K+ diffusion rate (1/s).
-	- Kₒᵦ: K+ buffer concentration (mM).
-	- Gᵧ: Glia uptake strength of K+ (mM/s).
-	- Clᵢ: Intracellular Cl- concentration (mM).
-	- Clₒ: Extracellular Cl- concentration (mM).
-	- R: Ideal gas constant (J/(mol*K)).
-	- T: Temperature (K).
-	- F: Faraday's constant (C/mol).
-	- Gₙₐ: Na+ maximum conductance (mS/cm^2).
-	- Gₖ: K+ maximum conductance (mS/cm^2).
-	- Gₙₐ_L: Na+ leak conductance (mS/cm^2).
-	- Gₖ_L: K+ leak conductance (mS/cm^2).
-	- G_cl_L: Cl- leak conductance (mS/cm^2).
-	- C_m: Membrane capacitance (uF/cm^2).
-	- I_in: External current input (uA/cm^2).
-	- G_exc: Conductance of excitatory synapses (mS/cm^2).
-	- G_inh: Conductance of inhibitory synapses (mS/cm^2).
-	- E_syn_exc: Excitatory synaptic reversal potential (mV).
-	- E_syn_inh: Inhibitory synaptic reversal potential (mV).
-
-	References:
-	1. Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion." Nature Communications 14.1 (2023): 4792.
-
-	"""
 	system
     output
     namespace
