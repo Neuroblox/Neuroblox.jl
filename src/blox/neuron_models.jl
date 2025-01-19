@@ -905,7 +905,7 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		α = 5.3,  # Conversion factor from pump current to O2 consumption rate, in g/mol
 		λ = 1.,  # Relative cell density [!]
 		ϵ₀ = 0.17,  # O2 diffusion rate, in s^-1
-		O₂ᵦ = 32.,  # O2 buffer concentration, in mg/L #TODO: potentially unrealistic value (found values are ~0.5)
+		O₂ᵦ = 32.,  # O2 buffer concentration, in mg/L
 		γ = 0.0445,  # conversion factor from current to concentration, in (mM/s)/(uA/cm2)
 		β = 7.,  # Ratio of intracellular vs extracellular volume
 		ϵₖ = 0.33,  # K+ diffusion rate, in 1/s
