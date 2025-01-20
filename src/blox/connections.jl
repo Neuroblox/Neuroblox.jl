@@ -3,6 +3,7 @@ struct Connector
     destination::Vector{Symbol}
     equation::Vector{Equation}
     weight::Vector{Num}
+    extra_params::Vector{Num}
     delay::Vector{Num}
     discrete_callbacks
     spike_affects::Dict{Symbol, Vector{Union{Tuple{Num, Num}, Equation}}}
@@ -13,7 +14,8 @@ function Connector(
     src::Union{Symbol, Vector{Symbol}}, 
     dest::Union{Symbol, Vector{Symbol}}; 
     equation=Equation[], 
-    weight=Num[], 
+    weight=Num[],
+    extra_params=Num[],
     receptor=Num[],
     delay=Num[], 
     discrete_callbacks=[], 
@@ -30,6 +32,7 @@ function Connector(
         to_vector(dest), 
         to_vector(equation), 
         to_vector(weight),
+        to_vector(extra_params),
         to_vector(delay), 
         to_vector(discrete_callbacks), 
         spike_affects, 
@@ -255,12 +258,7 @@ function params(bc::Connector)
     wt = map(weights(bc)) do w
         Symbolics.get_variables(w)
     end
-
-    if isempty(wt)
-        return vcat(wt, delays(bc))
-    else
-        return vcat(reduce(vcat, wt), delays(bc))
-    end
+    vcat(reduce(vcat, wt), delays(bc), bc.extra_params)
 end
 
 function Base.merge!(c1::Connector, c2::Connector)
@@ -450,7 +448,7 @@ function Connector(
     maybe_set_state_post!(lr, sys_dest.spikes_cumulative)
 
     return Connector(nameof(sys_src), nameof(sys_dest);
-                     equation=eq, weight=vcat(w, receptor_tag), learning_rule=Dict(w => lr))
+                     equation=eq, weight=w, extra_params=receptor_tag, learning_rule=Dict(w => lr))
 end
 
 function Connector(
