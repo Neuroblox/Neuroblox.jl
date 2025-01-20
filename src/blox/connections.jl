@@ -3,7 +3,6 @@ struct Connector
     destination::Vector{Symbol}
     equation::Vector{Equation}
     weight::Vector{Num}
-    receptor::Vector{Num}
     delay::Vector{Num}
     discrete_callbacks
     spike_affects::Dict{Symbol, Vector{Union{Tuple{Num, Num}, Equation}}}
@@ -30,8 +29,7 @@ function Connector(
         to_vector(src), 
         to_vector(dest), 
         to_vector(equation), 
-        to_vector(weight), 
-        to_vector(receptor),
+        to_vector(weight),
         to_vector(delay), 
         to_vector(discrete_callbacks), 
         spike_affects, 
@@ -451,7 +449,8 @@ function Connector(
     maybe_set_state_pre!(lr, sys_src.spikes_cumulative)
     maybe_set_state_post!(lr, sys_dest.spikes_cumulative)
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, receptor=receptor_tag, learning_rule=Dict(w => lr))
+    return Connector(nameof(sys_src), nameof(sys_dest);
+                     equation=eq, weight=vcat(w, receptor_tag), learning_rule=Dict(w => lr))
 end
 
 function Connector(
