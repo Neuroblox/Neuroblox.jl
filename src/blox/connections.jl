@@ -258,7 +258,7 @@ function params(bc::Connector)
     wt = map(weights(bc)) do w
         Symbolics.get_variables(w)
     end
-    vcat(reduce(vcat, wt), delays(bc), bc.extra_params)
+    vcat(reduce(vcat, wt; init=Num[]), delays(bc), bc.extra_params)
 end
 
 function Base.merge!(c1::Connector, c2::Connector)
