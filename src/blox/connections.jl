@@ -3,6 +3,7 @@ struct Connector
     destination::Vector{Symbol}
     equation::Vector{Equation}
     weight::Vector{Num}
+    receptor::Vector{Num}
     delay::Vector{Num}
     discrete_callbacks
     spike_affects::Dict{Symbol, Vector{Union{Tuple{Num, Num}, Equation}}}
@@ -14,6 +15,7 @@ function Connector(
     dest::Union{Symbol, Vector{Symbol}}; 
     equation=Equation[], 
     weight=Num[], 
+    receptor=Num[],
     delay=Num[], 
     discrete_callbacks=[], 
     spike_affects=Dict{Symbol, Vector{Tuple{Num, Num}}}(),
@@ -29,6 +31,7 @@ function Connector(
         to_vector(dest), 
         to_vector(equation), 
         to_vector(weight), 
+        to_vector(receptor),
         to_vector(delay), 
         to_vector(discrete_callbacks), 
         spike_affects, 
@@ -209,7 +212,7 @@ function generate_Glu_AMPA_tag_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     R_name = Symbol("g_Glu_AMPA_$(name_out)_$(name_in)")
-    g = only(@parameters $(R_name)=1.0)
+    g = only(@parameters $(R_name)=1.0 [tunable=false])
         
     return g
 end
@@ -219,7 +222,7 @@ function generate_Glu_NMDA_tag_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     R_name = Symbol("g_Glu_NMDA_$(name_out)_$(name_in)")
-    g = only(@parameters $(R_name)=1.0)
+    g = only(@parameters $(R_name)=1.0 [tunable=false])
         
     return g
 end
@@ -230,7 +233,7 @@ function generate_GABA_A_tag_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     R_name = Symbol("g_GABA_A_$(name_out)_$(name_in)")
-    g = only(@parameters $(R_name)=1.0)
+    g = only(@parameters $(R_name)=1.0 [tunable=false])
         
     return g
 end
@@ -240,7 +243,7 @@ function generate_GABA_B_tag_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     R_name = Symbol("g_GABA_B_$(name_out)_$(name_in)")
-    g = only(@parameters $(R_name)=1.0)
+    g = only(@parameters $(R_name)=1.0 [tunable=false])
         
     return g
 end
@@ -392,6 +395,7 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
     
     eq = Equation[]
+    receptor_tag = Num[]
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
@@ -406,11 +410,13 @@ function Connector(
         if GABA_A
             r_tag1 = generate_GABA_A_tag_param(blox_src, blox_dest; kwargs...) 
             push!(eq, sys_dest.I_syn ~ -r_tag1 * w * sys_src.G * (sys_dest.V - sys_src.E_syn))
+            push!(receptor_tag,r_tag1)
         end
 
         if GABA_B
             r_tag2 = generate_GABA_B_tag_param(blox_src, blox_dest; kwargs...) 
             push!(eq, sys_dest.I_syn ~ -r_tag2 * w * sys_src.G_B * (sys_dest.V - sys_src.E_syn))
+            push!(receptor_tag,r_tag2)
         end
     end
     
@@ -429,11 +435,13 @@ function Connector(
             end
 
             push!(eq, eqs)
+            push!(receptor_tag,r_tag1)
         end
 
         if Glu_NMDA
             r_tag2 = generate_Glu_NMDA_tag_param(blox_src, blox_dest; kwargs...) 
             push!(eq, sys_dest.I_syn ~ -r_tag2 * w * sys_src.G_nmda * (sys_dest.V - sys_src.E_syn))
+            push!(receptor_tag,r_tag2)
         end
     end
     # "sys_src.G" is synaptic conductance for default receptors, glu_ampa for exci neurons and GABA_A for inh neurons. For other receptors, separate variables ...
@@ -443,7 +451,7 @@ function Connector(
     maybe_set_state_pre!(lr, sys_src.spikes_cumulative)
     maybe_set_state_post!(lr, sys_dest.spikes_cumulative)
 
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, receptor=receptor_tag, learning_rule=Dict(w => lr))
 end
 
 function Connector(
