@@ -201,6 +201,53 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
 end
 
 """
+These are tagging parameters tat can be tuned for specific drug conditions
+"""
+
+function generate_Glu_AMPA_tag_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    R_name = Symbol("g_Glu_AMPA_$(name_out)_$(name_in)")
+    g = only(@parameters $(R_name)=1.0)
+        
+    return g
+end
+
+function generate_Glu_NMDA_tag_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    R_name = Symbol("g_Glu_NMDA_$(name_out)_$(name_in)")
+    g = only(@parameters $(R_name)=1.0)
+        
+    return g
+end
+
+
+function generate_GABA_A_tag_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    R_name = Symbol("g_GABA_A_$(name_out)_$(name_in)")
+    g = only(@parameters $(R_name)=1.0)
+        
+    return g
+end
+
+function generate_GABA_B_tag_param(blox_out, blox_in; kwargs...)
+    name_out = namespaced_nameof(blox_out)
+    name_in = namespaced_nameof(blox_in)
+
+    R_name = Symbol("g_GABA_B_$(name_out)_$(name_in)")
+    g = only(@parameters $(R_name)=1.0)
+        
+    return g
+end
+
+
+
+"""
     Helper to merge delay and weight into a single vector
 """
 function params(bc::Connector)
@@ -343,19 +390,58 @@ function Connector(
 )
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
+    
+    eq = Equation[]
 
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
+
+    STA = get_sta(kwargs, nameof(blox_src), nameof(blox_dest))
+    
+    # For inhibitory (GABAergic) presynaptic neuron, check what types of receptors are present in the post synaptic.
+
+    if blox_src isa AbstractInhNeuronBlox
+        GABA_A = get_gaba_a(kwargs, nameof(blox_src), nameof(blox_dest))
+        GABA_B = get_gaba_b(kwargs, nameof(blox_src), nameof(blox_dest))
+
+        if GABA_A
+            r_tag1 = generate_GABA_A_tag_param(blox_src, blox_dest; kwargs...) 
+            push!(eq, sys_dest.I_syn ~ -r_tag1 * w * sys_src.G * (sys_dest.V - sys_src.E_syn))
+        end
+
+        if GABA_B
+            r_tag2 = generate_GABA_B_tag_param(blox_src, blox_dest; kwargs...) 
+            push!(eq, sys_dest.I_syn ~ -r_tag2 * w * sys_src.G_B * (sys_dest.V - sys_src.E_syn))
+        end
+    end
+    
+    # For inhibitory (GABAergic) presynaptic neuron, check what types of receptors are present in the post synaptic.
+    if blox_src isa AbstractExciNeuronBlox
+        Glu_AMPA = get_glu_ampa(kwargs, nameof(blox_src), nameof(blox_dest))
+        Glu_NMDA = get_glu_nmda(kwargs, nameof(blox_src), nameof(blox_dest))
+
+        if Glu_AMPA
+            r_tag1 = generate_Glu_AMPA_tag_param(blox_src, blox_dest; kwargs...) 
+            # for glu ampa there could be short term augmentation STA
+            eqs = if STA
+                sys_dest.I_syn ~ -r_tag1 * w * sys_dest.Gₛₜₚ * sys_src.G * (sys_dest.V - sys_src.E_syn)
+            else
+                sys_dest.I_syn ~ -r_tag1 * w * sys_src.G * (sys_dest.V - sys_src.E_syn)
+            end
+
+            push!(eq, eqs)
+        end
+
+        if Glu_NMDA
+            r_tag2 = generate_Glu_NMDA_tag_param(blox_src, blox_dest; kwargs...) 
+            push!(eq, sys_dest.I_syn ~ -r_tag2 * w * sys_src.G_nmda * (sys_dest.V - sys_src.E_syn))
+        end
+    end
+    # "sys_src.G" is synaptic conductance for default receptors, glu_ampa for exci neurons and GABA_A for inh neurons. For other receptors, separate variables ...
+    # are defined inside neuron models eg. G_nmda, G_B etc. 
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
     maybe_set_state_pre!(lr, sys_src.spikes_cumulative)
     maybe_set_state_post!(lr, sys_dest.spikes_cumulative)
-        
-    STA = get_sta(kwargs, nameof(blox_src), nameof(blox_dest))
-    eq = if STA
-        sys_dest.I_syn ~ -w * sys_dest.Gₛₜₚ * sys_src.G * (sys_dest.V - sys_src.E_syn)
-    else
-        sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn)
-    end
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
 end
