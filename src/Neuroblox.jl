@@ -17,9 +17,7 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-using ForwardDiff: Dual, Partials
-using DifferentiationInterface
-using Enzyme: Enzyme
+using ForwardDiff: Dual, Partials, jacobian
 using ForwardDiff
 ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
 using ChainRules: _eigen_norm_phase_fwd!

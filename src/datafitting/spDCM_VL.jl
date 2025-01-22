@@ -410,12 +410,10 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     y_csd = mar2csd(mar, freq, dt^-1);     # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
 
     statevals = [v for v in values(initcond)]
+    append!(statevals, zeros(length(unknowns(model)) - length(statevals)))
     f_model = generate_function(model; expression=Val{false})[1]
     f_at(params, t) = states -> f_model(states, params, t)
-    derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), AutoEnzyme(function_annotation=Enzyme.Const), statevals)
-
-    # jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
-    # derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
+    derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), statevals)
 
     μθ_pr = vecparam(priors.μθ_pr)        # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(priors.Σθ_pr))
@@ -482,7 +480,7 @@ function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (Πθ_pr, Πλ_pr) = setup.systemmatrices
     Q = setup.Q
 
-    dfdp = ForwardDiff.jacobian(f, μθ_po)
+    dfdp = jacobian(f, μθ_po)
 
     norm_dfdp = opnorm(dfdp, Inf);
     revert = isnan(norm_dfdp) || norm_dfdp > exp(32);

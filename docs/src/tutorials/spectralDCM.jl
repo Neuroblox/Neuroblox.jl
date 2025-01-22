@@ -166,20 +166,6 @@ untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
 fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations; the `split` parameter is necessary for some ModelingToolkit peculiarities and will soon be removed. So don't lose time with it ;)
 
-# using DifferentiationInterface
-# using Enzyme: Enzyme
-# relevant post: https://discourse.julialang.org/t/enzyme-autodiff-functor-which-contains-cache/121105/2
-# other stuff: https://github.com/EnzymeAD/Enzyme.jl/issues/1719, https://discourse.julialang.org/t/enzyme-autodiff-readonly-error-and-working-with-batches-of-data/123012 
-
-# v =  0.001*randn(21)
-# f = generate_function(fitmodel; expression=Val{false})[1]
-# f_at(params, t) = states -> f(states, params, t)
-# derivatives = params -> jacobian(f_at(addnontunableparams(params, fitmodel), 0.0), AutoEnzyme(function_annotation=Enzyme.Duplicated), v)
-# derivatives(ones(22))
-
-# jac = generate_jacobian(fitmodel; expression=Val{false})[1]
-# jac(statevals, addnontunableparams(rand(10), fitmodel), 0.0)
-
 # ## Setup spectral DCM
 max_iter = 128;            # maximum number of iterations
 ## attribute initial conditions to states
@@ -206,23 +192,17 @@ _, s_bold = get_eqidx_tagged_vars(fitmodel, "measurement");    # get bold signal
 # Prepare the DCM. This function will setup the computation of the Dynamic Causal Model. The last parameter specifies that wer are using fMRI time series as opposed to LFPs.
 (state, setup) = setup_sDCM(dfsol[:, String.(Symbol.(s_bold))], fitmodel, perturbedfp, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
 
-## HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
-## this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
-with_stack(f, n) = fetch(schedule(Task(f, n)));
-
 # We are now ready to run the optimization procedure! :)
 # That is we loop over run_sDCM_iteration! which will alter `state` after each optimization iteration. It essentially computes the Variational Laplace estimation of expectation and variance of the tunable parameters. 
-with_stack(5_000_000) do  # 5MB of stack space
-    for iter in 1:max_iter
-        state.iter = iter
-        run_sDCM_iteration!(state, setup)
-        print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
-        if iter >= 4
-            criterion = state.dF[end-3:end] .< setup.tolerance
-            if all(criterion)
-                print("convergence\n")
-                break
-            end
+for iter in 1:max_iter
+    state.iter = iter
+    run_sDCM_iteration!(state, setup)
+    print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
+    if iter >= 4
+        criterion = state.dF[end-3:end] .< setup.tolerance
+        if all(criterion)
+            print("convergence\n")
+            break
         end
     end
 end
