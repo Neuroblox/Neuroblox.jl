@@ -847,6 +847,14 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 	end
 end
 
+# ====================
+# Metabolic HH Neuron
+# ====================
+
+# Labels for excitatory vs inhibitory neuron subtype (determines synaptic parameters)
+const Excitatory = :Excitatory
+const Inhibitory = :Inhibitory
+
 """
 	MetabolicHHNeuron(name, namespace, neurontype,
 		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
@@ -932,12 +940,12 @@ struct MetabolicHHNeuron{IsExcitatory} <: AbstractNeuronBlox
 		if neurontype == :excitatory
 			MetabolicHHNeuron{Excitatory}(;name, namespace,
 				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
-				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, E_syn_exc, τ
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G=G_exc, E_syn=E_syn_exc, τ
 			)
 		elseif neurontype == :inhibitory
 			MetabolicHHNeuron{Inhibitory}(;name, namespace,
 				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
-				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_inh, E_syn_inh, τ
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G=G_inh, E_syn=E_syn_inh, τ
 			)
 		else
 			error("Unknown neuron type: $neurontype")
