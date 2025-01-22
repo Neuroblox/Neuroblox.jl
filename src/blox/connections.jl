@@ -1205,13 +1205,7 @@ function Connector(
     sys_dest = get_namespaced_sys(blox_dest)
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
     
-    if blox_src.neurontype == "excitatory"
-        eq = sys_dest.I_syn ~ -w * sys_dest.G_exc * (sys_dest.V - sys_dest.E_syn_exc) * sys_src.S * exp(-sys_src.χ/5)
-    elseif blox_src.neurontype == "inhibitory"
-        eq = sys_dest.I_syn ~ -w * sys_dest.G_inh * (sys_dest.V - sys_dest.E_syn_inh) * sys_src.S * exp(-sys_src.χ/5)
-    else
-        error("Failed to make connection due to unknown neurontype. Must be excitatory or inhibitory.")
-    end 
+    eq = sys_dest.I_syn ~ -w * sys_dest.G * (sys_dest.V - sys_dest.E_syn) * sys_src.S * exp(-sys_src.χ/5)
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end

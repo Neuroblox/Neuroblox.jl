@@ -891,15 +891,15 @@ References:
 1. Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion." Nature Communications 14.1 (2023): 4792.
 
 """
-struct MetabolicHHNeuron <: AbstractNeuronBlox
+struct MetabolicHHNeuron{IsExcitatory} <: AbstractNeuronBlox
 	system
     output
     namespace
-	neurontype::String
+
 	function MetabolicHHNeuron(
 		;name,
 		namespace=nothing,
-		neurontype="excitatory",
+		neurontype=:excitatory,
 		Naᵢᵧ = 18.0,  # Intracellular Naconcentration, in mM
 		ρₘₐₓ = 1.25,  # Maximum pump rate, in mM/s
 		α = 5.3,  # Conversion factor from pump current to O2 consumption rate, in g/mol
@@ -928,7 +928,27 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		E_syn_exc = 0., # Excitatory synaptic reversal potential, in mV
 		E_syn_inh = -80.,  # Inhibitory synaptic reversal potential, in mV
 		τ = 4.,  # Time constant for synapse, in ms [!]
-	)
+		)
+		if neurontype == :excitatory
+			MetabolicHHNeuron{Excitatory}(;name, namespace,
+				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, E_syn_exc, τ
+			)
+		elseif neurontype == :inhibitory
+			MetabolicHHNeuron{Inhibitory}(;name, namespace,
+				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_inh, E_syn_inh, τ
+			)
+		else
+			error("Unknown neuron type: $neurontype")
+		end
+	end
+	function MetabolicHHNeuron{Excitatory}(
+		;name,
+		namespace=nothing,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G, E_syn, τ
+		)
 		# Parameters
 		ps = @parameters begin
 			Naᵢᵧ=Naᵢᵧ
@@ -952,10 +972,8 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 			G_cl_L=G_cl_L
 			C_m=C_m
 			I_in=I_in
-			G_exc=G_exc
-			G_inh=G_inh
-			E_syn_exc=E_syn_exc
-			E_syn_inh=E_syn_inh
+			G=G
+			E_syn=E_syn
 			τ=τ
 		end
 		# State variables
@@ -1025,6 +1043,109 @@ struct MetabolicHHNeuron <: AbstractNeuronBlox
 		sys = ODESystem(eqs, t, sts, ps; name=name)
 
 		# Construct the neuron
-		new(sys, sts[1], namespace, neurontype)
+		new{Excitatory}(sys, sts[1], namespace)
+	end
+
+	function MetabolicHHNeuron{Inhibitory}(
+		;name,
+		namespace=nothing,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G, E_syn, τ
+		)
+		# Parameters
+		ps = @parameters begin
+			Naᵢᵧ=Naᵢᵧ
+			ρₘₐₓ=ρₘₐₓ
+			α=α
+			λ=λ
+			ϵ₀=ϵ₀
+			O₂ᵦ=O₂ᵦ
+			γ=γ
+			β=β
+			ϵₖ=ϵₖ
+			Kₒᵦ=Kₒᵦ
+			Gᵧ=Gᵧ
+			R=R
+			T=T
+			F=F
+			Gₙₐ=Gₙₐ
+			Gₖ=Gₖ
+			Gₙₐ_L=Gₙₐ_L
+			Gₖ_L=Gₖ_L
+			G_cl_L=G_cl_L
+			C_m=C_m
+			I_in=I_in
+			G=G
+			E_syn=E_syn
+			τ=τ
+		end
+		# State variables
+		sts = @variables begin
+			V(t)=-60.0
+			O₂(t)=25.0
+			Kₒ(t)=3.0
+			Naᵢ(t)=15.0
+			m(t)=0.0
+			h(t)=0.0
+			n(t)=0.0
+			I_syn(t) 
+			[input=true] 
+			S(t)=0.1
+			[output = true] 
+			χ(t)=0.0
+			[output = true] 
+		end
+		
+		# Pump currents
+		ρ = ρₘₐₓ / (1.0 + exp((20.0 - O₂)/3.0))
+		I_pump = ρ / (1.0 + exp((25.0 - Naᵢ)/3.0)*(1.0 + exp(5.5 - Kₒ)))
+		I_gliapump = ρ / (3.0*(1.0 + exp((25.0 - Naᵢᵧ)/3.0))*(1.0 + exp(5.5 - Kₒ)))
+
+		# Glia current
+		I_glia = Gᵧ / (1.0 + exp((18.0 - Kₒ)/2.5))
+
+		# Ion concentrations
+		Kᵢ = 140.0 + (18.0 - Naᵢ)
+		Naₒ = 144.0 - β*(Naᵢ - 18.0)
+	
+		# Ion reversal potentials
+		Eₙₐ = R*T/F * log(Naₒ/Naᵢ) * 1000.0
+		Eₖ = R*T/F * log(Kₒ/Kᵢ) * 1000.0
+		E_cl = R*T/F * log(Clᵢ/Clₒ) * 1000.0
+		
+		# Ion currents
+		Iₙₐ = Gₙₐ*m^3.0*h*(V - Eₙₐ) + Gₙₐ_L*(V - Eₙₐ)
+		Iₖ = Gₖ*n^4.0*(V - Eₖ) + Gₖ_L*(V - Eₖ)
+		I_cl = G_cl_L*(V - E_cl)
+
+		# Ion channel gating rate equations
+		aₘ = 0.32*(V + 54.0)/(1.0 - exp(-0.25*(V + 54.0)))
+		bₘ = 0.28*(V + 27.0)/(exp(0.2*(V + 27.0)) - 1.0)
+		aₕ = 0.128*exp(-(V + 50.0)/18.0)
+		bₕ = 4.0/(1.0 + exp(-0.2*(V + 27.0)))
+		aₙ = 0.032*(V + 52.0)/(1.0 - exp(-0.2*(V + 52.0)))
+		bₙ = 0.5*exp(-(V + 57.0)/40.0)
+		
+		# Depolarization factor, as continuous variable
+		η = 0.4/(1.0 + exp(-10.0*(V + 30.0)))/(1.0 + exp(10.0*(V + 10.0)))
+
+		# Differential equations
+		eqs = [
+			D(O₂) ~ -α*λ*(I_pump + I_gliapump) + ϵ₀*(O₂ᵦ - O₂),
+			D(Kₒ) ~ γ*β*Iₖ - 2.0*β*I_pump - I_glia - 2.0*I_gliapump - ϵₖ*(Kₒ - Kₒᵦ),
+			D(Naᵢ) ~ -γ*Iₙₐ - 3.0*I_pump,
+			D(m) ~ aₘ * (1.0 - m) - bₘ*m,
+			D(h) ~ aₕ * (1.0 - h) - bₕ*h,
+			D(n) ~ aₙ * (1.0 - n) - bₙ*n,
+			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in)/C_m,
+			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
+			D(χ) ~ η*(V + 50.0) - 0.4*χ
+			]
+
+		# Define the ODE system
+		sys = ODESystem(eqs, t, sts, ps; name=name)
+
+		# Construct the neuron
+		new{Inhibitory}(sys, sts[1], namespace)
 	end
 end
