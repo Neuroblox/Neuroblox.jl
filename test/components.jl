@@ -879,7 +879,7 @@ end
 
     @named sys = system_from_graph(g);
 
-    prob = ODEProblem(sys, [], [0., 60.], []);
+    prob = ODEProblem(sys, [], [0., 200.], []);
     sol = solve(prob, Tsit5());
 
     @test sol.retcode == ReturnCode.Success
