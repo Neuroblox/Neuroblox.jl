@@ -13,37 +13,36 @@ function recursive_getdefault(x::Union{MTK.Num, MTK.BasicSymbolic})
     substitute(def_x, defs)
 end
 
-
 function define_neurons()
-    for (name, T) ∈ [(:hhne, :HHNeuronExciBlox)
-                     (:hhni, :HHNeuronInhibBlox)
-                     (:hhni_msn_adam, :HHNeuronInhib_MSN_Adam_Blox)
-                     (:hhni_fsi_adam, :HHNeuronInhib_FSI_Adam_Blox)
-                     (:hhne_stn_adam, :HHNeuronExci_STN_Adam_Blox)
-                     (:hhni_GPe_adam, :HHNeuronInhib_GPe_Adam_Blox)
-                     (:ngei, :NextGenerationEIBlox)
-                     (:wc, :WilsonCowan)
-                     (:ho, :HarmonicOscillator)
-                     (:jr, :JansenRit)  # Note! Regular JansenRit can support delays, and I have not yet implemented this!
-                     (:if, :IFNeuron)
-                     (:lif, :LIFNeuron) 
-                     (:qif, :QIFNeuron)
-                     (:izh, :IzhikevichNeuron)
-                     (:lif_exci, :LIFExciNeuron)
-                     (:lif_inh, :LIFInhNeuron)
-                     (:pexci, :PINGNeuronExci)
-                     (:pinhib, :PINGNeuronInhib)
-                     ]
-        sys = getproperty(Neuroblox, T)(;name)
+    for (name, T) ∈ [(:hhne, HHNeuronExciBlox)
+                     (:hhni, HHNeuronInhibBlox)
+                     (:hhni_msn_adam, HHNeuronInhib_MSN_Adam_Blox)
+                     (:hhni_fsi_adam, HHNeuronInhib_FSI_Adam_Blox)
+                     (:hhne_stn_adam, HHNeuronExci_STN_Adam_Blox)
+                     (:hhni_GPe_adam, HHNeuronInhib_GPe_Adam_Blox)
+                     (:ngei, NextGenerationEIBlox)
+                     (:wc, WilsonCowan)
+                     (:ho, HarmonicOscillator)
+                     (:jr, JansenRit)  # Note! Regular JansenRit can support delays, and I have not yet implemented this!
+                     (:if, IFNeuron)
+                     (:lif, LIFNeuron) 
+                     (:qif, QIFNeuron)
+                     (:izh, IzhikevichNeuron)
+                     (:lif_exci, LIFExciNeuron)
+                     (:lif_inh, LIFInhNeuron)
+                     (:pexci, PINGNeuronExci)
+                     (:pinhib, PINGNeuronInhib)
+                     (:VdP, VanDerPol{NonNoisy})
+                     (:VdPN, VanDerPol{Noisy})
+                     (:ko, KuramotoOscillator{NonNoisy})
+                     (:kon, KuramotoOscillator{Noisy})]
+        sys = T(;name)
         system = structural_simplify(sys.system; fully_determined=false)
         params = get_ps(system)
         t = Symbol(get_iv(system))
 
         states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
         inputs = [s for s ∈ unknowns(system) if  MTK.isinput(s)]
-
-        # states_unwrapped = map(x -> x.f, states)
-        # inputs_unwrapped = map(x -> x.f, inputs)
 
         p_syms = map(Symbol, params)
         s_syms = map(x -> tosymbol(x; escape=false), states)
@@ -137,7 +136,7 @@ function define_neurons()
                 end
             end
         end
-        if !isempty(get_discrete_events(system)) && T ∉ (:LIFExciNeuron, :LIFInhNeuron)
+        if !isempty(get_discrete_events(system)) && T ∉ (LIFExciNeuron, LIFInhNeuron)
             cb = only(collect(get_discrete_events(system))) # currently only support single events
             cb_eq = r(cb.condition)
             if cb_eq.f ∉ (<, >, <=, >=)
@@ -166,18 +165,6 @@ function define_neurons()
 end
 define_neurons() # it's useful when developing this module to have these in a function
 
-#Maybe should just encorporate this into define_neurons()
-# for T ∈ [:LIFExciNeuron, :LIFInhNeuron]
-#     @eval begin
-#         GraphDynamics.has_discrete_events(::Type{$T}) = true
-#         GraphDynamics.discrete_event_condition((; t_refract_end)::Subsystem{$T}, t) = t_refract_end == t
-#         function GraphDynamics.apply_discrete_event!(integrator, _, pview, neuron::Subsystem{$T}, _)
-#             params = get_params(neuron)
-#             pview[] = @set params.is_refractory = 0
-#         end
-#     end
-# end
-
 issupported(::PoissonSpikeTrain) = true
 components(p::PoissonSpikeTrain) = (p,)
 function to_subsystem(s::PoissonSpikeTrain)
@@ -188,27 +175,6 @@ end
 GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
 GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
-
-
-#-------------------------
-# Kuramoto
-issupported(::KuramotoOscillator) = true
-function to_subsystem(o::KuramotoOscillator)
-    states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
-    Subsystem(states, params)
-end
-
-GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillator}) = 0.0
-function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillator}, jcn, t)
-    SubsystemStates{KuramotoOscillator}((; #=D=#θ= s.ω + jcn))
-end
-GraphDynamics.isstochastic(::Type{KuramotoOscillator}) = true
-function GraphDynamics.apply_subsystem_noise!(vstates, (;ζ,)::Subsystem{KuramotoOscillator}, t)
-    vstates[1] = ζ
-    nothing
-end
-
 
 #-------------------------
 # Matrisome
