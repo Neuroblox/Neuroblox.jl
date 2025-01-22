@@ -224,10 +224,9 @@ end
                 );
 
     hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
-    hyperpriors = Dict(:Πλ_pr => hype["ihC"],               # prior metaparameter precision, needs to be a matrix
-                        :μλ_pr => vec(hype["hE"]),              # prior metaparameter mean, needs to be a vector
-                        :Q => hype["Q"]
-                        );
+    hyperpriors = (Πλ_pr = hype["ihC"],               # prior metaparameter precision, needs to be a matrix
+                   μλ_pr = vec(hype["hE"]),           # prior metaparameter mean, needs to be a vector
+                   Q = hype["Q"]);
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
