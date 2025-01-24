@@ -66,7 +66,7 @@ end
 argument_names(::Type{<: FreeEnergy}) = (:spDCMresults)
 
 function Makie.plot!(p::FreeEnergy)
-    F = p.spDCMresults[].F
+    F = copy(p.spDCMresults[].F)
     deleteat!(F, 1)   # remove the first value since that's always -Inf
     
     ax = current_axis()
