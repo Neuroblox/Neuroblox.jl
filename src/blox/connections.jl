@@ -1195,3 +1195,17 @@ function Connector(
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
+
+function Connector(
+    blox_src::MetabolicHHNeuron,
+    blox_dest::MetabolicHHNeuron;
+    kwargs...
+)
+    sys_src = get_namespaced_sys(blox_src)
+    sys_dest = get_namespaced_sys(blox_dest)
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    
+    eq = sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn) * sys_src.S * exp(-sys_src.χ/5)
+
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
