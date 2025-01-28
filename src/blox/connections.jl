@@ -1197,8 +1197,8 @@ function Connector(
 end
 
 function Connector(
-    blox_src::Union{MetabolicHHNeuron},
-    blox_dest::Union{MetabolicHHNeuron};
+    blox_src::MetabolicHHNeuron,
+    blox_dest::MetabolicHHNeuron;
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)
