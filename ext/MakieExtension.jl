@@ -83,7 +83,8 @@ end
     Theme(
         xlabel = "Parameter Name",
         ylabel = "Effective Connectivity",
-        title = ""
+        title = "",
+        color = :black
     )
 end
 
@@ -112,9 +113,9 @@ function Makie.plot!(p::ECBarPlot)
     var_A = diag(state.Σθ_po[1:np, 1:np])  # get variance of effective connectivity
 
     x = 1:np
-    barplot!(p, x, μA)
-    errorbars!(p, x, μA, sqrt.(var_A), color = :red)
-    scatter!(p, x, gt[idx])
+    barplot!(p, x, μA; color=p.color[])
+    errorbars!(p, x, μA, sqrt.(var_A); color=p.color[])
+    scatter!(p, x, gt[idx]; color=p.color[])
     return p
 end
 
@@ -122,7 +123,8 @@ end
     Theme(
         xlabel = "Time (ms)",
         ylabel = "Voltage (mV)",
-        title = ""
+        title = "",
+        color = :black
     )
 end
 
@@ -139,7 +141,7 @@ function Makie.plot!(p::MeanField)
 
     V = meanfield_timeseries(blox, sol)
     
-    lines!(p, sol.t, vec(V))
+    lines!(p, sol.t, vec(V); color=p.color[])
 
     return p
 end
