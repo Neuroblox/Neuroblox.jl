@@ -86,7 +86,7 @@ struct SNc <: AbstractModulator
                 R_ ~ min(κ, κ/(λ*jcn_ + sqrt(eps())))
               ]
 
-        R_cb = [[t_event + sqrt(eps(t_event))] => [jcn_ ~ jcn]]     
+        R_cb = [[t_event] => [jcn_ ~ jcn]]     
 
         sys = ODESystem(eqs, t, sts, ps; name = name, discrete_events = R_cb)
 
