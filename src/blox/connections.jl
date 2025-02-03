@@ -810,8 +810,8 @@ function Connector(
     neurons_dest = get_inh_neurons(blox_dest)
 
     t_event = get_event_time(kwargs, nameof(blox_src), nameof(blox_dest))
-    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
-    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
+    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
+    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
     
     # HACK: H should be reset to 1 at the beginning of each trial
     # Such callbacks should be moved to RL-specific functions like `run_experiment!`
