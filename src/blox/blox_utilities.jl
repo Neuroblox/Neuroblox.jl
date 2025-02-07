@@ -437,6 +437,10 @@ end
 to_vector(v::AbstractVector) = v
 to_vector(v) = [v]
 
+to_set(s::Set) = s
+to_set(v::AbstractVector) = Set{Any}(s)
+to_set(x) = Set{Any}(x)
+
 to_double_vector(v::AbstractVector{<:AbstractVector}) = v
 to_double_vector(v::AbstractVector) = [v]
 to_double_vector(v) = [[v]]
