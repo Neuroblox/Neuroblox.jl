@@ -846,3 +846,314 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 		new(p, sys, namespace)
 	end
 end
+
+# ====================
+# Metabolic HH Neuron
+# ====================
+
+# Labels for excitatory vs inhibitory neuron subtype (determines synaptic parameters)
+const Excitatory = :Excitatory
+const Inhibitory = :Inhibitory
+
+"""
+	MetabolicHHNeuron(name, namespace, neurontype,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G_exc, G_inh, E_syn_exc, E_syn_inh)
+
+	Create a Metabolic Hodgkin-Huxley Neuron. This model accounts for
+	dynamic ion concentrations, oxygen consumption and astrocytic buffering.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- neurontype: excitatory or inhibitory.
+- Naᵢᵧ: Intracellular Na+ concentration (mM).
+- ρₘₐₓ: Maximum pump rate (mM/s).
+- α: Conversion factor from pump current to O2 consumption rate (g/mol).
+- λ: Relative cell density.
+- ϵ₀: O2 diffusion rate (s^-1).
+- O₂ᵦ: O2 buffer concentration (mg/L).
+- γ: Conversion factor from current to concentration (mM/s)/(uA/cm2).
+- β: Ratio of intracellular vs extracellular volume.
+- ϵₖ: K+ diffusion rate (1/s).
+- Kₒᵦ: K+ buffer concentration (mM).
+- Gᵧ: Glia uptake strength of K+ (mM/s).
+- Clᵢ: Intracellular Cl- concentration (mM).
+- Clₒ: Extracellular Cl- concentration (mM).
+- R: Ideal gas constant (J/(mol*K)).
+- T: Temperature (K).
+- F: Faraday's constant (C/mol).
+- Gₙₐ: Na+ maximum conductance (mS/cm^2).
+- Gₖ: K+ maximum conductance (mS/cm^2).
+- Gₙₐ_L: Na+ leak conductance (mS/cm^2).
+- Gₖ_L: K+ leak conductance (mS/cm^2).
+- G_cl_L: Cl- leak conductance (mS/cm^2).
+- C_m: Membrane capacitance (uF/cm^2).
+- I_in: External current input (uA/cm^2).
+- G_exc: Conductance of excitatory synapses (mS/cm^2).
+- G_inh: Conductance of inhibitory synapses (mS/cm^2).
+- E_syn_exc: Excitatory synaptic reversal potential (mV).
+- E_syn_inh: Inhibitory synaptic reversal potential (mV).
+
+References:
+1. Dutta, Shrey, et al. "Mechanisms underlying pathological cortical bursts during metabolic depletion." Nature Communications 14.1 (2023): 4792.
+
+"""
+struct MetabolicHHNeuron{IsExcitatory} <: AbstractNeuronBlox
+	system
+    output
+    namespace
+
+	function MetabolicHHNeuron(
+		;name,
+		namespace=nothing,
+		neurontype=:excitatory,
+		Naᵢᵧ = 18.0,  # Intracellular Naconcentration, in mM
+		ρₘₐₓ = 1.25,  # Maximum pump rate, in mM/s
+		α = 5.3,  # Conversion factor from pump current to O2 consumption rate, in g/mol
+		λ = 1.,  # Relative cell density [!]
+		ϵ₀ = 0.17,  # O2 diffusion rate, in s^-1
+		O₂ᵦ = 32.,  # O2 buffer concentration, in mg/L
+		γ = 0.0445,  # conversion factor from current to concentration, in (mM/s)/(uA/cm2)
+		β = 7.,  # Ratio of intracellular vs extracellular volume
+		ϵₖ = 0.33,  # K+ diffusion rate, in 1/s
+		Kₒᵦ = 3.5,  # K+ buffer concentration, in mM
+		Gᵧ = 8.0,  # Glia uptake strength of K+, in mM/s
+		Clᵢ = 6.0, # Intracellular Cl- concentration, in mM
+		Clₒ = 130.0, # Extracellular Cl- concentration, in mM
+		R = 8.314,  # Ideal gas constant, in J/(mol*K)
+		T = 310.0,  # Temperature, in K
+		F = 96485.0,  # Faraday's constant, in C/mol
+		Gₙₐ = 30.,  # Na+ maximum conductance, in mS/cm^2
+		Gₖ = 25.,  # K+ maximum conductance, in mS/cm^2
+		Gₙₐ_L = 0.0175,  # Na+ leak conductance, in mS/cm^2
+		Gₖ_L = 0.05,  # K+ leak conductance, in mS/cm^2
+		G_cl_L = 0.05,  # Cl- leak conductance, in mS/cm^2
+		C_m = 1.,  # Membrane capacitance, in uF/cm^2
+		I_in = 0.,  # External current input, in uA/cm^2
+		G_exc = 0.022,  # Conductance of excitatory synapses, in mS/cm^2
+		G_inh = 0.374,  # Conductance of inhibitory synapses, in mS/cm^2
+		E_syn_exc = 0., # Excitatory synaptic reversal potential, in mV
+		E_syn_inh = -80.,  # Inhibitory synaptic reversal potential, in mV
+		τ = 4.,  # Time constant for synapse, in ms [!]
+		)
+		if neurontype == :excitatory
+			MetabolicHHNeuron{Excitatory}(;name, namespace,
+				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G=G_exc, E_syn=E_syn_exc, τ
+			)
+		elseif neurontype == :inhibitory
+			MetabolicHHNeuron{Inhibitory}(;name, namespace,
+				Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+				Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G=G_inh, E_syn=E_syn_inh, τ
+			)
+		else
+			error("Unknown neuron type: $neurontype")
+		end
+	end
+	function MetabolicHHNeuron{Excitatory}(
+		;name,
+		namespace=nothing,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G, E_syn, τ
+		)
+		# Parameters
+		ps = @parameters begin
+			Naᵢᵧ=Naᵢᵧ
+			ρₘₐₓ=ρₘₐₓ
+			α=α
+			λ=λ
+			ϵ₀=ϵ₀
+			O₂ᵦ=O₂ᵦ
+			γ=γ
+			β=β
+			ϵₖ=ϵₖ
+			Kₒᵦ=Kₒᵦ
+			Gᵧ=Gᵧ
+			R=R
+			T=T
+			F=F
+			Gₙₐ=Gₙₐ
+			Gₖ=Gₖ
+			Gₙₐ_L=Gₙₐ_L
+			Gₖ_L=Gₖ_L
+			G_cl_L=G_cl_L
+			C_m=C_m
+			I_in=I_in
+			G=G
+			E_syn=E_syn
+			τ=τ
+		end
+		# State variables
+		sts = @variables begin
+			V(t)=-60.0
+			O₂(t)=25.0
+			Kₒ(t)=3.0
+			Naᵢ(t)=15.0
+			m(t)=0.0
+			h(t)=0.0
+			n(t)=0.0
+			I_syn(t) 
+			[input=true] 
+			S(t)=0.1
+			[output = true] 
+			χ(t)=0.0
+			[output = true] 
+		end
+		
+		# Pump currents
+		ρ = ρₘₐₓ / (1.0 + exp((20.0 - O₂)/3.0))
+		I_pump = ρ / (1.0 + exp((25.0 - Naᵢ)/3.0)*(1.0 + exp(5.5 - Kₒ)))
+		I_gliapump = ρ / (3.0*(1.0 + exp((25.0 - Naᵢᵧ)/3.0))*(1.0 + exp(5.5 - Kₒ)))
+
+		# Glia current
+		I_glia = Gᵧ / (1.0 + exp((18.0 - Kₒ)/2.5))
+
+		# Ion concentrations
+		Kᵢ = 140.0 + (18.0 - Naᵢ)
+		Naₒ = 144.0 - β*(Naᵢ - 18.0)
+	
+		# Ion reversal potentials
+		Eₙₐ = R*T/F * log(Naₒ/Naᵢ) * 1000.0
+		Eₖ = R*T/F * log(Kₒ/Kᵢ) * 1000.0
+		E_cl = R*T/F * log(Clᵢ/Clₒ) * 1000.0
+		
+		# Ion currents
+		Iₙₐ = Gₙₐ*m^3.0*h*(V - Eₙₐ) + Gₙₐ_L*(V - Eₙₐ)
+		Iₖ = Gₖ*n^4.0*(V - Eₖ) + Gₖ_L*(V - Eₖ)
+		I_cl = G_cl_L*(V - E_cl)
+
+		# Ion channel gating rate equations
+		aₘ = 0.32*(V + 54.0)/(1.0 - exp(-0.25*(V + 54.0)))
+		bₘ = 0.28*(V + 27.0)/(exp(0.2*(V + 27.0)) - 1.0)
+		aₕ = 0.128*exp(-(V + 50.0)/18.0)
+		bₕ = 4.0/(1.0 + exp(-0.2*(V + 27.0)))
+		aₙ = 0.032*(V + 52.0)/(1.0 - exp(-0.2*(V + 52.0)))
+		bₙ = 0.5*exp(-(V + 57.0)/40.0)
+		
+		# Depolarization factor, as continuous variable
+		η = 0.4/(1.0 + exp(-10.0*(V + 30.0)))/(1.0 + exp(10.0*(V + 10.0)))
+
+		# Differential equations
+		eqs = [
+			D(O₂) ~ -α*λ*(I_pump + I_gliapump) + ϵ₀*(O₂ᵦ - O₂),
+			D(Kₒ) ~ γ*β*Iₖ - 2.0*β*I_pump - I_glia - 2.0*I_gliapump - ϵₖ*(Kₒ - Kₒᵦ),
+			D(Naᵢ) ~ -γ*Iₙₐ - 3.0*I_pump,
+			D(m) ~ aₘ * (1.0 - m) - bₘ*m,
+			D(h) ~ aₕ * (1.0 - h) - bₕ*h,
+			D(n) ~ aₙ * (1.0 - n) - bₙ*n,
+			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in)/C_m,
+			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
+			D(χ) ~ η*(V + 50.0) - 0.4*χ
+			]
+
+		# Define the ODE system
+		sys = ODESystem(eqs, t, sts, ps; name=name)
+
+		# Construct the neuron
+		new{Excitatory}(sys, sts[1], namespace)
+	end
+
+	function MetabolicHHNeuron{Inhibitory}(
+		;name,
+		namespace=nothing,
+		Naᵢᵧ, ρₘₐₓ, α, λ, ϵ₀, O₂ᵦ, γ, β, ϵₖ, Kₒᵦ, Gᵧ, Clᵢ, Clₒ, R, T, F,
+		Gₙₐ, Gₖ, Gₙₐ_L, Gₖ_L, G_cl_L, C_m, I_in, G, E_syn, τ
+		)
+		# Parameters
+		ps = @parameters begin
+			Naᵢᵧ=Naᵢᵧ
+			ρₘₐₓ=ρₘₐₓ
+			α=α
+			λ=λ
+			ϵ₀=ϵ₀
+			O₂ᵦ=O₂ᵦ
+			γ=γ
+			β=β
+			ϵₖ=ϵₖ
+			Kₒᵦ=Kₒᵦ
+			Gᵧ=Gᵧ
+			R=R
+			T=T
+			F=F
+			Gₙₐ=Gₙₐ
+			Gₖ=Gₖ
+			Gₙₐ_L=Gₙₐ_L
+			Gₖ_L=Gₖ_L
+			G_cl_L=G_cl_L
+			C_m=C_m
+			I_in=I_in
+			G=G
+			E_syn=E_syn
+			τ=τ
+		end
+		# State variables
+		sts = @variables begin
+			V(t)=-60.0
+			O₂(t)=25.0
+			Kₒ(t)=3.0
+			Naᵢ(t)=15.0
+			m(t)=0.0
+			h(t)=0.0
+			n(t)=0.0
+			I_syn(t) 
+			[input=true] 
+			S(t)=0.1
+			[output = true] 
+			χ(t)=0.0
+			[output = true] 
+		end
+		
+		# Pump currents
+		ρ = ρₘₐₓ / (1.0 + exp((20.0 - O₂)/3.0))
+		I_pump = ρ / (1.0 + exp((25.0 - Naᵢ)/3.0)*(1.0 + exp(5.5 - Kₒ)))
+		I_gliapump = ρ / (3.0*(1.0 + exp((25.0 - Naᵢᵧ)/3.0))*(1.0 + exp(5.5 - Kₒ)))
+
+		# Glia current
+		I_glia = Gᵧ / (1.0 + exp((18.0 - Kₒ)/2.5))
+
+		# Ion concentrations
+		Kᵢ = 140.0 + (18.0 - Naᵢ)
+		Naₒ = 144.0 - β*(Naᵢ - 18.0)
+	
+		# Ion reversal potentials
+		Eₙₐ = R*T/F * log(Naₒ/Naᵢ) * 1000.0
+		Eₖ = R*T/F * log(Kₒ/Kᵢ) * 1000.0
+		E_cl = R*T/F * log(Clᵢ/Clₒ) * 1000.0
+		
+		# Ion currents
+		Iₙₐ = Gₙₐ*m^3.0*h*(V - Eₙₐ) + Gₙₐ_L*(V - Eₙₐ)
+		Iₖ = Gₖ*n^4.0*(V - Eₖ) + Gₖ_L*(V - Eₖ)
+		I_cl = G_cl_L*(V - E_cl)
+
+		# Ion channel gating rate equations
+		aₘ = 0.32*(V + 54.0)/(1.0 - exp(-0.25*(V + 54.0)))
+		bₘ = 0.28*(V + 27.0)/(exp(0.2*(V + 27.0)) - 1.0)
+		aₕ = 0.128*exp(-(V + 50.0)/18.0)
+		bₕ = 4.0/(1.0 + exp(-0.2*(V + 27.0)))
+		aₙ = 0.032*(V + 52.0)/(1.0 - exp(-0.2*(V + 52.0)))
+		bₙ = 0.5*exp(-(V + 57.0)/40.0)
+		
+		# Depolarization factor, as continuous variable
+		η = 0.4/(1.0 + exp(-10.0*(V + 30.0)))/(1.0 + exp(10.0*(V + 10.0)))
+
+		# Differential equations
+		eqs = [
+			D(O₂) ~ -α*λ*(I_pump + I_gliapump) + ϵ₀*(O₂ᵦ - O₂),
+			D(Kₒ) ~ γ*β*Iₖ - 2.0*β*I_pump - I_glia - 2.0*I_gliapump - ϵₖ*(Kₒ - Kₒᵦ),
+			D(Naᵢ) ~ -γ*Iₙₐ - 3.0*I_pump,
+			D(m) ~ aₘ * (1.0 - m) - bₘ*m,
+			D(h) ~ aₕ * (1.0 - h) - bₕ*h,
+			D(n) ~ aₙ * (1.0 - n) - bₙ*n,
+			D(V) ~ (-Iₙₐ - Iₖ - I_cl - I_syn - I_in)/C_m,
+			D(S) ~ (20.0/(1.0 + exp(-(V + 20.0)/3.0)) * (1.0 - S) - S)/τ,
+			D(χ) ~ η*(V + 50.0) - 0.4*χ
+			]
+
+		# Define the ODE system
+		sys = ODESystem(eqs, t, sts, ps; name=name)
+
+		# Construct the neuron
+		new{Inhibitory}(sys, sts[1], namespace)
+	end
+end

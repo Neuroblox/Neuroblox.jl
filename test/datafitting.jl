@@ -36,10 +36,9 @@ using MAT
         push!(A, only(@parameters $symb = a))
     end
 
-    # untune!(A, untunelist)   # list indices of parameters that should be set to tunable=false
     for (i, idx) in enumerate(CartesianIndices(vars["pE"]["A"]))
         if idx[1] == idx[2]
-            add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM12, likely to avoid instabilities of the linear model
+            add_edge!(g, regions[idx[1]], regions[idx[2]], :weight, -exp(A[i])/2)  # treatement of diagonal elements in SPM, likely to avoid instabilities of the linear model
         else
             add_edge!(g, regions[idx[2]], regions[idx[1]], :weight, A[i])
         end
@@ -47,7 +46,7 @@ using MAT
 
     # compose model
     @named neuronmodel = system_from_graph(g, simplify=false)
-    untunelist = Dict()
+    untunelist = Dict()  # dictionary of parameters whose tunable flag may be changed, we do this in dependency of variances that are set to 0 as is done in SPM
     for (i, v) in enumerate(diag(vars["pC"])[1:nrr^2])
         untunelist[A[i]] = v == 0 ? false : true
     end
@@ -81,9 +80,6 @@ using MAT
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
     (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
-
-    # HACK: on machines with very small amounts of RAM, Julia can run out of stack space while compiling the code called in this loop
-    # this should be rewritten to abuse the compiler less, but for now, an easy solution is just to run it with more allocated stack space.
 
     for iter in 1:max_iter
         state.iter = iter
@@ -123,7 +119,7 @@ end
 
     @parameters lnr = 0.0
     @parameters lnτ_ss=0 lnτ_sp=0 lnτ_ii=0 lnτ_dp=0
-    @parameters C=512.0 [tunable = false]    # TODO: SPM12 has this seemingly arbitrary 512 pre-factor in spm_fx_cmc.m. Can we understand why?
+    @parameters C=512.0 [tunable = false]    # TODO: SPM has this seemingly arbitrary 512 pre-factor in spm_fx_cmc.m. Can we understand why?
     for ii = 1:nrr
         region = CanonicalMicroCircuitBlox(;namespace=global_ns, name=Symbol("r$(ii)₊cmc"), 
                                             τ_ss=exp(lnτ_ss)*0.002, τ_sp=exp(lnτ_sp)*0.002, τ_ii=exp(lnτ_ii)*0.016, τ_dp=exp(lnτ_dp)*0.028, 
@@ -228,10 +224,9 @@ end
                 );
 
     hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
-    hyperpriors = Dict(:Πλ_pr => hype["ihC"],               # prior metaparameter precision, needs to be a matrix
-                        :μλ_pr => vec(hype["hE"]),              # prior metaparameter mean, needs to be a vector
-                        :Q => hype["Q"]
-                        );
+    hyperpriors = (Πλ_pr = hype["ihC"],               # prior metaparameter precision, needs to be a matrix
+                   μλ_pr = vec(hype["hE"]),           # prior metaparameter mean, needs to be a vector
+                   Q = hype["Q"]);
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 

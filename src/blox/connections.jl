@@ -810,8 +810,8 @@ function Connector(
     neurons_dest = get_inh_neurons(blox_dest)
 
     t_event = get_event_time(kwargs, nameof(blox_src), nameof(blox_dest))
-    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
-    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
+    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
+    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
     
     # HACK: H should be reset to 1 at the beginning of each trial
     # Such callbacks should be moved to RL-specific functions like `run_experiment!`
@@ -1193,5 +1193,19 @@ function Connector(
     s = only(outputs(blox_src; namespaced=true))
     eq = sys_dest.jcn ~ w*s*(V_I - sys_dest.V)
     
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
+
+function Connector(
+    blox_src::MetabolicHHNeuron,
+    blox_dest::MetabolicHHNeuron;
+    kwargs...
+)
+    sys_src = get_namespaced_sys(blox_src)
+    sys_dest = get_namespaced_sys(blox_dest)
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    
+    eq = sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn) * sys_src.S * exp(-sys_src.χ/5)
+
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end

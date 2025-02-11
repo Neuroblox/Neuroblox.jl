@@ -178,7 +178,7 @@ function csd_approx(freq, derivatives, params, indices)
             Gn[:,j,i] = Gn[:,i,j]
         end
     end
-    S = transferfunction(freq, derivatives, params, indices)   # This is K(freq) in the equations of the spectral DCM paper.
+    S = transferfunction(freq, derivatives, params, indices)   # This is K(ω) in the equations of the spectral DCM paper.
 
     # predicted cross-spectral density
     G = zeros(eltype(S), nfreq, nrr, nrr);
@@ -227,7 +227,7 @@ function csd_approx_lfp(freq, derivatives, params, params_idx)
     return G
 end
 
-@views function csd_mtf(freq, p, derivatives, params, params_idx, modality)   # alongside the above realtes to spm_csd_fmri_mtf.m
+function csd_mtf(freq, p::Int64, derivatives, params, params_idx, modality::String)   # alongside the above realtes to spm_csd_fmri_mtf.m
     if modality == "fMRI"
         G = csd_approx(freq, derivatives, params, params_idx)
         dt = 1/(2*freq[end])
@@ -236,7 +236,7 @@ end
         # But this does not correspond to any equation in the papers nor is it commented in the SPM12 code. NB: Friston conferms that likely it is
         # to make y well behaved.
         mar = csd2mar(G, freq, dt, p-1)
-        y = mar2csd(mar, freq)    
+        y = mar2csd(mar, freq)
     elseif modality == "LFP"
         y = csd_approx_lfp(freq, derivatives, params, params_idx)
     end
@@ -260,7 +260,7 @@ function csd_Q(csd)
             end
         end
     end
-    Q = inv(Q + opnorm(Q, 1)*I/32)   # TODO: MATLAB's and Julia's norm function are different! Reconciliate?
+    Q = inv(Q + opnorm(Q, 1)*I/32)
     return Q
 end
 
@@ -408,19 +408,21 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     data = Matrix(data[:, String.(Symbol.(vars))])           # make sure the column order is consistent with the ordering of variables of the model that represent the measurements
     mar = mar_ml(data, mar_order);         # compute MAR from time series y and model order p
     y_csd = mar2csd(mar, freq, dt^-1);     # compute cross spectral densities from MAR parameters at specific frequencies freqs, dt^-1 is sampling rate of data
-    jac_fg = generate_jacobian(model, expression = Val{false})[1]   # compute symbolic jacobian.
 
     statevals = [v for v in values(initcond)]
-    derivatives = par -> jac_fg(statevals, addnontunableparams(par, model), t)
+    append!(statevals, zeros(length(unknowns(model)) - length(statevals)))
+    f_model = generate_function(model; expression=Val{false})[1]
+    f_at(params, t) = states -> f_model(states, params, t)
+    derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), statevals)
 
-    μθ_pr = vecparam(priors.μθ_pr)   # note: μθ_po is posterior and μθ_pr is prior
+    μθ_pr = vecparam(priors.μθ_pr)        # note: μθ_po is posterior and μθ_pr is prior
     Σθ_pr = diagm(vecparam(priors.Σθ_pr))
 
     ### Collect prior means and covariances ###
     if haskey(hyperpriors, :Q)
-        Q = hyperpriors[:Q];
+        Q = hyperpriors.Q;
     else
-        Q = csd_Q(y_csd);                 # compute functional connectivity prior Q. See Friston etal. 2007 Appendix A
+        Q = csd_Q(y_csd);             # compute functional connectivity prior Q. See Friston etal. 2007 Appendix A
     end
     nq = 1                            # TODO: this is hard-coded, need to make this compliant with csd_Q
     nh = size(Q, 3)                   # number of precision components (this is the same as above, but may differ)
@@ -437,9 +439,9 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
         -4,                                  # log ascent rate
         [-Inf],                              # free energy
         Float64[],                           # delta free energy
-        hyperpriors[:μλ_pr],                 # metaparameter, initial condition. TODO: why are we not just using the prior mean?
+        hyperpriors.μλ_pr,                   # metaparameter, initial condition. TODO: why are we not just using the prior mean?
         zeros(np),                           # parameter estimation error ϵ_θ
-        [zeros(np), hyperpriors[:μλ_pr]],    # memorize reset state
+        [zeros(np), hyperpriors.μλ_pr],      # memorize reset state
         μθ_pr,                               # parameter posterior mean
         Σθ_pr,                               # parameter posterior covariance
         zeros(np),
@@ -452,8 +454,8 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
         y_csd,                                # empirical cross-spectral density
         1e-1,                                 # tolerance
         [nr, np, ny, nq, nh],                 # number of parameters, number of data points, number of Qs, number of hyperparameters
-        [μθ_pr, hyperpriors[:μλ_pr]],         # parameter and hyperparameter prior mean
-        [inv(Σθ_pr), hyperpriors[:Πλ_pr]],    # parameter and hyperparameter prior precision matrices
+        [μθ_pr, hyperpriors.μλ_pr],           # parameter and hyperparameter prior mean
+        [inv(Σθ_pr), hyperpriors.Πλ_pr],      # parameter and hyperparameter prior precision matrices
         Q,                                    # components of data precision matrix
         modelparam
     )
@@ -493,7 +495,7 @@ function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
 
             μθ_po = μθ_pr + ϵ_θ
 
-            dfdp = jacobian(f, μθ_po)
+            dfdp = ForwardDiff.jacobian(f, μθ_po)
 
             # check for stability
             norm_dfdp = opnorm(dfdp, Inf);

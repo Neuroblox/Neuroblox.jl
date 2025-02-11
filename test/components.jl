@@ -838,4 +838,82 @@ end
         mean_fr, std_fr = firing_rate(stn, ens_sol, threshold=-25, transient=1000, scheduler=:dynamic)
         @test isapprox(mean_fr[1], 292.63, atol = 4.79)
     end
+
+end
+
+@testset "Single MetabolicHHNeuron" begin
+    @named solo = MetabolicHHNeuron(neurontype=:excitatory, λ=1, τ=4, I_in=-4)
+    g = MetaDiGraph()
+    add_blox!(g, solo)
+    @named sys = system_from_graph(g)
+    prob = ODEProblem(sys, [], (0, 200.0))
+    sol = solve(prob, Tsit5())
+    @test sol.retcode == ReturnCode.Success
+
+    # Extract voltage time-series
+    V_ind = findfirst(x -> occursin("V(t)", string(x)), unknowns(sys))
+    V_ts = sol[V_ind, :]
+    
+    # Check if time points where V(t) > 0 mV occur throughout the timeseries
+    t_above = sol.t[V_ts .> 0]
+    @test minimum(t_above) < 50 && maximum(t_above) > 180
+    
+    # Check if time points where V(t) < -50 mV occur throughout the timeseries
+    t_below = sol.t[V_ts .< -50]
+    @test minimum(t_below) < 50 && maximum(t_below) > 180
+
+end
+@testset "MetabolicHHNeuron Network" begin
+    N_exc = 10;
+    N_inh = 2;
+    N = N_exc + N_inh;
+    w = 1.;
+
+    assembly = [];
+    for i in 1:N_exc
+        push!(assembly, MetabolicHHNeuron(name=Symbol("nrn$i"), λ=1, τ=4, I_in=-4,
+            neurontype=:excitatory));
+    end
+    for i in 1+N_exc:N_exc+N_inh
+        push!(assembly, MetabolicHHNeuron(name=Symbol("nrn$(i)"), λ=0.5, τ=8, I_in=-4,
+            neurontype=:inhibitory));
+    end
+
+    adj_matrix = rand(N, N) .< 0.2;
+
+    g = MetaDiGraph();
+    add_blox!.(Ref(g), assembly);
+
+    for i in 1:N
+        for j in 1:N
+            if adj_matrix[i, j]
+                add_edge!(g, i, j, :weight, w);
+            end
+        end
+    end
+
+    @named sys = system_from_graph(g);
+
+    prob = ODEProblem(sys, [], [0., 200.], []);
+    sol = solve(prob, Tsit5());
+
+    @test sol.retcode == ReturnCode.Success
+
+    # Extract voltage time-series from an exc and an inh neuron
+    V_inds = findall(x -> occursin("V(t)", string(x)), unknowns(sys))
+    V_ts_exc = sol[V_inds[1], :]
+    V_ts_inh = sol[V_inds[N_exc+1], :]
+
+    # Check if time points where V(t) > 20 mV occur throughout the ts
+    t_above = sol.t[V_ts_exc .> -20]
+    @test minimum(t_above) < 50 && maximum(t_above) > 150
+    t_above = sol.t[V_ts_inh .> -20]
+    @test minimum(t_above) < 50 && maximum(t_above) > 150
+
+    # Check if time points where V(t) < -40 mV occur throughout the ts
+    t_below = sol.t[V_ts_exc .< -40]
+    @test minimum(t_below) < 50 && maximum(t_below) > 150
+    t_below = sol.t[V_ts_inh .< -40]
+    @test minimum(t_below) < 50 && maximum(t_below) > 150
+
 end
