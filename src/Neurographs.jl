@@ -130,7 +130,7 @@ function merge_discrete_callbacks(cbs)
     cbs_symbolic = Pair[]
 
     for cb in cbs
-        if last(cb) isa ModelingToolkit.FunctionalAffect
+        if last(cb) isa Tuple
             push!(cbs_functional, cb)
         else
             push!(cbs_symbolic, cb)
@@ -138,7 +138,7 @@ function merge_discrete_callbacks(cbs)
     end
 
     conditions = unique(first.(cbs_symbolic))
-
+    
     for c in conditions
         idxs = findall(cb -> first(cb) == c, cbs_symbolic)
         affects = mapreduce(last, vcat, cbs_symbolic[idxs])
