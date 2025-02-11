@@ -125,6 +125,29 @@ function LIF_spike_affect!(integ, u, p, ctx)
     end
 end
 
+function merge_discrete_callbacks(cbs)
+    cbs_functional = Pair[]
+    cbs_symbolic = Pair[]
+
+    for cb in cbs
+        if last(cb) isa ModelingToolkit.FunctionalAffect
+            push!(cbs_functional, cb)
+        else
+            push!(cbs_symbolic, cb)
+        end
+    end
+
+    conditions = unique(first.(cbs_symbolic))
+
+    for c in conditions
+        idxs = findall(cb -> first(cb) == c, cbs_symbolic)
+        affects = mapreduce(last, vcat, cbs_symbolic[idxs])
+        push!(cbs_functional, c => affects)
+    end
+
+    return cbs_functional
+end
+
 generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
 
 function generate_discrete_callbacks(blox::AbstractSpikeSource, bc::Connector; t_block = missing)
@@ -231,10 +254,11 @@ function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::Abstrac
     cbs = mapreduce(vcat, bloxs) do blox
         generate_discrete_callbacks(blox, bc; t_block)
     end
-    
+    cbs_merged = merge_discrete_callbacks(cbs)
+
     cbs_connections = generate_discrete_callbacks(bc, eqs; t_block)
 
-    return vcat(cbs, cbs_connections)
+    return vcat(cbs_merged, cbs_connections)
 end
 
 
