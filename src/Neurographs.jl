@@ -141,7 +141,7 @@ function merge_discrete_callbacks(cbs)
     
     for c in conditions
         idxs = findall(cb -> first(cb) == c, cbs_symbolic)
-        affects = mapreduce(last, vcat, cbs_symbolic[idxs])
+        affects = unique(mapreduce(last, vcat, cbs_symbolic[idxs]))
         push!(cbs_functional, c => affects)
     end
 
