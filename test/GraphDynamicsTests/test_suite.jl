@@ -647,6 +647,7 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     
 ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
+    rng = MersenneTwister(1234)
 
     spike_rate = 2.4 ## spikes / ms
 
@@ -677,10 +678,10 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
     # Blox definitions
-    @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1);
-    @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1);
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns);
+    @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
+    @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1, rng);
+    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
 
     @named n1 = LIFExciNeuron()
     @named n2 = LIFExciNeuron()
@@ -701,7 +702,7 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     
     ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
-
+    rng = MersenneTwister(1234)
     spike_rate = 2.4 ## spikes / ms
 
     f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
@@ -731,10 +732,10 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
     # Blox definitions
-    @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1);
+    @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
 
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns);
+    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
 
     @named n_A = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor);
     @named n_B = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor) ;
