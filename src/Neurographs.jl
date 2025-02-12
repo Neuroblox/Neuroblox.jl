@@ -125,7 +125,7 @@ function LIF_spike_affect!(integ, u, p, ctx)
     end
 end
 
-function merge_discrete_callbacks(cbs)
+function merge_discrete_callbacks(cbs::AbstractVector)
     cbs_functional = Pair[]
     cbs_symbolic = Pair[]
 
@@ -254,7 +254,7 @@ function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::Abstrac
     cbs = mapreduce(vcat, bloxs) do blox
         generate_discrete_callbacks(blox, bc; t_block)
     end
-    cbs_merged = merge_discrete_callbacks(cbs)
+    cbs_merged = merge_discrete_callbacks(to_vector(cbs))
 
     cbs_connections = generate_discrete_callbacks(bc, eqs; t_block)
 
