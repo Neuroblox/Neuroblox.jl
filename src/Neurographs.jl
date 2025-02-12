@@ -137,14 +137,33 @@ function merge_discrete_callbacks(cbs::AbstractVector)
         end
     end
 
+    # We need to take care of the edge case where the same condition appears multiple times 
+    # with the same affect. If we merge them using unique(affects) then the affect will apply only once.
+    # But it could be the case that we want this affect to apply as many times as it appears in duplicate callbacks,
+    # e.g. because it is a spike affect coming from different sources that happen to spike exactly at the same condition. 
     conditions = unique(first.(cbs_symbolic))
-    
     for c in conditions
         idxs = findall(cb -> first(cb) == c, cbs_symbolic)
-        affects = unique(mapreduce(last, vcat, cbs_symbolic[idxs]))
-        push!(cbs_functional, c => affects)
-    end
+        affects = mapreduce(last, vcat, cbs_symbolic[idxs])
+        idxs = eachindex(affects)
 
+        affects_to_merge = Equation[]
+        for (i, aff) in enumerate(affects)
+            idxs_rest = setdiff(idxs, i)
+            if isnothing(findfirst(x -> aff == x, affects[idxs_rest]))
+                # If the affect has no duplicate then accumulate it for merging.
+                push!(affects_to_merge, aff)
+            else
+                # If the affect has a duplicate then add them as separate callbacks
+                # so that each one triggers as intended. 
+                push!(cbs_functional, c => [aff])
+            end
+        end
+        if !isempty(affects_to_merge)
+            push!(cbs_functional, c => affects_to_merge)
+        end
+    end
+   
     return cbs_functional
 end
 
