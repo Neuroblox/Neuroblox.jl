@@ -104,9 +104,6 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
 end
 
 function transferfunction(freq, derivatives, params, indices)
-    # nr = length(indices[:u])
-    # pars = params[indices[:dspars]]
-    # ∂f = derivatives([pars[1:nr^2], pars[nr^2+1:end]...])
     ∂f = derivatives(params[indices[:dspars]])
     ∂f∂x = ∂f[indices[:sts], indices[:sts]]
     ∂f∂u = ∂f[indices[:sts], indices[:u]]
@@ -119,7 +116,7 @@ function transferfunction(freq, derivatives, params, indices)
     ∂g∂v = ∂g∂x*V
     ∂v∂u = V\∂f∂u              # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
-    nfreq = size(freq, 1)            # number of frequencies
+    nfreq = size(freq, 1)      # number of frequencies
     ng = size(∂g∂x, 1)         # number of outputs
     nu = size(∂v∂u, 2)         # number of inputs
     nk = size(V, 2)            # number of modes
@@ -314,15 +311,16 @@ function integration_step(dfdx, f, v, solenoid=false)
         dfdx = dfdx - Q*dfdx;        
     end
 
-    # (expm(dfdx*t) - I)*inv(dfdx)*f ~~~ could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
-    # could also be done with exponential! but isn't numerically stable
+    # NB: (exp(dfdx*t) - I)*inv(dfdx)*f, could also be done with expv (expv(t, dFdθθ, dFdθθ \ dFdθ) - dFdθθ \ dFdθ) but doesn't work with Dual.
+    # Could also be done with `exponential!` but isn't numerically stable.
+    # Thus, just use `exp`.
     n = length(f)
     t = exp(v - spm_logdet(dfdx)/n)
 
     if t > exp(16)
         dx = - dfdx \ f   # -inv(dfdx)*f
     else
-        dx = (exp(t * dfdx) - I) * inv(dfdx)*f # (expm(dfdx*t) - I)*inv(dfdx)*f
+        dx = (exp(t * dfdx) - I) * inv(dfdx) * f # (expm(dfdx*t) - I)*inv(dfdx)*f
     end
 
     return dx
@@ -462,15 +460,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     return (vlstate, vlsetup)
 end
 
-with_stack(f, n) = fetch(schedule(Task(f, n)));
-
 function run_sDCM_iteration!(state::VLState, setup::VLSetup)
-    with_stack(5_000_000) do
-        _run_sDCM_iteration!(state, setup)
-    end
-end
-
-function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (;μθ_po, λ, v, ϵ_θ, dFdθ, dFdθθ) = state
 
     f = setup.model_at_x0
