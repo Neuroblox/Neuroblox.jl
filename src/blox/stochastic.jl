@@ -28,6 +28,26 @@ mutable struct OUBlox <: NeuralMassBlox
     end
 end
 
+mutable struct ARBlox <: StimulusBlox
+    # all parameters are Num to allow symbolic expressions
+    namespace
+    system
+    function OUBlox(;name, namespace=nothing, data::DataFrame)
+        sts = @variables x(t)=0.0 [output=true]
+
+        reset_eqs = Vector{Equation}(undef, N_pixels)
+        for i = 1:nrow(data)
+            reset_eqs[i] = x ~ data.vals[i]
+        end
+
+        cb_stim = [data.t_stimulus] => reset_eqs
+        sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stim)
+
+        new(namespace, sys)
+    end
+end
+
+
 # """
 # Ornstein-Uhlenbeck Coupling Blox
 # This blox takes an input and multiplies that input with

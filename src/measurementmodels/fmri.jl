@@ -129,7 +129,7 @@ function boldsignal(;name, lnϵ=0.0)
     k1  = 4.3*nu0*E0*TE
 
     params = @parameters lnϵ=lnϵ
-    vars = @variables bold(t) lnν(t) lnq(t)   # TODO: got to be really careful with the current implementation! A simple permutation of this breaks the algorithm!
+    vars = @variables bold(t) lnν(t) lnq(t)
 
     eqs = [
         bold ~ V0*(k1 - k1*exp(lnq) + exp(lnϵ)*r0*E0*TE - exp(lnϵ)*r0*E0*TE*exp(lnq)/exp(lnν) + 1-exp(lnϵ) - (1-exp(lnϵ))*exp(lnν))
