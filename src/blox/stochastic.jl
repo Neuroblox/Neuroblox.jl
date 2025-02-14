@@ -31,16 +31,17 @@ end
 mutable struct ARBlox <: StimulusBlox
     namespace
     system
-    function OUBlox(;name, namespace=nothing, t_stimulus, timeseries)
+    function ARBlox(;name, namespace=nothing, t_stim, timeseries)
         sts = @variables x(t)=0.0 [output=true]
 
-        stim_eqs = Vector{Equation}(undef, N_pixels)
-        for i = 1:nrow(data)
+        N = length(timeseries)
+        stim_eqs = Vector{Equation}(undef, N)
+        for i = 1:N
             stim_eqs[i] = x ~ timeseries[i]
         end
 
-        cb_stim = t_stimulus .=> stim_eqs
-        sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stim)
+        cb_stim = t_stim .=> stim_eqs
+        sys = ODESystem(Equation[], t, sts, []; name, discrete_events = cb_stim)
 
         new(namespace, sys)
     end

@@ -31,6 +31,7 @@ using OrderedCollections
 using CairoMakie
 using ModelingToolkit
 using Random
+using MAT
 
 # # Model simulation
 # ## Define the model
@@ -54,7 +55,7 @@ vars["u"]
 tspan = (0.0, 1124.0)
 t_burnin = 102   # ignore the first 102 seconds
 dt = 2   # 2 seconds as measurement interval for fMRI
-times = t:burnin:dt:tspan[2]
+times = t_burnin:dt:tspan[2]
 for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
     push!(regions, region)          # store neural mass model in list. We need this list below. If you haven't seen the Julia command `push!` before [see here](http://jlhub.com/julia/manual/en/function/push-exclamation).
