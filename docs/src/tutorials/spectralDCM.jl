@@ -49,12 +49,20 @@ g = MetaDiGraph()
 regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
 # Now add the different blocks to each region and connect the blocks within each region. 
 # For convenience we use a for loop since the type of blocks belonging to a each region repeat over regions but you could also approach building the system the same way as was shown in previous tutorials:
+vars = matread(joinpath(@__DIR__, "../../../test/spm25_demo.mat"));
+vars["u"]
+tspan = (0.0, 1124.0)
+t_burnin = 102   # ignore the first 102 seconds
+dt = 2   # 2 seconds as measurement interval for fMRI
+times = t:burnin:dt:tspan[2]
 for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
     push!(regions, region)          # store neural mass model in list. We need this list below. If you haven't seen the Julia command `push!` before [see here](http://jlhub.com/julia/manual/en/function/push-exclamation).
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
-    input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=1, τ=0.1)
+    # input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.25, τ=2.5)
+    input = ARBlox(;name=Symbol("r$(i)₊ar"), t_stim=vars["u"][:, i], timeseries=times)
+    
     add_edge!(g, input => region, weight=1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
 
     ## simulate fMRI signal with BalloonModel which includes the BOLD signal on top of the balloon model dynamics
@@ -62,7 +70,7 @@ for i = 1:nr
     add_edge!(g, region => measurement, weight=1.0)
 end
 # Next we define the between-region connectivity matrix and connect regions; we use the same matrix as is defined in [3]
-A_true = [[-0.5 -2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
+A_true = [[-0.5 -0.2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
 for idx in CartesianIndices(A_true)
     add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=A_true[idx[1], idx[2]])
 end
@@ -73,9 +81,7 @@ end
 # ## Run the simulation and plot the results
 
 # setup simulation of the model, time in seconds
-tspan = (0.0, 1024.0)
 prob = SDEProblem(simmodel, [], tspan)
-dt = 2   # 2 seconds (units are seconds) as measurement interval for fMRI
 sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
@@ -93,17 +99,17 @@ lines!(ax, sol, idxs=idx_m)
 f
 
 # We note that the initial spike is not meaningful and a result of the equilibration of the stochastic process thus we remove it.
-dfsol = DataFrame(sol[ceil(Int, 50/dt):end]);
+dfsol = DataFrame(sol[round(Int, t_burnin/dt):end]);
 
 # ## Estimate and plot the cross-spectral densities
 # add rescaling of data as done in SPM:
 data = Matrix(dfsol[:, idx_m.+1]);
 data += vars["e"][1:size(data)[1], :]
-scale = 1/sqrt(sum((data[:] .- sum(data[:])/length(data)).^2)/length(data))/4;
+data .-= mean(data,dims=1)
+scale = 1/sqrt(sum((data[:]).^2)/length(data))/4;
 data *= scale
 ddata = DataFrame(data, :auto)
 
-# vars = matread(joinpath(@__DIR__, "../../../test/spm25_demo.mat"));
 # ddata = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
 _, obsvars = get_eqidx_tagged_vars(simmodel, "measurement")  # get index of equation of bold state
 rename!(ddata, Symbol.(obsvars))
@@ -157,7 +163,7 @@ A_prior -= diagm(diag(A_prior))    # remove the diagonal
 # These two parameters are not present in the ground truth thus set them to zero and set their tuning parameter to false: 
 A_prior[3] = 0.0
 A_prior[7] = 0.0
-untune = Dict(A[3] => false, A[7] => false)
+
 # Since we want to optimize these weights we turn them into symbolic parameters:
 # Add the symbolic weights to the edges and connect regions.
 A = []
@@ -177,6 +183,7 @@ end
 @named fitmodel = system_from_graph(g, simplify=false)
 # With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimizatoin procedure.
 # For instance the the effective connections that are set to zero in the simulation:
+untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
 fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations; the `split` parameter is necessary for some ModelingToolkit peculiarities and will soon be removed. So don't lose time with it ;)
 

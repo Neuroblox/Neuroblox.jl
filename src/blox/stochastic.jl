@@ -29,18 +29,17 @@ mutable struct OUBlox <: NeuralMassBlox
 end
 
 mutable struct ARBlox <: StimulusBlox
-    # all parameters are Num to allow symbolic expressions
     namespace
     system
-    function OUBlox(;name, namespace=nothing, data::DataFrame)
+    function OUBlox(;name, namespace=nothing, t_stimulus, timeseries)
         sts = @variables x(t)=0.0 [output=true]
 
-        reset_eqs = Vector{Equation}(undef, N_pixels)
+        stim_eqs = Vector{Equation}(undef, N_pixels)
         for i = 1:nrow(data)
-            reset_eqs[i] = x ~ data.vals[i]
+            stim_eqs[i] = x ~ timeseries[i]
         end
 
-        cb_stim = [data.t_stimulus] => reset_eqs
+        cb_stim = t_stimulus .=> stim_eqs
         sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stim)
 
         new(namespace, sys)
