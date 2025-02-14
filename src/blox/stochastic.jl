@@ -28,6 +28,26 @@ mutable struct OUBlox <: NeuralMassBlox
     end
 end
 
+mutable struct ARBlox <: StimulusBlox
+    namespace
+    system
+    function ARBlox(;name, namespace=nothing, t_stim, timeseries)
+        sts = @variables x(t)=0.0 [output=true, irreducible=true]
+
+        N = length(timeseries)
+        stim_eqs = Vector{Equation}(undef, N)
+        for i = 1:N
+            stim_eqs[i] = x ~ timeseries[i]
+        end
+        eq = x ~ 0.0
+        cb_stim = t_stim .=> stim_eqs
+        sys = ODESystem(eq, t, sts, []; name, discrete_events = cb_stim)
+
+        new(namespace, sys)
+    end
+end
+
+
 # """
 # Ornstein-Uhlenbeck Coupling Blox
 # This blox takes an input and multiplies that input with
