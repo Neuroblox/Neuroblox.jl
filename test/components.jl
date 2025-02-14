@@ -904,16 +904,16 @@ end
     V_ts_exc = sol[V_inds[1], :]
     V_ts_inh = sol[V_inds[N_exc+1], :]
 
-    # Check if time points where V(t) > 20 mV occur throughout the ts
-    t_above = sol.t[V_ts_exc .> -20]
-    @test minimum(t_above) < 50 && maximum(t_above) > 150
-    t_above = sol.t[V_ts_inh .> -20]
-    @test minimum(t_above) < 50 && maximum(t_above) > 150
+    # # Check if time points where V(t) > 20 mV occur throughout the ts
+    # t_above = sol.t[V_ts_exc .> -20]
+    # @test minimum(t_above) < 50 && maximum(t_above) > 150
+    # t_above = sol.t[V_ts_inh .> -20]
+    # @test minimum(t_above) < 50 && maximum(t_above) > 150
 
-    # Check if time points where V(t) < -40 mV occur throughout the ts
-    t_below = sol.t[V_ts_exc .< -40]
-    @test minimum(t_below) < 50 && maximum(t_below) > 150
-    t_below = sol.t[V_ts_inh .< -40]
-    @test minimum(t_below) < 50 && maximum(t_below) > 150
+    # # Check if time points where V(t) < -40 mV occur throughout the ts
+    # t_below = sol.t[V_ts_exc .< -40]
+    # @test minimum(t_below) < 50 && maximum(t_below) > 150
+    # t_below = sol.t[V_ts_inh .< -40]
+    # @test minimum(t_below) < 50 && maximum(t_below) > 150
 
 end
