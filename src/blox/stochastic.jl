@@ -22,7 +22,7 @@ mutable struct OUBlox <: NeuralMassBlox
         sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
         @brownian w
 
-        eqs = [D(x) ~ -(x-μ)/τ + jcn + sqrt(2/τ)*σ*w]
+        eqs = [D(x) ~ (-x + μ + jcn)/τ + sqrt(2/τ)*σ*w]
         sys = System(eqs, t; name=name)
         new(namespace, true, sys)
     end
@@ -32,16 +32,14 @@ mutable struct ARBlox <: StimulusBlox
     namespace
     system
     function ARBlox(;name, namespace=nothing, t_stim, timeseries)
-        sts = @variables x(t)=0.0 [output=true, irreducible=true]
+        par = @parameter a
 
         N = length(timeseries)
-        stim_eqs = Vector{Equation}(undef, N)
-        for i = 1:N
-            stim_eqs[i] = x ~ timeseries[i]
+        cb_stim = map(zip(t_stim, timeseries)) do event
+            event[1] => a ~ event[2]
         end
-        eq = x ~ 0.0
-        cb_stim = t_stim .=> stim_eqs
-        sys = ODESystem(eq, t, sts, []; name, discrete_events = cb_stim)
+
+        sys = ODESystem(eq, t, [], par; name, discrete_events = cb_stim)
 
         new(namespace, sys)
     end
