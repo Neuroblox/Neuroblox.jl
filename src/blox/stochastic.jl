@@ -28,18 +28,21 @@ mutable struct OUBlox <: NeuralMassBlox
     end
 end
 
+function get_ts_data(t, data::Dict{Float64, Float64})
+    return data[t]
+end
+
+@register_symbolic get_ts_data(t, data::Dict{Float64, Float64})
+
 mutable struct ARBlox <: StimulusBlox
     namespace
     system
-    function ARBlox(;name, namespace=nothing, t_stim, timeseries)
-        par = @parameter a
+    function ARBlox(;name, namespace=nothing, timeseries)
+        sts = @variables u(t) = 0.0 [output=true]
 
-        N = length(timeseries)
-        cb_stim = map(zip(t_stim, timeseries)) do event
-            event[1] => a ~ event[2]
-        end
+        eq = [u ~ get_ts_data(t, timeseries)]
 
-        sys = ODESystem(eq, t, [], par; name, discrete_events = cb_stim)
+        sys = ODESystem(eq, t, sts, []; name)
 
         new(namespace, sys)
     end

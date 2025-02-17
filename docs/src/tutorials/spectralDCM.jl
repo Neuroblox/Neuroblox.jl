@@ -47,11 +47,20 @@ Random.seed!(17)   # set seed for reproducibility
 
 nr = 3             # number of regions
 g = MetaDiGraph()
+
+@named ar = ARBlox(;timeseries=Dict(times .=> vars["u"][:,1]))
+@named nm = LinearNeuralMass()
+add_edge!(g, ar => nm)
+@named simmodel = system_from_graph(g)
+
+prob = ODEProblem(simmodel, [], tspan)
+sol = solve(prob, solver = AutoVern7(Rodas4()))
+
+
 regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
 # Now add the different blocks to each region and connect the blocks within each region. 
 # For convenience we use a for loop since the type of blocks belonging to a each region repeat over regions but you could also approach building the system the same way as was shown in previous tutorials:
 vars = matread(joinpath(@__DIR__, "../../../test/spm25_demo.mat"));
-vars["u"]
 tspan = (0.0, 1124.0)
 t_burnin = 102   # ignore the first 102 seconds
 dt = 2   # 2 seconds as measurement interval for fMRI
@@ -62,7 +71,7 @@ for i = 1:nr
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
     # input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.25, τ=2.5)
-    input = ARBlox(;name=Symbol("r$(i)₊ar"), t_stim=vars["u"][:, i], timeseries=times)
+    input = ARBlox(;name=Symbol("r$(i)₊ar"), timeseries=Dict(times .=> vars["u"][:,i]))
     
     add_edge!(g, input => region, weight=1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
 
@@ -82,8 +91,8 @@ end
 # ## Run the simulation and plot the results
 
 # setup simulation of the model, time in seconds
-prob = SDEProblem(simmodel, [], tspan)
-sol = solve(prob, ImplicitRKMil(), saveat=dt);
+prob = ODEProblem(simmodel, [], tspan)
+sol = simulate(prob, saveat=dt);
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
 # the observable quantity in our model is the BOLD signal, the variable of the Blox `BalloonModel` that represents the BOLD signal is tagged with "measurement" tag.
