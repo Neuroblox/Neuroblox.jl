@@ -28,21 +28,23 @@ mutable struct OUBlox <: NeuralMassBlox
     end
 end
 
-function get_ts_data(t, data::Dict{Float64, Float64})
-    return data[t]
+function get_ts_data(t, dt::Real, data::Array{Float64})
+    idx = ceil(Int, t / dt)
+
+    return idx > 0 ? data[idx] : 0.0
 end
 
-@register_symbolic get_ts_data(t, data::Dict{Float64, Float64})
+@register_symbolic get_ts_data(t, dt::Real, data::Array{Float64})
 
 mutable struct ARBlox <: StimulusBlox
     namespace
     system
-    function ARBlox(;name, namespace=nothing, timeseries)
+    function ARBlox(;name, namespace=nothing, dt, data)
         sts = @variables u(t) = 0.0 [output=true]
 
-        eq = [u ~ get_ts_data(t, timeseries)]
+        eq = [u ~ get_ts_data(t, dt, data)]
 
-        sys = ODESystem(eq, t, sts, []; name)
+        sys = System(eq, t; name)
 
         new(namespace, sys)
     end

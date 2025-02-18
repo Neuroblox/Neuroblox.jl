@@ -48,30 +48,28 @@ Random.seed!(17)   # set seed for reproducibility
 nr = 3             # number of regions
 g = MetaDiGraph()
 
-@named ar = ARBlox(;timeseries=Dict(times .=> vars["u"][:,1]))
-@named nm = LinearNeuralMass()
-add_edge!(g, ar => nm)
-@named simmodel = system_from_graph(g)
+# @named ar = ARBlox(;dt=dt, data=vars["u"][:,1])
+# @named nm = LinearNeuralMass()
+# add_edge!(g, ar => nm)
+# @named simmodel = system_from_graph(g)
 
-prob = ODEProblem(simmodel, [], tspan)
-sol = solve(prob, solver = AutoVern7(Rodas4()))
-
-
+# prob = ODEProblem(simmodel, [], tspan)
+# sol = solve(prob, AutoVern7(Rodas4()))
+# plot(sol)
 regions = [];      # list of neural mass blocks to then connect them to each other with an adjacency matrix `A_true`
 # Now add the different blocks to each region and connect the blocks within each region. 
 # For convenience we use a for loop since the type of blocks belonging to a each region repeat over regions but you could also approach building the system the same way as was shown in previous tutorials:
 vars = matread(joinpath(@__DIR__, "../../../test/spm25_demo.mat"));
-tspan = (0.0, 1124.0)
-t_burnin = 102   # ignore the first 102 seconds
+tspan = (0.0, 1022.0)
+# t_burnin = 102   # ignore the first 102 seconds
 dt = 2   # 2 seconds as measurement interval for fMRI
-times = t_burnin:dt:tspan[2]
 for i = 1:nr
     region = LinearNeuralMass(;name=Symbol("r$(i)₊lm"))
     push!(regions, region)          # store neural mass model in list. We need this list below. If you haven't seen the Julia command `push!` before [see here](http://jlhub.com/julia/manual/en/function/push-exclamation).
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
     # input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.25, τ=2.5)
-    input = ARBlox(;name=Symbol("r$(i)₊ar"), timeseries=Dict(times .=> vars["u"][:,i]))
+    input = ARBlox(;name=Symbol("r$(i)₊ar"), dt=dt, data=vars["u"][:, i])
     
     add_edge!(g, input => region, weight=1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
 
@@ -92,7 +90,7 @@ end
 
 # setup simulation of the model, time in seconds
 prob = ODEProblem(simmodel, [], tspan)
-sol = simulate(prob, saveat=dt);
+sol = solve(prob, Rosenbrock23(), saveat=dt);
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
 # the observable quantity in our model is the BOLD signal, the variable of the Blox `BalloonModel` that represents the BOLD signal is tagged with "measurement" tag.
@@ -109,7 +107,7 @@ lines!(ax, sol, idxs=idx_m)
 f
 
 # We note that the initial spike is not meaningful and a result of the equilibration of the stochastic process thus we remove it.
-dfsol = DataFrame(sol[round(Int, t_burnin/dt):end]);
+dfsol = DataFrame(sol);
 
 # ## Estimate and plot the cross-spectral densities
 # add rescaling of data as done in SPM:
