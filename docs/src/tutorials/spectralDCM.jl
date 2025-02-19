@@ -164,7 +164,7 @@ end
 # For instance the the effective connections that are set to zero in the simulation:
 untune = Dict(A[3] => false, A[7] => false)
 fitmodel = changetune(fitmodel, untune)                 # 3 and 7 are not present in the simulation model
-fitmodel = structural_simplify(fitmodel, split=false)   # and now simplify the euqations; the `split` parameter is necessary for some ModelingToolkit peculiarities and will soon be removed. So don't lose time with it ;)
+fitmodel = structural_simplify(fitmodel)   # and now simplify the euqations; the `split` parameter is necessary for some ModelingToolkit peculiarities and will soon be removed. So don't lose time with it ;)
 
 # ## Setup spectral DCM
 max_iter = 128;            # maximum number of iterations
