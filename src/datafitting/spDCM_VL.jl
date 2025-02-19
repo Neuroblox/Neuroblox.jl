@@ -104,9 +104,6 @@ function LinearAlgebra.eigen(M::Matrix{Dual{T, P, np}}) where {T, P, np}
 end
 
 function transferfunction(freq, derivatives, params, indices)
-    # nr = length(indices[:u])
-    # pars = params[indices[:dspars]]
-    # ∂f = derivatives([pars[1:nr^2], pars[nr^2+1:end]...])
     ∂f = derivatives(params[indices[:dspars]])
     ∂f∂x = ∂f[indices[:sts], indices[:sts]]
     ∂f∂u = ∂f[indices[:sts], indices[:u]]
@@ -119,7 +116,7 @@ function transferfunction(freq, derivatives, params, indices)
     ∂g∂v = ∂g∂x*V
     ∂v∂u = V\∂f∂u              # u is external variable which we don't use right now. With external variable this would read V/dfdu
 
-    nfreq = size(freq, 1)            # number of frequencies
+    nfreq = size(freq, 1)      # number of frequencies
     ng = size(∂g∂x, 1)         # number of outputs
     nu = size(∂v∂u, 2)         # number of inputs
     nk = size(V, 2)            # number of modes
@@ -412,7 +409,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     statevals = [v for v in values(initcond)]
     append!(statevals, zeros(length(unknowns(model)) - length(statevals)))
     f_model = generate_function(model; expression=Val{false})[1]
-    f_at(params, t) = states -> f_model(states, params, t)
+    f_at(params, t) = states -> f_model(states, MTKParameters(model, params)..., t)
     derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), statevals)
 
     μθ_pr = vecparam(priors.μθ_pr)        # note: μθ_po is posterior and μθ_pr is prior
@@ -462,15 +459,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     return (vlstate, vlsetup)
 end
 
-with_stack(f, n) = fetch(schedule(Task(f, n)));
-
 function run_sDCM_iteration!(state::VLState, setup::VLSetup)
-    with_stack(5_000_000) do
-        _run_sDCM_iteration!(state, setup)
-    end
-end
-
-function _run_sDCM_iteration!(state::VLState, setup::VLSetup)
     (;μθ_po, λ, v, ϵ_θ, dFdθ, dFdθθ) = state
 
     f = setup.model_at_x0
