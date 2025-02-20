@@ -17,7 +17,8 @@ function Connector(
     delay=Num[], 
     discrete_callbacks=[], 
     spike_affects=Dict{Symbol, Vector{Tuple{Num, Num}}}(),
-    learning_rule=Dict{Num, AbstractLearningRule}()
+    learning_rule=Dict{Num, AbstractLearningRule}(),
+    connection_blox=Set([])
     )
     filter!(x -> !isempty(last(x)), spike_affects)
     # Check if all weigths have NoLearningRule and if so don't keep them in the final Dict.
@@ -224,7 +225,6 @@ function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
     mergewith!(append!, c1.spike_affects, c2.spike_affects)
     merge!(c1.learning_rule, c2.learning_rule)
-
     return c1
 end
 
@@ -327,7 +327,7 @@ function Connector(blox_src::AbstractBlox, blox_dest::AbstractBlox; kwargs...)
     
     return Connector(
         namespaced_nameof(blox_src), 
-        namespaced_nameof(blox_dest); 
+        namespaced_nameof(blox_dest);
         equation = eq, 
         weight = w,
         spike_affects = sa,
