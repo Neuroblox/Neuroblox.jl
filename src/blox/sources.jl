@@ -182,7 +182,7 @@ struct PoissonSpikeTrain{N} <: AbstractSpikeSource
     rng
 end
 
-function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234)) where {N <: Number, T <: Tuple}
+function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{AbstractVector{T}, T}; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=Random.GLOBAL_RNG) where {N <: Number, T <: Tuple}
     rate = to_vector(rate)
     tspan = to_vector(tspan)
 
@@ -191,7 +191,7 @@ function PoissonSpikeTrain(rate::Union{AbstractVector{N}, N}, tspan::Union{Abstr
     PoissonSpikeTrain(name, namespace, N_trains, rate, tspan, prob_dt, rng)
 end
 
-function PoissonSpikeTrain(rate_sampling::NamedTuple, tspan::Tuple; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=MersenneTwister(1234))     
+function PoissonSpikeTrain(rate_sampling::NamedTuple, tspan::Tuple; name, namespace=nothing, N_trains=1, prob_dt=0.01, rng=Random.GLOBAL_RNG)     
     
     PoissonSpikeTrain(name, namespace, N_trains, rate_sampling, tspan, prob_dt, rng)
 end

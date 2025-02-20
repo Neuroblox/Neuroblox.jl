@@ -27,7 +27,7 @@ function define_neuron(sys; mod=@__MODULE__())
 
     states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
     inputs = [s for s ∈ unknowns(system) if  MTK.isinput(s)]
-
+  
     p_syms = map(Symbol, params)
     s_syms = map(x -> tosymbol(x; escape=false), states)
     input_syms = map(x -> tosymbol(x; escape=false), inputs)
@@ -165,7 +165,11 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            LIFExciNeuron(name=:lif_exci)
            LIFInhNeuron(name=:lif_inh)
            PINGNeuronExci(name=:pexci)
-           PINGNeuronInhib(name=:pinhib)]
+           PINGNeuronInhib(name=:pinhib)
+           VanDerPol{NonNoisy}(name=:VdP)
+           VanDerPol{Noisy}(name=:VdPN)
+           KuramotoOscillator{NonNoisy}(name=:ko)
+           KuramotoOscillator{Noisy}(name:kon)]
     define_neuron(sys)
 end
 
@@ -179,27 +183,6 @@ end
 GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
 GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
-
-
-#-------------------------
-# Kuramoto
-issupported(::KuramotoOscillator) = true
-function to_subsystem(o::KuramotoOscillator)
-    states = SubsystemStates{KuramotoOscillator}((;θ=0.0,))
-    params = SubsystemParams{KuramotoOscillator}((;ω=getdefault(o.system.ω), ζ=getdefault(o.system.ζ)))
-    Subsystem(states, params)
-end
-
-GraphDynamics.initialize_input(s::Subsystem{KuramotoOscillator}) = 0.0
-function GraphDynamics.subsystem_differential(s::Subsystem{KuramotoOscillator}, jcn, t)
-    SubsystemStates{KuramotoOscillator}((; #=D=#θ= s.ω + jcn))
-end
-GraphDynamics.isstochastic(::Type{KuramotoOscillator}) = true
-function GraphDynamics.apply_subsystem_noise!(vstates, (;ζ,)::Subsystem{KuramotoOscillator}, t)
-    vstates[1] = ζ
-    nothing
-end
-
 
 #-------------------------
 # Matrisome

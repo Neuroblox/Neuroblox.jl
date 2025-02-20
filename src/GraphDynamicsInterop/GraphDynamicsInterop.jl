@@ -30,6 +30,8 @@ using ..Neuroblox:
     Matrisome,
     TAN,
     SNc,
+    Noisy,
+    NonNoisy,
     KuramotoOscillator,
     CorticalBlox,
     STN,
@@ -48,7 +50,8 @@ using ..Neuroblox:
     PINGNeuronExci,
     PINGNeuronInhib,
     AbstractPINGNeuron,
-    Connector
+    Connector,
+    VanDerPol
 
 using GraphDynamics:
     GraphDynamics,

@@ -707,6 +707,19 @@ function Connector(
 end
 
 function Connector(
+    blox_src::Union{CorticalBlox,STN,Thalamus},
+    blox_dest::Union{GPi, GPe};
+    kwargs...
+)
+    neurons_dest = get_inh_neurons(blox_dest)
+    neurons_src = get_exci_neurons(blox_src)
+
+    conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...)
+
+    return conn
+end
+
+function Connector(
     blox_src::Union{Striatum, GPi, GPe},
     blox_dest::Union{CorticalBlox,STN,Thalamus};
     kwargs...
@@ -813,8 +826,8 @@ function Connector(
     neurons_dest = get_inh_neurons(blox_dest)
 
     t_event = get_event_time(kwargs, nameof(blox_src), nameof(blox_dest))
-    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
-    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_src.H*sys_matr_src.jcn, 0, 1)]
+    cb_matr = [t_event] => [sys_matr_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
+    cb_strios = [t_event] => [sys_strios_dest.H ~ ifelse(sys_matr_src.H*sys_matr_src.jcn > sys_matr_dest.H*sys_matr_dest.jcn, 0, 1)]
     
     # HACK: H should be reset to 1 at the beginning of each trial
     # Such callbacks should be moved to RL-specific functions like `run_experiment!`

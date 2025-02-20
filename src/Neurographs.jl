@@ -58,7 +58,7 @@ end
 get_system(g::MetaDiGraph) = get_system.(get_bloxs(g))
 
 get_dynamics_bloxs(blox) = [blox]
-get_dynamics_bloxs(blox::CompositeBlox) = get_parts(blox)
+get_dynamics_bloxs(blox::CompositeBlox) = mapreduce(get_dynamics_bloxs, vcat, get_parts(blox))
 
 flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
 
@@ -133,6 +133,48 @@ function LIF_spike_affect!(integ, u, p, ctx)
         integ.u[u[i]] += integ.p[p[c + 4]]
         c += 1
     end
+end
+
+function merge_discrete_callbacks(cbs::AbstractVector)
+    cbs_functional = Pair[]
+    cbs_symbolic = Pair[]
+
+    for cb in cbs
+        if last(cb) isa Tuple
+            push!(cbs_functional, cb)
+        else
+            push!(cbs_symbolic, cb)
+        end
+    end
+
+    # We need to take care of the edge case where the same condition appears multiple times 
+    # with the same affect. If we merge them using unique(affects) then the affect will apply only once.
+    # But it could be the case that we want this affect to apply as many times as it appears in duplicate callbacks,
+    # e.g. because it is a spike affect coming from different sources that happen to spike exactly at the same condition. 
+    conditions = unique(first.(cbs_symbolic))
+    for c in conditions
+        idxs = findall(cb -> first(cb) == c, cbs_symbolic)
+        affects = mapreduce(last, vcat, cbs_symbolic[idxs])
+        idxs = eachindex(affects)
+
+        affects_to_merge = Equation[]
+        for (i, aff) in enumerate(affects)
+            idxs_rest = setdiff(idxs, i)
+            if isnothing(findfirst(x -> aff == x, affects[idxs_rest]))
+                # If the affect has no duplicate then accumulate it for merging.
+                push!(affects_to_merge, aff)
+            else
+                # If the affect has a duplicate then add them as separate callbacks
+                # so that each one triggers as intended. 
+                push!(cbs_functional, c => [aff])
+            end
+        end
+        if !isempty(affects_to_merge)
+            push!(cbs_functional, c => affects_to_merge)
+        end
+    end
+   
+    return cbs_functional
 end
 
 generate_discrete_callbacks(blox, ::Connector; t_block = missing) = []
@@ -215,7 +257,7 @@ function generate_discrete_callbacks(blox::HHNeuronExciBlox, ::Connector; t_bloc
     if !ismissing(t_block)
         nn = get_namespaced_sys(blox)
         eq = nn.spikes_window ~ 0
-        cb_spike_reset = (t_block + sqrt(eps(float(t_block)))) => [eq]
+        cb_spike_reset = (t_block + 2*sqrt(eps(float(t_block)))) => [eq]
         
         return cb_spike_reset
     else
@@ -241,10 +283,11 @@ function generate_discrete_callbacks(g::MetaDiGraph, bc::Connector, eqs::Abstrac
     cbs = mapreduce(vcat, bloxs) do blox
         generate_discrete_callbacks(blox, bc; t_block)
     end
-    
+    cbs_merged = merge_discrete_callbacks(to_vector(cbs))
+
     cbs_connections = generate_discrete_callbacks(bc, eqs; t_block)
 
-    return vcat(cbs, cbs_connections)
+    return vcat(cbs_merged, cbs_connections)
 end
 
 

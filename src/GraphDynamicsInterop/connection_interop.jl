@@ -281,11 +281,12 @@ function get_connection(src::KuramotoOscillator, dst::KuramotoOscillator, kwargs
     (;conn=BasicConnection(w_val), names=[name])
 end
 
-function (c::BasicConnection)(src::Subsystem{KuramotoOscillator}, dst::Subsystem{KuramotoOscillator})
+function (c::BasicConnection)(src::Subsystem{<:KuramotoOscillator},
+                              dst::Subsystem{<:KuramotoOscillator})
     w = c.weight
     x₀ = src.θ
     xᵢ = dst.θ
-    w * sin(x₀ - xᵢ)
+    (;jcn = w * sin(x₀ - xᵢ))
 end
 
 #----------------------------------------------

@@ -51,7 +51,7 @@ using MAT
         untunelist[A[i]] = v == 0 ? false : true
     end
     neuronmodel = changetune(neuronmodel, untunelist)
-    neuronmodel = structural_simplify(neuronmodel, split=false)
+    neuronmodel = structural_simplify(neuronmodel)
 
     # attribute initial conditions to states
     _, obsvars = get_eqidx_tagged_vars(neuronmodel, "measurement")  # get index of equation of bold state
@@ -93,7 +93,6 @@ using MAT
             end
         end
     end
-    print("maxixmum iterations reached\n")
 
     ### COMPARE RESULTS WITH MATLAB RESULTS ###
     @show state.F[end], vars["F"]
@@ -160,7 +159,7 @@ end
         end
     end
 
-    @named fullmodel = system_from_graph(g; split=false)
+    @named fullmodel = system_from_graph(g)
 
     # attribute initial conditions to states
     sts, idx_sts = get_dynamic_states(fullmodel)

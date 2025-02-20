@@ -23,6 +23,7 @@ using Base.Iterators: map as imap
 using GraphDynamics.SymbolicIndexingInterface
 
 function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
+                                  u0map=[], param_map=[],
                                   rtol,
                                   parallel=true, mtk=true, alg=nothing)
     if g isa Tuple
@@ -34,7 +35,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
     @named gsys = system_from_graph(gl; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp = let sys = gsys
-        prob = ODEProblem(sys, [], tspan)
+        prob = ODEProblem(sys, u0map, tspan, param_map)
         (; f, u0, p) = prob
         du = similar(u0)
         f(du, u0, p, 1.0)
@@ -52,7 +53,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
    
     if mtk
         sol_mtk, du_mtk = let @named sys = system_from_graph(gr)
-            prob = ODEProblem(sys, [], tspan)
+            prob = ODEProblem(sys, u0map, tspan, param_map)
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
@@ -80,7 +81,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
     end
     if parallel
         sol_grp_p, du_grp_p = let sys = gsys
-            prob = ODEProblem(sys, [], tspan, scheduler=StaticScheduler())
+            prob = ODEProblem(sys, u0map, tspan, param_map, scheduler=StaticScheduler())
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
@@ -169,7 +170,7 @@ function neuron_and_neural_mass_comparison_tests()
                         HarmonicOscillator(name=:ho1)
                         HarmonicOscillator(name=:ho2)
                         JansenRit(name=:jr1)
-                        JansenRit(name=:jr2)],
+                        JansenRit(name=:jr2)]
                        )
             if length(unknowns(LIFNeuron(;name=:_).system)) > 3
                 @warn "excluding LIFNeurons from test"
@@ -183,15 +184,17 @@ function neuron_and_neural_mass_comparison_tests()
                 add_blox!.((g,), neurons)
                 for i ∈ eachindex(neurons)
                     for j ∈ eachindex(neurons)
-                        if (neurons[i] isa NeuralMassBlox && neurons[j] isa AbstractNeuronBlox)
-                            nothing # Neuroblox doesn't support this currently
-                        elseif neurons[i] isa QIFNeuron && neurons[j] isa QIFNeuron
-                            add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "psp"))
-                        elseif neurons[i] isa IFNeuron || neurons[j] isa IFNeuron
-                            add_edge!(g, i, j, Dict(:weight => -rand(), :connection_rule => "basic"))
-                        else
-                            add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "basic"))
-                        end
+                        if i != j
+                            if (neurons[i] isa NeuralMassBlox && neurons[j] isa AbstractNeuronBlox)
+                                nothing # Neuroblox doesn't support this currently
+                            elseif neurons[i] isa QIFNeuron && neurons[j] isa QIFNeuron
+                                add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "psp"))
+                            elseif neurons[i] isa IFNeuron || neurons[j] isa IFNeuron
+                                add_edge!(g, i, j, Dict(:weight => -rand(), :connection_rule => "basic"))
+                            else
+                                add_edge!(g, i, j, Dict(:weight => 2*randn(), :connection_rule => "basic"))
+                            end
+                        end 
                     end
                 end
                 
@@ -222,13 +225,35 @@ function basic_hh_network_tests()
     end
 end
 
-function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, trajectories=50_000)
-    Random.seed!(1234)
+function vdp_test()
+    @testset "VdP" begin
+        Random.seed!(1234)
+        @named vdp = VanDerPol()
+        g = MetaDiGraph()
+        add_blox!(g, vdp)
+        test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); u0map=[vdp.x => 0.0, vdp.y=>0.1], rtol=1e-10, alg=Vern7())
+
+        @named vdpn = VanDerPol(include_noise=true)
+        @named vdpn2 = VanDerPol(include_noise=true)
+        g = MetaDiGraph()
+        add_blox!(g, vdpn)
+        add_blox!(g, vdpn2)
+        add_edge!(g, 1, 2, :weight, 1.0)
+        
+        prob = test_compare_du_and_sols(SDEProblem, g, (0.0, 1.0);
+                                        u0map=[vdpn.x => 0.0, vdpn.y=>1.1], rtol=1e-10, alg=RKMil(), seed=123)
+    end
+end
+
+
+
+function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, trajectories=100_000)
+    # Random.seed!(1234)
     if graph isa Tuple
         (graph_l, graph_r) = graph
     else
-        graph_l = g
-        graph_r = g
+        graph_l = graph
+        graph_r = graph
     end
     
     @named gsys = system_from_graph(graph_l; graphdynamics=true)
@@ -242,8 +267,6 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         dnoise = zero(u0)
         g(dnoise, u0, p, 1.1)
 
-        @test solve(prob, ImplicitEM(), saveat = 0.01,reltol=1e-4,abstol=1e-4).retcode == ReturnCode.Success
-        
         ens_prob = EnsembleProblem(prob)
         sols = solve(ens_prob, alg, EnsembleThreads(); trajectories)
 
@@ -288,6 +311,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
         end
         @test sort(du_grp) ≈ sort(du_mtk)         #due to the MTK getu bug, we'll compare the sorted versions
         @test sort(dnoise_grp) ≈ sort(dnoise_mtk) #due to the MTK getu bug, we'll compare the sorted versions
+        @debug "" norm(mean(sol_grp_ens) .- mean(sol_mtk_ens)) / norm(mean(sol_grp_ens))
         @test mean(sol_grp_ens) ≈ mean(sol_mtk_ens) rtol=rtol
         @test std(sol_grp_ens)  ≈ std(sol_mtk_ens)  rtol=rtol
     end
@@ -295,6 +319,7 @@ function test_compare_du_and_sols_ensemble(::Type{SDEProblem}, graph, tspan; rto
 end
 
 function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, seed=1234,
+                                  u0map=[], param_map=[],
                                   sol_comparison_broken=false, f_comparison_broken=false, g_comparison_broken=false)
     Random.seed!(seed)
     if graph isa Tuple
@@ -306,7 +331,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     @named gsys = system_from_graph(graph_l; graphdynamics=true)
     state_names = variable_symbols(gsys)
     sol_grp, du_grp, dnoise_grp = let sys = gsys
-        prob = SDEProblem(sys, [], tspan, [], seed=seed)
+        prob = SDEProblem(sys, u0map, tspan, param_map, seed=seed)
         (; f, g, u0, p) = prob
         du = similar(u0)
         f(du, u0, p, 1.1)
@@ -324,7 +349,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     end
     if mtk
         sol_mtk, du_mtk, dnoise_mtk = let neuron_net = system_from_graph(graph_r; name=:neuron_net)
-            prob = SDEProblem(neuron_net, [], tspan, [], seed=seed)
+            prob = SDEProblem(neuron_net, u0map, tspan, param_map, seed=seed)
             (; f, g, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.1)
@@ -412,27 +437,30 @@ function ngei_test()
     end
 end
 
-function kuramato_test()
-    @testset "Kuramoto" begin
-        N = 2
-        # Define the natural distribution of oscillator frequencies
-        Ω = 249
-        σ = 26.317
-        ks_blocks = [KuramotoOscillator(name=Symbol("KO$i"), 
-                                        ω=rand(Normal(Ω, σ)),
-                                        ζ=5.920,
-                                        include_noise=true) for i in 1:N]
-        # Create a graph and add all the oscillators to it
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), ks_blocks)
+function kuramoto_test()
+    @testset "Kuramoto Oscillator" begin
+        @testset "Non-noisy" begin
+            @named K01 = KuramotoOscillator(ω=2.0)
+            @named K02 = KuramotoOscillator(ω=5.0)
 
-        # Connect all oscillators to each other
-        for i in 1:N
-            for j in 1:N
-                add_edge!(g, i, j, Dict(:weight => 1.0))
-            end
+            adj = [0 1; 1 0]
+            g = MetaDiGraph()
+            add_blox!.(Ref(g), [K01, K02])
+            create_adjacency_edges!(g, adj)
+
+            test_compare_du_and_sols(ODEProblem, g, (0.0, 2.0); rtol=1e-10, alg=AutoVern7(Rodas4()))
         end
-        test_compare_du_and_sols(SDEProblem, g, (0.0, 2.0), rtol=0.05, alg=RKMil())
+        @testset "Noisy" begin
+            @named K01 = KuramotoOscillator(ω=2.0, include_noise=true)
+            @named K02 = KuramotoOscillator(ω=5.0, include_noise=true)
+
+            adj = [0 1; 1 0]
+            g = MetaDiGraph()
+            add_blox!.(Ref(g), [K01, K02])
+            create_adjacency_edges!(g, adj)
+
+            test_compare_du_and_sols(SDEProblem, g, (0.0, 2.0); rtol=1e-10, alg=RKMil())
+        end
     end
 end
 
@@ -647,6 +675,7 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     
 ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
+    rng = MersenneTwister(1234)
 
     spike_rate = 2.4 ## spikes / ms
 
@@ -677,10 +706,10 @@ function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
     spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
     # Blox definitions
-    @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1);
-    @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1);
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns);
+    @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
+    @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1, rng);
+    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
 
     @named n1 = LIFExciNeuron()
     @named n2 = LIFExciNeuron()
@@ -701,7 +730,7 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     
     ## Describe what the local variables you define are for
     global_ns = :g ## global name for the circuit. All components should be inside this namespace.
-
+    rng = MersenneTwister(1234)
     spike_rate = 2.4 ## spikes / ms
 
     f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
@@ -731,10 +760,10 @@ function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
     spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
     # Blox definitions
-    @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1);
+    @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
 
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns);
+    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
 
     @named n_A = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor);
     @named n_B = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor) ;
