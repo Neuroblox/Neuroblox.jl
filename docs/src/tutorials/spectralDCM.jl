@@ -64,8 +64,8 @@ for i = 1:nr
 end
 # Next we define the between-region connectivity matrix and connect regions; we use the same matrix as is defined in [3]
 A_true = [[-0.5 -0.2 0]; [0.4 -0.5 -0.3]; [0 0.2 -0.5]]
-# Note that in SPM DCM connection matrices are defined such that column variables denote output from and rows denote inputs to a particular region.
-# This is different from the usual Neuroblox notation. Thus we flip the indices in what follows:
+# Note that in SPM DCM connection matrices column variables denote output from and rows denote inputs to a particular region.
+# This is different from the usual Neuroblox definition of connection matrices. Thus we flip the indices in what follows:
 for idx in CartesianIndices(A_true)
     add_edge!(g, regions[idx[1]] => regions[idx[2]], weight=A_true[idx[2], idx[1]])   # Note the definition of columns as outputs and rows as inputs. For consistency with SPM we keep this notation.
 end
@@ -197,10 +197,8 @@ fitmodel = structural_simplify(fitmodel)          # and now simplify the euqatio
 max_iter = 128;            # maximum number of iterations
 ## attribute initial conditions to states
 sts, _ = get_dynamic_states(fitmodel);
-sts = unknowns(fitmodel)
-rv = rand(length(sts))
 # the following step is needed if the model's Jacobian would give degenerate eigenvalues when expanded around the fixed point 0 (which is the default expansion). We simply add small random values to avoid this degeneracy:
-perturbedfp = OrderedDict(sts .=> abs.(0.001*rv[1:length(sts)]))     # slight noise to avoid issues with Automatic Differentiation.
+perturbedfp = Dict(sts .=> abs.(10^-10*rand(length(sts))))     # slight noise to avoid issues with Automatic Differentiation.
 # For convenience we can use the default prior function to use standardized prior values as given in SPM:
 pmean, pcovariance, indices = defaultprior(fitmodel, nr)
 
@@ -230,6 +228,7 @@ for iter in 1:max_iter
         end
     end
 end
+# Note that the output `F` is the free energy at each iteration step and `dF` is the predicted change of free energy at each step which approximates the actual free energy change and is used as stopping criterion by requiring that it does not excede the `tolerance` level for 4 consecutive times.
 
 # # Plot Results
 # Free energy is the objective function of the optimization scheme of spectral DCM. Note that in the machine learning literature this it is called Evidence Lower Bound (ELBO). 
