@@ -236,7 +236,7 @@ export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, ExternalInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
 export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
 export BandPassFilterBlox
-export OUBlox, OUCouplingBlox
+export OUBlox, OUCouplingBlox, ARBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
 export add_blox!, get_system

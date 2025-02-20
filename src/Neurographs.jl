@@ -116,7 +116,7 @@ function LIF_spike_affect!(integ, u, p, ctx)
     integ.p[p[4]] = 1
 
     SciMLBase.add_tstop!(integ, t_refract_end)
-    
+
     c = 1
     for i in eachindex(u)[2:end]
         integ.u[u[i]] += integ.p[p[c + 4]]
@@ -221,9 +221,9 @@ function generate_discrete_callbacks(blox::Union{LIFExciNeuron, LIFInhNeuron}, b
 
     states_affect = get_states_spikes_affect(sa, name_blox)
     params_affect = get_params_spikes_affect(sa, name_blox)
-   
+
     param_pairs = make_unique_param_pairs(params_affect)
-    
+
     ps = vcat([
         sys.V_reset => Symbol(sys.V_reset), 
         sys.t_refract_duration => Symbol(sys.t_refract_duration), 
