@@ -50,6 +50,7 @@ using ..Neuroblox:
     PINGNeuronExci,
     PINGNeuronInhib,
     AbstractPINGNeuron,
+    Connector,
     VanDerPol
 
 using GraphDynamics:
@@ -88,6 +89,7 @@ using StatsBase:
 const NB = Neuroblox
 const MTK = NB.ModelingToolkit
 
+using SymbolicUtils: Chain, Postwalk
 
 using Graphs
 using MetaGraphs

@@ -20,4 +20,3 @@ end
 
 
 @time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
-

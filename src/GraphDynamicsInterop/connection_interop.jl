@@ -2,6 +2,69 @@
 ## Connections
 ##----------------------------------------------
 
+function define_basic_connection(c::Connector, blox_src::TSrc, blox_dst::TDst; mod=@__MODULE__()) where {TSrc, TDst}
+    name_src = only(c.source)
+    name_dst = only(c.destination)
+    if isempty(c.weight)
+        w = :_
+    else
+        w = only(c.weight)
+    end 
+
+    sys_src = get_namespaced_sys(blox_src)
+    sys_dst = get_namespaced_sys(blox_dst)
+    
+    state_rules_src = map(ModelingToolkit.namespace_variables(sys_src)) do s
+        @rule s => Expr(:., name_src, QuoteNode(Symbol(split(string(s.f), '₊')[end])))
+    end
+    param_rules_src = map(ModelingToolkit.namespace_parameters(sys_src)) do s
+        @rule s => Expr(:., name_src, QuoteNode(Symbol(split(string(s), '₊')[end])))
+    end
+    state_rules_dst = map(ModelingToolkit.namespace_variables(sys_dst)) do s
+        @rule s => Expr(:., name_dst, QuoteNode(Symbol(split(string(s.f), '₊')[end])))
+    end
+    param_rules_dst = map(ModelingToolkit.namespace_parameters(sys_dst)) do s
+        @rule s => Expr(:., name_dst, QuoteNode(Symbol(split(string(s), '₊')[end])))
+    end
+    r = (Postwalk ∘ Chain)([[@rule w => Symbol(w)];
+                            state_rules_src;
+                            param_rules_src;
+                            state_rules_dst;
+                            param_rules_dst])
+
+    nt = initialize_input(to_subsystem(blox_dst))
+    length(c.equation) <= length(nt) || error("Too many equations for destination blox")
+    eqs = map(keys(nt)) do lhs
+        i = findfirst(c.equation) do eq
+            Symbol(split(string(eq.lhs.f), "₊")[end]) == lhs
+        end
+        rhs = if isnothing(i)
+            nt[lhs]
+        else
+            toexpr(r(c.equation[i].rhs))
+        end
+        Expr(:(=), lhs, rhs)
+    end
+
+    @eval mod begin
+        function (c::$BasicConnection)($name_src::$Subsystem{$TSrc}, $name_dst::$Subsystem{$TDst})
+            $(Symbol(w)) = c.weight
+            $(Expr(:tuple, eqs...))
+        end
+        function $GraphDynamicsInterop.blox_wiring_rule!(h, blox_src::$TSrc, blox_dst::$TDst, v_src, v_dst, kwargs)
+            i, j = $only(v_src), $only(v_dst)
+            (; conn, names) = $get_connection(blox_src, blox_dst, kwargs)
+            $add_edge!(h, i, j, $Dict(:conn => conn, :names => names))
+        end
+        function $GraphDynamicsInterop.get_connection(blox_src::$TSrc, blox_dst::$TDst, kwargs)
+            (;w_val, name) = $generate_weight_param(blox_src, blox_dst, kwargs)
+            conn = $BasicConnection(w_val)
+            (;conn, names = [name,])
+        end
+    end
+end
+
+
 #----------------------------------------------
 get_nameof(sys) = nameof()
 function generate_weight_param(blox_src, blox_dst, kwargs)

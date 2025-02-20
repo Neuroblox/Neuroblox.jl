@@ -41,7 +41,6 @@ function get_bloxs(g::MetaDiGraph)
             push!(bs, b)
         end
     end
-
     return bs
 end
 
