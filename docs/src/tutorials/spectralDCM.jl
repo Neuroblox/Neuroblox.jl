@@ -55,7 +55,7 @@ for i = 1:nr
     push!(regions, region)          # store neural mass model in list. We need this list below. If you haven't seen the Julia command `push!` before [see here](http://jlhub.com/julia/manual/en/function/push-exclamation).
 
     ## add Ornstein-Uhlenbeck block as noisy input to the current region
-    input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.25, τ=2.5)
+    input = OUBlox(;name=Symbol("r$(i)₊ou"), σ=0.2, τ=2)
     add_edge!(g, input => region, weight=1/16)   # Note that 1/16 is taken from SPM12, this stabilizes the balloon model simulation. Alternatively the noise of the Ornstein-Uhlenbeck block or the weight of the edge connecting neuronal activity and balloon model could be reduced to guarantee numerical stability.
 
     ## simulate fMRI signal with BalloonModel which includes the BOLD signal on top of the balloon model dynamics
@@ -78,7 +78,7 @@ tspan = (0, 1022)
 dt = 2   # 2 seconds as measurement interval for fMRI
 # setup simulation of the model, time in seconds
 prob = SDEProblem(simmodel, [], tspan)
-sol = solve(prob, ImplicitRKMil(), saveat=dt);
+sol = solve(prob, ImplicitRKMil(), saveat=dt);   # ImplicitRKMil
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
 # the observable quantity in our model is the BOLD signal, the variable of the Blox `BalloonModel` that represents the BOLD signal is tagged with "measurement" tag.
@@ -97,18 +97,19 @@ f
 # We note that the initial spike is not meaningful and a result of the equilibration of the stochastic process thus we remove it.
 dfsol = DataFrame(sol);
 
+# ## Add measurement noise and rescale data
+data = Matrix(dfsol[:, idx_m .+ 1]);    # +1 due to the additional time-dimension in the data frame.
+# add measurement noise
+data += randn(size(data))/4
+# center and rescale data (as done in SPM):
+data .-= mean(data, dims=1)
+data *= 1/std(data[:])/4
+dfsol = DataFrame(data, :auto)
+# Add correct names to columns of the data frame
+_, obsvars = get_eqidx_tagged_vars(simmodel, "measurement")  # get index of equation of bold state
+rename!(dfsol, Symbol.(obsvars))
+
 # ## Estimate and plot the cross-spectral densities
-data = Matrix(dfsol[:, idx_m.+1]);    # +1 due to the additional time-dimension in the data frame.
-# # add measurement noise
-# dfsol[!, idx_m.+1] += randn(size(dfsol[:, idx_m.+1]))
-# # center and rescale data as done in SPM:
-# data .-= mean(data, dims=1)
-# scale = 1/std(data[:])/4
-# data *= scale
-# data = DataFrame(data, :auto)
-# # Add correct names to columns of the data frame
-# _, obsvars = get_eqidx_tagged_vars(simmodel, "measurement")  # get index of equation of bold state
-# rename!(data, Symbol.(obsvars))
 
 # We compute the cross-spectral density by fitting a linear model of order `p` and then compute the csd analytically from the parameters of the multivariate autoregressive model
 p = 8
@@ -178,8 +179,8 @@ end
 # Avoid simplification of the model in order to be able to exclude some parameters from fitting
 @named fitmodel = system_from_graph(g, simplify=false)
 # With the function `changetune`` we can provide a dictionary of parameters whose tunable flag should be changed, for instance set to false to exclude them from the optimization procedure.
-# For instance the the effective connections that are set to zero in the simulation:
-untune = Dict(A[3] => false, A[7] => false)
+# For instance the effective connections that are set to zero in the simulation and the self-connections:
+untune = Dict(A[3] => false, A[7] => false, A[1] => false, A[5] => false, A[9] => false)
 fitmodel = changetune(fitmodel, untune)           # 3 and 7 are not present in the simulation model
 fitmodel = structural_simplify(fitmodel)          # and now simplify the euqations
 

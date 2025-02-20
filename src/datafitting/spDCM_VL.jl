@@ -410,7 +410,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     statevals = [v for v in values(initcond)]
     append!(statevals, zeros(length(unknowns(model)) - length(statevals)))
     f_model = generate_function(model; expression=Val{false})[1]
-    f_at(params, t) = states -> f_model(states, params, t)
+    f_at(params, t) = states -> f_model(states, MTKParameters(model, params)..., t)
     derivatives = par -> jacobian(f_at(addnontunableparams(par, model), t), statevals)
 
     μθ_pr = vecparam(priors.μθ_pr)        # note: μθ_po is posterior and μθ_pr is prior

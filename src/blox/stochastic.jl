@@ -31,7 +31,7 @@ end
 function get_ts_data(t, dt::Real, data::Array{Float64})
     idx = ceil(Int, t / dt)
 
-    return ifelse(idx > 0, data[idx], 0.0)
+    return idx > 0 ? data[idx] : 0.0
 end
 
 @register_symbolic get_ts_data(t, dt::Real, data::Array{Float64})
