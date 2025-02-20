@@ -78,7 +78,7 @@ tspan = (0, 1022)
 dt = 2   # 2 seconds as measurement interval for fMRI
 # setup simulation of the model, time in seconds
 prob = SDEProblem(simmodel, [], tspan)
-sol = solve(prob, ImplicitRKMil(), saveat=dt);   # ImplicitRKMil
+sol = solve(prob, ImplicitRKMil(), saveat=dt);
 
 # we now want to extract all the variables in our model which carry the tag "measurement". For this purpose we can use the Neuroblox function `get_idx_tagged_vars`
 # the observable quantity in our model is the BOLD signal, the variable of the Blox `BalloonModel` that represents the BOLD signal is tagged with "measurement" tag.
@@ -91,7 +91,7 @@ ax = Axis(f[1, 1],
     xlabel = "Time [ms]",
     ylabel = "BOLD",
 )
-lines!(ax, sol, idxs=idx_m)
+lines!(ax, sol, idxs=idx_m);
 f
 
 # We note that the initial spike is not meaningful and a result of the equilibration of the stochastic process thus we remove it.
@@ -100,33 +100,42 @@ dfsol = DataFrame(sol);
 # ## Add measurement noise and rescale data
 data = Matrix(dfsol[:, idx_m .+ 1]);    # +1 due to the additional time-dimension in the data frame.
 # add measurement noise
-data += randn(size(data))/4
+data += randn(size(data))/4;
 # center and rescale data (as done in SPM):
-data .-= mean(data, dims=1)
-data *= 1/std(data[:])/4
-dfsol = DataFrame(data, :auto)
+data .-= mean(data, dims=1);
+data *= 1/std(data[:])/4;
+dfsol = DataFrame(data, :auto);
 # Add correct names to columns of the data frame
-_, obsvars = get_eqidx_tagged_vars(simmodel, "measurement")  # get index of equation of bold state
+_, obsvars = get_eqidx_tagged_vars(simmodel, "measurement");  # get index of equation of bold state
 rename!(dfsol, Symbol.(obsvars))
 
 # ## Estimate and plot the cross-spectral densities
 
 # We compute the cross-spectral density by fitting a linear model of order `p` and then compute the csd analytically from the parameters of the multivariate autoregressive model
-p = 8
-mar = mar_ml(data, p)   # maximum likelihood estimation of the MAR coefficients and noise covariance matrix
-ns = size(data, 1)
-freq = range(min(128, ns*dt)^-1, max(8, 2*dt)^-1, 32)
+p = 8;
+mar = mar_ml(data, p);   # maximum likelihood estimation of the MAR coefficients and noise covariance matrix
+ns = size(data, 1);
+freq = range(min(128, ns*dt)^-1, max(8, 2*dt)^-1, 32);
 csd = mar2csd(mar, freq, dt^-1);
-# Now plot the cross-spectrum:
+# Now plot the real part of the cross-spectra. Most part of the signal is in the lower frequencies:
 fig = Figure(size=(1200, 800))
 grid = fig[1, 1] = GridLayout()
 for i = 1:nr
     for j = 1:nr
-        ax = Axis(grid[i, j])
+        if i == 1 && j == 1
+            ax = Axis(grid[i, j], xlabel="Frequency [Hz]", ylabel="real value of CSD")
+        else
+            ax = Axis(grid[i, j])
+        end
         lines!(ax, freq, real.(csd[:, i, j]))
     end
 end
+Label(grid[1, 1:3, Top()], "Cross-spectral densities", valign = :bottom,
+    font = :bold,
+    fontsize = 32,
+    padding = (0, 0, 5, 0))
 fig
+# These cross-spectral densities are the data we use in spectral DCM to fit our model to and perform the inference of connection strengths.
 
 # # Model Inference
 
