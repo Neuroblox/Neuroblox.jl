@@ -44,17 +44,6 @@ function get_bloxs(g::MetaDiGraph)
     return bs
 end
 
-function get_bloxs(g::MetaDiGraph, conns::AbstractVector{<:Connector})
-    bs = get_bloxs(g)
-    s = Set([])
-    for conn ∈ conns
-        for b ∈ conn.connection_blox
-            push!(s, b)
-        end
-    end
-    append!(bs, s)
-end
-
 get_system(g::MetaDiGraph) = get_system.(get_bloxs(g))
 
 get_dynamics_bloxs(blox) = [blox]
@@ -325,7 +314,7 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
 end
 
 function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
-    bloxs = get_bloxs(g, conns)
+    bloxs = get_bloxs(g)
     blox_syss = get_system.(bloxs)
 
     bc = isempty(conns) ? Connector(name, name) : reduce(merge!, conns)

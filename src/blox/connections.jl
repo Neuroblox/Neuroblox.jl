@@ -7,7 +7,6 @@ struct Connector
     discrete_callbacks
     spike_affects::Dict{Symbol, Vector{Union{Tuple{Num, Num}, Equation}}}
     learning_rule::Dict{Num, AbstractLearningRule}
-    connection_blox::Set
 end
 
 function Connector(
@@ -34,8 +33,7 @@ function Connector(
         to_vector(delay), 
         to_vector(discrete_callbacks), 
         spike_affects, 
-        learning_rule,
-        to_set(connection_blox)
+        learning_rule
     )
 end
 
@@ -227,7 +225,6 @@ function Base.merge!(c1::Connector, c2::Connector)
     append!(c1.discrete_callbacks, c2.discrete_callbacks)
     mergewith!(append!, c1.spike_affects, c2.spike_affects)
     merge!(c1.learning_rule, c2.learning_rule)
-    union!(c1.connection_blox, c2.connection_blox)
     return c1
 end
 
