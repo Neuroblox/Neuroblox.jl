@@ -78,9 +78,10 @@ end
 get_parts(blox::CompositeBlox) = blox.parts
 get_parts(blox::Union{AbstractBlox, ObserverBlox}) = blox
 
-get_components(blox::CompositeBlox) = mapreduce(x -> get_components(x), vcat, get_parts(blox))
-get_components(blox::Vector{<:AbstractBlox}) = mapreduce(x -> get_components(x), vcat, blox)
-get_components(blox::Union{NeuralMassBlox, AbstractNeuronBlox}) = [blox]
+get_dynamics_components(blox::AbstractDiscrete) = []
+get_dynamics_components(blox::Union{NeuralMassBlox, AbstractNeuronBlox}) = [blox]
+get_dynamics_components(blox::CompositeBlox) = mapreduce(get_dynamics_components, vcat, get_parts(blox))
+get_dynamics_components(blox::Vector{<:AbstractBlox}) = mapreduce(get_dynamics_components, vcat, blox)
 
 get_neuron_color(n::AbstractExciNeuronBlox) = "blue"
 get_neuron_color(n::AbstractInhNeuronBlox) = "red"
