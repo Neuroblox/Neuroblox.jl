@@ -46,10 +46,7 @@ end
 
 get_system(g::MetaDiGraph) = get_system.(get_bloxs(g))
 
-get_dynamics_bloxs(blox) = [blox]
-get_dynamics_bloxs(blox::CompositeBlox) = mapreduce(get_dynamics_bloxs, vcat, get_parts(blox))
-
-flatten_graph(g::MetaDiGraph) = mapreduce(get_dynamics_bloxs, vcat, get_bloxs(g))
+flatten_graph(g::MetaDiGraph) = mapreduce(get_components, vcat, get_bloxs(g))
 
 function connectors_from_graph(g::MetaDiGraph)
     conns = reduce(vcat, get_connectors.(get_bloxs(g)))

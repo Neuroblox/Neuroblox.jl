@@ -29,9 +29,6 @@ struct Matrisome <: AbstractDiscrete
     end
 end
 
-
-
-
 struct Striosome <: AbstractDiscrete
     system
     namespace
