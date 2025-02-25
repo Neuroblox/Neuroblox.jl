@@ -572,7 +572,7 @@ end
 function state_timeseries(cb::Union{CompositeBlox, AbstractVector{<:AbstractBlox}},
                           sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
     
-    neurons = get_components(cb)
+    neurons = get_dynamics_components(cb)
     state_names = map(neuron -> Symbol(namespaced_nameof(neuron), "₊", state), neurons)
 
     if isnothing(ts)
