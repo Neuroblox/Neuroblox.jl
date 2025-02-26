@@ -98,8 +98,8 @@ function generate_gap_weight_param(blox_src, blox_dst, kwargs)
 end
 
 function blox_wiring_rule!(h,
-                           blox_src::Union{AbstractNeuronBlox, NeuralMassBlox},
-                           blox_dst ::Union{AbstractNeuronBlox, NeuralMassBlox},
+                           blox_src,
+                           blox_dst,
                            v_src, v_dst, kwargs)
     #this is the fallback method for non-composite blox, hence vi and vj should have only one element
     i, j = only(v_src), only(v_dst)
