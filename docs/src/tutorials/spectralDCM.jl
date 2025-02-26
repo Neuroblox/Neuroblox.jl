@@ -237,7 +237,9 @@ freeenergy(state)
 
 # Plot the estimated posterior of the effective connectivity and compare that to the true parameter values.
 # Bar hight are the posterior mean and error bars are the standard deviation of the posterior.
-ecbarplot(state, setup, A_true)
+fig = ecbarplot(state, setup, A_true)
+axislegend(position=:lt)
+fig
 
 # ## References
 # [1] [Novelli, Leonardo, Karl Friston, and Adeel Razi. “Spectral Dynamic Causal Modeling: A Didactic Introduction and Its Relationship with Functional Connectivity.” Network Neuroscience 8, no. 1 (April 1, 2024): 178–202.](https://doi.org/10.1162/netn_a_00348) \
