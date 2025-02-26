@@ -84,8 +84,7 @@ end
         xlabel = "Parameter Name",
         ylabel = "Effective Connectivity",
         title = "",
-        colormap = :tab10,
-        colorrange = (1, 10)
+        colormap = :tab10
     )
 end
 
@@ -113,10 +112,12 @@ function Makie.plot!(p::ECBarPlot)
     μA = state.μθ_po[1:length(idx)]    # get estimated means of effective connectivity
     var_A = diag(state.Σθ_po[1:np, 1:np])  # get variance of effective connectivity
 
+    colormap = Makie.to_colormap(p.colormap[])
+
     x = 1:np
-    barplot!(p, x, μA, color=1, colormap = p.colormap[], colorrange = p.colorrange[], label="estimated values")
+    barplot!(p, x, μA, color=colormap[1], label="estimated values")
     errorbars!(p, x, μA, sqrt.(var_A), whiskerwidth = 10, color=:red)
-    scatter!(p, x, gt[idx], color=2, markersize=10, colormap = p.colormap[], colorrange = p.colorrange[], label="ground truth")
+    scatter!(p, x, gt[idx], markersize=10, color=colormap[2], label="ground truth")
     return p
 end
 
