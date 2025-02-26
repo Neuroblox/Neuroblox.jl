@@ -1223,3 +1223,38 @@ function Connector(
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
+
+function Connector(
+    blox_src::AdamPYR,
+    blox_dest::AbstractAdamNeuron;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    E_Exc = haskey(kwargs, :E_Exc) ? kwargs[:E_Exc] : 0.0
+    s = only(outputs(blox_src; namespaced=true))
+
+    eq = sys_post.jcn ~ w*s*(sys_post.V - E_Exc)
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+
+end
+
+function Connector(
+    blox_src::AdamINP,
+    blox_dest::AbstractAdamNeuron;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    E_Inh = haskey(kwargs, :E_Inh) ? kwargs[:E_Inh] : -80.0
+    s = only(outputs(blox_src; namespaced=true)) 
+
+    eq = sys_post.jcn ~ w*s*(sys_post.V - E_Inh)
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+end

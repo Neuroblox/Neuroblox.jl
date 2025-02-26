@@ -49,7 +49,10 @@ using ..Neuroblox:
     PINGNeuronInhib,
     AbstractPINGNeuron,
     Connector,
-    VanDerPol
+    VanDerPol,
+    AdamPYR,
+    AdamINP,
+    AbstractAdamNeuron
 
 using GraphDynamics:
     GraphDynamics,
