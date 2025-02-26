@@ -133,7 +133,7 @@ function check_right_inds(h, blox_src, blox_dst, i_src, i_dst)
 end
 
 ##----------------------------------------------
-function get_connection(blox_src::Union{AbstractNeuronBlox, NeuralMassBlox}, blox_dst::Union{AbstractNeuronBlox, NeuralMassBlox}, kwargs)
+function get_connection(blox_src, blox_dst, kwargs)
     (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
     r_name = get(kwargs, :connection_rule, "basic")
     conn = if r_name == "basic"
