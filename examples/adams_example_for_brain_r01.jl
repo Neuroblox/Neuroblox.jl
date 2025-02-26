@@ -19,7 +19,7 @@ add_edge!(g, exci_PING => inhi_PING; weight=10.0)
 add_edge!(g, inhi_PING => exci_PING; weight=10.0)
 
 @named sys = system_from_graph(g)
-sys = structural_simplify(sys)
+#sys = structural_simplify(sys)
 
 sim_dur = 1000.0
 prob = SDEProblem(sys, [], (0.0, sim_dur))
