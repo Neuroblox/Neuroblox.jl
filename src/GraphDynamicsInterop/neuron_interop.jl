@@ -2,8 +2,8 @@
 ## Neurons / Neural Mass
 ##----------------------------------------------
 
-# neurons and neural mass models have no sub-components
-components(blox::Union{NeuralMassBlox, AbstractNeuronBlox}) = (blox,)
+# By default, assume there are no sub-components
+components(blox) = (blox,)
 
 recursive_getdefault(x) = x
 function recursive_getdefault(x::Union{MTK.Num, MTK.BasicSymbolic})
