@@ -1,4 +1,7 @@
 # ## Import the necessary packages
+# This isn't production quality example code. It's just to give a sense of how we'd solve
+# the challenge problem in the PING tutorial.
+
 # Reasons for each non-Neuroblox package are given in the comments after each.
 using Neuroblox 
 using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
