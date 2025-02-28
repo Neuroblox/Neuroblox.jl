@@ -493,7 +493,7 @@ Citation:
 Chen/Campbell citation
 
 """
-struct NGNMM_Izh <: NeuralMassBlox
+struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
@@ -514,16 +514,37 @@ struct NGNMM_Izh <: NeuralMassBlox
                 τₛ=2.6,
                 κ=1.0,
                 ζ=0.0)
-            p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
-            Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
-            sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-            eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
-                    D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
-                    D(w) ~ a*(b*V - w) + wⱼ*r,
-                    D(s) ~ -s/τₛ + sⱼ*r
-                ]
-            sys = System(eqs, t, sts, p; name=name)
-            new(p, sys, namespace)
+        if ζ == 0
+            NGNMM_Izh{NonNoisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ)
+        else
+            NGNMM_Izh{Noisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ)
+        end
+
+    end
+    function NGNMM_Izh{NonNoisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0)
+        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
+        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
+                D(w) ~ a*(b*V - w) + wⱼ*r,
+                D(s) ~ -s/τₛ + sⱼ*r
+              ]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+    end
+    function NGNMM_Izh{Noisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0, ζ=0.0)
+        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, τₛ=τₛ, κ=κ, ζ=ζ)
+        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ = p
+        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
+        @brownian ξ
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + ζ*ξ + jcn - (π*r)^2,
+                D(w) ~ a*(b*V - w) + wⱼ*r,
+                D(s) ~ -s/τₛ + sⱼ*r
+              ]
+        sys = System(eqs, t, sts, p; name=name)
+        new{Noisy}(p, sys, namespace)
     end
 end
 
@@ -543,9 +564,9 @@ struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
                         J_internal=8.0,
                         A=0.0)
         if A == 0
-            NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ, τₘ, H, I_ext, ω, J_internal)
+            NGNMM_QIF{NonNoisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal)
         else
-            NGNMM_QIF{Noisy}(; name, namespace=nothing, Δ, τₘ, H, I_ext, ω, J_internal, A)
+            NGNMM_QIF{Noisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal, A)
         end
     end
 
