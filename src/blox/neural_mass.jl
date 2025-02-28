@@ -513,12 +513,12 @@ struct NGNMM_Izh <: NeuralMassBlox
                 sⱼ=1.2308,
                 τₛ=2.6,
                 κ=1.0,
-                ω=0.0)
+                ζ=0.0)
             p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
             Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
             sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
             eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
-                    D(V) ~ V^2 - α*V - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
+                    D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
                     D(w) ~ a*(b*V - w) + wⱼ*r,
                     D(s) ~ -s/τₛ + sⱼ*r
                 ]
@@ -533,15 +533,15 @@ struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     namespace
 
     function NGNMM_QIF(;
-                            name,
-                            namespace=nothing,
-                            Δ=1.0,
-                            τₘ=20.0,
-                            H=1.3,
-                            I_ext=0.0,
-                            ω=0.0,
-                            J_internal=8.0,
-                            A=0.0)
+                        name,
+                        namespace=nothing,
+                        Δ=1.0,
+                        τₘ=20.0,
+                        H=1.3,
+                        I_ext=0.0,
+                        ω=0.0,
+                        J_internal=8.0,
+                        A=0.0)
         if A == 0
             NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ, τₘ, H, I_ext, ω, J_internal)
         else
