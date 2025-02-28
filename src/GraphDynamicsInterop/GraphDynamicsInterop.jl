@@ -22,8 +22,6 @@ using ..Neuroblox:
     WinnerTakeAllBlox,
     namespaced_nameof,
     NextGenerationEIBlox,
-    NextGenerationBlox,
-    NextGenerationResolvedBlox,
     get_namespaced_sys,
     Striatum,
     Striosome,
