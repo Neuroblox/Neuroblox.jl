@@ -21,7 +21,7 @@ using ..Neuroblox:
     HHNeuronInhib_GPe_Adam_Blox,
     WinnerTakeAllBlox,
     namespaced_nameof,
-    NextGenerationEIBlox,
+    NGNMM_theta,
     get_namespaced_sys,
     Striatum,
     Striosome,

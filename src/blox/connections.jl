@@ -420,7 +420,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::NextGenerationEIBlox, 
+    blox_src::NGNMM_theta, 
     blox_dest::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; 
     kwargs...
 )
@@ -591,7 +591,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::NextGenerationEIBlox, 
+    blox_src::NGNMM_theta, 
     blox_dest::CorticalBlox; 
     kwargs...
 )
