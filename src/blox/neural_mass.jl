@@ -576,7 +576,34 @@ struct PYR_Izh <: NeuralMassBlox
     end
 end
 
-struct QIF_PING_NGNMM <: NeuralMassBlox
+# struct QIF_PING_NGNMM <: NeuralMassBlox
+#     params
+#     system
+#     namespace
+
+#     function QIF_PING_NGNMM(;
+#                             name,
+#                             namespace=nothing,
+#                             Δ=1.0,
+#                             τₘ=20.0,
+#                             H=1.3,
+#                             I_ext=0.0,
+#                             ω=0.0,
+#                             J_internal=8.0,
+#                             A=0.0)
+#         p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+#         Δ, τₘ, H, I_ext, J_internal = p
+#         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
+#         @brownian ξ
+#         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
+#                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
+#         sys = System(eqs, t, sts, p; name=name)
+
+#         new(p, sys, namespace)
+#     end
+# end
+
+struct QIF_PING_NGNMM{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
@@ -591,6 +618,25 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
                             ω=0.0,
                             J_internal=8.0,
                             A=0.0)
+        if A == 0
+            QIF_PING_NGNMM{NonNoisy}(; name, namespace=nothing, Δ, τₘ, H, I_ext, ω, J_internal)
+        else
+            QIF_PING_NGNMM{Noisy}(; name, namespace=nothing, Δ, τₘ, H, I_ext, ω, J_internal, A)
+        end
+    end
+
+    function QIF_PING_NGNMM{NonNoisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0)
+        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+        Δ, τₘ, H, I_ext, J_internal = p
+        sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
+        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
+               D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+
+        new{NonNoisy}(p, sys, namespace)
+    end
+
+    function QIF_PING_NGNMM{Noisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0, A=0.0)
         p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
         Δ, τₘ, H, I_ext, J_internal = p
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
@@ -599,7 +645,7 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
         sys = System(eqs, t, sts, p; name=name)
 
-        new(p, sys, namespace)
+        new{Noisy}(p, sys, namespace)
     end
 end
 
