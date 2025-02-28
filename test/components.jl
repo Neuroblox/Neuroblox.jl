@@ -723,9 +723,9 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "QIF_PING" begin
-    @named exci_PING = QIF_PING_NGNMM(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
-    @named inhi_PING = QIF_PING_NGNMM(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
+@testset "NGNMM_QIF" begin
+    @named exci_PING = NGNMM_QIF(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
+    @named inhi_PING = NGNMM_QIF(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), [exci_PING, inhi_PING])

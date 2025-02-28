@@ -1101,8 +1101,8 @@ function Connector(
 end
 
 function Connector(
-    blox_src::QIF_PING_NGNMM, 
-    blox_dest::QIF_PING_NGNMM; 
+    blox_src::NGNMM_QIF, 
+    blox_dest::NGNMM_QIF; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)

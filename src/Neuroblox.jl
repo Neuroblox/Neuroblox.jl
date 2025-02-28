@@ -252,7 +252,7 @@ export addnontunableparams, changetune
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
-export PYR_Izh, QIF_PING_NGNMM
+export PYR_Izh, NGNMM_QIF
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!, adjacency, adjacency!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
