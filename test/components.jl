@@ -254,27 +254,6 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-# @testset "Next Generation Neural Mass" begin
-#     """
-#     complex neural mass model test (next generation neural mass model)
-#     This test generates a neural mass model using the kuramoto order parameter
-#     to capture within-population synchrony. A model is generated and then
-#     the phase of oscillations is computed (ψ) along with synchrony (R). 
-#     This model has no input, and therefore oscillations and synchrony should
-#     tend toward zero.
-#     """
-#     @named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
-#     sim_dur = 1000.0 
-#     sol = simulate(structural_simplify(macroscopic_model.system), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
-
-#     C=30
-#     W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
-#     R = (1/(C*pi))*(W+conj.(W))/2
-#     ψ = log.(sol[!,"Z(t)"]./R)/im
-
-#     @test norm.(R[length(R)]) < 0.1
-# end
-
 """
 stochastic.jl test
 
