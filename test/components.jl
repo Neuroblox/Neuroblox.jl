@@ -752,8 +752,8 @@ end
     @named sys = system_from_graph(g)
 
     sim_dur = 200.0
-    prob = ODEProblem(sys, [], (0.0, sim_dur))
-    sol = solve(prob, Tsit5(), saveat=1.0)
+    prob = SDEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, RKMil(), saveat=1.0)
     @test sol.retcode == ReturnCode.Success
 end
 
