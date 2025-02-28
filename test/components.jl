@@ -740,9 +740,9 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "PYR_Izh" begin
-    @named popP = PYR_Izh(η̄=0.08, κ=0.8)
-    @named popQ = PYR_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
+@testset "NGNMM_Izh" begin
+    @named popP = NGNMM_Izh(η̄=0.08, κ=0.8)
+    @named popQ = NGNMM_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), [popP, popQ])

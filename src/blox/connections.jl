@@ -1085,8 +1085,8 @@ end
 
 # New version - need to discuss gₛ implementation
 function Connector(
-    blox_src::PYR_Izh, 
-    blox_dest::PYR_Izh; 
+    blox_src::NGNMM_Izh, 
+    blox_dest::NGNMM_Izh; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)

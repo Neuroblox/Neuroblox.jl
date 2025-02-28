@@ -472,7 +472,7 @@ struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
 end
 
 """
-    PYR_Izh(name, namespace, ...)
+    NGNMM_Izh(name, namespace, ...)
 
     This is the basic Izhikevich next-gen neural mass as described in [1].
     The corresponding connector is set up to allow for connections between masses, but the
@@ -493,12 +493,12 @@ Citation:
 Chen/Campbell citation
 
 """
-struct PYR_Izh <: NeuralMassBlox
+struct NGNMM_Izh <: NeuralMassBlox
     params
     system
     namespace
 
-    function PYR_Izh(;
+    function NGNMM_Izh(;
                 name,
                 namespace=nothing,
                 Δ=0.02,
