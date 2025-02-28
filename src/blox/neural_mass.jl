@@ -2,7 +2,7 @@ struct Noisy end
 struct NonNoisy end
 
 """
-    NextGenerationEIBlox(name, namespace, ...)
+    NGNMM_theta(name, namespace, ...)
         Create a next-gen neural mass model of coupled theta neuron populations. For a full list of the parameters used see the reference.
         Each mass consists of a population of two neurons ``a`` and ``b``, coupled using different synaptic terms ``g``. The entire expression of these is given by:
 ```math
@@ -15,6 +15,9 @@ struct NonNoisy end
     \\frac{g_ie}{dt} = \\alpha_{inv, ie} (\\frac{k_{ie}}{C_e \\pi} \\frac{1-a_e^2-b_e^2}{(1+2*a_e+a_e^2+b_e^2)} - g_{ie})
     \\frac{g_ii}{dt} = \\alpha_{inv, ii} (\\frac{k_{ii}}{C_i \\pi} \\frac{1-a_i^2-b_i^2}{(1+2*a_i+a_i^2+b_i^2)} - g_{ii})
 ```
+
+Can alternatively be called by ``NextGenerationEIBlox()``, but this is deprecated and will be removed in future updates.
+
 Citations:
 1. Byrne Á, O'Dea RD, Forrester M, Ross J, Coombes S. Next-generation neural mass and field modeling. J Neurophysiol. 2020 Feb 1;123(2):726-742. doi: 10.1152/jn.00406.2019.
 """
@@ -550,6 +553,24 @@ struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
     end
 end
 
+"""
+    NGNMM_QIF(name, namespace, ...)
+
+    This is the basic QIF next-gen neural mass as described in [1].
+    This includes the connections via firing rate as described in [1] and the optional noise term.
+    
+    Equations:
+        To be added once we have a final form that we like here.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citation:
+Theta-nested gamma bursts by Torcini group.
+
+"""
 struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     params
     system
