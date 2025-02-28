@@ -1100,23 +1100,6 @@ function Connector(
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
 
-## Deprecating this for removal
-# function Connector(
-#     blox_src::PYR_Izh, 
-#     blox_dest::PYR_Izh; 
-#     kwargs...
-# )
-#     sys_src = get_namespaced_sys(blox_src)
-#     sys_dest = get_namespaced_sys(blox_dest)
-
-#     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-#     s_presyn = only(outputs(blox_src; namespaced=true))
-#     eq = sys_dest.jcn ~ w*(1-sys_dest.κ)*sys_src.gₛ*s_presyn*(sys_dest.eᵣ-sys_dest.V)
-    
-#     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
-# end
-
 function Connector(
     blox_src::QIF_PING_NGNMM, 
     blox_dest::QIF_PING_NGNMM; 

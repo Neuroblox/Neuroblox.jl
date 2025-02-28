@@ -1,54 +1,6 @@
 struct Noisy end
 struct NonNoisy end
 
-# mutable struct NextGenerationBlox <: NeuralMassBlox
-#     C::Num
-#     Δ::Num
-#     η_0::Num
-#     v_syn::Num
-#     alpha_inv::Num
-#     k::Num
-#     connector::Num
-#     system::ODESystem
-#     namespace
-#     function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-#         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-#         sts    = @variables Z(t)=0.5 [output=true] g(t)=1.6
-#         Z = ModelingToolkit.unwrap(Z)
-#         g = ModelingToolkit.unwrap(g)
-#         C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
-#         eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
-#                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
-#         odesys = ODESystem(eqs, t, sts, params; name=name)
-#         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys, namespace)
-#     end
-# end
-
-# mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
-#     C::Num
-#     Δ::Num
-#     η_0::Num
-#     v_syn::Num
-#     alpha_inv::Num
-#     k::Num
-#     connector::Num
-#     system::ODESystem
-#     namespace
-#     function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-#         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-#         sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 g(t)=1.6
-#         #Z = a + ib
-        
-#         eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
-#                 D(b) ~ (1/C)*((b^2-(a-1)^2)/2 - Δ*b*(a+1) + (η_0/2)*((a+1)^2-b^2) + v_syn*(g/2)*((a+1)^2-b^2) - a*b*g),
-#                 D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
-#                ]
-#         odesys = ODESystem(eqs, t, sts, params; name=name)
-#         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.a, odesys, namespace)
-#     end
-# end
-
-
 """
     NextGenerationEIBlox(name, namespace, ...)
         Create a next-gen neural mass model of coupled theta neuron populations. For a full list of the parameters used see the reference.
@@ -91,8 +43,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
         new(Cₑ, Cᵢ, odesys.aₑ, odesys, namespace)
     end
 end
-# this assignment is temporary until all the code is changed to the new name
-# const next_generation = NextGenerationBlox
+
 
 """
     LinearNeuralMass(name, namespace)
@@ -575,33 +526,6 @@ struct PYR_Izh <: NeuralMassBlox
             new(p, sys, namespace)
     end
 end
-
-# struct QIF_PING_NGNMM <: NeuralMassBlox
-#     params
-#     system
-#     namespace
-
-#     function QIF_PING_NGNMM(;
-#                             name,
-#                             namespace=nothing,
-#                             Δ=1.0,
-#                             τₘ=20.0,
-#                             H=1.3,
-#                             I_ext=0.0,
-#                             ω=0.0,
-#                             J_internal=8.0,
-#                             A=0.0)
-#         p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
-#         Δ, τₘ, H, I_ext, J_internal = p
-#         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
-#         @brownian ξ
-#         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
-#                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
-#         sys = System(eqs, t, sts, p; name=name)
-
-#         new(p, sys, namespace)
-#     end
-# end
 
 struct QIF_PING_NGNMM{IsNoisy} <: NeuralMassBlox
     params
