@@ -1,52 +1,52 @@
 struct Noisy end
 struct NonNoisy end
 
-mutable struct NextGenerationBlox <: NeuralMassBlox
-    C::Num
-    Δ::Num
-    η_0::Num
-    v_syn::Num
-    alpha_inv::Num
-    k::Num
-    connector::Num
-    system::ODESystem
-    namespace
-    function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-        params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables Z(t)=0.5 [output=true] g(t)=1.6
-        Z = ModelingToolkit.unwrap(Z)
-        g = ModelingToolkit.unwrap(g)
-        C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
-        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
-                    D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys, namespace)
-    end
-end
+# mutable struct NextGenerationBlox <: NeuralMassBlox
+#     C::Num
+#     Δ::Num
+#     η_0::Num
+#     v_syn::Num
+#     alpha_inv::Num
+#     k::Num
+#     connector::Num
+#     system::ODESystem
+#     namespace
+#     function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
+#         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
+#         sts    = @variables Z(t)=0.5 [output=true] g(t)=1.6
+#         Z = ModelingToolkit.unwrap(Z)
+#         g = ModelingToolkit.unwrap(g)
+#         C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
+#         eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
+#                     D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
+#         odesys = ODESystem(eqs, t, sts, params; name=name)
+#         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys, namespace)
+#     end
+# end
 
-mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
-    C::Num
-    Δ::Num
-    η_0::Num
-    v_syn::Num
-    alpha_inv::Num
-    k::Num
-    connector::Num
-    system::ODESystem
-    namespace
-    function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-        params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 g(t)=1.6
-        #Z = a + ib
+# mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
+#     C::Num
+#     Δ::Num
+#     η_0::Num
+#     v_syn::Num
+#     alpha_inv::Num
+#     k::Num
+#     connector::Num
+#     system::ODESystem
+#     namespace
+#     function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
+#         params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
+#         sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 g(t)=1.6
+#         #Z = a + ib
         
-        eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
-                D(b) ~ (1/C)*((b^2-(a-1)^2)/2 - Δ*b*(a+1) + (η_0/2)*((a+1)^2-b^2) + v_syn*(g/2)*((a+1)^2-b^2) - a*b*g),
-                D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
-               ]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.a, odesys, namespace)
-    end
-end
+#         eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
+#                 D(b) ~ (1/C)*((b^2-(a-1)^2)/2 - Δ*b*(a+1) + (η_0/2)*((a+1)^2-b^2) + v_syn*(g/2)*((a+1)^2-b^2) - a*b*g),
+#                 D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
+#                ]
+#         odesys = ODESystem(eqs, t, sts, params; name=name)
+#         new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.a, odesys, namespace)
+#     end
+# end
 
 
 """
@@ -92,7 +92,7 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
     end
 end
 # this assignment is temporary until all the code is changed to the new name
-const next_generation = NextGenerationBlox
+# const next_generation = NextGenerationBlox
 
 """
     LinearNeuralMass(name, namespace)
