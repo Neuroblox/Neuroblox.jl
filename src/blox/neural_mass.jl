@@ -520,6 +520,28 @@ struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
     end
 end
 
+"""
+    PYR_Izh(name, namespace, ...)
+
+    This is the basic Izhikevich next-gen neural mass as described in [1].
+    The corresponding connector is set up to allow for connections between masses, but the
+    user must add their own $\\kappa$ values to the connection weight as there is no
+    good way of accounting for this weight within/between regions.
+    
+    Currently, the connection weights include the presynaptic $ g_s $, but this could be changed.
+
+    Equations:
+        To be added once we have a final form that we like here.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citation:
+Chen/Campbell citation
+
+"""
 struct PYR_Izh <: NeuralMassBlox
     params
     system
