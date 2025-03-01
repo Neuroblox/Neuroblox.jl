@@ -1319,8 +1319,9 @@ function Connector(
     sys_pre = blox_src.system
     sys_post = blox_dest.system
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-    eq = sys_post.jcn ~ w*blox_src.params.g_NMDA*sys_pre.OAA*(sys_post.V - blox_src.params.E_NMDA)
+    g_NMDA = haskey(kwargs, :g_NMDA) ? kwargs[:g_NMDA] : 8.5
+    E_NMDA = haskey(kwargs, :E_NMDA) ? kwargs[:E_NMDA] : 0.0
+    eq = sys_post.jcn ~ w*g_NMDA*sys_pre.O_AA*(sys_post.V - E_NMDA)
 
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 
