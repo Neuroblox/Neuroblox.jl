@@ -45,6 +45,7 @@ g = MetaDiGraph()
 add_edge!(g, exci => glur; weight=1.0)
 add_edge!(g, glur => nmda; weight=1.0)
 add_edge!(g, exci2 => nmda; weight=1.0)
+add_edge!(g, nmda => exci2; weight=1.0)
 
 tspan = (0.0, 500.0)
 @named sys = system_from_graph(g, graphdynamics=false)
