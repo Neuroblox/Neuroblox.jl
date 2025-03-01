@@ -3,7 +3,7 @@ using OrdinaryDiffEq
 using Random, Distributions
 using Plots
 import Neuroblox: AbstractNeuronBlox, paramscoping
-using BenchmarkTools
+#using BenchmarkTools
 
 ḡᵢ = 0.5
 ḡₑ = 0.2
@@ -24,10 +24,14 @@ for ne ∈ exci
 end
 
 tspan = (0.0, 500.0)
-begin
-    @btime @named sys = system_from_graph(g, graphdynamics=true)
-    @btime prob = ODEProblem(sys, [], tspan)
-    @btime sol = solve(prob, Tsit5(), saveat=0.5)
-end
+# begin
+#     @btime @named sys = system_from_graph(g, graphdynamics=true)
+#     @btime prob = ODEProblem(sys, [], tspan)
+#     @btime sol = solve(prob, Tsit5(), saveat=0.5)
+# end
+
+@named sys = system_from_graph(g, graphdynamics=true)
+prob = ODEProblem(sys, [], tspan)
+sol = solve(prob, Tsit5(), saveat=0.5)
 
 plot(sol, idxs=1:5:(NE+NI)*5)
