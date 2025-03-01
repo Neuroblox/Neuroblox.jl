@@ -1319,7 +1319,7 @@ function Connector(
     sys_post = blox_dest.system
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
-    eq = sys_post.jcn ~ w*sys_pre.g_NMDA*sys_pre.OAA*(sys_post.V - sys_pre.E_NMDA)
+    eq = sys_post.jcn ~ w*blox_src.params.g_NMDA*sys_pre.OAA*(sys_post.V - blox_src.params.E_NMDA)
 
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 
