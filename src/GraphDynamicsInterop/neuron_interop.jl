@@ -24,35 +24,6 @@ function define_neuron(sys; mod=@__MODULE__())
     system = structural_simplify(sys.system; fully_determined=false)
     params = get_ps(system)
     t = Symbol(get_iv(system))
-function define_neurons()
-    for (name, T) ∈ [(:hhne, HHNeuronExciBlox)
-                     (:hhni, HHNeuronInhibBlox)
-                     (:hhni_msn_adam, HHNeuronInhib_MSN_Adam_Blox)
-                     (:hhni_fsi_adam, HHNeuronInhib_FSI_Adam_Blox)
-                     (:hhne_stn_adam, HHNeuronExci_STN_Adam_Blox)
-                     (:hhni_GPe_adam, HHNeuronInhib_GPe_Adam_Blox)
-                     (:ngei, NextGenerationEIBlox)
-                     (:wc, WilsonCowan)
-                     (:ho, HarmonicOscillator)
-                     (:jr, JansenRit)  # Note! Regular JansenRit can support delays, and I have not yet implemented this!
-                     (:if, IFNeuron)
-                     (:lif, LIFNeuron) 
-                     (:qif, QIFNeuron)
-                     (:izh, IzhikevichNeuron)
-                     (:lif_exci, LIFExciNeuron)
-                     (:lif_inh, LIFInhNeuron)
-                     (:pexci, PINGNeuronExci)
-                     (:pinhib, PINGNeuronInhib)
-                     (:VdP, VanDerPol{NonNoisy})
-                     (:VdPN, VanDerPol{Noisy})
-                     (:ko, KuramotoOscillator{NonNoisy})
-                     (:kon, KuramotoOscillator{Noisy})
-                     (:adpyr, AdamPYR)
-                     (:adinp, AdamINP)]
-        sys = T(;name)
-        system = structural_simplify(sys.system; fully_determined=false)
-        params = get_ps(system)
-        t = Symbol(get_iv(system))
 
     states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
     inputs = [s for s ∈ unknowns(system) if  MTK.isinput(s)]
@@ -198,7 +169,9 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            VanDerPol{NonNoisy}(name=:VdP)
            VanDerPol{Noisy}(name=:VdPN)
            KuramotoOscillator{NonNoisy}(name=:ko)
-           KuramotoOscillator{Noisy}(name=:kon)]
+           KuramotoOscillator{Noisy}(name=:kon)
+           AdamPYR(name=:adam_pyr)
+           AdamINP(name=:adam_inp)]
     define_neuron(sys)
 end
 
