@@ -7,7 +7,7 @@ abstract type AbstractNeurotransmitter <: AbstractBlox end
 
 # Custom IfElse function to ensure differentiability so the solvers don't complain
 function heaviside(x)
-    IfElse(x > 0, 1.0, 0.0)
+    IfElse.ifelse(x > 0, 1.0, 0.0)
 end
 
 struct AdamPYR <: AbstractAdamNeuron
