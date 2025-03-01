@@ -36,7 +36,21 @@ sol = solve(prob, Tsit5(), saveat=0.5)
 
 plot(sol, idxs=1:5:(NE+NI)*5)
 
+exci = AdamPYR(name=:PYR, Iₐₚₚ=0.25)
+glur = AdamGlu(name=:Glu, θ=-59.0)
+nmda = AdamNMDAR(name=:NMDA)
+exci2 = AdamPYR(name=:PYR2, Iₐₚₚ=0.33)
 
+g = MetaDiGraph()
+add_edge!(g, exci => glur; weight=1.0)
+add_edge!(g, glur => nmda; weight=1.0)
+add_edge!(g, exci2 => nmda; weight=1.0)
+
+tspan = (0.0, 500.0)
+@named sys = system_from_graph(g, graphdynamics=false)
+prob = ODEProblem(sys, [], tspan)
+sol = solve(prob, Tsit5(), saveat=0.5)
+plot(sol, idxs=11)
 
 ## Testing Glu for threshold setting
 ## Commented out for now but useful for tuning later so leaving in the file

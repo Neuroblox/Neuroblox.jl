@@ -263,4 +263,5 @@ export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
 export AdamPYR, AdamINP
 export AdamGlu
+export AdamNMDAR
 end
