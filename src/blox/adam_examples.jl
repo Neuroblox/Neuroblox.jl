@@ -51,7 +51,7 @@ tspan = (0.0, 500.0)
 @named sys = system_from_graph(g, graphdynamics=false)
 prob = ODEProblem(sys, [], tspan)
 sol = solve(prob, Tsit5(), saveat=0.5)
-plot(sol, idxs=11)
+plot(sol)
 
 ## Testing Glu for threshold setting
 ## Commented out for now but useful for tuning later so leaving in the file

@@ -152,12 +152,11 @@ struct AdamNMDAR <: AbstractReceptor
                       k_unblock=5.4,
                       k_block=0.61,
                       α=0.0916,
-                      β=0.0465,
-                      g_nmda=8.5,
-                      E_nmda=0.0)
+                      β=0.0465
+                      )
         
-        p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, g_nmda=g_nmda, E_nmda=E_nmda)
-        k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, g_nmda, E_nmda = p
+        p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β)
+        k_on, k_off, k_r, k_d, k_unblock, k_block, α, β = p
 
         sts = @variables begin 
             Glu(t)
