@@ -1308,3 +1308,19 @@ function Connector(
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 
 end
+
+function Connector(
+    blox_src::AdamNMDAR,
+    blox_dest::AbstractAdamNeuron;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+
+    eq = sys_post.jcn ~ w*sys_pre.g_NMDA*sys_pre.OAA*(sys_post.V - sys_pre.E_NMDA)
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+
+end
