@@ -59,6 +59,8 @@ struct AdamPYR <: AbstractAdamNeuron
     end
 end
 
+struct AdamGLU <: 
+
 struct AdamINP <: AbstractAdamNeuron
     params
     system
