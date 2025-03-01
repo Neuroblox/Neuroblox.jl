@@ -55,7 +55,7 @@ struct AdamPYR <: AbstractAdamNeuron
                D(sₐₘₚₐ) ~ gₐₘₚₐ(V)*(1-sₐₘₚₐ) - sₐₘₚₐ/τₑ
         ]
 
-        sys = ODESystem(eqs, t, sts, p; name=name)
+        sys = System(eqs, t, sts, p; name=name)
 
         new(p, sys, namespace)
 
@@ -107,10 +107,32 @@ struct AdamINP <: AbstractAdamNeuron
                D(sᵧ) ~ gᵧ(V)*(1-sᵧ) - sᵧ/τᵢ
         ]
 
-        sys = ODESystem(eqs, t, sts, p; name=name)
+        sys = System(eqs, t, sts, p; name=name)
 
         new(p, sys, namespace)
 
     end
 end
 
+struct AdamGlu <: AbstractNeurotransmitter
+    params
+    system
+    namespace
+
+    function AdamGlu(;name,
+                      namespace=nothing,
+                      Glu_max = 1.0,
+                      τ_Glu=1.2,
+                      θ=10.0)
+
+        p = paramscoping(Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
+        Glu_max, τ_Glu, θ = p
+        sts = @variables Glu(t)=0.0 [output=true] jcn(t) [input=true]
+
+        eqs = [D(Glu) ~ Glu_max*heaviside(jcn - θ) - Glu/τ_Glu]
+       
+        sys = System(eqs, t, sts, p; name=name)
+
+        new(p, sys, namespace)
+    end
+end
