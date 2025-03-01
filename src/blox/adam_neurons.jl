@@ -152,7 +152,9 @@ struct AdamNMDAR <: AbstractReceptor
                       k_unblock=5.4,
                       k_block=0.61,
                       α=0.0916,
-                      β=0.0465)
+                      β=0.0465,
+                      g_nmda=8.5,
+                      E_nmda=0.0)
         
         p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β)
         k_on, k_off, k_r, k_d, k_unblock, k_block, α, β = p
@@ -188,7 +190,7 @@ struct AdamNMDAR <: AbstractReceptor
                 D(C_B) ~ k_off*C_AB - 2*k_on*Glu*C_B
               ]
 
-        sys = System( eqs, t, sts, p; name=name)
+        sys = System(eqs, t, sts, p; name=name)
 
         new(p, sys, namespace)
     end
