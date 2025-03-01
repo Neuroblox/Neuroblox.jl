@@ -114,6 +114,7 @@ struct AdamINP <: AbstractAdamNeuron
     end
 end
 
+# Threshold θ is set to -59 mV so that the total impulse of an average spike is about 1.0
 struct AdamGlu <: AbstractNeurotransmitter
     params
     system
@@ -123,7 +124,7 @@ struct AdamGlu <: AbstractNeurotransmitter
                       namespace=nothing,
                       Glu_max = 1.0,
                       τ_Glu=1.2,
-                      θ=10.0)
+                      θ=-59.0)
 
         p = paramscoping(Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
         Glu_max, τ_Glu, θ = p

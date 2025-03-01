@@ -1257,3 +1257,19 @@ function Connector(
 
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 end
+
+function Connector(
+    blox_src::AdamPYR,
+    blox_dest::AdamGlu;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+
+    eq = sys_post.jcn ~ sys_pre.V
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+
+end
