@@ -1274,3 +1274,38 @@ function Connector(
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 
 end
+
+# An alternative thought - could lower threshold to have larger impulses and set a max here
+# to prevent [Glu] > [Glu]_max. Not doing that for now because don't want to mess with the
+# potential softmax issue (probably negligible though).
+function Connector(
+    blox_src::AdamGlu,
+    blox_dest::AdamNMDAR;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+
+    eq = sys_post.Glu ~ sys_pre.Glu
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+
+end
+
+function Connector(
+    blox_src::AbstractAdamNeuron,
+    blox_dest::AdamNMDAR;
+    kwargs...
+)
+
+    sys_pre = blox_src.system
+    sys_post = blox_dest.system
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+
+    eq = sys_post.V ~ sys_pre.V
+
+    return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
+
+end
