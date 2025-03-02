@@ -151,6 +151,45 @@ tspan = (0.0, 500.0)
 @time prob = ODEProblem(sys, [], tspan)
 @time sol = solve(prob, Tsit5(), saveat=0.5)
 
+function make_nmda_edge!(g, prenrn, postnrn)
+    glu = AdamGlu(name=Symbol("Glu$(prenrn.name)_$(postnrn.name)"))
+    nmda = AdamNMDAR(name=Symbol("NMDA$(prenrn.name)_$(postnrn.name)"))
+    add_edge!(g, prenrn => glu; weight=1.0)
+    add_edge!(g, glu => nmda; weight=1.0)
+    add_edge!(g, postnrn => nmda; weight=1.0)
+    add_edge!(g, nmda => postnrn; weight=1.0)
+end
+
+NE = 80
+NI = 20
+
+exci = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=rand(Normal(1.5, 0.05))) for i in 1:NE]
+inhi = [AdamINP(name=Symbol("INP$i"), Iₐₚₚ=rand(Normal(0.1, 0.05))) for i in 1:NI] # bump up to 0.3
+
+g = MetaDiGraph()
+
+for ne ∈ exci
+    for ni ∈ inhi
+        make_nmda_edge!(g, ne, ni)
+    end
+end
+
+for ne ∈ exci
+    for ne ∈ exci
+        add_edge!(g, ne => ne; weight=1.0)
+    end
+end
+
+for ni ∈ inhi
+    for ne ∈ exci[1:20]
+        add_edge!(g, ni => ne; weight=ḡᵢ/NI)
+    end
+end
+
+tspan = (0.0, 500.0)
+@time @named sys = system_from_graph(g, graphdynamics=true)
+@time prob = ODEProblem(sys, [], tspan)
+@time sol = solve(prob, Tsit5(), saveat=0.5)
 
 ## Testing Glu for threshold setting
 ## Commented out for now but useful for tuning later so leaving in the file
