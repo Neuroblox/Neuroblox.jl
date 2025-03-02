@@ -54,7 +54,11 @@ using ..Neuroblox:
     VanDerPol,
     AdamPYR,
     AdamINP,
-    AbstractAdamNeuron
+    AbstractAdamNeuron,
+    AdamNMDAR,
+    AbstractReceptor,
+    AdamGlu,
+    AbstractNeurotransmitter
 
 using GraphDynamics:
     GraphDynamics,
