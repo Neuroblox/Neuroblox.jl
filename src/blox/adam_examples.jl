@@ -129,8 +129,8 @@ prob = ODEProblem(sys, [], tspan)
 sol = solve(prob, Tsit5(), saveat=0.5)
 plot(sol)
 
-NE = 80
-NI = 80
+NE = 800
+NI = 800
 
 exci = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=rand(Normal(0.25, 0.05))) for i in 1:NE]
 inhi = [AdamINP(name=Symbol("INP$i"), Iₐₚₚ=rand(Normal(0.3, 0.05))) for i in 1:NI] # bump up to 0.3
