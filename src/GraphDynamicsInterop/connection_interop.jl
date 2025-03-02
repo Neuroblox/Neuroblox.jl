@@ -1050,7 +1050,6 @@ end
 # #-------------------------
 # Adam Network
 # #-------------------------
-# PING Network
 struct AdamConnection <: ConnectionRule
     w::Float64
     V_E::Float64
@@ -1071,14 +1070,33 @@ end
 
 function (c::AdamConnection)(blox_src::Subsystem{AdamPYR}, blox_dst::Subsystem{<:AbstractAdamNeuron})
     (; w, V_E) = c
-    (;sₐₘₚₐ) = blox_src
-    (;V) = blox_dst
+    (; sₐₘₚₐ) = blox_src
+    (; V) = blox_dst
     (; jcn = w * sₐₘₚₐ * (V - V_E))
 end
 
 function (c::AdamConnection)(blox_src::Subsystem{AdamINP}, blox_dst::Subsystem{<:AbstractAdamNeuron})
     (; w, V_I) = c
-    (;sᵧ) = blox_src
-    (;V) = blox_dst
+    (; sᵧ) = blox_src
+    (; V) = blox_dst
     (; jcn = w * sᵧ * (V - V_I))
 end
+
+function (c::BasicConnection)(blox_src::Subsystem{AdamPYR}, blox_dst::Subsystem{AdamGlu})
+    w = c.weight
+    (; V) = blox_src
+    (; jcn = V)
+end
+
+# using Accessors
+# function (c::AdamConnection)(sys_src::Subsystem{AdamGlu}, sys_dst::Subsystem{AdamNMDAR})
+#     w = c.weight
+#     input = initialize_input(sys_dest)
+#     @set input.Glu = sys_src.Glu
+# end
+
+# function (c::AdamConnection)(sys_src::Subsystem{<:AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR})
+#     w = c.weight
+#     input = initialize_input(sys_dest)
+#     @set input.V = sys_src.V
+# end

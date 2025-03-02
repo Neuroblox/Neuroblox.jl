@@ -171,7 +171,9 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            KuramotoOscillator{NonNoisy}(name=:ko)
            KuramotoOscillator{Noisy}(name=:kon)
            AdamPYR(name=:adam_pyr)
-           AdamINP(name=:adam_inp)]
+           AdamINP(name=:adam_inp)
+           AdamGlu(name=:adam_glu)
+           AdamNMDAR(name=:adam_nmdar)]
     define_neuron(sys)
 end
 
@@ -283,3 +285,27 @@ function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsyste
     vparams[] = @set params.jcn_ = jcn
     nothing
 end
+
+# GraphDynamics.initialize_input(s::Subsystem{AdamNMDAR}) = (; Glu = 0.0, V = 0.0)
+
+# function GraphDynamics.subsystem_differential(sys::Subsystem{AdamNMDAR}, inputs, t)
+#     # Unpack the system
+#     (; C, C_A, C_AA, D_AA, O_AA, O_AAB, C_AAB, D_AAB, C_AB, C_B) = sys
+#     (; k_on, k_off, k_r, k_d, k_unblock, k_block, α, β) = sys
+#     (; Glu, V) = inputs
+
+#     # Differential equations
+#     SubsystemStates{AdamNMDAR}(
+#         #=d/dt=# C = k_off*C_A - 2*k_on*Glu*C,
+#         #=d/dt=# C_A = 2*k_off*C_AA + 2*k_on*Glu*C - (k_on*Glu + k_off)*C_A,
+#         #=d/dt=# C_AA = k_on*Glu*C_A + α*O_AA + k_r*D_AA - (2*k_off + β + k_d)*C_AA,
+#         #=d/dt=# D_AA = k_d*C_AA - k_r*D_AA,
+#         #=d/dt=# O_AA = k_r*D_AA - α*O_AA,
+#         #=d/dt=# O_AAB = k_unblock*C_AAB - k_block*O_AAB,
+#         #=d/dt=# C_AAB = k_block*O_AAB - k_unblock*C_AAB,
+#         #=d/dt=# D_AAB = k_d*C_AAB - k_r*D_AAB,
+#         #=d/dt=# C_AB = k_off*C_AAB - 2*k_on*Glu*C_AB,
+#         #=d/dt=# C_B = k_off*C_AB - 2*k_on*Glu*C_B
+#     )
+
+# end
