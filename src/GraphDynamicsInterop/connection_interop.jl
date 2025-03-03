@@ -256,7 +256,7 @@ end
 
 ##----------------------------------------------
 # Next Generation EI
-function get_connection(asc_src::NextGenerationEIBlox, 
+function get_connection(asc_src::NGNMM_theta, 
                         HH_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox},
                         kwargs)
     sys_src = get_namespaced_sys(asc_src)
@@ -265,7 +265,7 @@ function get_connection(asc_src::NextGenerationEIBlox,
     (; conn = BasicConnection(w_val), names = [name,])
 end
 
-function (c::BasicConnection)((;aₑ, bₑ, Cₑ)::Subsystem{NextGenerationEIBlox}, 
+function (c::BasicConnection)((;aₑ, bₑ, Cₑ)::Subsystem{NGNMM_theta}, 
                               HH_dst::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}})
     w = c.weight
     acc = initialize_input(HH_dst)

@@ -254,27 +254,6 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "Next Generation Neural Mass" begin
-    """
-    complex neural mass model test (next generation neural mass model)
-    This test generates a neural mass model using the kuramoto order parameter
-    to capture within-population synchrony. A model is generated and then
-    the phase of oscillations is computed (ψ) along with synchrony (R). 
-    This model has no input, and therefore oscillations and synchrony should
-    tend toward zero.
-    """
-    @named macroscopic_model = next_generation(C=30, Δ=1.0, η_0=5.0, v_syn=-10, alpha_inv=35, k=0.105)
-    sim_dur = 1000.0 
-    sol = simulate(structural_simplify(macroscopic_model.system), [0.5 + 0.0im, 1.6 + 0.0im], (0.0, sim_dur), [], Tsit5(); saveat=0.01,reltol=1e-4,abstol=1e-4)
-
-    C=30
-    W = (1 .- conj.(sol[!,"Z(t)"]))./(1 .+ conj.(sol[!,"Z(t)"]))
-    R = (1/(C*pi))*(W+conj.(W))/2
-    ψ = log.(sol[!,"Z(t)"]./R)/im
-
-    @test norm.(R[length(R)]) < 0.1
-end
-
 """
 stochastic.jl test
 
@@ -327,87 +306,6 @@ end
     @test std(sol[2,:]) > 0.0 # there should be variance
 end
 
-# @testset "OUBlox-OUCouplingBlox network" begin
-#     @named coupling = LinearNeuralMass()   # TODO: this here needs to be a linear function not a linear differential equation.
-#     @named ou = OUBlox()
-#     @named oucp = OUBlox(μ=2.0, σ=1.0, τ=1.0)
-#     g = MetaDiGraph()
-#     add_blox!.(Ref(g), [coupling, ou, oucp])
-#     add_edge!(g, 2, 1, Dict(:weight => ou.system.x))
-#     @named sys = system_from_graph(g)
-#     ousimpl = structural_simplify(sys)
-#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
-#     sol = solve(prob_oucp)
-#     @test sol.retcode == SciMLBase.ReturnCode.Success
-#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-# end
-
-# @testset "OUBlox-OUCouplingBlox network" begin
-#     @named ou1 = OUBlox()
-#     @named oucp = OUCouplingBlox(μ=2.0, σ=1.0, τ=1.0)
-#     sys = [ou1.system, oucp.system]
-#     eqs = [sys[1].jcn ~ 0.0, sys[2].jcn ~ sys[1].x]
-#     @named ou1connected = compose(System(eqs, t;name=:connected),sys)
-#     ousimpl = structural_simplify(ou1connected)
-#     prob_oucp = SDEProblem(ousimpl,[],(0.0,10.0))
-#     sol = solve(prob_oucp)
-#     @test sol.retcode == SciMLBase.ReturnCode.Success
-#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-# end
-
-# @testset "OUBlox-OUCouplingBlox larger network" begin
-#     @named ou1 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-#     @named ou2 = OUBlox(μ=0.0, σ=1.0, τ=3.0)
-#     @named oucp1 = OUCouplingBlox(μ=-0.1, σ=0.02, τ=10)
-#     @named oucp2 = OUCouplingBlox(μ=-0.2, σ=0.02, τ=10)
-#     sys = [ou1.system, ou2.system, oucp1.system, oucp2.system]
-#     eqs = [sys[1].jcn ~ oucp1.connector,
-#            sys[2].jcn ~ oucp2.connector,
-#            sys[3].jcn ~ ou2.connector,
-#            sys[4].jcn ~ ou1.connector]
-#     @named ouconnected = compose(System(eqs, t; name=:connected), sys)
-#     ousimpl = structural_simplify(ouconnected)
-#     prob_ouconnect = SDEProblem(ousimpl,[0,0,-0.1,-0.2],(0.0,100.0))
-#     sol = solve(prob_ouconnect)
-#     @test sol.retcode == SciMLBase.ReturnCode.Success
-#     @test std(sol[1,:].*sol[2,:]) > 0.0 # there should be variance
-#     #@test cor(sol[1,:],sol[2,:]) < 0.2 # Pearson correlation should be negative or small
-# end
-
-# @testset "Time-series output" begin
-#     phase_int = phase_inter(0:3,[0.0,1.0,2.0,1.0])
-#     phase_cos_out(ω,t) = phase_cos_blox(ω,t,phase_int)
-#     phase_sin_out(ω,t) = phase_sin_blox(ω,t,phase_int)
-#     @test phase_cos_out(0.1,2.5)≈0.9689124217106447
-#     @test phase_sin_out(0.1,2.5)≈0.24740395925452294
-
-#     # now test how to connect this time series to a neural mass blox
-#     @named Str2 = jansen_ritC(τ=0.0022, H=20, λ=300, r=0.3)
-#     @parameters phase_input = 0
-
-#     sys = [Str2.system]
-#     eqs = [sys[1].jcn ~ phase_input]
-#     @named phase_system = ODESystem(eqs,systems=sys)
-#     phase_system_simpl = structural_simplify(phase_system)
-#     phase_ode = ODEProblem(phase_system_simpl,[],(0,3.0),[])
-
-#     # create callback functions
-#     # we always want to update phase_input to be our phase_cos_out(t)
-#     condition = function (u,t,integrator)
-#         true
-#     end
-
-#     function affect!(integrator)
-#         integrator.p[1] = phase_cos_out(10*pi,integrator.t)
-#     end
-
-#     cb = DiscreteCallback(condition,affect!)
-
-#     sol = solve(phase_ode,Tsit5(),callback=cb)
-#     @test sol.retcode == SciMLBase.ReturnCode.Success
-#     @test sol[2,:][5] ≈ 13.49728948607267
-# end
-
 @testset "HH Neuron excitatory & inhibitory network" begin
     nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
     nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
@@ -431,7 +329,7 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "NextGenerationEIBlox connected to neuron" begin
+@testset "NGNMM_theta connected to neuron" begin
     global_ns = :g 
     @named LC = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
     @named nn = HHNeuronExciBlox(;namespace=global_ns)
@@ -446,9 +344,9 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "NextGenerationEIBlox connected to CorticalBlox" begin
+@testset "NGNMM_theta connected to CorticalBlox" begin
     global_ns = :g 
-    @named LC = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
+    @named LC = NGNMM_theta(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
     @named cb = CorticalBlox(N_wta=2, N_exci=2, namespace=global_ns, density=0.1, weight=1)
     assembly = [LC, cb]
     g = MetaDiGraph()
@@ -744,9 +642,9 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "QIF_PING" begin
-    @named exci_PING = QIF_PING_NGNMM(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
-    @named inhi_PING = QIF_PING_NGNMM(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
+@testset "NGNMM_QIF" begin
+    @named exci_PING = NGNMM_QIF(I_ext=10.0, ω=5*2*π/1000, J_internal=8.0, H=1.3, Δ=1.0, τₘ=20.0, A=0.2)
+    @named inhi_PING = NGNMM_QIF(I_ext=5.0, ω=5*2*π/1000, J_internal=0.0, H=-5.0, Δ=1.0, τₘ=10.0, A=0.0)
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), [exci_PING, inhi_PING])
@@ -761,9 +659,9 @@ end
     @test sol.retcode == ReturnCode.Success
 end
 
-@testset "PYR_Izh" begin
-    @named popP = PYR_Izh(η̄=0.08, κ=0.8)
-    @named popQ = PYR_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
+@testset "NGNMM_Izh" begin
+    @named popP = NGNMM_Izh(η̄=0.08, κ=0.8, ζ=0.1)
+    @named popQ = NGNMM_Izh(η̄=0.08, κ=0.2, wⱼ=0.0095, a=0.077)
 
     g = MetaDiGraph()
     add_blox!.(Ref(g), [popP, popQ])
@@ -773,8 +671,8 @@ end
     @named sys = system_from_graph(g)
 
     sim_dur = 200.0
-    prob = ODEProblem(sys, [], (0.0, sim_dur))
-    sol = solve(prob, Tsit5(), saveat=1.0)
+    prob = SDEProblem(sys, [], (0.0, sim_dur))
+    sol = solve(prob, RKMil(), saveat=1.0)
     @test sol.retcode == ReturnCode.Success
 end
 

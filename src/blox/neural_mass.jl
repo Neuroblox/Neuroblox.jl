@@ -1,56 +1,8 @@
 struct Noisy end
 struct NonNoisy end
 
-mutable struct NextGenerationBlox <: NeuralMassBlox
-    C::Num
-    Δ::Num
-    η_0::Num
-    v_syn::Num
-    alpha_inv::Num
-    k::Num
-    connector::Num
-    system::ODESystem
-    namespace
-    function NextGenerationBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-        params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables Z(t)=0.5 [output=true] g(t)=1.6
-        Z = ModelingToolkit.unwrap(Z)
-        g = ModelingToolkit.unwrap(g)
-        C, Δ, η_0, v_syn, alpha_inv, k = map(ModelingToolkit.unwrap, [C, Δ, η_0, v_syn, alpha_inv, k])
-        eqs = [Equation(D(Z), (1/C)*(-im*((Z-1)^2)/2 + (((Z+1)^2)/2)*(-Δ + im*(η_0) + im*v_syn*g) - ((Z^2-1)/2)*g))
-                    D(g) ~ alpha_inv*((k/(C*pi))*(1-abs(Z)^2)/(1+Z+conj(Z)+abs(Z)^2) - g)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.Z, odesys, namespace)
-    end
-end
-
-mutable struct NextGenerationResolvedBlox <: NeuralMassBlox
-    C::Num
-    Δ::Num
-    η_0::Num
-    v_syn::Num
-    alpha_inv::Num
-    k::Num
-    connector::Num
-    system::ODESystem
-    namespace
-    function NextGenerationResolvedBlox(;name,namespace=nothing, C=30.0, Δ=1.0, η_0=5.0, v_syn=-10.0, alpha_inv=35.0, k=0.105)
-        params = @parameters C=C Δ=Δ η_0=η_0 v_syn=v_syn alpha_inv=alpha_inv k=k
-        sts    = @variables a(t)=0.5 [output=true] b(t)=0.0 g(t)=1.6
-        #Z = a + ib
-        
-        eqs = [ D(a) ~ (1/C)*(b*(a-1) - (Δ/2)*((a+1)^2-b^2) - η_0*b*(a+1) - v_syn*g*b*(a+1) - (g/2)*(a^2-b^2-1)),
-                D(b) ~ (1/C)*((b^2-(a-1)^2)/2 - Δ*b*(a+1) + (η_0/2)*((a+1)^2-b^2) + v_syn*(g/2)*((a+1)^2-b^2) - a*b*g),
-                D(g) ~ alpha_inv*((k/(C*pi))*((1-a^2-b^2)/(1+2*a+a^2+b^2)) - g)
-               ]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-        new(C, Δ, η_0, v_syn, alpha_inv, k, odesys.a, odesys, namespace)
-    end
-end
-
-
 """
-    NextGenerationEIBlox(name, namespace, ...)
+    NGNMM_theta(name, namespace, ...)
         Create a next-gen neural mass model of coupled theta neuron populations. For a full list of the parameters used see the reference.
         Each mass consists of a population of two neurons ``a`` and ``b``, coupled using different synaptic terms ``g``. The entire expression of these is given by:
 ```math
@@ -63,16 +15,19 @@ end
     \\frac{g_ie}{dt} = \\alpha_{inv, ie} (\\frac{k_{ie}}{C_e \\pi} \\frac{1-a_e^2-b_e^2}{(1+2*a_e+a_e^2+b_e^2)} - g_{ie})
     \\frac{g_ii}{dt} = \\alpha_{inv, ii} (\\frac{k_{ii}}{C_i \\pi} \\frac{1-a_i^2-b_i^2}{(1+2*a_i+a_i^2+b_i^2)} - g_{ii})
 ```
+
+Can alternatively be called by ``NextGenerationEIBlox()``, but this is deprecated and will be removed in future updates.
+
 Citations:
 1. Byrne Á, O'Dea RD, Forrester M, Ross J, Coombes S. Next-generation neural mass and field modeling. J Neurophysiol. 2020 Feb 1;123(2):726-742. doi: 10.1152/jn.00406.2019.
 """
-mutable struct NextGenerationEIBlox <: NeuralMassBlox
+mutable struct NGNMM_theta <: NeuralMassBlox
     Cₑ::Num
     Cᵢ::Num
     connector::Num
     system::ODESystem
     namespace
-    function NextGenerationEIBlox(;name,namespace=nothing, Cₑ=30.0,Cᵢ=30.0, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0, alpha_invₑᵢ=0.8, alpha_invᵢₑ=10.0, alpha_invᵢᵢ=0.8, kₑₑ=0, kₑᵢ=0.5, kᵢₑ=0.65, kᵢᵢ=0)
+    function NGNMM_theta(;name,namespace=nothing, Cₑ=30.0,Cᵢ=30.0, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0, alpha_invₑᵢ=0.8, alpha_invᵢₑ=10.0, alpha_invᵢᵢ=0.8, kₑₑ=0, kₑᵢ=0.5, kᵢₑ=0.65, kᵢᵢ=0)
         params = @parameters Cₑ=Cₑ Cᵢ=Cᵢ Δₑ=Δₑ Δᵢ=Δᵢ η_0ₑ=η_0ₑ η_0ᵢ=η_0ᵢ v_synₑₑ=v_synₑₑ v_synₑᵢ=v_synₑᵢ v_synᵢₑ=v_synᵢₑ v_synᵢᵢ=v_synᵢᵢ alpha_invₑₑ=alpha_invₑₑ alpha_invₑᵢ=alpha_invₑᵢ alpha_invᵢₑ=alpha_invᵢₑ alpha_invᵢᵢ=alpha_invᵢᵢ kₑₑ=kₑₑ kₑᵢ=kₑᵢ kᵢₑ=kᵢₑ kᵢᵢ=kᵢᵢ
         sts    = @variables aₑ(t)=-0.6 [output=true] bₑ(t)=0.18 aᵢ(t)=0.02 bᵢ(t)=0.21 gₑₑ(t)=0 gₑᵢ(t)=0.23 gᵢₑ(t)=0.26 gᵢᵢ(t)=0
         
@@ -91,8 +46,9 @@ mutable struct NextGenerationEIBlox <: NeuralMassBlox
         new(Cₑ, Cᵢ, odesys.aₑ, odesys, namespace)
     end
 end
-# this assignment is temporary until all the code is changed to the new name
-const next_generation = NextGenerationBlox
+
+NextGenerationEIBlox(; kwargs...) = NGNMM_theta(; kwargs...)
+
 
 """
     LinearNeuralMass(name, namespace)
@@ -520,12 +476,34 @@ struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
     end
 end
 
-struct PYR_Izh <: NeuralMassBlox
+"""
+    NGNMM_Izh(name, namespace, ...)
+
+    This is the basic Izhikevich next-gen neural mass as described in [1].
+    The corresponding connector is set up to allow for connections between masses, but the
+    user must add their own \$ \\kappa \$ values to the connection weight as there is no
+    good way of accounting for this weight within/between regions.
+    
+    Currently, the connection weights include the presynaptic \$ g_s \$, but this could be changed.
+
+    Equations:
+        To be added once we have a final form that we like here.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citation:
+Chen/Campbell citation
+
+"""
+struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
 
-    function PYR_Izh(;
+    function NGNMM_Izh(;
                 name,
                 namespace=nothing,
                 Δ=0.02,
@@ -540,35 +518,93 @@ struct PYR_Izh <: NeuralMassBlox
                 sⱼ=1.2308,
                 τₛ=2.6,
                 κ=1.0,
-                ω=0.0)
-            p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
-            Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
-            sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-            eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
-                    D(V) ~ V^2 - α*V - w + η̄ + I_ext*sin(ω*t) + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
-                    D(w) ~ a*(b*V - w) + wⱼ*r,
-                    D(s) ~ -s/τₛ + sⱼ*r
-                ]
-            sys = System(eqs, t, sts, p; name=name)
-            new(p, sys, namespace)
+                ζ=0.0)
+        if ζ == 0
+            NGNMM_Izh{NonNoisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ)
+        else
+            NGNMM_Izh{Noisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ)
+        end
+
+    end
+    function NGNMM_Izh{NonNoisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0)
+        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
+        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
+                D(w) ~ a*(b*V - w) + wⱼ*r,
+                D(s) ~ -s/τₛ + sⱼ*r
+              ]
+        sys = System(eqs, t, sts, p; name=name)
+        new(p, sys, namespace)
+    end
+    function NGNMM_Izh{Noisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0, ζ=0.0)
+        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, τₛ=τₛ, κ=κ, ζ=ζ)
+        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ = p
+        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
+        @brownian ξ
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + ζ*ξ + jcn - (π*r)^2,
+                D(w) ~ a*(b*V - w) + wⱼ*r,
+                D(s) ~ -s/τₛ + sⱼ*r
+              ]
+        sys = System(eqs, t, sts, p; name=name)
+        new{Noisy}(p, sys, namespace)
     end
 end
 
-struct QIF_PING_NGNMM <: NeuralMassBlox
+"""
+    NGNMM_QIF(name, namespace, ...)
+
+    This is the basic QIF next-gen neural mass as described in [1].
+    This includes the connections via firing rate as described in [1] and the optional noise term.
+    
+    Equations:
+        To be added once we have a final form that we like here.
+
+Arguments:
+- name: Name given to ODESystem object within the blox.
+- namespace: Additional namespace above name if needed for inheritance.
+- Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
+
+Citation:
+Theta-nested gamma bursts by Torcini group.
+
+"""
+struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     params
     system
     namespace
 
-    function QIF_PING_NGNMM(;
-                            name,
-                            namespace=nothing,
-                            Δ=1.0,
-                            τₘ=20.0,
-                            H=1.3,
-                            I_ext=0.0,
-                            ω=0.0,
-                            J_internal=8.0,
-                            A=0.0)
+    function NGNMM_QIF(;
+                        name,
+                        namespace=nothing,
+                        Δ=1.0,
+                        τₘ=20.0,
+                        H=1.3,
+                        I_ext=0.0,
+                        ω=0.0,
+                        J_internal=8.0,
+                        A=0.0)
+        if A == 0
+            NGNMM_QIF{NonNoisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal)
+        else
+            NGNMM_QIF{Noisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal, A)
+        end
+    end
+
+    function NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0)
+        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
+        Δ, τₘ, H, I_ext, J_internal = p
+        sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
+        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
+               D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
+        sys = System(eqs, t, sts, p; name=name)
+
+        new{NonNoisy}(p, sys, namespace)
+    end
+
+    function NGNMM_QIF{Noisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0, A=0.0)
         p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
         Δ, τₘ, H, I_ext, J_internal = p
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
@@ -577,7 +613,7 @@ struct QIF_PING_NGNMM <: NeuralMassBlox
                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
         sys = System(eqs, t, sts, p; name=name)
 
-        new(p, sys, namespace)
+        new{Noisy}(p, sys, namespace)
     end
 end
 
