@@ -113,6 +113,7 @@ include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
 include("blox/discrete.jl")
 include("blox/ping_neuron_examples.jl")
+include("blox/adam_neurons.jl")
 include("blox/reinforcement_learning.jl")
 include("gui/GUI.jl")
 include("blox/connections.jl")
@@ -260,4 +261,7 @@ export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, 
 export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
+export AdamPYR, AdamINP
+export AdamGlu
+export AdamNMDAR
 end
