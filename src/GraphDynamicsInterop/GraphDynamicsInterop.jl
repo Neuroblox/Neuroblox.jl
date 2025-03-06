@@ -146,6 +146,10 @@ using Symbolics:
     get_variables,
     simplify
 
+using StatsBase:
+    StatsBase,
+    countmap
+
 include("neuron_interop.jl")
 include("connection_interop.jl")
 
@@ -343,8 +347,13 @@ function graphsystem_from_graph(_g::MetaDiGraph; sparsity_heuristic=1.0, sparse_
     subsystems_and_names_flat = map(vertices(g)) do i
         (subsystem = get_subsystem(g, i), name = get_name(g, i))
     end
-    names_flat = map(last, subsystems_and_names_flat)
     subsystems_flat = map(first, subsystems_and_names_flat)
+    names_flat = map(last, subsystems_and_names_flat)
+    if !allunique(names_flat)
+        cm = countmap(names_flat)
+        dup_names = join((":$name ($cnt occurances)" for (name, cnt) in countmap(names_flat) if cnt > 1), ", ")
+        error("All subsystems must have unique names, got duplicate names: $dup_names")
+    end
 
     subsystem_types = get_sorted_subsystem_types(subsystems_flat)
     
