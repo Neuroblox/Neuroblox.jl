@@ -28,7 +28,7 @@ function lyap(jacs::Vector{Matrix}, dt=1)
         q, r = qr(jacs[t] * q_store)
         d = sign.(diag(r))
         d[d .== 0] .= 1
-        q_store = q*diagm(d)
+        q_store = q*Diagonal(d)
 
         dr = diag(diagm(d)*r)
         idx = dr .> 0
