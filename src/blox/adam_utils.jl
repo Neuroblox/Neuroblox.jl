@@ -2,20 +2,16 @@ using ForwardDiff
 using LinearAlgebra
 
 function compute_jacs(sol, prob, tspan; dt=1)
-    jacs = Vector{Matrix}()
     p = prob.p
-    
-    for _t in collect(tspan[1]:dt:tspan[2])
-        u0 = sol(_t)
-        function diff_function(u)
-            du = similar(u)
-            prob.f(du, u, p, _t)
-            du
-        end
-        push!(jacs, ForwardDiff.jacobian(diff_function, u0))
+    function diff_function(u)
+        du = similar(u)
+        prob.f(du, u, p, _t)
+        du
     end
-
-    jacs
+    jacs = map(tspan[1]:dt:tspan[2]) do _t
+        u0 = sol(_t)
+        ForwardDiff.jacobian(diff_function, u0)
+    end
 end
 
 function lyap(jacs::Vector{Matrix}, dt=1)
