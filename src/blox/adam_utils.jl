@@ -30,7 +30,7 @@ function lyap(jacs::Vector{Matrix}, dt=1)
         d[d .== 0] .= 1
         q_store = q*Diagonal(d)
 
-        dr = diag(diagm(d)*r)
+        dr = diag(Diagonal(d)*r)
         idx = dr .> 0
         lexpᵢ = log.(dr[idx])
         lexp[idx] .+= lexpᵢ
