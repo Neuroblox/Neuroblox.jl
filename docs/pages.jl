@@ -9,8 +9,9 @@ pages = ["index.md",
         "tutorials/parkinsons.md",
         "tutorials/basal_ganglia.md",
         "tutorials/neural_assembly.md",
-        "tutorials/spectralDCM.md"
+        "tutorials/spectralDCM.md",
     ],
+    "Dev Tutorials" => ["dev_tutorials/graph_dynamics_interop.md"],
     "API" => "api.md",
     "Release Notes" => "release_notes.md",
 ]
