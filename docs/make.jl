@@ -11,11 +11,18 @@ Literate.markdown.([
     "./docs/src/tutorials/ping_network.jl",
     "./docs/src/tutorials/basal_ganglia.jl",
     "./docs/src/tutorials/spectralDCM.jl",
-    "./docs/src/tutorials/graph_dynamics_interop.jl",
     ],
     "./docs/src/tutorials";
     documenter = true
 )
+
+Literate.markdown.([
+    "./docs/src/dev_tutorials/graph_dynamics_interop.jl"
+],
+    "./docs/src/dev_tutorials";
+    documenter = true
+)
+
 
 cp("./docs/Manifest.toml", "./docs/src/assets/Manifest.toml", force = true)
 cp("./docs/Project.toml", "./docs/src/assets/Project.toml", force = true)

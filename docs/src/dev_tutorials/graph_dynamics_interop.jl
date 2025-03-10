@@ -298,7 +298,7 @@ function GraphDynamicsInterop.to_subsystem(d::DBS)
     ## Extract the DBS stimulus function
     stimulus = getfield(d, :stimulus)
     params = SubsystemParams{DBS}(; stimulus)
-    
+
     ## Return *empty* states
     states = SubsystemStates{DBS}()
 
@@ -327,9 +327,9 @@ function Neuroblox.Connector(
 )
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
-    
+
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    
+
     eq = sys_dest.jcn ~ w * sys_src.u
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
@@ -338,9 +338,9 @@ end
 # Then the GraphDynamics version of this can be as simple as
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{DBS},
-                                                   sys_dst::Subsystem{VanDerPol}, 
+                                                   sys_dst::Subsystem{VanDerPol},
                                                    t)
-    
+
     w = c.weight
     jcn_x = 0.0 # do nothing to jcn_x
     jcn = w * sys_src.stimulus(t) # drive jcn
@@ -355,7 +355,7 @@ g_vdp_dbs = MetaDiGraph()
 add_edge!(g_vdp_dbs, dbs => v1; weight=1.0)
 add_edge!(g_vdp_dbs, dbs => v2; weight=1.0)
 
-let 
+let
     @named sys = system_from_graph(g_vdp_dbs)
 
     prob = SDEProblem(sys, [], tspan; seed=seed)
@@ -370,7 +370,7 @@ end
 
 # and with GraphDynamics:
 
-let 
+let
     ## this is how we tell it to use GraphDynamics! ----------↓
     @named sys = system_from_graph(g_vdp_dbs; graphdynamics=true)
 
