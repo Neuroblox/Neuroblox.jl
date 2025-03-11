@@ -276,6 +276,26 @@ function get_gap(kwargs, name_blox1, name_blox2)
     get(kwargs, :gap, false)    
 end
 
+"""
+  check the receptor type status specified in kwargs
+"""
+function get_gaba_a(kwargs, name_blox1, name_blox2)
+    get(kwargs, :gaba_a, true)
+end
+
+function get_gaba_b(kwargs, name_blox1, name_blox2)
+    get(kwargs, :gaba_b, false)
+end
+
+function get_glu_ampa(kwargs, name_blox1, name_blox2)
+    get(kwargs, :glu_ampa, true)
+end
+
+function get_glu_nmda(kwargs, name_blox1, name_blox2)
+    get(kwargs, :glu_nmda, false)
+end
+
+
 function get_event_time(kwargs, name_blox1, name_blox2)
     get(kwargs, :t_event) do
         error("Time for the event that affects the connection from $name_blox1 to $name_blox2 is not specified.")
