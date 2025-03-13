@@ -554,8 +554,8 @@ struct IFNeuron <: AbstractNeuronBlox
 		C, θ, Eₘ, I_in = p
 		sts = @variables V(t)=-70.00 [output=true] jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
-		ev = [V~θ] => [V~Eₘ]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V >= θ) => [V~Eₘ]
+		sys = ODESystem(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
@@ -617,8 +617,8 @@ struct LIFNeuron <: AbstractNeuronBlox
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G]
 
-		ev = [V~θ] => [V~Eₘ, G~G+G_syn]
-		sys = System(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V >= θ) => [V~Eₘ, G~G+G_syn]
+		sys = System(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
@@ -840,8 +840,8 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 				D(G) ~ (-1/τ)*G + z,
 				D(z) ~ (-1/τ)*z
 			  ]
-		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~sⱼ]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V >= θ) => [V~vᵣ, w~w+wⱼ, z~sⱼ]
+		sys = ODESystem(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
