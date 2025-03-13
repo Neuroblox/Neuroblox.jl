@@ -840,8 +840,8 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 				D(G) ~ (-1/τ)*G + z,
 				D(z) ~ (-1/τ)*z
 			  ]
-		ev = [V~θ] => [V~vᵣ, w~w+wⱼ, z~sⱼ]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V >= θ) => [V~vᵣ, w~w+wⱼ, z~sⱼ]
+		sys = ODESystem(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
