@@ -554,8 +554,8 @@ struct IFNeuron <: AbstractNeuronBlox
 		C, θ, Eₘ, I_in = p
 		sts = @variables V(t)=-70.00 [output=true] jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
-		ev = [V~θ] => [V~Eₘ]
-		sys = ODESystem(eqs, t, sts, p, continuous_events=[ev]; name=name)
+		ev = (V >= θ) => [V~Eₘ]
+		sys = ODESystem(eqs, t, sts, p, discrete_events=[ev]; name=name)
 
 		new(p, sys, namespace)
 	end
