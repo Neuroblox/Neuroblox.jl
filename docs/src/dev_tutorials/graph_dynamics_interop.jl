@@ -194,7 +194,7 @@ to `computed_properties` which returns a NamedTuple whose keys are the property 
 functions to compute them:
 ===============================================================================================================#
 
-function GraphDynamics.computed_properies(v::Subsystem{VanDerPol})
+function GraphDynamics.computed_properties(v::Subsystem{VanDerPol})
     r_func(v) = √(v.x^2 + v.y^2)
     (; r = r_func)
 end
