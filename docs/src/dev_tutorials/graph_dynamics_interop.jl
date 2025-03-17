@@ -1,11 +1,12 @@
-# # Making Neuroblox models work with GraphDynamics
-#
-# In this notebook I'll show some toy examples of Neuroblox systems and make them interoperate with GraphDynamics.
-#
-# There are some functions in Neuroblox.GraphDynamicsInterop to try and automate this process, but I'm going to
-# show you here the "manual" way of doing this, which is typically going to be better supported and more powerful
-# / robust.
-#
+#===============================================================================================================
+# Making Neuroblox models work with GraphDynamics
+
+In this notebook I'll show some toy examples of Neuroblox systems and make them interoperate with GraphDynamics.
+
+There are some functions in Neuroblox.GraphDynamicsInterop to try and automate this process, but I'm going to
+show you here the "manual" way of doing this, which is typically going to be better supported and more powerful
+/ robust.
+===============================================================================================================#
 
 using Neuroblox, ModelingToolkit, GraphDynamics
 using Neuroblox.GraphDynamicsInterop
@@ -20,14 +21,16 @@ using Neuroblox:
 using CairoMakie, StochasticDiffEq
 
 using Test #src
-#
-#
-# ## Van der Pol
-#
-# First, let's consider something that's suspiciously like the noisy Van der Pol oscillator in `Neuroblox/src/blox/neural_mass.jl`, except:
-#
-# * It has 2 inputs instead of only 1 (I added jcn_x as an additional complication)
-# * It has some 'coomputed variables' (i.e. variables which don't really exist in the system solution, but can be calulated based on its parameters and states)
+
+#===============================================================================================================
+## Van der Pol
+
+First, let's consider something that's suspiciously like the noisy Van der Pol oscillator in
+`Neuroblox/src/blox/neural_mass.jl`, except:
+
+* It has 2 inputs instead of only 1 (I added jcn_x as an additional complication)
+* It has some 'computed variables' (i.e. variables which don't really exist in the system solution, but can be calulated based on its parameters and states)
+===============================================================================================================#
 
 struct VanDerPol <: NeuralMassBlox
     params
@@ -69,22 +72,29 @@ struct VanDerPol <: NeuralMassBlox
     end
 end;
 
-# ### GraphDynamics version
-#
-# #### Marking as supported 
-#
-# First, lets mark VanDerPol as a supported type by defining `issupported`. 
-#
-# We'll also tell `GraphDynamicsInterop` that it's not a composite block by defining a method for `components` that just returns a Tuple containing the oscillator itself:
+#===============================================================================================================
+### GraphDynamics version
+
+#### Marking as supported 
+
+First, lets mark VanDerPol as a supported type by defining `issupported`. 
+
+We'll also tell `GraphDynamicsInterop` that it's not a composite block by defining a method for `components`
+that just returns a Tuple containing the oscillator itself:
+===============================================================================================================#
 
 GraphDynamicsInterop.issupported(::VanDerPol) = true
 GraphDynamicsInterop.components(v::VanDerPol) = (v,)
 
-# #### Converting to Subsystem
-#
-# GraphDynamics.jl uses a type called `Subsystem` which is really a bundle around a `SubsystemStates` which stores the dynamical states of an object, and `SubsystemParams` which stores whatever parameters might affect the evolution of the object (or be important to it in some other way).
-#
-# We need to teach `GraphDynamicsInterop` how to convert a `VanDerPol` into a `Subsystem{VanDerPol}`
+#===============================================================================================================
+#### Converting to Subsystem
+
+GraphDynamics.jl uses a type called `Subsystem` which is really a bundle around a `SubsystemStates` which stores
+the dynamical states of an object, and `SubsystemParams` which stores whatever parameters might affect the evolution
+of the object (or be important to it in some other way).
+
+We need to teach `GraphDynamicsInterop` how to convert a `VanDerPol` into a `Subsystem{VanDerPol}`
+===============================================================================================================#
 
 function GraphDynamicsInterop.to_subsystem(v::VanDerPol)
     ## Extract the default values of the parameters θ and ϕ
@@ -102,7 +112,9 @@ function GraphDynamicsInterop.to_subsystem(v::VanDerPol)
     Subsystem(states, params)
 end
 
-# Here it is in action:
+#===============================================================================================================
+Here it is in action:
+===============================================================================================================#
 
 let @named v = VanDerPol(;θ=10.0)
     sys = GraphDynamicsInterop.to_subsystem(v)
@@ -113,17 +125,25 @@ let @named v = VanDerPol(;θ=10.0)
     @test sys.ϕ == 0.1   #src
 end
 
-# #### Inputs
-# 
-# Now let's define what an "input" to a VanDerPol must look like. In the MTK definition above, we said it had two possible inputs, `jcn_x` and `jcn`, so we'll make the "zero input" to  a VanDerPol be a NamedTuple with those two names as keys:
+#===============================================================================================================
+#### Inputs
+
+Now let's define what an "input" to a VanDerPol must look like. In the MTK definition above, we said it had two
+possible inputs, `jcn_x` and `jcn`, so we'll make the "zero input" to  a VanDerPol be a NamedTuple with those two
+names as keys:
+===============================================================================================================#
 
 GraphDynamics.initialize_input(s::Subsystem{VanDerPol}) = (;jcn_x = 0.0, jcn = 0.0)
 
-# #### The subsystem differential
-#
-# Now we can get to the interesting stuff: defining the differential equations of a Subsystem.
-#
-# The idea is that we add a method to `GraphDynamics.subsustem_differential` that takes in the subsystem, whatever inputs were "sent" to it, and the time (which we don't need), and then we compute a `SubsystemStates` whose entries correspond to the derivatives of the respective states
+#===============================================================================================================
+#### The subsystem differential
+
+Now we can get to the interesting stuff: defining the differential equations of a Subsystem.
+
+The idea is that we add a method to `GraphDynamics.subsustem_differential` that takes in the subsystem, whatever
+inputs were "sent" to it, and the time (which we don't need), and then we compute a `SubsystemStates` whose
+entries correspond to the derivatives of the respective states
+===============================================================================================================#
 
 function GraphDynamics.subsystem_differential(sys::Subsystem{VanDerPol}, inputs, t)
     ## Unpack the states and params we need
@@ -138,11 +158,13 @@ function GraphDynamics.subsystem_differential(sys::Subsystem{VanDerPol}, inputs,
     )
 end
 
-# #### Noise terms
-#
-# The keen-eyed may have noticed that we didn't include the `ϕ*ξ` term in the differential for `y`. This is because we only use `subsystem_differential` for the non-stochastic part of the ODE. 
-#
-# To include stochastic noise, we first tell GraphDynamics that our `VanDerPol` oscillator is stochastic (by default, it's assumed to not be stochastic)
+#===============================================================================================================
+#### Noise terms
+
+The keen-eyed may have noticed that we didn't include the `ϕ*ξ` term in the differential for `y`. This is because we only use `subsystem_differential` for the non-stochastic part of the ODE. 
+
+To include stochastic noise, we first tell GraphDynamics that our `VanDerPol` oscillator is stochastic (by default, it's assumed to not be stochastic)
+===============================================================================================================#
 
 GraphDynamics.isstochastic(::Type{VanDerPol}) = true
 
@@ -150,26 +172,37 @@ function GraphDynamics.apply_subsystem_noise!(v_noise, sys::Subsystem{VanDerPol}
     v_noise[2] = sys.ϕ
 end
 
-# The above method works by mutating a vector of potential noise terms because noise is typically "sparse", i.e. not all of our variables experience noise directly. 
-#
-# Writing `v_noise[2] = sys.ϕ` is eqivalent to the `ξ*ϕ` term where `ξ` is a Brownian variable.
-#
-# If `x` also were to experience noise, you'd mutate `v_noise[1]` as well.
-#
-# Currently, GraphDynamics assumes that each source of noise in the equations is *independant*, and does not support cases where `x` and `y` see correlated noise. This is equivalent to either 0 or 1 Brownian variable per state.
+#===============================================================================================================
+The above method works by mutating a vector of potential noise terms because noise is typically "sparse", i.e.
+not all of our variables experience noise directly. 
 
-# #### Computed properties
-#
-# Now lets deal with the computed properties `r`, `jcn_x`, `jcn` and `jcn_total`.
-#
-# `r` is different from the others because it does not depend on the inputs, it only depends on the internal states / parameters of the subsystem itself. We can tell GraphDynamics how to compute `r` by adding a method to `computed_properties` which returns a NamedTuple whose keys are the property names, and the values are functions to compute them:
+Writing `v_noise[2] = sys.ϕ` is eqivalent to the `ξ*ϕ` term where `ξ` is a Brownian variable.
 
-function GraphDynamics.computed_properies(v::Subsystem{VanDerPol})
+If `x` also were to experience noise, you'd mutate `v_noise[1]` as well.
+
+Currently, GraphDynamics assumes that each source of noise in the equations is *independant*, and does not
+support cases where `x` and `y` see correlated noise. This is equivalent to either 0 or 1 Brownian variable per
+state.
+
+#### Computed properties
+
+Now lets deal with the computed properties `r`, `jcn_x`, `jcn` and `jcn_total`.
+
+`r` is different from the others because it does not depend on the inputs, it only depends on the internal
+states / parameters of the subsystem itself. We can tell GraphDynamics how to compute `r` by adding a method
+to `computed_properties` which returns a NamedTuple whose keys are the property names, and the values are
+functions to compute them:
+===============================================================================================================#
+
+function GraphDynamics.computed_properties(v::Subsystem{VanDerPol})
     r_func(v) = √(v.x^2 + v.y^2)
     (; r = r_func)
 end
 
-# Likewise, for computed properties that depend on a subsystem's inputs, we define a method on `computed_properties_with_inputs`, except the functions returned will have an extra argument for the inputs:
+#===============================================================================================================
+# Likewise, for computed properties that depend on a subsystem's inputs, we define a method on
+`computed_properties_with_inputs`, except the functions returned will have an extra argument for the inputs:
+===============================================================================================================#
 
 function GraphDynamics.computed_properties_with_inputs(v::Subsystem{VanDerPol})
     jcn_x(v, input) = input.jcn_x
@@ -178,11 +211,13 @@ function GraphDynamics.computed_properties_with_inputs(v::Subsystem{VanDerPol})
     (; jcn_x, jcn, jcn_tot)
 end
 
-# ### Solving a system of Van der Pols
+#===============================================================================================================
+### Solving a system of Van der Pols
 
-# Lets simulate a couple of VanDerPol oscillators. We can't couple them together yet because we haven't talked about connections, but we can at least run two parallel VdP oscillators and look at the results:
+Lets simulate a couple of VanDerPol oscillators. We can't couple them together yet because we haven't talked about connections, but we can at least run two parallel VdP oscillators and look at the results:
 
-# lets first solve the regular version:
+lets first solve the regular version:
+===============================================================================================================#
 
 tspan = (0.0, 2.0)
 seed = 1234
@@ -192,9 +227,11 @@ g_vdp = MetaDiGraph()
 @named v2 = VanDerPol(θ = 0.5, ϕ = 0.25)
 
 add_blox!(g_vdp, v1)
-add_blox!(g_vdp, v2)
+add_blox!(g_vdp, v2);
 
-# Here's a solution computed with the regular machinery:
+#===============================================================================================================
+Here's a solution computed with the regular machinery:
+===============================================================================================================#
 
 let
     @named sys = system_from_graph(g_vdp)
@@ -209,7 +246,9 @@ let
     f
 end
 
-# And now lets try to do the same with GraphDynamics:
+#===============================================================================================================
+And now lets try to do the same with GraphDynamics:
+===============================================================================================================#
 
 let 
     ## this is how we tell it to use GraphDynamics! ------↓
@@ -231,9 +270,11 @@ for s ∈ [v1.r, v2.r, v1.jcn_tot, v2.jcn_x]                   #src
     @test sol1_mtk[s, end] ≈ sol1_gdy[Symbol(s.val.f), end]  #src
 end                                                          #src
 
-# ## DBS Source blox
+#===============================================================================================================
+## DBS Source blox
 
-# Now lets implement another random blox, the DBS Source blox from `Neuroblox/src/blox/DBS_sources.jl`, because lets say we want to use this to drive our VanDerPol oscillator.
+Now lets implement another random blox, the DBS Source blox from `Neuroblox/src/blox/DBS_sources.jl`, because lets say we want to use this to drive our VanDerPol oscillator.
+===============================================================================================================#
 
 struct DBS <: Neuroblox.StimulusBlox
     params::Vector{Num}
@@ -281,11 +322,14 @@ struct DBS <: Neuroblox.StimulusBlox
     end
 end
 
-# This is a bit special because it doesn't actually have *any* dynamical state. It basically just has it's `u ~ stimulus(t)`, which we'll actually treat as a parameter in the GraphDynamics approach:
+#===============================================================================================================
+This is a bit special because it doesn't actually have *any* dynamical state. It basically just has it's
+`u ~ stimulus(t)`, which we'll actually treat as a parameter in the GraphDynamics approach:
 
-# ### GraphDynamics version
+### GraphDynamics version
 
-# #### Basics
+#### Basics
+===============================================================================================================#
 
 GraphDynamicsInterop.issupported(::DBS) = true
 
@@ -306,19 +350,24 @@ function GraphDynamicsInterop.to_subsystem(d::DBS)
     Subsystem(states, params)
 end
 
-# #### A do-nothing differential
-#
-# Since there's no dynamics, we can skip `subsystem_differential` and instead just tell it that `apply_subsystem_differential!` does nothing:
+#===============================================================================================================
+#### A do-nothing differential
+
+Since there's no dynamics, we can skip `subsystem_differential` and instead just tell it that
+`apply_subsystem_differential!` does nothing:
+===============================================================================================================#
 
 function GraphDynamics.apply_subsystem_differential!(_, d::Subsystem{DBS}, _, _)
     nothing
 end
 
-# ## Connections
-#
-# Now, all we need to do is define some connections between some blox. Let's go for a connection from the DBS source to a Van der Pol.
-#
-# Suppose our regular Neuroblox connection rule looks like:
+#===============================================================================================================
+## Connections
+
+Now, all we need to do is define some connections between some blox. Let's go for a connection from the DBS source to a Van der Pol.
+
+Suppose our regular Neuroblox connection rule looks like:
+===============================================================================================================#
 
 function Neuroblox.Connector(
     blox_src::DBS,
@@ -335,7 +384,9 @@ function Neuroblox.Connector(
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
 
-# Then the GraphDynamics version of this can be as simple as
+#===============================================================================================================
+Then the GraphDynamics version of this can be as simple as
+===============================================================================================================#
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{DBS},
                                                    sys_dst::Subsystem{VanDerPol},
@@ -347,8 +398,9 @@ function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{DBS},
     (; jcn_x, jcn) # This must match the form of initialize_input(sys_dst)
 end
 
-# ### Solve a system with the DBS and VdP Blox
-
+#===============================================================================================================
+### Solve a system with the DBS and VdP Blox
+===============================================================================================================#
 
 g_vdp_dbs = MetaDiGraph()
 @named dbs = DBS()
@@ -368,7 +420,9 @@ let
     f
 end
 
-# and with GraphDynamics:
+#===============================================================================================================
+and with GraphDynamics:
+===============================================================================================================#
 
 let
     ## this is how we tell it to use GraphDynamics! ----------↓
@@ -390,7 +444,8 @@ for s ∈ [v1.r, v2.r, v1.jcn_tot, v2.jcn_x]                   #src
     @test sol2_mtk[s, end] ≈ sol2_gdy[Symbol(s.val.f), end]  #src
 end                                                          #src
 
+#===============================================================================================================
+## TODO: A neuron model with events
 
-# ## TODO: A neuron model with events
-
-# ## TODO: Composite blox
+## TODO: Composite blox
+===============================================================================================================#
