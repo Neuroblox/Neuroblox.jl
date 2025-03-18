@@ -6,6 +6,11 @@ on:
   push:
     branches:
       - master
+
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   testprep:
     runs-on: ubuntu-latest

@@ -7,6 +7,8 @@ if GROUP == "All" || GROUP == "GraphDynamics1"
     basic_smoketest()
     neuron_and_neural_mass_comparison_tests()
     basic_hh_network_tests()
+    stochastic_hh_network_tests()
+    ngei_test()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics2"
@@ -23,8 +25,6 @@ if GROUP == "All" || GROUP == "GraphDynamics3"
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics4"
-    stochastic_hh_network_tests()
-    ngei_test()
     vdp_test()
     kuramoto_test()
     ping_tests()
