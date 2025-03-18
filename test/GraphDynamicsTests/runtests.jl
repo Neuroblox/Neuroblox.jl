@@ -12,8 +12,6 @@ if GROUP == "All" || GROUP == "GraphDynamics1"
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics2"
-    vdp_test()
-    kuramoto_test()
     wta_tests()
     dbs_circuit_components()
     dbs_circuit()
@@ -24,5 +22,10 @@ end
 if GROUP == "All" || GROUP == "GraphDynamics3"
     lif_exci_inh_tests()
     decision_making_test()
+end
+
+if GROUP == "All" || GROUP == "GraphDynamics4"
+    vdp_test()
+    kuramoto_test()
     ping_tests()
 end

@@ -6,8 +6,33 @@ on:
   push:
     branches:
       - master
+
+permissions:
+  actions: write
+  contents: read
+
 jobs:
+  testprep:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        group:
+          - None
+        version:
+          - '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        env:
+          JULIA_NUM_THREADS: 4
+          GROUP: ${{ matrix.group }}
   test:
+    needs: testprep
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,6 +42,7 @@ jobs:
           - GraphDynamics1
           - GraphDynamics2
           - GraphDynamics3
+          - GraphDynamics4
         version:
           - '1'
     steps:
