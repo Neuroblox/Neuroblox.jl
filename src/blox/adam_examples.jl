@@ -7,6 +7,33 @@ using Plots
 
 include("adams_graphdynamics_draft.jl")
 
+# two neurons, increasing nmda weight 
+frs = zeros(41)
+for (i,w) in enumerate(2:0.1:6)
+    @named neuron1 = AdamPYR(Iₐₚₚ=0.01)
+    @named neuron2 = AdamPYR(Iₐₚₚ=0)
+    g = MetaDiGraph()
+    add_edge!(g, neuron1 => neuron2; weight=1)
+    make_nmda_edge!(g, neuron1, neuron2; weight=8.5, k_unblock=w)
+    tspan = (0.0, 2500.0)
+    @named sys = system_from_graph(g, graphdynamics=true) # if graph dynamics is true, nothing changes when changing k_unblock 
+    prob = ODEProblem(sys, [], tspan)
+    sol = solve(prob, Tsit5(), saveat=1)
+    spikes = detect_spikes(neuron2, sol; threshold=-50)
+    frs[i] = sum(spikes) / (tspan[2] - tspan[1]) * 1000
+end
+
+plot(2:0.1:6, frs, ylabel="Post Firing rate (Hz)", xlabel="k_unblock", legend=false)
+
+function make_nmda_edge!(g, prenrn, postnrn; weight=8.5, k_unblock=5.4)
+    glu = AdamGlu(name=Symbol("Glu$(prenrn.name)_$(postnrn.name)"))
+    nmda = AdamNMDAR(name=Symbol("NMDA$(prenrn.name)_$(postnrn.name)"), k_unblock=k_unblock)
+    add_edge!(g, prenrn => glu; weight=1.0)
+    add_edge!(g, glu => nmda; weight=1.0)
+    add_edge!(g, postnrn => nmda; weight=1.0)
+    add_edge!(g, nmda => postnrn; weight=weight)
+end
+
 ḡᵢ = 0.5
 ḡₑ = 0.2
 

@@ -34,9 +34,9 @@ function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     Subsystem(states, params)
 end
 
-GraphDynamics.initialize_input(s::Subsystem{AdamNMDAR}) = (; Glu = 0.0, V = 0.0)
+GraphDynamicsInterop.initialize_input(s::Subsystem{AdamNMDAR}) = (; Glu = 0.0, V = 0.0)
 
-function GraphDynamics.subsystem_differential(s::Subsystem{AdamNMDAR}, inputs, t)
+function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, inputs, t)
     # Unpack
     (; Glu, V) = inputs
     (; C, C_A, C_AA, D_AA, O_AA, O_AAB, C_AAB, D_AAB, C_AB, C_B) = s
@@ -46,11 +46,11 @@ function GraphDynamics.subsystem_differential(s::Subsystem{AdamNMDAR}, inputs, t
         #=d/dt=# C_A = 2*k_off*C_AA + 2*k_on*Glu*C - (k_on*Glu + k_off)*C_A,
         #=d/dt=# C_AA = k_on*Glu*C_A + α*O_AA + k_r*D_AA - (2*k_off + β + k_d)*C_AA,
         #=d/dt=# D_AA = k_d*C_AA - k_r*D_AA,
-        #=d/dt=# O_AA = k_r*D_AA - α*O_AA,
-        #=d/dt=# O_AAB = k_unblock*C_AAB - k_block*O_AAB,
-        #=d/dt=# C_AAB = k_block*O_AAB - k_unblock*C_AAB,
+        #=d/dt=# O_AA = β*C_AA + k_unblock*exp(V/47)*O_AAB - (α + k_block*exp(-V/17))*O_AA,
+        #=d/dt=# O_AAB = k_block*exp(-V/17)*O_AA + β*C_AAB - (k_unblock*exp(V/47) + α)*O_AAB,
+        #=d/dt=# C_AAB = α*O_AAB + k_on*Glu*C_AB + k_r*D_AAB - (β + 2*k_off + k_d)*C_AAB,
         #=d/dt=# D_AAB = k_d*C_AAB - k_r*D_AAB,
-        #=d/dt=# C_AB = k_off*C_AAB - 2*k_on*Glu*C_AB,
+        #=d/dt=# C_AB = 2*k_off*C_AAB + 2*k_on*Glu*C_B - (k_on*Glu + k_off)*C_AB,
         #=d/dt=# C_B = k_off*C_AB - 2*k_on*Glu*C_B
     )
 end
@@ -84,5 +84,5 @@ function make_nmda_edge!(g, prenrn, postnrn)
     add_edge!(g, prenrn => glu; weight=1.0)
     add_edge!(g, glu => nmda; weight=1.0)
     add_edge!(g, postnrn => nmda; weight=1.0)
-    add_edge!(g, nmda => postnrn; weight=1.0)
+    add_edge!(g, nmda => postnrn; weight=8.5)
 end
