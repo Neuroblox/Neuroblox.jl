@@ -241,7 +241,7 @@ export SynapticConnections, create_rl_loop
 export add_blox!, get_system
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export vecparam, csd_Q, setup_sDCM, run_sDCM_iteration!, defaultprior
+export vecparam, csd_Q, setup_spDCM, run_spDCM_iteration!, defaultprior
 export simulate, random_initials
 export system_from_graph, system, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
