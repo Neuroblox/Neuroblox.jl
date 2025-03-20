@@ -3,11 +3,11 @@
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct JansenRitSPM12 <: NeuralMassBlox
+mutable struct JansenRitSPM <: NeuralMassBlox
     params
     system
     namespace
-    function JansenRitSPM12(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
+    function JansenRitSPM(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
         p = paramscoping(τ=τ, r=r)
         τ, r = p
 
