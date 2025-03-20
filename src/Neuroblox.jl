@@ -222,7 +222,7 @@ end
 
 
 export Neuron
-export JansenRitSPM12, qif_neuron, if_neuron, hh_neuron_excitatory, 
+export JansenRitSPM, qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, VanDerPol, Generic2dOscillator, kuramoto_oscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,

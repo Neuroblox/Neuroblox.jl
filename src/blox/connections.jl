@@ -440,8 +440,8 @@ end
 sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
 
 function Connector(
-    blox_src::JansenRitSPM12, 
-    blox_dest::JansenRitSPM12; 
+    blox_src::JansenRitSPM, 
+    blox_dest::JansenRitSPM; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)
