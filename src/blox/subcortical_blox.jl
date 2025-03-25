@@ -17,8 +17,6 @@ struct Striatum <: CompositeBlox
         E_syn_inhib=-70,
         G_syn_inhib=1.2,
         I_bg=zeros(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=70
     )
         n_inh = [
@@ -29,8 +27,6 @@ struct Striatum <: CompositeBlox
                     G_syn = G_syn_inhib, 
                     τ = τ_inhib,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i]
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -94,8 +90,6 @@ struct GPi <: CompositeBlox
         E_syn_inhib=-70,
         G_syn_inhib=8,
         I_bg=4*ones(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=70
     )
         n_inh = [
@@ -106,8 +100,6 @@ struct GPi <: CompositeBlox
                     G_syn = G_syn_inhib, 
                     τ = τ_inhib,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i]
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -150,8 +142,6 @@ struct GPe <: CompositeBlox
         E_syn_inhib=-70,
         G_syn_inhib=3,
         I_bg=2*ones(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=70
     )
         n_inh = [
@@ -162,8 +152,6 @@ struct GPe <: CompositeBlox
                     G_syn = G_syn_inhib, 
                     τ = τ_inhib,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i]
             ) 
             for i in Base.OneTo(N_inhib)
         ]
@@ -206,8 +194,6 @@ struct Thalamus <: CompositeBlox
         E_syn_exci=0,
         G_syn_exci=3,
         I_bg=3*ones(N_exci),
-        freq=zeros(N_exci),
-        phase=zeros(N_exci),
         τ_exci=5
     )
         n_exci = [
@@ -218,8 +204,6 @@ struct Thalamus <: CompositeBlox
                     G_syn = G_syn_exci, 
                     τ = τ_exci,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i]
             ) 
             for i in Base.OneTo(N_exci)
         ]
@@ -261,8 +245,6 @@ struct STN <: CompositeBlox
         E_syn_exci=0,
         G_syn_exci=3,
         I_bg=3*ones(N_exci),
-        freq=zeros(N_exci),
-        phase=zeros(N_exci),
         τ_exci=5
     )
         n_exci = [
@@ -273,8 +255,6 @@ struct STN <: CompositeBlox
                     G_syn = G_syn_exci, 
                     τ = τ_exci,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i]
             ) 
             for i in Base.OneTo(N_exci)
         ]

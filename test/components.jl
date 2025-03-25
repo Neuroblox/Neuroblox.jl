@@ -307,9 +307,9 @@ end
 end
 
 @testset "HH Neuron excitatory & inhibitory network" begin
-    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
-    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
-    nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2, freq=3)
+    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3)
+    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2)
+    nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2)
     assembly = [nn1, nn2, nn3]
 
     # Adjacency matrix : 

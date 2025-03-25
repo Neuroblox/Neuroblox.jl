@@ -11,8 +11,6 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
         E_syn=0.0, 
         G_syn=3, 
         I_bg=0.0,
-        freq=0,
-        phase=0,
         τ=5
     )
 		sts = @variables begin 
@@ -50,8 +48,6 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 			τ₃ = 2000 
 			I_bg=I_bg
 			kₛₜₚ = 0.5
-			freq = freq 
-			phase = phase
             spikes = 0
 			spk_const = 1.127
 		end
@@ -65,7 +61,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 		eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -97,8 +93,6 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
         E_syn=-70.0,
         G_syn=11.5,
         I_bg=0.0,
-        freq=0,
-        phase=0,
         τ=70
     )
 		sts = @variables begin 
@@ -134,8 +128,6 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 			τ₂ = τ 
 			τ₃ = 2000 
 			I_bg=I_bg 
-			freq = freq 
-			phase = phase
 			spk_const = 1.127
 		end
 
@@ -148,7 +140,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
