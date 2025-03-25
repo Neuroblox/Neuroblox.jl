@@ -155,6 +155,12 @@ function (c::BasicConnection)(blox_src, blox_dst)
     (; jcn = c.weight * output(blox_src))
 end
 
+struct ReverseConnection <: ConnectionRule
+    weight::Float64
+end
+
+Base.zero(::Type{<:ReverseConnection}) = ReverseConnection(0.0)
+
 struct PSPConnection <: ConnectionRule
     weight::Float64
 end
