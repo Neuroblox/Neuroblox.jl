@@ -207,13 +207,6 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, in
     )
 end
 
-function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{AdamGlu}, sys_dst::Subsystem{AdamNMDAR}, t)
-    w = c.weight
-    Glu = sys_src.Glu
-    V = 0.0
-    (; Glu, V)
-end
-
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
     w = c.weight
     Glu = 0.0
