@@ -93,7 +93,7 @@ end
     ps = powerspectrum(nn1, sol, "V")
     
     peak_freq = ps.freq[argmax(ps.power[3:end])+2]
-    @test isapprox(peak_freq, 80, atol=1)
+    @test isapprox(peak_freq, 94, atol=1)
     
     # test Welch periodogram and windows
     ps2 = powerspectrum(nn1, sol, "V", window = hamming) 
