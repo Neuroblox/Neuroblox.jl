@@ -79,8 +79,8 @@ end
 @testset "Powerspectrum" begin
 
     # AbstractNeuronBlox
-    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=80)
-    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=1)
+    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3)
+    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2)
     assembly = [nn1, nn2]
     
     g = MetaDiGraph()
