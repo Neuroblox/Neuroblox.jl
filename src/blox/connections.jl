@@ -248,8 +248,8 @@ function hypergeometric_connections(neurons_src, neurons_dest, name_out, name_in
             end
         else
             for i in idx 
-                kwargs = (kwargs...,weight=wt[i])
-                push!(C, Connector(neurons_src[i], neuron_postsyn; kwargs...))
+                kwargs_i = (kwargs...,weight=wt[i])
+                push!(C, Connector(neurons_src[i], neuron_postsyn; kwargs_i...))
             end
         end
         outgoing_connections[idx] .+= 1
