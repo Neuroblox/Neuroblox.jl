@@ -102,7 +102,7 @@ end
 
 @testset "LFP test" begin
     ### Load data ###
-    vars = matread(joinpath(@__DIR__, "spm12_cmc.mat"));
+    vars = matread(joinpath(@__DIR__, "spm_cmc.mat"));
     data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
     x = vars["x"]                            # point around which expansion is computed
     nrr = ncol(data)                         # number of recorded regions
@@ -222,7 +222,7 @@ end
                 Σθ_pr = paramvariance
                 );
 
-    hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
+    hype = matread(joinpath(@__DIR__, "spm_cmc_hyperpriors.mat"));
     hyperpriors = (Πλ_pr = hype["ihC"],               # prior metaparameter precision, needs to be a matrix
                    μλ_pr = vec(hype["hE"]),           # prior metaparameter mean, needs to be a vector
                    Q = hype["Q"]);

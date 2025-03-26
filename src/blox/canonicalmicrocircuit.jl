@@ -27,10 +27,10 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
     connector
 
     function CanonicalMicroCircuitBlox(;name, namespace=nothing, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
-        @named ss = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_ss, r=r_ss)  # spiny stellate
-        @named sp = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_sp, r=r_sp)  # superficial pyramidal
-        @named ii = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
-        @named dp = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_dp, r=r_dp)  # deep pyramidal
+        @named ss = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_ss, r=r_ss)  # spiny stellate
+        @named sp = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_sp, r=r_sp)  # superficial pyramidal
+        @named ii = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
+        @named dp = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
         sblox_parts = vcat(ss, sp, ii, dp)
