@@ -181,7 +181,7 @@ function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     Subsystem(states, params)
 end
 
-GraphDynamicsInterop.initialize_input(s::Subsystem{AdamNMDAR}) = (; V = 0.0)
+GraphDynamicsInterop.initialize_input(s::Subsystem{AdamNMDAR}) = (; jcn = 0.0, V = 0.0)
 
 function heaviside(x)
     IfElse.ifelse(x > 0, 1.0, 0.0)
@@ -189,7 +189,7 @@ end
 
 function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, inputs, t)
     # Unpack
-    (; V) = inputs
+    (; jcn, V) = inputs
     (; C, C_A, C_AA, D_AA, O_AA, O_AAB, C_AAB, D_AAB, C_AB, C_B, Glu) = s
     (; k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ) = s
     return SubsystemStates{AdamNMDAR}(
@@ -203,7 +203,7 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, in
         #=d/dt=# D_AAB = k_d*C_AAB - k_r*D_AAB,
         #=d/dt=# C_AB = 2*k_off*C_AAB + 2*k_on*Glu*C_B - (k_on*Glu + k_off)*C_AB,
         #=d/dt=# C_B = k_off*C_AB - 2*k_on*Glu*C_B,
-        #=d/dt=# Glu = Glu_max*heaviside(V - θ) - Glu/τ_Glu
+        #=d/dt=# Glu = Glu_max*heaviside(jcn - θ) - Glu/τ_Glu
     )
 end
 
