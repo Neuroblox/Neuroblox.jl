@@ -146,6 +146,17 @@ function get_connection(blox_src, blox_dst, kwargs)
     (;conn, names = [name,])
 end
 
+function get_connection(blox_src::AbstractAdamNeuron, blox_dst::AbstractAdamNeuron, kwargs)
+    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
+    r_name = get(kwargs, :reverse, false)
+    conn = if r_name 
+        ReverseConnection(w_val)
+    else
+        BasicConnection(w_val)
+    end
+    (;conn, names = [name,])
+end
+
 struct BasicConnection <: ConnectionRule
     weight::Float64
 end
