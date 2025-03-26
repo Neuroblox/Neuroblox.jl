@@ -508,7 +508,7 @@ function run_spDCM_iteration!(state::VLState, setup::VLSetup)
     dFdλ = zeros(real(eltype(J)), nh)
     dFdλλ = zeros(real(eltype(J)), nh, nh)
     local iΣ, Σλ_po, Σθ_po, ϵ_λ
-    for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM12 code.
+    for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM code.
         iΣ = zeros(eltype(J), ny, ny)
         for i = 1:nh
             iΣ .+= Q[:, :, i] * exp(λ[i])
