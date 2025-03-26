@@ -222,14 +222,14 @@ function (c::BasicConnection)(sys_src::Subsystem{AdamINP}, sys_dst::Subsystem{<:
 end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
-    acc = GraphDynamicsInterop.initialize_input(sys_dest)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.jcn = sys_src.V
     
     return acc
 end
 
 function (c::GraphDynamicsInterop.ReverseConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
-    acc = GraphDynamicsInterop.initialize_input(sys_dest)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.V = sys_src.V
  
     return acc
