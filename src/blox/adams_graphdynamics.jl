@@ -2,6 +2,9 @@ using Neuroblox
 using GraphDynamics
 
 using Neuroblox.GraphDynamicsInterop
+using Neuroblox.GraphDynamicsInterop: BasicConnection
+
+import Neuroblox.GraphDynamicsInterop: issupported, components, to_subsystem, initialize_input, subsystem_differential
 
 GraphDynamicsInterop.issupported(::AdamPYR) = true
 GraphDynamicsInterop.components(v::AdamPYR) = (v,)
