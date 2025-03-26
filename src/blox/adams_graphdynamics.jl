@@ -236,9 +236,8 @@ function (c::GraphDynamicsInterop.ReverseConnection)(sys_src::Subsystem{<:Neurob
 end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{AdamNMDAR}, sys_dst::Subsystem{<:Neuroblox.AbstractAdamNeuron}, t)
-    acc = GraphDynamicsInterop.initialize_input(sys_dest)
-    acc = @set acc.O_AA = sys_src.O_AA
-    acc = @set acc.jcn = c.weight * O_AA * sys_dst.V
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.jcn = c.weight * sys_src.O_AA * sys_dst.V
     
     return acc
 end
