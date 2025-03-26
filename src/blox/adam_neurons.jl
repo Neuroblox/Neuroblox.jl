@@ -78,13 +78,12 @@ struct AdamINP <: AbstractAdamNeuron
                       ḡₖ=80,
                       Eₗ=-67,
                       ḡₗ=0.05,
-                      τᵢ=6,
                       Iₐₚₚ=0.1,
                       Iₙₒᵢₛₑ=0.0
     )
         p = paramscoping(V_I=V_I, C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
         V_I, C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
-        sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 sᵧ(t)=0.0 [output=true] jcn(t) [input=true]
+        sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 [output=true] jcn(t) [input=true]
 
         αₘ(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
         βₘ(v) = 0.28*(v+27.0)/(exp((v+27.0)/5.0) - 1.0)
@@ -101,19 +100,43 @@ struct AdamINP <: AbstractAdamNeuron
         τₕ(v) = 1.0/(αₕ(v) + βₕ(v))
         τₙ(v) = 1.0/(αₙ(v) + βₙ(v))
 
-        gᵧ(v) = 2*(1+tanh(v/4))
-
         eqs = [D(V) ~ (Iₐₚₚ + Iₙₒᵢₛₑ - ḡₙₐ*m^3*h*(V - Eₙₐ) - ḡₖ*n^4*(V - Eₖ) - ḡₗ*(V - Eₗ) - jcn)/C,
                D(m) ~ (m∞(V) - m)/τₘ(V),
                D(h) ~ (h∞(V) - h)/τₕ(V),
-               D(n) ~ (n∞(V) - n)/τₙ(V),
-               D(sᵧ) ~ gᵧ(V)*(1-sᵧ) - sᵧ/τᵢ
+               D(n) ~ (n∞(V) - n)/τₙ(V)
         ]
 
         sys = System(eqs, t, sts, p; name=name)
 
         new(p, sys, namespace)
 
+    end
+end
+
+struct AdamGABBA <: AbstractReceptor
+    params
+    system
+    namespace
+
+    function AdamGABBA(;
+        name,
+        namespace=nothing,
+        τᵢ=6
+    )
+
+    p = paramscoping(τᵢ=τᵢ)
+    τᵢ = first(p)
+    sts = @variables V(t) [input=true] sᵧ(t)=0.0
+
+    gᵧ(v) = 2*(1+tanh(v/4))
+
+    eqs = [
+            D(sᵧ) ~ gᵧ(V)*(1-sᵧ) - sᵧ/τᵢ
+        ]
+    
+    sys = System(eqs, t, sts, p; name=name)
+
+    new(p, sys, namespace)
     end
 end
 
