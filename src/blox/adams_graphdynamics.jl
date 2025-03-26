@@ -208,25 +208,32 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, in
 end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
-    w = c.weight
-    V = sys_src.V
-    (; V)
+    acc = GraphDynamicsInterop.initialize_input(sys_dest)
+    acc = @set acc.jcn = sys_src.V
+    
+    return acc
+end
+
+function (c::GraphDynamicsInterop.ReverseConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
+    acc = GraphDynamicsInterop.initialize_input(sys_dest)
+    acc = @set acc.V = sys_src.V
+ 
+    return acc
 end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{AdamNMDAR}, sys_dst::Subsystem{<:Neuroblox.AbstractAdamNeuron}, t)
-    w = c.weight
-    O_AA = sys_src.O_AA
-    jcn = w*O_AA*sys_dst.V
-    (; jcn)
+    acc = GraphDynamicsInterop.initialize_input(sys_dest)
+    acc = @set acc.O_AA = sys_src.O_AA
+    acc = @set acc.jcn = c.weight * O_AA * sys_dst.V
+    
+    return acc
 end
 
 ## Not GraphDynamics but work on connections
 # Helper function for connections
 function make_nmda_edge!(g, prenrn, postnrn)
-    glu = AdamGlu(name=Symbol("Glu$(prenrn.name)_$(postnrn.name)"))
     nmda = AdamNMDAR(name=Symbol("NMDA$(prenrn.name)_$(postnrn.name)"))
-    add_edge!(g, prenrn => glu; weight=1.0)
-    add_edge!(g, glu => nmda; weight=1.0)
+    add_edge!(g, prenrn => nmda; weight=1.0)
     add_edge!(g, postnrn => nmda; weight=1.0)
     add_edge!(g, nmda => postnrn; weight=8.5)
 end
