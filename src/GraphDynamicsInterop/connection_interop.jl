@@ -1064,47 +1064,6 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (; jcn = w * s * (V_I - V))
 end
 
-# #-------------------------
-# Adam Network
-# #-------------------------
-struct AdamConnection <: ConnectionRule
-    w::Float64
-    V_E::Float64
-    V_I::Float64
-end
-Base.zero(::Type{AdamConnection}) = AdamConnection(0.0, 0.0, 0.0)
-
-function get_connection(blox_src::AdamPYR, blox_dst::AbstractAdamNeuron, kwargs)
-    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
-    V_E = get(kwargs, :V_E, 0.0)
-    (; conn = AdamConnection(w_val, V_E, 0.0), names=[name])
-end
-function get_connection(blox_src::AdamINP, blox_dst::AbstractAdamNeuron, kwargs)
-    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
-    V_I = get(kwargs, :V_I, 0.0)
-    (; conn = AdamConnection(w_val, V_I, -80.0), names=[name])
-end
-
-function (c::AdamConnection)(blox_src::Subsystem{AdamPYR}, blox_dst::Subsystem{<:AbstractAdamNeuron})
-    (; w, V_E) = c
-    (; sₐₘₚₐ) = blox_src
-    (; V) = blox_dst
-    (; jcn = w * sₐₘₚₐ * (V - V_E))
-end
-
-function (c::AdamConnection)(blox_src::Subsystem{AdamINP}, blox_dst::Subsystem{<:AbstractAdamNeuron})
-    (; w, V_I) = c
-    (; sᵧ) = blox_src
-    (; V) = blox_dst
-    (; jcn = w * sᵧ * (V - V_I))
-end
-
-function (c::BasicConnection)(blox_src::Subsystem{AdamPYR}, blox_dst::Subsystem{AdamGlu})
-    w = c.weight
-    (; V) = blox_src
-    (; jcn = V)
-end
-
 # using Accessors
 # function (c::AdamConnection)(sys_src::Subsystem{AdamGlu}, sys_dst::Subsystem{AdamNMDAR})
 #     w = c.weight

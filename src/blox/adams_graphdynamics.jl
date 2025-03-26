@@ -207,6 +207,20 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, in
     )
 end
 
+function (c::BasicConnection)(sys_src::Subsystem{AdamPYR}, sys_dst::Subsystem{<:AbstractAdamNeuron}, t)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.V_E)
+    
+    return acc
+end
+
+function (c::BasicConnection)(sys_src::Subsystem{AdamINP}, sys_dst::Subsystem{<:AbstractAdamNeuron})
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.jcn = c.weight * sys_src.sᵧ * (sys_dst.V - sys_src.V_I)
+    
+    return acc
+end
+
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{<:Neuroblox.AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR}, t)
     acc = GraphDynamicsInterop.initialize_input(sys_dest)
     acc = @set acc.jcn = sys_src.V
