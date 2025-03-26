@@ -55,7 +55,6 @@ using ..Neuroblox:
     AbstractAdamNeuron,
     AdamNMDAR,
     AbstractReceptor,
-    AdamGlu,
     AbstractNeurotransmitter
 
 using GraphDynamics:

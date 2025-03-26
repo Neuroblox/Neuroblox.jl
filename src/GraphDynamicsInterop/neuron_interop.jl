@@ -172,7 +172,6 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            KuramotoOscillator{Noisy}(name=:kon)
            AdamPYR(name=:adam_pyr)
            AdamINP(name=:adam_inp)
-           AdamGlu(name=:adam_glu)
            AdamNMDAR(name=:adam_nmdar)]
     define_neuron(sys)
 end

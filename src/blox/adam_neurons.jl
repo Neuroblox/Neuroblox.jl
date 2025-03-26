@@ -117,30 +117,6 @@ struct AdamINP <: AbstractAdamNeuron
     end
 end
 
-# Threshold θ is set to -59 mV so that the total impulse of an average spike is about 1.0
-struct AdamGlu <: AbstractNeurotransmitter
-    params
-    system
-    namespace
-
-    function AdamGlu(;name,
-                      namespace=nothing,
-                      Glu_max = 1.0,
-                      τ_Glu=1.2,
-                      θ=-59.0)
-
-        p = paramscoping(Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
-        Glu_max, τ_Glu, θ = p
-        sts = @variables Glu(t)=0.0 [output=true] jcn(t) [input=true]
-
-        eqs = [D(Glu) ~ Glu_max*heaviside(jcn - θ) - Glu/τ_Glu]
-       
-        sys = System(eqs, t, sts, p; name=name)
-
-        new(p, sys, namespace)
-    end
-end
-
 struct AdamNMDAR <: AbstractReceptor
     params
     system
@@ -155,15 +131,16 @@ struct AdamNMDAR <: AbstractReceptor
                       k_unblock=5.4,
                       k_block=0.61,
                       α=0.0916,
-                      β=0.0465
-                      )
+                      β=0.0465,
+                      Glu_max = 1.0,
+                      τ_Glu=1.2,
+                      θ=-59.0 # θ is set to -59 mV so that the total impulse of an average spike is about 1.0
+    )
         
-        p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β)
-        k_on, k_off, k_r, k_d, k_unblock, k_block, α, β = p
+        p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
+        k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ = p
 
         sts = @variables begin 
-            Glu(t)
-            [input=true] 
             V(t)
             [input=true] 
             C(t)=0.5
@@ -176,7 +153,10 @@ struct AdamNMDAR <: AbstractReceptor
             C_AAB(t)=0.0
             D_AAB(t)=0.0
             C_AB(t)=0.0
-            C_B(t)=0.5     
+            C_B(t)=0.5    
+            Glu(t)=0.0 
+            jcn(t)
+            [input=true]
         end
 
         eqs = [
@@ -189,7 +169,8 @@ struct AdamNMDAR <: AbstractReceptor
                 D(C_AAB) ~ α*O_AAB + k_on*Glu*C_AB + k_r*D_AAB - (β + 2*k_off + k_d)*C_AAB,
                 D(D_AAB) ~ k_d*C_AAB - k_r*D_AAB,
                 D(C_AB) ~ 2*k_off*C_AAB + 2*k_on*Glu*C_B - (k_on*Glu + k_off)*C_AB,
-                D(C_B) ~ k_off*C_AB - 2*k_on*Glu*C_B
+                D(C_B) ~ k_off*C_AB - 2*k_on*Glu*C_B,
+                D(Glu) ~ Glu_max*heaviside(jcn - θ) - Glu/τ_Glu
               ]
 
         sys = System(eqs, t, sts, p; name=name)

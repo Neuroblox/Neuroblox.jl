@@ -1258,7 +1258,7 @@ function Connector(
 
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 end
-
+#=
 function Connector(
     blox_src::AdamPYR,
     blox_dest::AdamGlu;
@@ -1293,6 +1293,7 @@ function Connector(
     return Connector(nameof(sys_pre), nameof(sys_post); equation=eq, weight=w)
 
 end
+=#
 
 function Connector(
     blox_src::AbstractAdamNeuron,
