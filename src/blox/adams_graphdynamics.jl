@@ -122,9 +122,10 @@ GraphDynamicsInterop.issupported(::AdamGABBA) = true
 GraphDynamicsInterop.components(v::AdamGABBA) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamGABBA)
+    V_I = GraphDynamicsInterop.recursive_getdefault(v.V_I)
     τᵢ = GraphDynamicsInterop.recursive_getdefault(v.τᵢ)
 
-    params = SubsystemParams{AdamGABBA}(; τᵢ)
+    params = SubsystemParams{AdamGABBA}(; V_I, τᵢ)
 
     sᵧ = GraphDynamicsInterop.recursive_getdefault(v.sᵧ)
 
@@ -151,9 +152,10 @@ GraphDynamicsInterop.issupported(::AdamAMPA) = true
 GraphDynamicsInterop.components(v::AdamAMPA) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamAMPA)
-    τᵢ = GraphDynamicsInterop.recursive_getdefault(v.τₑ)
+    V_E = GraphDynamicsInterop.recursive_getdefault(v.V_E)
+    τₑ = GraphDynamicsInterop.recursive_getdefault(v.τₑ)
 
-    params = SubsystemParams{AdamAMPA}(; τₑ)
+    params = SubsystemParams{AdamAMPA}(; V_E, τₑ)
 
     sₐₘₚₐ = GraphDynamicsInterop.recursive_getdefault(v.sₐₘₚₐ)
 
