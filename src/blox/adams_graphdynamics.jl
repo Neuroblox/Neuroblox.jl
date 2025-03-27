@@ -124,11 +124,11 @@ GraphDynamicsInterop.components(v::AdamGABBA) = (v,)
 function GraphDynamicsInterop.to_subsystem(v::AdamGABBA)
     τᵢ = GraphDynamicsInterop.recursive_getdefault(v.τᵢ)
 
-    params = SubsystemParams{AdamINP}(; τᵢ)
+    params = SubsystemParams{AdamGABBA}(; τᵢ)
 
     sᵧ = GraphDynamicsInterop.recursive_getdefault(v.sᵧ)
 
-    states = SubsystemStates{AdamINP}(; sᵧ) 
+    states = SubsystemStates{AdamGABBA}(; sᵧ) 
 
     Subsystem(states, params)
 end
