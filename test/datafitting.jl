@@ -69,7 +69,7 @@ using MAT
     end
 
     pmean, pcovariance, indices = defaultprior(neuronmodel, nrr)
-    # priors = DataFrame(name=[k for k in keys(modelparam)], mean=[m for m in values(modelparam)], variance=[v for v in values(paramvariance)])
+
     priors = (μθ_pr = pmean,
               Σθ_pr = pcovariance
     );
@@ -79,11 +79,11 @@ using MAT
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
-    (state, setup) = setup_sDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
+    (state, setup) = setup_spDCM(data, neuronmodel, initcond, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
 
     for iter in 1:max_iter
         state.iter = iter
-        run_sDCM_iteration!(state, setup)
+        run_spDCM_iteration!(state, setup)
         print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
         if iter >= 4
             criterion = state.dF[end-3:end] .< setup.tolerance
@@ -102,7 +102,7 @@ end
 
 @testset "LFP test" begin
     ### Load data ###
-    vars = matread(joinpath(@__DIR__, "spm12_cmc.mat"));
+    vars = matread(joinpath(@__DIR__, "spm_cmc.mat"));
     data = DataFrame(vars["data"], :auto)    # turn data into DataFrame, name column names after building the model.
     x = vars["x"]                            # point around which expansion is computed
     nrr = ncol(data)                         # number of recorded regions
@@ -222,18 +222,18 @@ end
                 Σθ_pr = paramvariance
                 );
 
-    hype = matread(joinpath(@__DIR__, "spm12_cmc_hyperpriors.mat"));
+    hype = matread(joinpath(@__DIR__, "spm_cmc_hyperpriors.mat"));
     hyperpriors = (Πλ_pr = hype["ihC"],               # prior metaparameter precision, needs to be a matrix
                    μλ_pr = vec(hype["hE"]),           # prior metaparameter mean, needs to be a vector
                    Q = hype["Q"]);
 
     csdsetup = (mar_order = 8, freq = freq, dt = dt);
 
-    (state, setup) = setup_sDCM(data, fullmodel, initcond, csdsetup, priors, hyperpriors, indices, modelparam, "LFP");
+    (state, setup) = setup_spDCM(data, fullmodel, initcond, csdsetup, priors, hyperpriors, indices, modelparam, "LFP");
 
     for iter in 1:128
         state.iter = iter
-        run_sDCM_iteration!(state, setup)
+        run_spDCM_iteration!(state, setup)
         print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
         if iter >= 4
             criterion = state.dF[end-3:end] .< setup.tolerance
