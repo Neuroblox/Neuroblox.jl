@@ -53,6 +53,7 @@ using ..Neuroblox:
     AdamPYR,
     AdamINP,
     AbstractAdamNeuron,
+    AdamAMPA,
     AdamNMDAR,
     AdamGABBA,
     AbstractReceptor,

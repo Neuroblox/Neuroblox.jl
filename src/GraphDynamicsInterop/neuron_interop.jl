@@ -173,7 +173,8 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            AdamPYR(name=:adam_pyr)
            AdamINP(name=:adam_inp)
            AdamNMDAR(name=:adam_nmdar)
-           AdamGABBA(name=:adam_gabba)]
+           AdamGABBA(name=:adam_gabba)
+           AdamAMPA(name=:adam_ampa)]
     define_neuron(sys)
 end
 

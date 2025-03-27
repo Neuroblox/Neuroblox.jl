@@ -147,6 +147,35 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamGABBA}, in
     )
 end
 
+GraphDynamicsInterop.issupported(::AdamAMPA) = true
+GraphDynamicsInterop.components(v::AdamAMPA) = (v,)
+
+function GraphDynamicsInterop.to_subsystem(v::AdamAMPA)
+    τᵢ = GraphDynamicsInterop.recursive_getdefault(v.τₑ)
+
+    params = SubsystemParams{AdamAMPA}(; τₑ)
+
+    sₐₘₚₐ = GraphDynamicsInterop.recursive_getdefault(v.sₐₘₚₐ)
+
+    states = SubsystemStates{AdamAMPA}(; sₐₘₚₐ) 
+
+    Subsystem(states, params)
+end
+
+GraphDynamicsInterop.initialize_input(s::Subsystem{AdamAMPA}) = (; V = 0.0)
+
+function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamAMPA}, inputs, t)
+    (; V) = inputs
+    (; τₑ) = s
+    (; sₐₘₚₐ) = s 
+
+    gₐₘₚₐ(v) = 5*(1+tanh(v/4))
+
+    return SubsystemStates{AdamAMPA}(
+        #=d/dt=# sₐₘₚₐ = gₐₘₚₐ(V)*(1-sₐₘₚₐ) - sₐₘₚₐ/τₑ
+    )
+end
+
 GraphDynamicsInterop.issupported(::AdamNMDAR) = true
 GraphDynamicsInterop.components(v::AdamNMDAR) = (v,)
 

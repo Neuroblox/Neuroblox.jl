@@ -264,5 +264,5 @@ export AdjacencyMatrix, Connector, connection_rule, connection_equations, connec
 export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
 export AdamPYR, AdamINP
-export AdamNMDAR, AdamGABBA
+export AdamNMDAR, AdamGABBA, AdamAMPA
 end
