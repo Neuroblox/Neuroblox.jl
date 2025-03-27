@@ -27,8 +27,8 @@ struct AdamPYR <: AbstractAdamNeuron
                       ḡₗ=0.05,
                       Iₐₚₚ=-0.25,
                       Iₙₒᵢₛₑ=0.0)
-        p = paramscoping(V_E=V_E, C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
-        V_E, C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
+        p = paramscoping(C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
+        C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
         sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 jcn(t) [input=true]
 
         αₘ(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
@@ -76,8 +76,8 @@ struct AdamINP <: AbstractAdamNeuron
                       Iₐₚₚ=0.1,
                       Iₙₒᵢₛₑ=0.0
     )
-        p = paramscoping(V_I=V_I, C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
-        V_I, C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
+        p = paramscoping(C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
+        C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
         sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 [output=true] jcn(t) [input=true]
 
         αₘ(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
