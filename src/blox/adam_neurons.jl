@@ -25,12 +25,11 @@ struct AdamPYR <: AbstractAdamNeuron
                       ḡₖ=80,
                       Eₗ=-67,
                       ḡₗ=0.05,
-                      τₑ=1.5,
                       Iₐₚₚ=-0.25,
                       Iₙₒᵢₛₑ=0.0)
         p = paramscoping(V_E=V_E, C=C, Eₙₐ=Eₙₐ, ḡₙₐ=ḡₙₐ, Eₖ=Eₖ, ḡₖ=ḡₖ, Eₗ=Eₗ, ḡₗ=ḡₗ, Iₐₚₚ=Iₐₚₚ, Iₙₒᵢₛₑ=Iₙₒᵢₛₑ)
         V_E, C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ = p
-        sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 sₐₘₚₐ(t)=0.0 [output=true] jcn(t) [input=true]
+        sts = @variables V(t)=0.0 m(t)=0.0 h(t)=0.0 n(t)=0.0 jcn(t) [input=true]
 
         αₘ(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
         βₘ(v) = 0.28*(v+27.0)/(exp((v+27.0)/5.0) - 1.0)
@@ -47,13 +46,10 @@ struct AdamPYR <: AbstractAdamNeuron
         τₕ(v) = 1.0/(αₕ(v) + βₕ(v))
         τₙ(v) = 1.0/(αₙ(v) + βₙ(v))
 
-        gₐₘₚₐ(v) = 5*(1+tanh(v/4))
-
         eqs = [D(V) ~ (Iₐₚₚ + Iₙₒᵢₛₑ - ḡₙₐ*m^3*h*(V - Eₙₐ) - ḡₖ*n^4*(V - Eₖ) - ḡₗ*(V - Eₗ) - jcn)/C,
                D(m) ~ (m∞(V) - m)/τₘ(V),
                D(h) ~ (h∞(V) - h)/τₕ(V),
-               D(n) ~ (n∞(V) - n)/τₙ(V),
-               D(sₐₘₚₐ) ~ gₐₘₚₐ(V)*(1-sₐₘₚₐ) - sₐₘₚₐ/τₑ
+               D(n) ~ (n∞(V) - n)/τₙ(V)
         ]
 
         sys = System(eqs, t, sts, p; name=name)
@@ -109,6 +105,34 @@ struct AdamINP <: AbstractAdamNeuron
 
         new(p, sys, namespace)
 
+    end
+end
+
+struct AdamAMPA <: AbstractReceptor
+    params
+    system
+    namespace
+
+    function AdamAMPA(;
+        name,
+        namespace=nothing,
+        V_E=-80,
+        τₑ=1.5
+    )
+
+        p = paramscoping(V_E=V_E, τₑ=τₑ)
+        V_E, τₑ = p
+        sts = @variables V(t) [input=true] sₐₘₚₐ(t)=0.0 [output=true]
+
+        gₐₘₚₐ(v) = 5*(1+tanh(v/4))
+
+        eqs = [
+            D(sₐₘₚₐ) ~ gₐₘₚₐ(V)*(1-sₐₘₚₐ) - sₐₘₚₐ/τₑ
+        ]
+
+        sys = System(eqs, t, sts, p; name=name)
+
+        new(p, sys, namespace)
     end
 end
 
