@@ -857,7 +857,7 @@ function auto_tsit5_gdy_test()
         tspan = (0.0, 2500.0)
         @named sys = system_from_graph(g, graphdynamics=true)
         prob = ODEProblem(sys, [], tspan)
-        sol = solve(prob, AutoTsit5(Rodas4())) # errors
+        sol = solve(prob, AutoTsit5(Rodas4()))
         @test sol.retcode == ReturnCode.Success
 
     end
