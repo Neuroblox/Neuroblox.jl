@@ -248,6 +248,20 @@ function (c::BasicConnection)(sys_src::Subsystem{AdamPYR}, sys_dst::Subsystem{<:
     return acc
 end
 
+function (c::BasicConnection)(sys_src::Subsystem{AdamPYR}, sys_dst::Subsystem{<:AdamAMPA})
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.V = sys_src.V
+    
+    return acc
+end
+
+function (c::BasicConnection)(sys_src::Subsystem{AdamAMPA}, sys_dst::Subsystem{<:AbstractAdamNeuron})
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.V_E)
+    
+    return acc
+end
+
 function (c::BasicConnection)(sys_src::Subsystem{AdamINP}, sys_dst::Subsystem{<:AdamGABBA})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.V = sys_src.V
