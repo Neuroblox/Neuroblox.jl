@@ -70,7 +70,6 @@ struct AdamINP <: AbstractAdamNeuron
 
     function AdamINP(;name,
                       namespace=nothing,
-                      V_I=-80,
                       C=1.0,
                       Eₙₐ=50,
                       ḡₙₐ=100, 
@@ -121,12 +120,13 @@ struct AdamGABBA <: AbstractReceptor
     function AdamGABBA(;
         name,
         namespace=nothing,
+        V_I=-80,
         τᵢ=6
     )
 
-    p = paramscoping(τᵢ=τᵢ)
-    τᵢ = first(p)
-    sts = @variables V(t) [input=true] sᵧ(t)=0.0
+    p = paramscoping(V_I=V_I, τᵢ=τᵢ)
+    V_I, τᵢ = p
+    sts = @variables V(t) [input=true] sᵧ(t)=0.0 [output=true]
 
     gᵧ(v) = 2*(1+tanh(v/4))
 
