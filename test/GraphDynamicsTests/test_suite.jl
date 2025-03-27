@@ -845,3 +845,20 @@ function ping_tests(;tspan=(0.0, 2.0))
 
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
 end
+
+function auto_tsit5_gdy_test()
+    # ensure https://github.com/Neuroblox/GraphDynamics.jl/pull/23 stays fixed
+    # This solver involves switching out some types mid solve, which made older
+    # versions of GraphDynamics error out.
+    @testset "Test AutoTsit5(Rodas4) functionality" begin
+        @named neuron = LIFExciNeuron()
+        g = MetaDiGraph()
+        add_blox!(g, neuron)
+        tspan = (0.0, 2500.0)
+        @named sys = system_from_graph(g, graphdynamics=true)
+        prob = ODEProblem(sys, [], tspan)
+        sol = solve(prob, AutoTsit5(Rodas4()))
+        @test sol.retcode == ReturnCode.Success
+
+    end
+end
