@@ -17,7 +17,6 @@ struct AdamPYR <: AbstractAdamNeuron
 
     function AdamPYR(;name,
                       namespace=nothing,
-                      V_E=0.0,
                       C=1.0,
                       Eₙₐ=50,
                       ḡₙₐ=100, 
