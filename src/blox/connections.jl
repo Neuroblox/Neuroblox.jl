@@ -176,10 +176,10 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     weight = get_weight(kwargs, name_out, name_in)
-    w_name = Symbol("w_$(name_out)_$(name_in)")
     if typeof(weight) == Num   # Symbol
         w = weight
     else
+        w_name = Symbol("w_$(name_out)_$(name_in)")
         w = only(@parameters $(w_name)=weight [tunable=false])
     end    
 
@@ -202,7 +202,7 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
 end
 
 """
-    Helper to merge delay and weight into a single vector
+    Helper to merge delay and weight into a single vector as well as extract parameters in case of an edge containing an expressions
 """
 function params(bc::Connector)
     wt = map(weights(bc)) do w
@@ -440,8 +440,8 @@ end
 sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
 
 function Connector(
-    blox_src::JansenRitSPM12, 
-    blox_dest::JansenRitSPM12; 
+    blox_src::JansenRitSPM, 
+    blox_dest::JansenRitSPM; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)

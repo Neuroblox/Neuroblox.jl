@@ -212,13 +212,13 @@ hyperpriors = (Πλ_pr = 128.0*ones(1, 1),   # prior metaparameter precision, ne
 # To compute the cross spectral densities we need to provide the sampling interval of the time series, the frequency axis and the order of the multivariate autoregressive model:
 csdsetup = (mar_order = p, freq = freq, dt = dt);
 # Prepare the DCM. This function will setup the computation of the Dynamic Causal Model. The last parameter specifies that wer are using fMRI time series as opposed to LFPs.
-(state, setup) = setup_sDCM(dfsol, fitmodel, perturbedfp, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
+(state, setup) = setup_spDCM(dfsol, fitmodel, perturbedfp, csdsetup, priors, hyperpriors, indices, pmean, "fMRI");
 
 # We are now ready to run the optimization procedure! :)
 # That is we loop over run_sDCM_iteration! which will alter `state` after each optimization iteration. It essentially computes the Variational Laplace estimation of expectation and variance of the tunable parameters. 
 for iter in 1:max_iter
     state.iter = iter
-    run_sDCM_iteration!(state, setup)
+    run_spDCM_iteration!(state, setup)
     print("iteration: ", iter, " - F:", state.F[end] - state.F[2], " - dF predicted:", state.dF[end], "\n")
     if iter >= 4
         criterion = state.dF[end-3:end] .< setup.tolerance

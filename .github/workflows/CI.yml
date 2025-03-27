@@ -26,7 +26,8 @@ jobs:
           version: ${{ matrix.version }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("Neuroblox"; julia_args=["-O1"])'
         env:
           JULIA_NUM_THREADS: 4
           GROUP: ${{ matrix.group }}

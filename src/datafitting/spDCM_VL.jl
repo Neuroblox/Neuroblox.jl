@@ -397,7 +397,7 @@ end
     -- `μλ_pr`      : prior mean(s) for λ hyperparameter(s)
     - `indices`  : indices to separate model parameters from other parameters. Needed for the computation of AD gradient.
 """
-function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modelparam, modality)
+function setup_spDCM(data, model, initcond, csdsetup, priors, hyperpriors, indices, modelparam, modality)
     # compute cross-spectral density
     dt = csdsetup.dt;                      # order of MAR. Hard-coded in SPM12 with this value. We will use the same for now.
     freq = csdsetup.freq;                  # frequencies at which the CSD is evaluated
@@ -437,7 +437,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
         -4,                                  # log ascent rate
         [-Inf],                              # free energy
         Float64[],                           # delta free energy
-        hyperpriors.μλ_pr,                   # metaparameter, initial condition. TODO: why are we not just using the prior mean?
+        hyperpriors.μλ_pr,                   # metaparameter, initial condition
         zeros(np),                           # parameter estimation error ϵ_θ
         [zeros(np), hyperpriors.μλ_pr],      # memorize reset state
         μθ_pr,                               # parameter posterior mean
@@ -460,7 +460,7 @@ function setup_sDCM(data, model, initcond, csdsetup, priors, hyperpriors, indice
     return (vlstate, vlsetup)
 end
 
-function run_sDCM_iteration!(state::VLState, setup::VLSetup)
+function run_spDCM_iteration!(state::VLState, setup::VLSetup)
     (;μθ_po, λ, v, ϵ_θ, dFdθ, dFdθθ) = state
 
     f = setup.model_at_x0
@@ -508,7 +508,7 @@ function run_sDCM_iteration!(state::VLState, setup::VLSetup)
     dFdλ = zeros(real(eltype(J)), nh)
     dFdλλ = zeros(real(eltype(J)), nh, nh)
     local iΣ, Σλ_po, Σθ_po, ϵ_λ
-    for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM12 code.
+    for m = 1:8   # 8 seems arbitrary. Numbers of iterations taken from SPM code.
         iΣ = zeros(eltype(J), ny, ny)
         for i = 1:nh
             iΣ .+= Q[:, :, i] * exp(λ[i])
