@@ -25,4 +25,5 @@ if GROUP == "All" || GROUP == "GraphDynamics3"
     lif_exci_inh_tests()
     decision_making_test()
     ping_tests()
+    auto_tsit5_gdy_test()
 end
