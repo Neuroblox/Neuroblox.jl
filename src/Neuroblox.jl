@@ -107,10 +107,10 @@ macro paramscoping(arg1, args::Symbol...)
     else
         error("Invalid first argument to @paramscoping. Must be either tunable=istunable, or a Symbol.")
     end
-    argsnew = (Iterators.flatten ∘ Iterators.map)(args) do arg
-        (:($arg = $arg isa Num ? ($ParentScope($arg)) : $arg), :([tunable=$istunable]))
+    exprs = Iterators.map(args) do arg
+        :($arg isa Num ? $ParentScope($arg) : only($ModelingToolkit.@parameters $arg = $arg [tunable=$istunable]))
     end
-    esc(:($ModelingToolkit.@parameters($(argsnew...),)))
+    esc(Expr(:vect, exprs...))
 end
 
 
