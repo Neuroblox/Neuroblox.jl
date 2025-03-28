@@ -169,7 +169,12 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
            VanDerPol{NonNoisy}(name=:VdP)
            VanDerPol{Noisy}(name=:VdPN)
            KuramotoOscillator{NonNoisy}(name=:ko)
-           KuramotoOscillator{Noisy}(name=:kon)]
+           KuramotoOscillator{Noisy}(name=:kon)
+           AdamPYR(name=:adam_pyr)
+           AdamINP(name=:adam_inp)
+           AdamNMDAR(name=:adam_nmdar)
+           AdamGABBA(name=:adam_gabba)
+           AdamAMPA(name=:adam_ampa)]
     define_neuron(sys)
 end
 
