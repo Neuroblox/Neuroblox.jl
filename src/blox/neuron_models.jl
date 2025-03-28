@@ -550,8 +550,7 @@ struct IFNeuron <: AbstractNeuronBlox
 					   θ = -50.0,
 					   Eₘ= -70.0,
 					   I_in=0)
-		p = paramscoping(C=C, θ=θ, Eₘ=Eₘ, I_in=I_in)
-		C, θ, Eₘ, I_in = p
+		p = @paramscoping C θ Eₘ I_in
 		sts = @variables V(t)=-70.00 [output=true] jcn(t) [input=true]
 		eqs = [D(V) ~ (I_in + jcn)/C]
 		ev = (V >= θ) => [V~Eₘ]
@@ -611,8 +610,7 @@ struct LIFNeuron <: AbstractNeuronBlox
 					   E_syn=-70.0,
 					   G_syn=0.002,
 					   I_in=0.0)
-		p = paramscoping(C=C, Eₘ=Eₘ, Rₘ=Rₘ, τ=τ, θ=θ, E_syn=E_syn, G_syn=G_syn, I_in=I_in)
-		C, Eₘ, Rₘ, τ, θ, E_syn, G_syn, I_in = p
+		p = @paramscoping C Eₘ Rₘ τ θ E_syn G_syn I_in
 		sts = @variables V(t)=-70.00 G(t)=0.0 [output=true] jcn(t) [input=true]
 		eqs = [ D(V) ~ (-(V-Eₘ)/Rₘ + I_in + jcn)/C,
 				D(G)~(-1/τ)*G]
@@ -786,8 +784,7 @@ struct QIFNeuron <: AbstractNeuronBlox
 						Eₘ=0.0,
 						Vᵣₑₛ=-70.0,
 						θ=25.0)
-		p = paramscoping(C=C, Rₘ=Rₘ, E_syn=E_syn, G_syn=G_syn, τ₁=τ₁, τ₂=τ₂, I_in=I_in, Eₘ=Eₘ, Vᵣₑₛ=Vᵣₑₛ, θ=θ)
-		C, Rₘ, E_syn, G_syn, τ₁, τ₂, I_in, Eₘ, Vᵣₑₛ, θ = p
+		p = @paramscoping C Rₘ E_syn G_syn τ₁ τ₂ I_in Eₘ Vᵣₑₛ θ
 		sts = @variables V(t)=-70.0 G(t)=0.0 [output=true] z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ ((V-Eₘ)^2/(Rₘ^2)+I_in+jcn)/C,
 		 		D(G)~(-1/τ₂)*G + z,
@@ -832,8 +829,7 @@ struct IzhikevichNeuron <: AbstractNeuronBlox
 							   gₛ=1.2308,
 							   eᵣ=1.0,
 							   τ=2.6)
-		p = paramscoping(α=α, η=η, a=a, b=b, θ=θ, vᵣ=vᵣ, wⱼ=wⱼ, sⱼ=sⱼ, gₛ=gₛ, eᵣ=eᵣ, τ=τ)
-		α, η, a, b, θ, vᵣ, wⱼ, sⱼ, gₛ, eᵣ, τ = p
+		p = @paramscoping α η a b θ vᵣ wⱼ sⱼ gₛ eᵣ τ
 		sts = @variables V(t)=0.0 w(t)=0.0 G(t)=0.0 [output=true] z(t)=0.0 jcn(t) [input=true]
 		eqs = [ D(V) ~ V*(V-α) - w + η + jcn,
 				D(w) ~ a*(b*V - w),

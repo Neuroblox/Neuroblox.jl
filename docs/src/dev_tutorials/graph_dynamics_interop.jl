@@ -12,7 +12,7 @@ using Neuroblox, ModelingToolkit, GraphDynamics
 using Neuroblox.GraphDynamicsInterop
 
 using Neuroblox: 
-    paramscoping,
+    @paramscoping,
     NeuralMassBlox,
     get_namespaced_sys,
     generate_weight_param,
@@ -37,8 +37,7 @@ struct VanDerPol <: NeuralMassBlox
     system
     namespace
     function VanDerPol(; name, namespace=nothing, θ=1.0, ϕ=0.1)
-        p = paramscoping(θ=θ, ϕ=ϕ)
-        θ, ϕ = p
+        p = @paramscoping θ ϕ
         sts = @variables begin
             ## our regular dynamical variables
             x(t)=0.0 
@@ -305,13 +304,13 @@ struct DBS <: Neuroblox.StimulusBlox
             t -> Neuroblox.square(t, frequency_khz, amplitude, offset, start_time, pulse_width, smooth)
         end
     
-        p = Neuroblox.paramscoping(
-            tunable=false;
-            frequency=frequency,
-            amplitude=amplitude,
-            pulse_width=pulse_width,
-            offset=offset,
-            start_time=start_time
+        p = @paramscoping(
+            tunable=false,
+            frequency,
+            amplitude,
+            pulse_width,
+            offset,
+            start_time
         )
     
         sts = @variables u(t) [output = true]
