@@ -48,14 +48,7 @@ function DBS(;
         t -> square(t, frequency_khz, amplitude, offset, start_time, pulse_width, smooth)
     end
 
-    p = paramscoping(
-        tunable=false;
-        frequency=frequency,
-        amplitude=amplitude,
-        pulse_width=pulse_width,
-        offset=offset,
-        start_time=start_time
-    )
+    p = @paramscoping tunable=false frequency amplitude pulse_width offset start_time
 
     sts = @variables u(t) [output = true]
     eqs = [u ~ stimulus(t)]
@@ -140,18 +133,18 @@ function ProtocolDBS(;
         )
     end
 
-    p = paramscoping(
-        tunable=false;
-        frequency=frequency,
-        amplitude=amplitude,
-        pulse_width=pulse_width,
-        offset=offset,
-        smooth=smooth,
-        start_time=start_time,
-        pulses_per_burst=pulses_per_burst,
-        bursts_per_block=bursts_per_block,
-        pre_block_time=pre_block_time,
-        inter_burst_time=inter_burst_time,
+    p = @paramscoping(
+        tunable=false,
+        frequency,
+        amplitude,
+        pulse_width,
+        offset,
+        smooth,
+        start_time,
+        pulses_per_burst,
+        bursts_per_block,
+        pre_block_time,
+        inter_burst_time
     )
 
     sts = @variables u(t) [output = true]

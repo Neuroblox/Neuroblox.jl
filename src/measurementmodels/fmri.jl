@@ -71,8 +71,7 @@ struct BalloonModel <: ObserverBlox
         B = [0.04, 4, 25, 40.3, 0.4]
         k1 = 4.3*B[1]*B[4]*B[5]                         # coefficients in BOLD signal model
 
-        p = paramscoping(lnκ=lnκ, lnτ=lnτ, lnϵ=lnϵ)     # finally compile all parameters
-        lnκ, lnτ, lnϵ = p                               # assign the modified parameters
+        p = @paramscoping lnκ lnτ lnϵ     # finally compile all parameters
 
         sts = @variables s(t)=0.0 lnu(t)=0.0 lnν(t)=0.0 lnq(t)=0.0 bold(t)=0.0 [irreducible=true, output=true, description="measurement"] jcn(t) [input=true]
 

@@ -5,8 +5,7 @@ struct LeadField <: ObserverBlox
     namespace
 
     function LeadField(;name, namespace=nothing, L=1.0)
-        p = paramscoping(L=L)
-        L, = p
+        p = @paramscoping L
 
         sts = @variables lfp(t)=0.0 [irreducible=true, output=true, description="measurement"] jcn(t)=1.0 [input=true]
 

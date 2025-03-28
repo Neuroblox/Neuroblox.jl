@@ -8,9 +8,7 @@ mutable struct JansenRitSPM <: NeuralMassBlox
     system
     namespace
     function JansenRitSPM(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
-        p = paramscoping(τ=τ, r=r)
-        τ, r = p
-
+        p = @paramscoping τ r
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
         eqs    = [D(x) ~ y - ((2/τ)*x),
                   D(y) ~ -x/(τ*τ) + jcn/τ]

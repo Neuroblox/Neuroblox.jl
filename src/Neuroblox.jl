@@ -91,6 +91,29 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 # dictionary type for Blox parameters
 Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
+
+"""
+    @paramscoping(tunable=true, args...)
+    
+Scope arguments that are already a symbolic model parameter thereby keep the correct namespace 
+and make those that are not yet symbolic a symbol.
+"""
+macro paramscoping(arg1, args::Symbol...)
+    if Base.isexpr(arg1, :(=)) && arg1.args[1] == :tunable
+        istunable = arg1.args[2]
+    elseif arg1 isa Symbol
+        args = (arg1, args...)
+        istunable = true
+    else
+        error("Invalid first argument to @paramscoping. Must be either tunable=istunable, or a Symbol.")
+    end
+    exprs = Iterators.map(args) do arg
+        :($arg isa Num ? $ParentScope($arg) : only($ModelingToolkit.@parameters $arg = $arg [tunable=$istunable]))
+    end
+    esc(Expr(:vect, exprs...))
+end
+
+
 include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("utilities/bold_methods.jl")
