@@ -587,7 +587,7 @@ struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     end
 
     function NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0)
-        p = @paramscoping(Δ τₘ H I_ext J_internal
+        p = @paramscoping Δ τₘ H I_ext J_internal
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
