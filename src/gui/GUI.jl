@@ -120,6 +120,21 @@ function param_order(::Type{Neuroblox.ImageStimulus})
   [:height, :width, :N_stims, :file, :t_stimulus, :t_pause]
 end
 
+function arguments(::Type{Neuroblox.DBS})
+  OrderedDict(
+    :frequency => NCAD(130.0, NUMBER, 10.0, 200.0,[], true),
+    :amplitude => NCAD(2.5, NUMBER, 0.0, 20.0,[], true),
+    :pulse_width => NCAD(0.066, NUMBER, 0.010, 10, [], true),
+    :offset => NCAD(0.0, NUMBER, 0.0, 20,[], true),
+    :start_time => NCAD(0.0, NUMBER, 0.0, 1000,[],true),
+    :smooth => NCAD(1e-4, NUMBER, 0.0, 1e-3,[],true)
+  )
+end
+
+function param_order(::Type{Neuroblox.DBS})
+  [:frequency, :amplitude, :pulse_width, :offset, :start_time, :smooth]
+end
+
 function arguments(::Type{Neuroblox.WinnerTakeAllBlox})
   OrderedDict(
     :N_exci => NCAD(5, INTEGER, 1, 40, [],true),
@@ -160,7 +175,7 @@ end
 function arguments(::Type{Neuroblox.JansenRit})
   OrderedDict(
     :τ => NCAD(1, NUMBER, 1, 14,[],true),
-    :H => NCAD(20.0, NUMBER, 0.0, 0.5,[],true),
+    :H => NCAD(20.0, NUMBER, 0.0, 50.0,[],true),
     :λ => NCAD(400.0, NUMBER, 20.0, 500.0,[],true),
     :r => NCAD(0.1, NUMBER, 0.1, 5.0,[],true)
   )
