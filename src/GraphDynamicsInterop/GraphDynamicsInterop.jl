@@ -55,7 +55,7 @@ using ..Neuroblox:
     AbstractAdamNeuron,
     AdamAMPA,
     AdamNMDAR,
-    AdamGABBA,
+    AdamGABA,
     AbstractReceptor,
     AbstractNeurotransmitter
 

@@ -52,9 +52,9 @@ end
 
 for ni ∈ inhi
     for ne ∈ exci[1:20]
-        gabba = AdamGABBA(name=Symbol("GABBA$(ni.name)_$(ne.name)"))
-        add_edge!(g, ni => gabba; weight=1)
-        add_edge!(g, gabba => ne; weight=ḡᵢ/NI)
+        GABA = AdamGABA(name=Symbol("GABA$(ni.name)_$(ne.name)"))
+        add_edge!(g, ni => GABA; weight=1)
+        add_edge!(g, GABA => ne; weight=ḡᵢ/NI)
     end
 end
 

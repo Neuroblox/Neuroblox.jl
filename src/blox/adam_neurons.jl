@@ -135,12 +135,12 @@ struct AdamAMPA <: AbstractReceptor
     end
 end
 
-struct AdamGABBA <: AbstractReceptor
+struct AdamGABA <: AbstractReceptor
     params
     system
     namespace
 
-    function AdamGABBA(;
+    function AdamGABA(;
         name,
         namespace=nothing,
         V_I=-80,
@@ -170,6 +170,7 @@ struct AdamNMDAR <: AbstractReceptor
 
     function AdamNMDAR(;name,
                       namespace=nothing,
+                      V_E=0,
                       k_on=5,
                       k_off=0.0055,
                       k_r=0.0018,
