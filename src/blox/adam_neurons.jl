@@ -115,12 +115,12 @@ struct AdamAMPA <: AbstractReceptor
     function AdamAMPA(;
         name,
         namespace=nothing,
-        V_E=-80,
+        E=-80,
         τₑ=1.5
     )
 
-        p = paramscoping(V_E=V_E, τₑ=τₑ)
-        V_E, τₑ = p
+        p = paramscoping(E=E, τₑ=τₑ)
+        E, τₑ = p
         sts = @variables V(t) [input=true] sₐₘₚₐ(t)=0.0 [output=true]
 
         gₐₘₚₐ(v) = 5*(1+tanh(v/4))
@@ -143,12 +143,12 @@ struct AdamGABA <: AbstractReceptor
     function AdamGABA(;
         name,
         namespace=nothing,
-        V_I=-80,
+        E=-80,
         τᵢ=6
     )
 
-    p = paramscoping(V_I=V_I, τᵢ=τᵢ)
-    V_I, τᵢ = p
+    p = paramscoping(E=E, τᵢ=τᵢ)
+    E, τᵢ = p
     sts = @variables V(t) [input=true] sᵧ(t)=0.0 [output=true]
 
     gᵧ(v) = 2*(1+tanh(v/4))
@@ -170,7 +170,7 @@ struct AdamNMDAR <: AbstractReceptor
 
     function AdamNMDAR(;name,
                       namespace=nothing,
-                      V_E=0,
+                      E=0,
                       k_on=5,
                       k_off=0.0055,
                       k_r=0.0018,
@@ -184,8 +184,8 @@ struct AdamNMDAR <: AbstractReceptor
                       θ=-59.0 # θ is set to -59 mV so that the total impulse of an average spike is about 1.0
     )
         
-        p = paramscoping(k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
-        k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ = p
+        p = paramscoping(E=E, k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
+        E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ = p
 
         sts = @variables begin 
             V(t)

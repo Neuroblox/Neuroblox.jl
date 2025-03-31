@@ -122,10 +122,10 @@ GraphDynamicsInterop.issupported(::AdamGABA) = true
 GraphDynamicsInterop.components(v::AdamGABA) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamGABA)
-    V_I = GraphDynamicsInterop.recursive_getdefault(v.V_I)
+    E = GraphDynamicsInterop.recursive_getdefault(v.E)
     τᵢ = GraphDynamicsInterop.recursive_getdefault(v.τᵢ)
 
-    params = SubsystemParams{AdamGABA}(; V_I, τᵢ)
+    params = SubsystemParams{AdamGABA}(; E, τᵢ)
 
     sᵧ = GraphDynamicsInterop.recursive_getdefault(v.sᵧ)
 
@@ -152,10 +152,10 @@ GraphDynamicsInterop.issupported(::AdamAMPA) = true
 GraphDynamicsInterop.components(v::AdamAMPA) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamAMPA)
-    V_E = GraphDynamicsInterop.recursive_getdefault(v.V_E)
+    E = GraphDynamicsInterop.recursive_getdefault(v.E)
     τₑ = GraphDynamicsInterop.recursive_getdefault(v.τₑ)
 
-    params = SubsystemParams{AdamAMPA}(; V_E, τₑ)
+    params = SubsystemParams{AdamAMPA}(; E, τₑ)
 
     sₐₘₚₐ = GraphDynamicsInterop.recursive_getdefault(v.sₐₘₚₐ)
 
@@ -183,6 +183,7 @@ GraphDynamicsInterop.components(v::AdamNMDAR) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     # Extract default parameter values
+    E = GraphDynamicsInterop.recursive_getdefault(v.E)
     k_on = GraphDynamicsInterop.recursive_getdefault(v.system.k_on)
     k_off = GraphDynamicsInterop.recursive_getdefault(v.system.k_off)
     k_r = GraphDynamicsInterop.recursive_getdefault(v.system.k_r)
@@ -195,7 +196,7 @@ function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     τ_Glu = GraphDynamicsInterop.recursive_getdefault(v.τ_Glu)
     θ = GraphDynamicsInterop.recursive_getdefault(v.θ)
 
-    params = SubsystemParams{AdamNMDAR}(; k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ)
+    params = SubsystemParams{AdamNMDAR}(; E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ)
 
     # Extract the default values of states
     C = GraphDynamicsInterop.recursive_getdefault(v.C)
@@ -241,13 +242,6 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamNMDAR}, in
     )
 end
 
-function (c::BasicConnection)(sys_src::Subsystem{AdamPYR}, sys_dst::Subsystem{<:AbstractAdamNeuron}, t)
-    acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.V_E)
-    
-    return acc
-end
-
 function (c::BasicConnection)(sys_src::Subsystem{AdamPYR}, sys_dst::Subsystem{<:AdamAMPA})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.V = sys_src.V
@@ -257,7 +251,7 @@ end
 
 function (c::BasicConnection)(sys_src::Subsystem{AdamAMPA}, sys_dst::Subsystem{<:AbstractAdamNeuron})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.V_E)
+    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.E)
     
     return acc
 end
@@ -271,7 +265,7 @@ end
 
 function (c::BasicConnection)(sys_src::Subsystem{AdamGABA}, sys_dst::Subsystem{<:AbstractAdamNeuron})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.sᵧ * (sys_dst.V - sys_src.V_I)
+    acc = @set acc.jcn = c.weight * sys_src.sᵧ * (sys_dst.V - sys_src.E)
     
     return acc
 end
@@ -292,7 +286,7 @@ end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{AdamNMDAR}, sys_dst::Subsystem{<:Neuroblox.AbstractAdamNeuron}, t)
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.O_AA * sys_dst.V
+    acc = @set acc.jcn = c.weight * sys_src.O_AA * (sys_dst.V - sys_src.E)
     
     return acc
 end
