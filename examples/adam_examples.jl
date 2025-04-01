@@ -40,10 +40,10 @@ g = MetaDiGraph()
 for ni_dst ∈ INP
     idx_PYR_src = sample(Base.OneTo(N_PYR), N_PYR_INP; replace = false)
     for ne_src ∈ PYR[idx_PYR_src]
-        nmda = AdamNMDAR(name=Symbol("NMDA_$(ne_src.name)_$(ni_dst.name)"), k_unblock=10.4)
-        add_edge!(g, ne_src => nmda; weight=1.0)
-        add_edge!(g, ni_dst => nmda; weight=1.0, reverse=true)
-        add_edge!(g, nmda => ne_src; weight=8.5)
+        nmda = AdamNMDAR(name=Symbol("NMDA_$(ne_src.name)_$(ni_dst.name)"), k_unblock=5.4, g=9.5)
+        add_edge!(g, ne_src => nmda; weight=1)
+        add_edge!(g, ni_dst => nmda; weight=1, reverse=true)
+        add_edge!(g, nmda => ne_src; weight=1)
 
         ampa = AdamAMPA(name=Symbol("AMPA_$(ne_src.name)_$(ni_dst.name)"))
         add_edge!(g, ne_src => ampa; weight=1)
@@ -69,10 +69,10 @@ for (i, ne_dst) ∈ enumerate(PYR)
     idxs = [j for j in Base.OneTo(N_PYR) if j != i]
     idx_PYR_src = sample(idxs, N_PYR_PYR; replace = false)
     for ne_src ∈ PYR[idx_PYR_src]
-        nmda = AdamNMDAR(name=Symbol("NMDA_$(ne_src.name)_$(ne_dst.name)"), k_unblock=10.4)
-        add_edge!(g, ne_src => nmda; weight=1.0)
-        add_edge!(g, ne_dst => nmda; weight=1.0, reverse=true)
-        add_edge!(g, nmda => ne_dst; weight=8.5)
+        nmda = AdamNMDAR(name=Symbol("NMDA_$(ne_src.name)_$(ne_dst.name)"), k_unblock=5.4, g=8.5)
+        add_edge!(g, ne_src => nmda; weight=1)
+        add_edge!(g, ne_dst => nmda; weight=1, reverse=true)
+        add_edge!(g, nmda => ne_dst; weight=1)
 
         ampa = AdamAMPA(name=Symbol("AMPA_$(ne_src.name)_$(ne_dst.name)"))
         add_edge!(g, ne_src => ampa; weight=1)
@@ -94,7 +94,7 @@ for (i, ne_dst) ∈ enumerate(PYR)
     end
 end
 
-tspan = (0.0, 1000.0)
+tspan = (0.0, 100.0)
 sys = system_from_graph(g, graphdynamics=true)
 prob = ODEProblem(sys, [], tspan)
 sol = solve(prob, Tsit5())
