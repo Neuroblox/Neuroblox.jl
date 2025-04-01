@@ -183,6 +183,7 @@ GraphDynamicsInterop.components(v::AdamNMDAR) = (v,)
 
 function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     # Extract default parameter values
+    g = GraphDynamicsInterop.recursive_getdefault(v.g)
     E = GraphDynamicsInterop.recursive_getdefault(v.E)
     k_on = GraphDynamicsInterop.recursive_getdefault(v.system.k_on)
     k_off = GraphDynamicsInterop.recursive_getdefault(v.system.k_off)
@@ -196,7 +197,7 @@ function GraphDynamicsInterop.to_subsystem(v::AdamNMDAR)
     τ_Glu = GraphDynamicsInterop.recursive_getdefault(v.τ_Glu)
     θ = GraphDynamicsInterop.recursive_getdefault(v.θ)
 
-    params = SubsystemParams{AdamNMDAR}(; E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ)
+    params = SubsystemParams{AdamNMDAR}(; g, E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ)
 
     # Extract the default values of states
     C = GraphDynamicsInterop.recursive_getdefault(v.C)
@@ -286,7 +287,7 @@ end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{AdamNMDAR}, sys_dst::Subsystem{<:Neuroblox.AbstractAdamNeuron}, t)
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.O_AA * (sys_dst.V - sys_src.E)
+    acc = @set acc.jcn = c.weight * sys_src.g * sys_src.O_AA * (sys_dst.V - sys_src.E)
     
     return acc
 end

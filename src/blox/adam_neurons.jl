@@ -170,6 +170,7 @@ struct AdamNMDAR <: AbstractReceptor
 
     function AdamNMDAR(;name,
                       namespace=nothing,
+                      g=8.5, # mS / cm⁻²
                       E=0,
                       k_on=5,
                       k_off=0.0055,
@@ -184,8 +185,8 @@ struct AdamNMDAR <: AbstractReceptor
                       θ=-59.0 # θ is set to -59 mV so that the total impulse of an average spike is about 1.0
     )
         
-        p = paramscoping(E=E, k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
-        E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ = p
+        p = paramscoping(g=g, E=E, k_on=k_on, k_off=k_off, k_r=k_r, k_d=k_d, k_unblock=k_unblock, k_block=k_block, α=α, β=β, Glu_max=Glu_max, τ_Glu=τ_Glu, θ=θ)
+        g, E, k_on, k_off, k_r, k_d, k_unblock, k_block, α, β, Glu_max, τ_Glu, θ = p
 
         sts = @variables begin 
             V(t)
