@@ -111,7 +111,7 @@ struct HarmonicOscillator <: NeuralMassBlox
 
     function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
         # p = progress_scope(ω, ζ, k, h)
-        p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
+        p = @paramscoping ω ζ k h
         sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
         ω, ζ, k, h = p
         eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
@@ -169,8 +169,8 @@ struct JansenRit <: NeuralMassBlox
         r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
 
         # p = progress_scope(τ, H, λ, r)
-        p = paramscoping(τ=τ, H=H, λ=λ, r=r)
-        τ, H, λ, r = p
+        p = @paramscoping τ H λ r
+        
         if !delayed
             sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
             eqs = [D(x) ~ y - ((2/τ)*x),
@@ -232,8 +232,7 @@ struct WilsonCowan <: NeuralMassBlox
                         η=1.0
     )
         # p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
-        p = paramscoping(τ_E=τ_E, τ_I=τ_I, a_E=a_E, a_I=a_I, c_EE=c_EE, c_IE=c_IE, c_EI=c_EI, c_II=c_II, θ_E=θ_E, θ_I=θ_I, η=η)
-        τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
+        p = @paramscoping τ_E τ_I a_E a_I c_EE c_IE c_EI c_II θ_E θ_I η
         sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t) [input=true] #P(t)=0.0
         eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
                D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
@@ -300,8 +299,7 @@ struct LarterBreakspear <: NeuralMassBlox
                         C=0.35
     )
         # p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
-        p = paramscoping(C=C, δ_VZ=δ_VZ, T_Ca=T_Ca, δ_Ca=δ_Ca, g_Ca=g_Ca, V_Ca=V_Ca, T_K=T_K, δ_K=δ_K, g_K=g_K, V_K=V_K, T_Na=T_Na, δ_Na=δ_Na, g_Na=g_Na, V_Na=V_Na, V_L=V_L, g_L=g_L, V_T=V_T, Z_T=Z_T, Q_Vmax=Q_Vmax, Q_Zmax=Q_Zmax, IS=IS, a_ee=a_ee, a_ei=a_ei, a_ie=a_ie, a_ne=a_ne, a_ni=a_ni, b=b, τ_K=τ_K, ϕ=ϕ, r_NMDA=r_NMDA)
-        C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
+        p = @paramscoping C δ_VZ T_Ca δ_Ca g_Ca V_Ca T_K δ_K g_K V_K T_Na δ_Na g_Na V_N V_L g_L V_T Z_T Q_Vmax Q_Zmax IS a_ee a_ei a_ie a_ne a_ni b τ_K ϕ r_NMDA
         
         sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t) [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
 
@@ -387,8 +385,7 @@ struct Generic2dOscillator <: NeuralMassBlox
                         γ=6e-2,
                         bn=0.02,
     )
-        p = paramscoping(τ=τ, a=a,b=b,c=c,d=d,e=e,f=f,g=g,α=α,β=β,γ=γ)
-        τ,a,b,c,d,e,f,g,α,β,γ = p
+        p = @paramscoping τ a b c d e f g α β γ
         
         sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t) [input=true]
         @brownian w v
@@ -458,8 +455,7 @@ struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
         end
     end
     function KuramotoOscillator{Noisy}(;name, namespace=nothing, ω=249.0, ζ=5.92)
-        p = paramscoping(ω=ω, ζ=ζ)
-        ω, ζ = p
+        p = @paramscoping ω ζ
         sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
         @brownian w
         eqs = [D(θ) ~ ω + jcn + ζ*w]
@@ -467,8 +463,7 @@ struct KuramotoOscillator{IsNoisy} <: NeuralMassBlox
         new{Noisy}(p, sys, namespace)
     end
     function KuramotoOscillator{NonNoisy}(;name, namespace=nothing, ω=249.0)
-        p = paramscoping(ω=ω)
-        ω = p[1]
+        p = @paramscoping ω
         sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
         eqs = [D(θ) ~ ω + jcn]
         sys = System(eqs, t, sts, p; name=name)
@@ -527,8 +522,7 @@ struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
 
     end
     function NGNMM_Izh{NonNoisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0)
-        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
-        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
+        p = @paramscoping Δ α gₛ η̄ I_ext eᵣ a b wⱼ sⱼ κ
         sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
         eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
                 D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
@@ -539,8 +533,7 @@ struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
         new(p, sys, namespace)
     end
     function NGNMM_Izh{Noisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0, ζ=0.0)
-        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, τₛ=τₛ, κ=κ, ζ=ζ)
-        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ = p
+        p = @paramscoping Δ α gₛ η̄ I_ext eᵣ a b wⱼ sⱼ τₛ κ ζ
         sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
         @brownian ξ
         eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
@@ -594,8 +587,7 @@ struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     end
 
     function NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0)
-        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
-        Δ, τₘ, H, I_ext, J_internal = p
+        p = @paramscoping Δ τₘ H I_ext J_internal
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
                D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
@@ -605,8 +597,7 @@ struct NGNMM_QIF{IsNoisy} <: NeuralMassBlox
     end
 
     function NGNMM_QIF{Noisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0, A=0.0)
-        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
-        Δ, τₘ, H, I_ext, J_internal = p
+        p = @paramscoping Δ τₘ H I_ext J_internal
         sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
         @brownian ξ
         eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
@@ -630,8 +621,7 @@ struct VanDerPol{IsNoisy} <: NeuralMassBlox
         end
     end
     function VanDerPol{Noisy}(; name, namespace=nothing, θ=1.0, ϕ=0.1)
-        p = paramscoping(θ=θ, ϕ=ϕ)
-        θ, ϕ = p
+        p = @paramscoping θ ϕ
         sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
         @brownian ξ
 
@@ -642,8 +632,7 @@ struct VanDerPol{IsNoisy} <: NeuralMassBlox
         new{Noisy}(p, sys, namespace)
     end
     function VanDerPol{NonNoisy}(; name, namespace=nothing, θ=1.0)
-        p = paramscoping(θ=θ)
-        θ = p[1]
+        p = @paramscoping θ
         sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
         
         eqs = [D(x) ~ y,
