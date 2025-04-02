@@ -115,7 +115,7 @@ struct AdamAMPA <: AbstractReceptor
     function AdamAMPA(;
         name,
         namespace=nothing,
-        E=-80,
+        E=0,
         τₑ=1.5
     )
 
