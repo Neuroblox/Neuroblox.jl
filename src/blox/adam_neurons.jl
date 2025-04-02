@@ -58,12 +58,12 @@ struct AdamPYR <: AbstractAdamNeuron
     end
 end
 
-struct AdamINP <: AbstractAdamNeuron
+struct AdamIN <: AbstractAdamNeuron
     params
     system
     namespace
 
-    function AdamINP(;name,
+    function AdamIN(;name,
                       namespace=nothing,
                       C=1.0,
                       Eₙₐ=50,

@@ -51,7 +51,7 @@ using ..Neuroblox:
     Connector,
     VanDerPol,
     AdamPYR,
-    AdamINP,
+    AdamIN,
     AbstractAdamNeuron,
     AdamAMPA,
     AdamNMDAR,

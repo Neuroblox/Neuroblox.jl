@@ -45,7 +45,7 @@ NE = 80
 NI = 20
 
 exci = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=rand(Normal(0.05, 0.05))) for i in 1:NE]
-inhi = [AdamINP(name=Symbol("INP$i"), Iₐₚₚ=rand(Normal(0.05, 0.05))) for i in 1:NI] # bump up to 0.3
+inhi = [AdamIN(name=Symbol("INP$i"), Iₐₚₚ=rand(Normal(0.05, 0.05))) for i in 1:NI] # bump up to 0.3
 
 g = MetaDiGraph()
 

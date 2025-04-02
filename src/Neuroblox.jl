@@ -263,6 +263,6 @@ export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, 
 export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
-export AdamPYR, AdamINP
+export AdamPYR, AdamIN
 export AdamNMDAR, AdamGABA, AdamAMPA
 end

@@ -62,10 +62,10 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamPYR}, inpu
     )
 end
 
-GraphDynamicsInterop.issupported(::AdamINP) = true
-GraphDynamicsInterop.components(v::AdamINP) = (v,)
+GraphDynamicsInterop.issupported(::AdamIN) = true
+GraphDynamicsInterop.components(v::AdamIN) = (v,)
 
-function GraphDynamicsInterop.to_subsystem(v::AdamINP)
+function GraphDynamicsInterop.to_subsystem(v::AdamIN)
     C = GraphDynamicsInterop.recursive_getdefault(v.C)
     Eₙₐ = GraphDynamicsInterop.recursive_getdefault(v.Eₙₐ)
     ḡₙₐ = GraphDynamicsInterop.recursive_getdefault(v.ḡₙₐ)
@@ -76,21 +76,21 @@ function GraphDynamicsInterop.to_subsystem(v::AdamINP)
     Iₐₚₚ = GraphDynamicsInterop.recursive_getdefault(v.Iₐₚₚ)
     Iₙₒᵢₛₑ = GraphDynamicsInterop.recursive_getdefault(v.Iₙₒᵢₛₑ)
 
-    params = SubsystemParams{AdamINP}(; C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ)
+    params = SubsystemParams{AdamIN}(; C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ)
 
     V = GraphDynamicsInterop.recursive_getdefault(v.V)
     m = GraphDynamicsInterop.recursive_getdefault(v.m)
     h = GraphDynamicsInterop.recursive_getdefault(v.h)
     n = GraphDynamicsInterop.recursive_getdefault(v.n)
 
-    states = SubsystemStates{AdamINP}(; V, m, h, n) 
+    states = SubsystemStates{AdamIN}(; V, m, h, n) 
 
     Subsystem(states, params)
 end
 
-GraphDynamicsInterop.initialize_input(s::Subsystem{AdamINP}) = (; jcn = 0.0)
+GraphDynamicsInterop.initialize_input(s::Subsystem{AdamIN}) = (; jcn = 0.0)
 
-function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamINP}, inputs, t)
+function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamIN}, inputs, t)
     (; jcn) = inputs
     (; C, Eₙₐ, ḡₙₐ, Eₖ, ḡₖ, Eₗ, ḡₗ, Iₐₚₚ, Iₙₒᵢₛₑ) = s
     (; V, m, h, n) = s 
@@ -110,7 +110,7 @@ function GraphDynamicsInterop.subsystem_differential(s::Subsystem{AdamINP}, inpu
     τₕ(v) = 1.0/(αₕ(v) + βₕ(v))
     τₙ(v) = 1.0/(αₙ(v) + βₙ(v))
 
-    return SubsystemStates{AdamINP}(
+    return SubsystemStates{AdamIN}(
         #=d/dt=# V = (Iₐₚₚ + Iₙₒᵢₛₑ - ḡₙₐ*m^3*h*(V - Eₙₐ) - ḡₖ*n^4*(V - Eₖ) - ḡₗ*(V - Eₗ) - jcn)/C,
         #=d/dt=# m = (m∞(V) - m)/τₘ(V),
         #=d/dt=# h = (h∞(V) - h)/τₕ(V),
@@ -257,7 +257,7 @@ function (c::BasicConnection)(sys_src::Subsystem{AdamAMPA}, sys_dst::Subsystem{<
     return acc
 end
 
-function (c::BasicConnection)(sys_src::Subsystem{AdamINP}, sys_dst::Subsystem{<:AdamGABA})
+function (c::BasicConnection)(sys_src::Subsystem{AdamIN}, sys_dst::Subsystem{<:AdamGABA})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.V = sys_src.V
     
