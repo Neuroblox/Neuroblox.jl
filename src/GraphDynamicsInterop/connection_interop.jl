@@ -1063,16 +1063,3 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (;V) = blox_dst
     (; jcn = w * s * (V_I - V))
 end
-
-# using Accessors
-# function (c::AdamConnection)(sys_src::Subsystem{AdamGlu}, sys_dst::Subsystem{AdamNMDAR})
-#     w = c.weight
-#     input = initialize_input(sys_dest)
-#     @set input.Glu = sys_src.Glu
-# end
-
-# function (c::AdamConnection)(sys_src::Subsystem{<:AbstractAdamNeuron}, sys_dst::Subsystem{AdamNMDAR})
-#     w = c.weight
-#     input = initialize_input(sys_dest)
-#     @set input.V = sys_src.V
-# end
