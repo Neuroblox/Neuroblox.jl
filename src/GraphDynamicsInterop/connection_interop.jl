@@ -146,6 +146,17 @@ function get_connection(blox_src, blox_dst, kwargs)
     (;conn, names = [name,])
 end
 
+function get_connection(blox_src::AbstractAdamNeuron, blox_dst::AbstractAdamNeuron, kwargs)
+    (;w_val, name) = generate_weight_param(blox_src, blox_dst, kwargs)
+    r_name = get(kwargs, :reverse, false)
+    conn = if r_name 
+        ReverseConnection(w_val)
+    else
+        BasicConnection(w_val)
+    end
+    (;conn, names = [name,])
+end
+
 struct BasicConnection <: ConnectionRule
     weight::Float64
 end
@@ -154,6 +165,12 @@ Base.zero(::Type{<:BasicConnection}) = BasicConnection(0.0)
 function (c::BasicConnection)(blox_src, blox_dst)
     (; jcn = c.weight * output(blox_src))
 end
+
+struct ReverseConnection <: ConnectionRule
+    weight::Float64
+end
+
+Base.zero(::Type{<:ReverseConnection}) = ReverseConnection(0.0)
 
 struct PSPConnection <: ConnectionRule
     weight::Float64
@@ -1046,4 +1063,3 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (;V) = blox_dst
     (; jcn = w * s * (V_I - V))
 end
-

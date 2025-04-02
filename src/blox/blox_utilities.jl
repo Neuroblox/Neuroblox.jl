@@ -1,4 +1,4 @@
-function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, AbstractReceptor}, name::Symbol)
     # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
     if (name === :system) || (name === :namespace) || (name === :params)
@@ -700,4 +700,45 @@ function narrowtype(d::Dict)
     U = narrowtype_union(d)
 
     return Dict{Num, U}(d)
+end
+
+function compute_jacs(sol, prob, tspan; dt=1)
+    # TO DO : decide whether we should keep this.
+    # For now it is used in the Adam's ketamine model 
+    # to calculate the Lyapunov exponents.
+    p = prob.p
+    function diff_function(u)
+        du = similar(u)
+        prob.f(du, u, p, _t)
+        du
+    end
+    jacs = map(tspan[1]:dt:tspan[2]) do _t
+        u0 = sol(_t)
+        ForwardDiff.jacobian(diff_function, u0)
+    end
+end
+
+function lyap(jacs::Vector{Matrix}, dt=1)
+    # TO DO : decide whether we should keep this.
+    # For now it is used in the Adam's ketamine model 
+    # to calculate the Lyapunov exponents.
+    T = size(jacs, 1)
+    n = size(jacs[1], 1)
+    q_store = I(n)
+    lexp = zeros(n)
+    lexp_counts = zeros(n)
+    for t ∈ 1:T
+        q, r = qr(jacs[t] * q_store)
+        d = sign.(diag(r))
+        d[d .== 0] .= 1
+        q_store = q*Diagonal(d)
+
+        dr = diag(Diagonal(d)*r)
+        idx = dr .> 0
+        lexpᵢ = log.(dr[idx])
+        lexp[idx] .+= lexpᵢ
+        lexp_counts[idx] .+= 1
+    end
+
+    lexp ./= lexp_counts ./ dt
 end
