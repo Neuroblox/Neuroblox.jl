@@ -849,12 +849,6 @@ function ping_tests(;tspan=(0.0, 2.0))
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
 end
 
-function adam_tests(;tspan=(0.0, 2.0))
-    
-
-    test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
-end
-
 function auto_tsit5_gdy_test()
     # ensure https://github.com/Neuroblox/GraphDynamics.jl/pull/23 stays fixed
     # This solver involves switching out some types mid solve, which made older
