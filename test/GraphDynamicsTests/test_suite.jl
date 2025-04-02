@@ -170,7 +170,10 @@ function neuron_and_neural_mass_comparison_tests()
                         HarmonicOscillator(name=:ho1)
                         HarmonicOscillator(name=:ho2)
                         JansenRit(name=:jr1)
-                        JansenRit(name=:jr2)]
+                        JansenRit(name=:jr2)],
+                        [AdamPYR(name=:adampyr)],
+                        [AdamIN(name=:adamin)],
+                        [AdamNMDAR(name=:adamnmda)]
                        )
             if length(unknowns(LIFNeuron(;name=:_).system)) > 3
                 @warn "excluding LIFNeurons from test"
@@ -842,6 +845,12 @@ function ping_tests(;tspan=(0.0, 2.0))
             add_edge!(g, i, j, Dict(:weight => g_II/N))
         end
     end
+
+    test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
+end
+
+function adam_tests(;tspan=(0.0, 2.0))
+    
 
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
 end
