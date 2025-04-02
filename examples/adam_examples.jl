@@ -31,9 +31,9 @@ N_INT = 80
 N_INT_PYR = 5
 N_INT_INP = 5
 
-PYR = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=rand(Normal(1.5, 0.05))) for i in 1:N_PYR]
-INP = [AdamINP(name=Symbol("INP$i"), Iₐₚₚ=rand(Normal(0.1, 0.05))) for i in 1:N_INP] 
-INT = [AdamINP(name=Symbol("INT$i"), Iₐₚₚ=rand(Normal(0.1, 0.05))) for i in 1:N_INT]
+PYR = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=-0.25) for i in 1:N_PYR]
+INP = [AdamIN(name=Symbol("INP$i"), Iₐₚₚ=0.1) for i in 1:N_INP] 
+INT = [AdamIN(name=Symbol("INT$i"), Iₐₚₚ=-1.4) for i in 1:N_INT]
 
 g = MetaDiGraph()
 
@@ -94,7 +94,7 @@ for (i, ne_dst) ∈ enumerate(PYR)
     end
 end
 
-tspan = (0.0, 100.0)
+tspan = (0.0, 1000.0)
 sys = system_from_graph(g, graphdynamics=true)
 prob = ODEProblem(sys, [], tspan)
 sol = solve(prob, Tsit5())
