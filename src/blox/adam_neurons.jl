@@ -115,12 +115,13 @@ struct AdamAMPA <: AbstractReceptor
     function AdamAMPA(;
         name,
         namespace=nothing,
+        g=0.2, # mS / cm⁻²
         E=0,
         τₑ=1.5
     )
 
-        p = paramscoping(E=E, τₑ=τₑ)
-        E, τₑ = p
+        p = paramscoping(g=g, E=E, τₑ=τₑ)
+        g, E, τₑ = p
         sts = @variables V(t) [input=true] sₐₘₚₐ(t)=0.0 [output=true]
 
         gₐₘₚₐ(v) = 5*(1+tanh(v/4))
@@ -143,12 +144,13 @@ struct AdamGABA <: AbstractReceptor
     function AdamGABA(;
         name,
         namespace=nothing,
+        g=5, # mS / cm⁻²
         E=-80,
         τᵢ=6
     )
 
-    p = paramscoping(E=E, τᵢ=τᵢ)
-    E, τᵢ = p
+    p = paramscoping(g=g, E=E, τᵢ=τᵢ)
+    g, E, τᵢ = p
     sts = @variables V(t) [input=true] sᵧ(t)=0.0 [output=true]
 
     gᵧ(v) = 2*(1+tanh(v/4))

@@ -13,7 +13,7 @@ end
 
 function (c::BasicConnection)(sys_src::Subsystem{AdamAMPA}, sys_dst::Subsystem{<:AbstractAdamNeuron})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * (sys_dst.V - sys_src.E)
+    acc = @set acc.jcn = c.weight * sys_src.sₐₘₚₐ * sys_src.g * (sys_dst.V - sys_src.E)
     
     return acc
 end
@@ -27,7 +27,7 @@ end
 
 function (c::BasicConnection)(sys_src::Subsystem{AdamGABA}, sys_dst::Subsystem{<:AbstractAdamNeuron})
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
-    acc = @set acc.jcn = c.weight * sys_src.sᵧ * (sys_dst.V - sys_src.E)
+    acc = @set acc.jcn = c.weight * sys_src.sᵧ * sys_src.g * (sys_dst.V - sys_src.E)
     
     return acc
 end
