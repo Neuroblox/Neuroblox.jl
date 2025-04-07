@@ -97,6 +97,6 @@ end
 tspan = (0.0, 1000.0)
 sys = system_from_graph(g, graphdynamics=true)
 prob = ODEProblem(sys, [], tspan)
-sol = solve(prob, Tsit5())
+sol = solve(prob, Tsit5(); saveat=0.05)
 
 rasterplot(PYR, sol; threshold=-10)
