@@ -28,9 +28,9 @@ N_INT = 80
 N_INT_PYR = 5
 N_INT_INP = 5
 
-PYR = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=-0.25) for i in 1:N_PYR]
-INP = [AdamIN(name=Symbol("INP$i"), Iₐₚₚ=0.1) for i in 1:N_INP] 
-INT = [AdamIN(name=Symbol("INT$i"), Iₐₚₚ=-1.4) for i in 1:N_INT]
+PYR = [AdamPYR(name=Symbol("PYR$i"), Iₐₚₚ=-0.25*1e-3) for i in 1:N_PYR]
+INP = [AdamIN(name=Symbol("INP$i"), Iₐₚₚ=0.1*1e-3) for i in 1:N_INP] 
+INT = [AdamIN(name=Symbol("INT$i"), Iₐₚₚ=-1.4*1e-3) for i in 1:N_INT]
 
 g = MetaDiGraph()
 
@@ -40,7 +40,7 @@ for ni_dst ∈ INP
         nmda = AdamNMDAR(name=Symbol("NMDA_$(ne_src.name)_$(ni_dst.name)"), k_unblock=3.8, g=9.5)
         add_edge!(g, ne_src => nmda; weight=1)
         add_edge!(g, ni_dst => nmda; weight=1, reverse=true)
-        add_edge!(g, nmda => ni_dst; weight=1/N_PYR_PYR)
+        add_edge!(g, nmda => ni_dst; weight=1/N_PYR_INP)
 
         ampa = AdamAMPA(name=Symbol("AMPA_$(ne_src.name)_$(ni_dst.name)"))
         add_edge!(g, ne_src => ampa; weight=1)
@@ -106,6 +106,6 @@ end
 tspan = (0.0, 5000.0)
 sys = system_from_graph(g, graphdynamics=true)
 prob = ODEProblem(sys, [], tspan)
-sol = solve(prob, Tsit5(); saveat=0.05)
+sol = solve(prob, RK4(); saveat=0.05)
 
-rasterplot(PYR, sol; threshold=-10)
+rasterplot(PYR, sol; threshold=10)
