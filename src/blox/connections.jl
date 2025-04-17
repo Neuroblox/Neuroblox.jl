@@ -1223,3 +1223,46 @@ function Connector(
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
+
+function connection_equations(blox_src::AdamPYR, blox_dst::AdamAMPA, w)
+    eq = blox_dst.V ~ blox_src.V
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamAMPA, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.sₐₘₚₐ * blox_src.g * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamIN, blox_dst::AdamGABA, w)
+    eq = blox_dst.V ~ blox_src.V
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamGABA, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.sᵧ * blox_src.g * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
+function connection_equations(blox_src::AbstractAdamNeuron, blox_dst::AdamNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.V
+    end
+
+    return eq
+end
+
+function connection_equations(blox_src::AdamNMDAR, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.g * blox_src.O_AA * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
