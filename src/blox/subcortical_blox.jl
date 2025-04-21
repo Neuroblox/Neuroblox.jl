@@ -3,6 +3,22 @@
     all subcprtical blox used in cortico-striatal model are defined here
 
 """
+
+# internal connectivity matrix
+function subcortical_connection_matrix(density, N, weight)
+    connection_matrix = zeros(N, N)
+    idxs = 1:N
+    for i in idxs
+        for j in idxs
+            if !(i==j) && (rand()<=density && connection_matrix[j, i] == 0)
+                connection_matrix[i, j] = weight 
+            end
+        end
+    end
+    connection_matrix
+end
+
+
 struct Striatum <: CompositeBlox
     namespace
     parts
@@ -198,6 +214,7 @@ struct Thalamus <: CompositeBlox
     system
     connector
     mean
+    connection_matrix
 
     function Thalamus(;
         name, 
@@ -208,7 +225,10 @@ struct Thalamus <: CompositeBlox
         I_bg=3*ones(N_exci),
         freq=zeros(N_exci),
         phase=zeros(N_exci),
-        τ_exci=5
+        τ_exci=5,
+        density=0.0,
+        weight=1,
+        connection_matrix=nothing
     )
         n_exci = [
             HHNeuronExciBlox(
@@ -229,6 +249,18 @@ struct Thalamus <: CompositeBlox
             add_blox!(g, n_exci[i])
         end
 
+        if isnothing(connection_matrix)
+            connection_matrix = subcortical_connection_matrix(density, N_exci, weight)
+        end
+        for i in 1:N_exci
+            for j in 1:N_exci
+                cij = connection_matrix[i,j]
+                if !iszero(cij)
+                    add_edge!(g, i, j, Dict(:weight => cij))
+                end
+            end
+        end
+
         parts = n_exci
         
         bc = connectors_from_graph(g)
@@ -242,7 +274,7 @@ struct Thalamus <: CompositeBlox
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
-        new(namespace, parts, sys, bc, m)
+        new(namespace, parts, sys, bc, m, connection_matrix)
     end
 end   
 

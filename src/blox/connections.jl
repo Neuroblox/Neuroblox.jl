@@ -552,6 +552,38 @@ function Connector(
 end
 
 function Connector(
+    blox_src::StimulusBlox,
+    blox_dest::Union{HHNeuronExciBlox,HHNeuronInhibBlox};
+    kwargs...)
+
+    sys_src = get_namespaced_sys(blox_src)
+    sys_dest = get_namespaced_sys(blox_dest)
+
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    x = only(outputs(blox_src; namespaced=true))
+
+    eq = sys_dest.I_in ~ x*w
+
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
+
+function Connector(
+    blox_src::StimulusBlox,
+    blox_dest::Thalamus;
+    kwargs...)
+
+    neurons = get_exci_neurons(blox_dest)
+
+    conn = mapreduce(merge!, neurons) do neuron
+        Connector(blox_src, neuron; kwargs...)
+    end
+
+    return conn    
+end
+
+
+
+function Connector(
     blox_src::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
     blox_dest::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
     kwargs...
