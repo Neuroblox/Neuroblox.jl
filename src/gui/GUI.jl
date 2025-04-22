@@ -274,6 +274,27 @@ function plotdetail(::Type{Neuroblox.NextGenerationEIBlox})
   OrderedDict(:detail => ["aₑ","bₑ","aᵢ","bᵢ"], :nodetail => ["aₑ","bₑ"])
 end
 
+function arguments(::Type{Neuroblox.NGNMM_Izh})
+  OrderedDict(
+      :Δ => NCAD(0.02, NUMBER, 0.0, 0.1,[],true),
+      :α => NCAD(0.6215, NUMBER, 0.0, 0.1,[],true),
+      :gₛ => NCAD(1.2308, NUMBER, 0.0, 0.1,[],true),
+      :η̄ => NCAD(0.12, NUMBER, 0.0, 0.1,[],true),
+      :I_ext => NCAD(0.0, NUMBER, 0.0, 0.1,[],true),
+      :eᵣ => NCAD(1.0, NUMBER, 0.0, 0.1,[],true),
+      :a => NCAD(0.0077, NUMBER, 0.0, 0.1,[],true),
+      :b => NCAD(-0.0062, NUMBER, 0.0, 0.1,[],true),
+      :wⱼ => NCAD(0.0189, NUMBER, 0.0, 0.1,[],true),
+      :sⱼ => NCAD(1.2308, NUMBER, 0.0, 0.1,[],true),
+      :τₛ => NCAD(2.6, NUMBER, 0.0, 0.1,[],true),
+      :κ => NCAD(1.0, NUMBER, 0.0, 0.1,[],true)
+      )
+end
+
+function plotdetail(::Type{Neuroblox.NGNMM_Izh})
+  OrderedDict(:detail => ["V","r","w","s"], :nodetail => ["V"])
+end
+
 function arguments(::Type{Neuroblox.HebbianModulationPlasticity})
   OrderedDict(
     :K => NCAD(0.2, NUMBER, 0.01, 1.0,[],true),
