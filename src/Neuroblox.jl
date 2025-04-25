@@ -114,27 +114,6 @@ include("adjacency.jl")
 const Neuron = AbstractNeuronBlox
 const SpikeSource = AbstractSpikeSource
 
-
-function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(sys, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
-    return DataFrame(sol)
-end
-
-function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(blox.system, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
-    statesV = [s for s in unknowns(blox.system) if contains(string(s),"V")]
-    vsol = sol[statesV]
-    vmean = vec(mean(hcat(vsol...),dims=2))
-    df = DataFrame(sol)
-    vlist = Symbol.(statesV)
-    pushfirst!(vlist,:timestamp)
-    dfv = df[!,vlist]
-    dfv[!,:Vmean] = vmean
-    return dfv
-end
-
 """
 random_initials creates a vector of random initial conditions for an ODESystem that is
 composed of a list of blox.  The function finds the initial conditions in the blox and then
