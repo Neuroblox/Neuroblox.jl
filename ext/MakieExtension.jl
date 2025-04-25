@@ -55,10 +55,6 @@ function Makie.plot!(p::Adjacency)
     return p
 end
 
-function Makie.get_plots(plot::ECBarPlot)
-    return plot.plots
-end
-
 @recipe(MeanField, blox, sol) do scene
     Theme(
         xlabel = "Time (ms)",
