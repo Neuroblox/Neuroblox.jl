@@ -352,7 +352,7 @@ end
 function arguments(::Type{Neuroblox.GPe})
   OrderedDict(
     :N_inhib => NCAD(15, INTEGER, 1, 100,[],true),
-    :E_syn_inhib => NCAD(-70, NUMBER, -20, -100,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -100, -20,[],true),
     :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
     :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
   )
@@ -365,7 +365,7 @@ end
 function arguments(::Type{Neuroblox.GPi})
   OrderedDict(
     :N_inhib => NCAD(25, INTEGER, 1, 100,[],true),
-    :E_syn_inhib => NCAD(-70, NUMBER, -20, -100,[],true),
+    :E_syn_inhib => NCAD(-70, NUMBER, -100, -20,[],true),
     :G_syn_inhib => NCAD(1.2, NUMBER, 0, 10,[],true),
     :τ_inhib => NCAD(70, NUMBER, 1, 200,[],true)
   )
