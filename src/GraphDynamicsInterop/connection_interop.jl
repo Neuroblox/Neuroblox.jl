@@ -295,14 +295,13 @@ end
 function (c::BasicConnection)(sys_src::Subsystem{LIFExciNeuron},
                               sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
     w = c.weight
-    acc = initialize_input(HH_dst)
+    acc = initialize_input(sys_dst)
     @set acc.jcn = w * sys_src.S_NMDA * sys_dst.g_NMDA * (sys_dst.V - sys_dst.V_E) / (1 + sys_dst.Mg * exp(-0.062 * sys_dst.V) / 3.57)
 end
 
-function (c::BasicConnection)(::Subsystem{LIFInhNeuron},
-                              ::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    acc = initialize_input(HH_dst)
-    @set acc.jcn = 0.0
+function (c::BasicConnection)(sys_src::Subsystem{LIFInhNeuron},
+                              sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
+    initialize_input(sys_dst)
 end
 
 const LIFExciInhNeuron = Union{LIFExciNeuron, LIFInhNeuron}
@@ -380,7 +379,7 @@ end
 Base.zero(::Type{PoissonSpikeConn}) = PoissonSpikeConn(0.0, Set{Float64}())
 function ((;w)::PoissonSpikeConn)(stim::Subsystem{PoissonSpikeTrain},
                                   blox_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    (; jcn = 0.0)
+    initialize_input(blox_dst)
 end
 GraphDynamics.event_times((;t_spikes)::PoissonSpikeConn) = (t_spikes)
 
