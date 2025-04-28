@@ -20,8 +20,8 @@ function output end
 function define_neuron(sys; mod=@__MODULE__())
     T = typeof(sys)
     name = nameof(sys)
-    system = sys.system
-    params = get_ps(system)
+    system = structural_simplify(sys.system; fully_determined=false)
+    params = parameters(system)
     t = Symbol(get_iv(system))
 
     states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
@@ -39,7 +39,6 @@ function define_neuron(sys; mod=@__MODULE__())
     rhss = map(equations(system)) do eq
         toexpr(r(eq.rhs))
     end
-
     input_init = NamedTuple{(input_syms...,)}(ntuple(i -> 0.0, length(inputs)))
     
     @eval mod begin
