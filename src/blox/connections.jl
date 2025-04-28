@@ -451,19 +451,16 @@ function Connector(
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
     x = only(outputs(blox_src; namespaced=true))
-    if x isa Num
-        eq = sys_dest.jcn ~ x*w
-
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
+    if haskey(kwargs, :delay)
+        error("Delay connections are currently not supported")
+        # delay = get_delay(kwargs, nameof(sys_src), nameof(sys_dest))
+        # τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
+        # τ = only(@parameters $(τ_name)=delay)
+        # eq = sys_dest.jcn ~ x(t-τ)*w
+        # return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ, learning_rule=Dict(w => lr))
     else
-        @variables t
-        delay = get_delay(kwargs, nameof(sys_src), nameof(sys_dest))
-        τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
-        τ = only(@parameters $(τ_name)=delay)
-
-        eq = sys_dest.jcn ~ x(t-τ)*w
-
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ, learning_rule=Dict(w => lr))
+        eq = sys_dest.jcn ~ x*w
+        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
     end    
 end
 
