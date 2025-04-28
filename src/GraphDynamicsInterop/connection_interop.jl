@@ -295,14 +295,14 @@ end
 function (c::BasicConnection)(sys_src::Subsystem{LIFExciNeuron},
                               sys_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
     w = c.weight
-
-    (; jcn = w * sys_src.S_NMDA * sys_dst.g_NMDA * (sys_dst.V - sys_dst.V_E) / 
-        (1 + sys_dst.Mg * exp(-0.062 * sys_dst.V) / 3.57))
+    acc = initialize_input(HH_dst)
+    @set acc.jcn = w * sys_src.S_NMDA * sys_dst.g_NMDA * (sys_dst.V - sys_dst.V_E) / (1 + sys_dst.Mg * exp(-0.062 * sys_dst.V) / 3.57)
 end
 
 function (c::BasicConnection)(::Subsystem{LIFInhNeuron},
                               ::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}})
-    (; jcn = 0.0)
+    acc = initialize_input(HH_dst)
+    @set acc.jcn = 0.0
 end
 
 const LIFExciInhNeuron = Union{LIFExciNeuron, LIFInhNeuron}
