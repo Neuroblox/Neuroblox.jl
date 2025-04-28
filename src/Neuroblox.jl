@@ -17,14 +17,7 @@ using Reexport
 using Graphs
 using MetaGraphs
 
-using ForwardDiff: Dual, Partials, jacobian
-using ForwardDiff
-ForwardDiff.can_dual(::Type{Complex{Float64}}) = true
-using ChainRules: _eigen_norm_phase_fwd!
-
 using LinearAlgebra
-using ToeplitzMatrices: Toeplitz
-using ExponentialUtilities: exponential!
 
 using DSP, Statistics
 
@@ -44,7 +37,7 @@ import ModelingToolkit: equations, inputs, outputs, unknowns, parameters, discre
 
 using Symbolics: @register_symbolic, getdefaultval, get_variables
 
-using CSV: read, write
+using CSV: CSV, read, write
 using DataFrames
 
 using Peaks: argmaxima, peakproms!, peakheights!, findmaxima
@@ -91,13 +84,11 @@ abstract type BloxConnectMultiComplex <: BloxConnection end
 # dictionary type for Blox parameters
 Para_dict = Dict{Symbol, Union{<: Real, Num}}
 
-include("utilities/spectral_tools.jl")
 include("utilities/learning_tools.jl")
 include("utilities/bold_methods.jl")
 include("control/controlerror.jl")
 include("measurementmodels/fmri.jl")
 include("measurementmodels/lfp.jl")
-include("datafitting/spDCM_VL.jl")
 include("blox/neural_mass.jl")
 include("blox/cortical.jl")
 include("blox/canonicalmicrocircuit.jl")
@@ -122,26 +113,6 @@ include("adjacency.jl")
 
 const Neuron = AbstractNeuronBlox
 const SpikeSource = AbstractSpikeSource
-
-function simulate(sys::ODESystem, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(sys, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) #pass keyword arguments to solver
-    return DataFrame(sol)
-end
-
-function simulate(blox::CorticalBlox, u0, timespan, p, solver = AutoVern7(Rodas4()); kwargs...)
-    prob = ODEProblem(blox.system, u0, timespan, p)
-    sol = solve(prob, solver; kwargs...) # pass keyword arguments to solver
-    statesV = [s for s in unknowns(blox.system) if contains(string(s),"V")]
-    vsol = sol[statesV]
-    vmean = vec(mean(hcat(vsol...),dims=2))
-    df = DataFrame(sol)
-    vlist = Symbol.(statesV)
-    pushfirst!(vlist,:timestamp)
-    dfv = df[!,vlist]
-    dfv[!,:Vmean] = vmean
-    return dfv
-end
 
 """
 random_initials creates a vector of random initial conditions for an ODESystem that is
@@ -205,9 +176,6 @@ function voltage_stack end
 function ecbarplot end
 function ecbarplot! end
 
-function freeenergy end
-function freeenergy! end
-
 function powerspectrumplot end
 function powerspectrumplot! end
 
@@ -222,7 +190,7 @@ end
 
 
 export Neuron
-export JansenRitSPM, qif_neuron, if_neuron, hh_neuron_excitatory, 
+export qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, VanDerPol, Generic2dOscillator, kuramoto_oscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
     CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,
@@ -232,7 +200,7 @@ export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
 export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
-export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, ExternalInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
+export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
 export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration
 export BandPassFilterBlox
 export OUBlox, OUCouplingBlox, ARBlox
@@ -241,7 +209,6 @@ export SynapticConnections, create_rl_loop
 export add_blox!, get_system
 export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
 export learningrate, ControlError
-export vecparam, csd_Q, setup_spDCM, run_spDCM_iteration!, defaultprior
 export simulate, random_initials
 export system_from_graph, system, graph_delays
 export create_adjacency_edges!, adjmatrixfromdigraph
@@ -252,7 +219,7 @@ export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_va
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export NGNMM_Izh, NGNMM_QIF, NGNMM_theta, NextGenerationEIBlox
-export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!, adjacency, adjacency!
+export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, adjacency, adjacency!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate
 export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color

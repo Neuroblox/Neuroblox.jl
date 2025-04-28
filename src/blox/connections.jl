@@ -440,24 +440,6 @@ end
 sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
 
 function Connector(
-    blox_src::JansenRitSPM, 
-    blox_dest::JansenRitSPM; 
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-    x = only(outputs(blox_src; namespaced=true))
-    r = namespace_expr(blox_src.params[2], sys_src)
-
-    eq = sys_dest.jcn ~ sigmoid(x, r)*w
-
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=[w, r])
-end
-
-function Connector(
     blox_src::NeuralMassBlox, 
     blox_dest::NeuralMassBlox; 
     kwargs...
