@@ -173,9 +173,6 @@ function frplot! end
 
 function voltage_stack end
 
-function ecbarplot end
-function ecbarplot! end
-
 function powerspectrumplot end
 function powerspectrumplot! end
 
@@ -207,7 +204,7 @@ export OUBlox, OUCouplingBlox, ARBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
 export SynapticConnections, create_rl_loop
 export add_blox!, get_system
-export powerspectrum, complexwavelet, bandpassfilter, hilberttransform, phaseangle, mar2csd, csd2mar, mar_ml
+export powerspectrum
 export learningrate, ControlError
 export simulate, random_initials
 export system_from_graph, system, graph_delays
@@ -216,7 +213,7 @@ export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, changetune
 export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
-export BalloonModel,LeadField, boldsignal_endo_balloon
+export BalloonModel, LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export NGNMM_Izh, NGNMM_QIF, NGNMM_theta, NextGenerationEIBlox
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, adjacency, adjacency!

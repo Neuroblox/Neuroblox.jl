@@ -327,35 +327,6 @@ function get_weights(agent::Agent, blox_out, blox_in)
     return pv[map_idxs[idxs_weight]]
 end
 
-"""
-    function addnontunableparams(param, model)
-    
-    Function adds parameters of a model that were not marked as tunable to a list of tunable parameters
-    and respects the MTK ordering of parameters.
-
-    Arguments:
-    - `paramlist`: parameters of an MTK system that were tagged as tunable
-    - `sys`: MTK system
-
-    Returns:
-    - `completeparamlist`: complete parameter list of a system, including those that were not tagged as tunable
-"""
-function addnontunableparams(paramlist, sys)
-    completeparamlist = []
-    k = 0
-  
-    for p in parameters(sys)
-        if istunable(p)
-            k += 1
-            push!(completeparamlist, paramlist[k])
-        else
-            push!(completeparamlist, Symbolics.getdefaultval(p))
-        end
-    end
-    append!(completeparamlist, paramlist[k+1:end])
-    return completeparamlist
-end
-
 function get_connection_rule(kwargs, bloxout, bloxin, w)
     cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
