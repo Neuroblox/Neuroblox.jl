@@ -328,59 +328,6 @@ function get_weights(agent::Agent, blox_out, blox_in)
 end
 
 """
-    function get_dynamic_states(sys)
-    
-    Function extracts states from the system that are dynamic variables, 
-    get also indices of external inputs (u(t)) and measurements (like bold(t))
-    Arguments:
-    - `sys`: MTK system
-
-    Returns:
-    - `sts`: states/unknowns of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
-    - `idx`: indices of these states
-"""
-function get_dynamic_states(sys)
-    itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
-        !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
-    end
-    sts = map(x -> x[2], itr)
-    idx = map(x -> x[1], itr)
-    return sts, idx
-end
-
-function get_eqidx_tagged_vars(sys, tag)
-    idx = Int[]
-    vars = []
-    eqs = equations(sys)
-    for s in unknowns(sys)
-        if getdescription(s) == tag
-            push!(vars, s)
-        end
-    end
-
-    for v in vars
-        for (i, e) in enumerate(eqs)
-            for s in Symbolics.get_variables(e)
-                if string(s) == string(v)
-                    push!(idx, i)
-                end
-            end
-        end
-    end
-    return idx, vars
-end
-
-function get_idx_tagged_vars(sys, tag)
-    idx = Int[]
-    for (i, s) in enumerate(unknowns(sys))
-        if (getdescription(s) == tag)
-            push!(idx, i)
-        end
-    end
-    return idx
-end
-
-"""
     function addnontunableparams(param, model)
     
     Function adds parameters of a model that were not marked as tunable to a list of tunable parameters
