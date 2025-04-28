@@ -31,7 +31,7 @@ DocMeta.setdocmeta!(Neuroblox, :DocTestSetup, :(using Neuroblox); recursive = tr
 
 include("pages.jl")
 
-makedocs(sitename = "Neuroblox",
+makedocs(sitename = "Neuroblox Documentation",
     authors = "Neuroblox Inc.",
     modules = [Neuroblox],
     clean = true, doctest = false, linkcheck = false,
