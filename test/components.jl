@@ -160,7 +160,6 @@ end
     sol_dde_with_delays = solve(prob, alg, saveat=1)
     @test sol_dde_with_delays.retcode == ReturnCode.Success
     end
-    
 end
 
 @testset "Wilson-Cowan" begin
