@@ -14,8 +14,7 @@ using Statistics: mean, std
 using Colors: colormap
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, 
-                frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!,
-                adjacency, adjacency!
+                  frplot, frplot!, voltage_stack, adjacency, adjacency!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
