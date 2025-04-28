@@ -20,8 +20,7 @@ function output end
 function define_neuron(sys; mod=@__MODULE__())
     T = typeof(sys)
     name = nameof(sys)
-    # sys = getproperty(Neuroblox, T)(;name)
-    system = structural_simplify(sys.system; fully_determined=false)
+    system = sys.system
     params = get_ps(system)
     t = Symbol(get_iv(system))
 
