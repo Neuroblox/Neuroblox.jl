@@ -52,8 +52,7 @@ struct PINGNeuronExci <: AbstractPINGNeuron
                              I_ext=0.0,
                              τ_R=0.2,
                              τ_D=2.0)
-        p = paramscoping(C=C, g_Na=g_Na, V_Na=V_Na, g_K=g_K, V_K=V_K, g_L=g_L, V_L=V_L, I_ext=I_ext, τ_R=τ_R, τ_D=τ_D)
-        C, g_Na, V_Na, g_K, V_K, g_L, V_L, I_ext, τ_R, τ_D = p
+        p = @paramscoping C g_Na V_Na g_K V_K g_L V_L I_ext τ_R τ_D
         sts = @variables V(t)=0.0 n(t)=0.0 h(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
         
         a_m(v) = 0.32*(v+54.0)/(1.0 - exp(-(v+54.0)/4.0))
@@ -126,8 +125,7 @@ struct PINGNeuronInhib <: AbstractPINGNeuron
                              I_ext=0.0,
                              τ_R=0.5,
                              τ_D=10.0)
-        p = paramscoping(C=C, g_Na=g_Na, V_Na=V_Na, g_K=g_K, V_K=V_K, g_L=g_L, V_L=V_L, I_ext=I_ext, τ_R=τ_R, τ_D=τ_D)
-        C, g_Na, V_Na, g_K, V_K, g_L, V_L, I_ext, τ_R, τ_D = p
+        p = @paramscoping C g_Na V_Na g_K V_K g_L V_L I_ext τ_R τ_D
         sts = @variables V(t)=0.0 n(t)=0.0 h(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
 
         a_m(v) = 0.1*(v+35.0)/(1.0 - exp(-(v+35.0)/10.0))

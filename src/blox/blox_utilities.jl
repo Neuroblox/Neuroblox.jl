@@ -16,6 +16,7 @@ end
     Keyword arguments are used, because parameter definition require names, not just values.
 """
 function paramscoping(;tunable=true, kwargs...)
+    @warn "paramscoping is deprecated" 
     paramlist = []
     for (kw, v) in kwargs
         if v isa Num
