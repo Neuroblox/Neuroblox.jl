@@ -12,8 +12,19 @@ using Test
     tspan = (0,30)
     t = tspan[1]:dt:tspan[2]
 
-    @named dbs = DBS(namespace=:g, frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, start_time=start_time, smooth=smooth, offset=offset)
+    dbs = DBS(;
+        name=:test,
+        frequency,
+        amplitude,
+        pulse_width,
+        start_time,
+        smooth,
+        offset)
     stimulus = dbs.stimulus.(t)
+
+    stimulus2 = get_stimulus_function(dbs)
+    @test all(isapprox.(stimulus, stimulus2.(t, frequency, amplitude, pulse_width, offset, start_time, smooth), rtol=1e-3))
+
     transitions_inds = detect_transitions(t, stimulus; atol=0.05)
     transition_times1 = t[transitions_inds]
     transition_values1 = stimulus[transitions_inds]
@@ -33,7 +44,7 @@ end
 
 @testset "DBS connections" begin
     # Test DBS -> single AbstractNeuronBlox
-    @named dbs = DBS()
+    @named dbs = DBS(namespace=:g)
     @named n1 = HHNeuronExciBlox()
     g = MetaDiGraph()
     add_edge!(g, dbs => n1, weight = 1.0)
@@ -74,23 +85,36 @@ end
     smooth=1e-3
     start_time = 0.008
 
-    dbs = ProtocolDBS(;
-        name=:test,
-        frequency=frequency,
-        amplitude=amplitude,
-        pulse_width=pulse_width,
-        offset=offset,
-        pulses_per_burst=pulses_per_burst,
-        bursts_per_block=bursts_per_block,
-        pre_block_time=pre_block_time,
-        inter_burst_time=inter_burst_time,
-        smooth=smooth,
-        start_time=start_time
+    @named dbs = ProtocolDBS(;
+        namespace=:g,
+        frequency,
+        amplitude,
+        pulse_width,
+        offset,
+        pulses_per_burst,
+        bursts_per_block,
+        pre_block_time,
+        inter_burst_time,
+        smooth,
+        start_time
     )
 
     # Test pre-block period
     ts = 0.0:0.1:pre_block_time-1
     @test all(dbs.stimulus.(ts) .== offset)
+
+    stimulus2 = get_stimulus_function(dbs)
+    @test all(isapprox.(dbs.stimulus.(ts), stimulus2.(ts,
+                                                    frequency,
+                                                    amplitude,
+                                                    pulse_width,
+                                                    offset,
+                                                    start_time,
+                                                    smooth,
+                                                    pulses_per_burst,
+                                                    bursts_per_block,
+                                                    pre_block_time,
+                                                    inter_burst_time), rtol=1e-3))
 
     # Should see pulses within burst
     period = 1000.0/frequency  # period in ms from 100Hz
@@ -107,6 +131,17 @@ end
                 bursts_per_block * (pulses_per_burst * period + inter_burst_time) -
                 inter_burst_time  # subtract last inter_burst
     @test duration == expected
+
+    @named stn = HHNeuronExci_STN_Adam_Blox()
+    g = MetaDiGraph()
+    add_blox!(g, stn)
+    add_blox!(g, dbs)
+    add_edge!(g, dbs => stn, weight = 1.0)
+    @named sys = system_from_graph(g)
+    prob = SDEProblem{true}(sys, [], (0,1), [])
+    duration2 = get_protocol_duration(prob)
+    @info "testing duration 2"
+    @test duration == duration2
 
     # Test number of stimulus
     t_end = duration + inter_burst_time

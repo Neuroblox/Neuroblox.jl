@@ -37,29 +37,43 @@ function DBS(;
     # Ensure consistent numeric types for all parameters
     frequency, amplitude, pulse_width, offset, start_time, smooth = 
         promote(frequency, amplitude, pulse_width, offset, start_time, smooth)
-    
+
+    smoothing = smooth == 0 ? false : true
+
+    p = paramscoping(
+        tunable=true;
+        frequency=frequency,
+        amplitude=amplitude,
+        pulse_width=pulse_width,
+        offset=offset,
+        start_time=start_time,
+        smooth=smooth,
+    )
+
+    frequency, amplitude, pulse_width, offset, start_time, smooth = p
+
     # Convert to kHz (to match interal time in ms)
     frequency_khz = frequency/1000.0
 
     # Create stimulus function based on smooth/non-smooth square wave
-    stimulus = if smooth == 0
+    stimulus = if smoothing == 0
         t -> square(t, frequency_khz, amplitude, offset, start_time, pulse_width)
     else
         t -> square(t, frequency_khz, amplitude, offset, start_time, pulse_width, smooth)
     end
 
-    p = paramscoping(
-        tunable=false;
-        frequency=frequency,
-        amplitude=amplitude,
-        pulse_width=pulse_width,
-        offset=offset,
-        start_time=start_time
-    )
-
     sts = @variables u(t) [output = true]
     eqs = [u ~ stimulus(t)]
     sys = System(eqs, t, sts, p; name=name)
+
+    # Get the stimulus function with the default parameters ready to use
+    eq       = first(equations(sys))
+    expr     = eq.rhs
+    params   = ModelingToolkit.parameters(sys)
+    defs     = ModelingToolkit.getdefault.(params)
+    expr_sub = Symbolics.substitute(expr, Dict(params .=> defs))
+    f_expr   = build_function(expr_sub, t; expression=Val{false})
+    stimulus = eval(f_expr)
     
     DBS(p, sys, namespace, stimulus)
 end
@@ -106,6 +120,22 @@ function ProtocolDBS(;
     frequency, amplitude, pulse_width, offset, start_time, smooth, pre_block_time, inter_burst_time = 
         promote(frequency, amplitude, pulse_width, offset, start_time, smooth, pre_block_time, inter_burst_time)
 
+    p = paramscoping(
+        tunable=true;
+        frequency=frequency,
+        amplitude=amplitude,
+        pulse_width=pulse_width,
+        offset=offset,
+        start_time=start_time,
+        smooth=smooth,
+        pulses_per_burst=pulses_per_burst,
+        bursts_per_block=bursts_per_block,
+        pre_block_time=pre_block_time,
+        inter_burst_time=inter_burst_time,
+    )
+
+    frequency, amplitude, pulse_width, offset, start_time, smooth, pulses_per_burst, bursts_per_block, pre_block_time, inter_burst_time = p
+
     # Convert to kHz (to match interal time in ms)
     frequency_khz = frequency/1000.0
 
@@ -140,25 +170,72 @@ function ProtocolDBS(;
         )
     end
 
-    p = paramscoping(
-        tunable=false;
-        frequency=frequency,
-        amplitude=amplitude,
-        pulse_width=pulse_width,
-        offset=offset,
-        smooth=smooth,
-        start_time=start_time,
-        pulses_per_burst=pulses_per_burst,
-        bursts_per_block=bursts_per_block,
-        pre_block_time=pre_block_time,
-        inter_burst_time=inter_burst_time,
-    )
-
     sts = @variables u(t) [output = true]
     eqs = [u ~ protocol_stimulus(t)]
     sys = System(eqs, t, sts, p; name=name)
     
-    DBS(p, sys, namespace, protocol_stimulus)
+    # Get the stimulus function with the default parameters ready to use
+    eq       = first(equations(sys))
+    expr     = eq.rhs
+    params   = ModelingToolkit.parameters(sys)
+    defs     = ModelingToolkit.getdefault.(params)
+    expr_sub = Symbolics.substitute(expr, Dict(params .=> defs))
+    f_expr   = build_function(expr_sub, t; expression=Val{false})
+    stimulus = eval(f_expr)
+
+    DBS(p, sys, namespace, stimulus)
+end
+
+"""
+Get the DBS stimulus function as a function of time and all other parameters of the DBS blox,
+in contrast to the stimulus function stored in the blox, which is a function of time only.
+
+If the blox is a simple DBS blox, the returned stimulus function is called as:
+
+```julia
+dbs = DBS()
+stimulus = get_stimulus_function(dbs)
+stimulus(t,
+        frequency,
+        amplitude,
+        pulse_width,
+        offset,
+        start_time,
+        smooth)
+```
+
+If the blox is a protocol DBS, the returned stimulus function is called as:
+
+```julia
+dbs = ProtocolDBS()
+stimulus = get_stimulus_function(dbs)
+stimulus(t,
+        frequency,
+        amplitude,
+        pulse_width,
+        offset,
+        start_time,
+        smooth,
+        pulses_per_burst,
+        bursts_per_block,
+        pre_block_time,
+        inter_burst_time)
+```
+"""
+function get_stimulus_function(dbs)
+    eq       = first(equations(dbs.system))
+    expr     = eq.rhs
+
+    time_sym = ModelingToolkit.get_iv(dbs.system)
+    params   = ModelingToolkit.parameters(dbs.system)
+
+    f_expr = build_function(
+        expr,
+        time_sym,
+        params...;
+        expression=Val{false}
+    )
+    f = eval(f_expr)
 end
 
 function sawtooth(t, f, offset)
@@ -265,6 +342,37 @@ function get_protocol_duration(dbs::DBS)
     bursts_per_block = ModelingToolkit.getdefault(dbs.params[8])
     pre_block_time = ModelingToolkit.getdefault(dbs.params[9])
     inter_burst_time = ModelingToolkit.getdefault(dbs.params[10])
+
+    # Calculate total protocol duration
+    pulse_period = 1000.0/frequency
+    burst_duration = pulses_per_burst * pulse_period
+    block_duration = bursts_per_block * (burst_duration + inter_burst_time) - inter_burst_time
+    
+    return pre_block_time + block_duration
+end
+
+function get_inds(x::Union{Vector{String}, Vector{Symbol}}, pattern::Regex)
+    findall(x -> contains(string(x), pattern), x)
+end
+
+function get_param_value(prob, params, params_str, param_name)
+    ind = get_inds(params_str, Regex("₊$(param_name)\$"))
+    @assert length(ind) == 1 "More than one parameter '$param_name' found"
+    symbol = params[ind]
+    getter = getp(prob, symbol)
+    param_value = getter(prob)[1]
+    return param_value
+end
+
+function get_protocol_duration(prob::SciMLBase.AbstractDEProblem)
+
+    params = parameters(prob.f.sys)
+    param_str = string.(params)
+    frequency = get_param_value(prob, params, param_str, "frequency")
+    pulses_per_burst = get_param_value(prob, params, param_str, "pulses_per_burst")
+    bursts_per_block = get_param_value(prob, params, param_str, "bursts_per_block")
+    pre_block_time = get_param_value(prob, params, param_str, "pre_block_time")
+    inter_burst_time = get_param_value(prob, params, param_str, "inter_burst_time")
 
     # Calculate total protocol duration
     pulse_period = 1000.0/frequency
