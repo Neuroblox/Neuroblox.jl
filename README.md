@@ -12,6 +12,7 @@ We employ ModelingToolkit.jl to describe the dynamical behavior of blox as symbo
 
 ## Installation
 
+
 Neuroblox is available in the [NeurobloxRegistry](https://github.com/Neuroblox/NeurobloxRegistry). In order to install the NeurobloxRegistry simply run
 
 ``` julia
