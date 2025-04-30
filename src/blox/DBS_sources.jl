@@ -66,16 +66,11 @@ function DBS(;
     eqs = [u ~ stimulus(t)]
     sys = System(eqs, t, sts, p; name=name)
 
-    # Get the stimulus function with the default parameters ready to use
-    eq       = first(equations(sys))
-    expr     = eq.rhs
-    params   = ModelingToolkit.parameters(sys)
-    defs     = ModelingToolkit.getdefault.(params)
-    expr_sub = Symbolics.substitute(expr, Dict(params .=> defs))
-    f_expr   = build_function(expr_sub, t; expression=Val{false})
-    stimulus = eval(f_expr)
-    
-    DBS(p, sys, namespace, stimulus)
+    defs     = ModelingToolkit.getdefault.(p)
+    expr_sub = Symbolics.substitute(stimulus(t), Dict(p .=> defs))
+    built_stimulus   = build_function(expr_sub, t; expression=Val{false})
+
+    DBS(p, sys, namespace, built_stimulus)
 end
 
 """
@@ -174,16 +169,11 @@ function ProtocolDBS(;
     eqs = [u ~ protocol_stimulus(t)]
     sys = System(eqs, t, sts, p; name=name)
     
-    # Get the stimulus function with the default parameters ready to use
-    eq       = first(equations(sys))
-    expr     = eq.rhs
-    params   = ModelingToolkit.parameters(sys)
-    defs     = ModelingToolkit.getdefault.(params)
-    expr_sub = Symbolics.substitute(expr, Dict(params .=> defs))
-    f_expr   = build_function(expr_sub, t; expression=Val{false})
-    stimulus = eval(f_expr)
+    defs     = ModelingToolkit.getdefault.(p)
+    expr_sub = Symbolics.substitute(protocol_stimulus(t), Dict(p .=> defs))
+    built_stimulus   = build_function(expr_sub, t; expression=Val{false})
 
-    DBS(p, sys, namespace, stimulus)
+    DBS(p, sys, namespace, built_stimulus)
 end
 
 """
@@ -229,13 +219,14 @@ function get_stimulus_function(dbs)
     time_sym = ModelingToolkit.get_iv(dbs.system)
     params   = ModelingToolkit.parameters(dbs.system)
 
-    f_expr = build_function(
+    f = build_function(
         expr,
         time_sym,
         params...;
         expression=Val{false}
     )
-    f = eval(f_expr)
+    
+    return f
 end
 
 function sawtooth(t, f, offset)
