@@ -212,7 +212,7 @@ stimulus(t,
         inter_burst_time)
 ```
 """
-function get_stimulus_function(dbs)
+function get_stimulus_function(dbs::DBS)
     eq       = first(equations(dbs.system))
     expr     = eq.rhs
 
