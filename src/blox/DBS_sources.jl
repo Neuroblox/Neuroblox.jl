@@ -213,7 +213,7 @@ stimulus(t,
 ```
 """
 function get_stimulus_function(dbs::DBS)
-    eq       = first(equations(dbs.system))
+    eq       = only(equations(dbs.system))
     expr     = eq.rhs
 
     time_sym = ModelingToolkit.get_iv(dbs.system)
