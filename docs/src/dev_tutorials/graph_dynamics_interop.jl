@@ -200,7 +200,7 @@ function GraphDynamics.computed_properties(v::Subsystem{VanDerPol})
 end
 
 #===============================================================================================================
-# Likewise, for computed properties that depend on a subsystem's inputs, we define a method on
+Likewise, for computed properties that depend on a subsystem's inputs, we define a method on
 `computed_properties_with_inputs`, except the functions returned will have an extra argument for the inputs:
 ===============================================================================================================#
 
