@@ -1,5 +1,5 @@
 # About
-Neuroblox.jl is designed for computational neuroscience and psychiatry applications. Our tools range from control circuit system identification to brain circuit simulations bridging scales from spiking neurons to fMRI-derived circuits, parameter-fitting models to neuroimaging data, interactions between the brain and other physiological systems, experimental optimization, and scientific machine learning.
+[Neuroblox.jl](https://www.neuroblox.org/) is designed for computational neuroscience and psychiatry applications. Our tools range from control circuit system identification to brain circuit simulations bridging scales from spiking neurons to fMRI-derived circuits, parameter-fitting models to neuroimaging data, interactions between the brain and other physiological systems, experimental optimization, and scientific machine learning.
 
 # Description
 Neuroblox.jl is based on a library of modular computational building blocks (“blox”) in the form of systems of symbolic dynamic differential equations that can be combined to describe large-scale brain dynamics.  Once a model is built, it can be simulated efficiently and fit electrophysiological and neuroimaging data.  Moreover, the circuit behavior of multiple model variants can be investigated to aid in distinguishing between competing hypotheses.
