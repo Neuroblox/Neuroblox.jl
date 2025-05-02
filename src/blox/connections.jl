@@ -1146,7 +1146,7 @@ function Connector(
     sys_src = get_namespaced_sys(blox_src)
     sys_dest = get_namespaced_sys(blox_dest)
     
-    eq = sys_dest.Union{DBS, ProtocolDBS}_in ~ - sys_dest.V/sys_dest.b + sys_src.u
+    eq = sys_dest.DBS_in ~ - sys_dest.V/sys_dest.b + sys_src.u
     
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq)
 end
