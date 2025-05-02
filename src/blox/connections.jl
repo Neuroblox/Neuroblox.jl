@@ -1096,7 +1096,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::CompositeBlox;
     kwargs...
 )
@@ -1109,7 +1109,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::AbstractNeuronBlox;
     kwargs...
 )
@@ -1124,7 +1124,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::NeuralMassBlox;
     kwargs...
 )
@@ -1139,7 +1139,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::HHNeuronExci_STN_Adam_Blox;
     kwargs...
 )
