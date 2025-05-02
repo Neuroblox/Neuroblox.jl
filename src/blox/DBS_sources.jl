@@ -259,12 +259,7 @@ function compute_transition_values(transition_times, t, signal)
     return transition_values
 end
 
-function get_protocol_duration(dbs::DBS)
-
-    # Check if this is a protocol DBS by looking at the number of parameters (in the future we may create a DBS subtype)
-    if length(dbs.params) < 10
-        error("This DBS object does not contain protocol parameters")
-    end
+function get_protocol_duration(dbs::ProtocolDBS)
     
     # Access parameters in correct order based on paramscoping
     frequency = ModelingToolkit.getdefault(dbs.params[1])
