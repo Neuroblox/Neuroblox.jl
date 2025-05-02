@@ -6,6 +6,13 @@ struct DBS <: StimulusBlox
     stimulus::Function
 end
 
+struct ProtocolDBS <: StimulusBlox
+    params::Vector{Num}
+    system::ODESystem
+    namespace::Union{Symbol, Nothing}
+    stimulus::Function
+end
+
 """
     DBS(; name, namespace=nothing, frequency=130.0, amplitude=2.5, pulse_width=0.066, 
         offset=0.0, start_time=0.0, smooth=1e-4)
@@ -158,7 +165,7 @@ function ProtocolDBS(;
     eqs = [u ~ protocol_stimulus(t)]
     sys = System(eqs, t, sts, p; name=name)
     
-    DBS(p, sys, namespace, protocol_stimulus)
+    ProtocolDBS(p, sys, namespace, protocol_stimulus)
 end
 
 function sawtooth(t, f, offset)
