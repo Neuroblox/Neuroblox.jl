@@ -45,6 +45,8 @@ using SparseArrays
 
 using LogExpFunctions: logistic
 
+using Accessors: @set
+
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
 abstract type AbstractComponent end
@@ -103,6 +105,7 @@ include("blox/subcortical_blox.jl")
 include("blox/stochastic.jl")
 include("blox/discrete.jl")
 include("blox/ping_neuron_examples.jl")
+include("blox/adam_neurons.jl")
 include("blox/reinforcement_learning.jl")
 #include("gui/GUI.jl")
 include("blox/connections.jl")
@@ -110,6 +113,7 @@ include("blox/blox_utilities.jl")
 include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
 include("Neurographs.jl")
 include("adjacency.jl")
+include("blox/adams_graphdynamics.jl")
 
 const Neuron = AbstractNeuronBlox
 const SpikeSource = AbstractSpikeSource
@@ -223,4 +227,6 @@ export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, 
 export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
+export AdamPYR, AdamIN
+export AdamNMDAR, AdamGABA, AdamAMPA
 end
