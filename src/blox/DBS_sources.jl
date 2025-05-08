@@ -6,6 +6,13 @@ struct DBS <: StimulusBlox
     stimulus::Function
 end
 
+struct ProtocolDBS <: StimulusBlox
+    params::Vector{Num}
+    system::ODESystem
+    namespace::Union{Symbol, Nothing}
+    stimulus::Function
+end
+
 """
     DBS(; name, namespace=nothing, frequency=130.0, amplitude=2.5, pulse_width=0.066, 
         offset=0.0, start_time=0.0, smooth=1e-4)
@@ -212,7 +219,7 @@ stimulus(t,
         inter_burst_time)
 ```
 """
-function get_stimulus_function(dbs::DBS)
+function get_stimulus_function(dbs::Union{DBS, ProtocolDBS})
     eq       = only(equations(dbs.system))
     expr     = eq.rhs
 
@@ -320,12 +327,7 @@ function compute_transition_values(transition_times, t, signal)
     return transition_values
 end
 
-function get_protocol_duration(dbs::DBS)
-
-    # Check if this is a protocol DBS by looking at the number of parameters (in the future we may create a DBS subtype)
-    if length(dbs.params) < 10
-        error("This DBS object does not contain protocol parameters")
-    end
+function get_protocol_duration(dbs::ProtocolDBS)
     
     # Access parameters in correct order based on paramscoping
     frequency = ModelingToolkit.getdefault(dbs.params[1])
