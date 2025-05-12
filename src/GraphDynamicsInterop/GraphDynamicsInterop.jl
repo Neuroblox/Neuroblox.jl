@@ -4,6 +4,7 @@ using ..Neuroblox:
     Neuroblox,
     get_exci_neurons,
     get_connection_matrix,
+    AbstractBlox,
     AbstractNeuronBlox,
     NeuralMassBlox,
     HarmonicOscillator,

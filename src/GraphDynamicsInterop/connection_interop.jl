@@ -58,6 +58,11 @@ function define_basic_connection(c::Connector, blox_src::TSrc, blox_dst::TDst; m
     end
 end
 
+function GraphDynamics.system_wiring_rule!(g, blox_src::AbstractBlox, blox_dst::AbstractBlox; weight, kwargs...)
+    # The fallback for all blox: just use BasicConnection
+    conn = BasicConnection(weight)
+    add_connection!(g, blox_src, blox_dst; conn, weight, kwargs...)
+end
 
 function GraphDynamics.system_wiring_rule!(g,
                                            blox_src::Union{AbstractNeuronBlox, NeuralMassBlox},

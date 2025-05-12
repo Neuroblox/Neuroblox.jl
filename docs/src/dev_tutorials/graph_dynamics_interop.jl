@@ -232,7 +232,6 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[v1.r], label="v1.r")
     lines!(ax, sol.t, sol[v2.r], label="v2.r")
-    display(f)
     f
 end
 
@@ -251,7 +250,6 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
     lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
-    display(f)
     f
 end
 
@@ -372,18 +370,7 @@ function Neuroblox.Connector(
 end
 
 #===============================================================================================================
-Then the GraphDynamics version of this requires that we define a `system_wiring_rule!` that defines what a connection
-are (In this case, it's trivial, but it can be more involved for composite structures):
-===============================================================================================================#
-
-function GraphDynamics.system_wiring_rule!(g, blox_src::DBS, blox_dst::VanDerPol; weight, kwargs...)
-    conn = BasicConnection(weight)
-    add_connection!(g, blox_src, blox_dst; conn, weight, kwargs...)
-end
-
-#===============================================================================================================
-and then we define a method on `BasicConnection` that specifies the actual code to be evaluated for the connection
-in the system during solving:
+Then the GraphDynamics version of this can be as simple as
 ===============================================================================================================#
 
 function (c::BasicConnection)(sys_src::Subsystem{DBS},
@@ -415,7 +402,6 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[v1.r], label="v1.r")
     lines!(ax, sol.t, sol[v2.r], label="v2.r")
-    display(f)
     f
 end
 
@@ -434,7 +420,6 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
     lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
-    display(f)
     f
 end
 
