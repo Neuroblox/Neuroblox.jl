@@ -153,7 +153,6 @@ using StatsBase:
     countmap
 
 include("neuron_interop.jl")
-include("composite_structure_interop.jl")
 include("connection_interop.jl")
 
 
