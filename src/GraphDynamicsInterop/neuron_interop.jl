@@ -2,9 +2,6 @@
 ## Neurons / Neural Mass
 ##----------------------------------------------
 
-# By default, assume there are no sub-components
-components(blox) = (blox,)
-
 recursive_getdefault(x) = x
 function recursive_getdefault(x::Union{MTK.Num, MTK.BasicSymbolic})
     def_x = MTK.getdefault(x)
@@ -13,8 +10,6 @@ function recursive_getdefault(x::Union{MTK.Num, MTK.BasicSymbolic})
     substitute(def_x, defs)
 end
 
-issupported(x) = false
-function to_subsystem end
 function output end
 
 function define_neuron(sys; mod=@__MODULE__())
@@ -42,8 +37,6 @@ function define_neuron(sys; mod=@__MODULE__())
     input_init = NamedTuple{(input_syms...,)}(ntuple(i -> 0.0, length(inputs)))
     
     @eval mod begin
-        $GraphDynamicsInterop.issupported(::$T) = true
-        $GraphDynamicsInterop.components($name::$T) = ($name,)
         $GraphDynamics.initialize_input(s::$Subsystem{$T}) = $input_init
         function $GraphDynamics.subsystem_differential((; $(p_and_s_syms...),)::$Subsystem{$T}, ($(input_syms...),), t)
             Dneuron = $SubsystemStates{$T}(
@@ -52,7 +45,7 @@ function define_neuron(sys; mod=@__MODULE__())
                 )
             )
         end
-        function $GraphDynamicsInterop.to_subsystem($name::$T)
+        function $GraphDynamics.to_subsystem($name::$T)
             states = $SubsystemStates{$T}($NamedTuple{$(Expr(:tuple, QuoteNode.(s_syms)...))}(
                 $(Expr(:tuple, (:(float($recursive_getdefault($getproperty(Neuroblox.get_system($name), $(QuoteNode(s)))))) for s ∈ s_syms)...))
             ))
@@ -85,9 +78,7 @@ function define_neuron(sys; mod=@__MODULE__())
         # equation can't depend on the noise source from another equation). This needs to be
         # generalized, but how to handle it best will require a lot of thought.
         @eval mod begin
-            $GraphDynamics.isstochastic(::$T) = true
-            $GraphDynamics.isstochastic(::$Subsystem{$T}) = true
-            $GraphDynamics.isstochastic(::$SubsystemStates{$T}) = true
+            $GraphDynamics.isstochastic(::Type{<:$T}) = true
             Base.@propagate_inbounds function $GraphDynamics.apply_subsystem_noise!(v, (; $(p_and_s_syms...),)::$Subsystem{$T}, $t)
                 $(Expr(:block, neq_gen...))
             end
@@ -125,8 +116,6 @@ function define_neuron(sys; mod=@__MODULE__())
         if cb_eq.f ∉ (<, >, <=, >=)
             error("unsupported callback condition $cb_eq")
         end
-
-        
         ev_condition = Expr(:call, cb_eq.f, toexpr.(r.(cb_eq.arguments))...)
         cb_affects = map(r, cb.affects)
         
@@ -171,9 +160,7 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
     define_neuron(sys)
 end
 
-issupported(::PoissonSpikeTrain) = true
-components(p::PoissonSpikeTrain) = (p,)
-function to_subsystem(s::PoissonSpikeTrain)
+function GraphDynamics.to_subsystem(s::PoissonSpikeTrain)
     states = SubsystemStates{PoissonSpikeTrain, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{PoissonSpikeTrain}((;))
     Subsystem(states, params)
@@ -181,101 +168,3 @@ end
 GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
 GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
-
-#-------------------------
-# Matrisome
-issupported(::Matrisome) = true
-components(m::Matrisome) = (m,)
-GraphDynamics.initialize_input(s::Subsystem{Matrisome}) = 0.0
-function GraphDynamics.apply_subsystem_differential!(_, m::Subsystem{Matrisome}, jcn, t)
-    m.jcn_ref[] = jcn
-end
-function to_subsystem(s::Matrisome)
-    states = SubsystemStates{Matrisome, Float64, NamedTuple{(), Tuple{}}}((;))
-    params = SubsystemParams{Matrisome}((; H=1, TAN_spikes=0.0, jcn_=0.0, jcn_ref=Ref(0.0), H_=1, t_event=s.t_event + sqrt(eps(s.t_event))))
-    #TODO: support observed variables ρ = H*jcn, ρ_ = H_*jcn_
-    Subsystem(states, params)
-end
-GraphDynamics.has_discrete_events(::Type{Matrisome}) = true
-GraphDynamics.discrete_events_require_inputs(::Type{Matrisome}) = true
-function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{Matrisome}, t, _)
-    t == t_event
-end
-GraphDynamics.event_times((;t_event)::Subsystem{Matrisome}) = t_event
-function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{Matrisome}, _, jcn)
-    # recording the values of jcn and H at the event time in the parameters jcn_ and H_
-    params = get_params(s)
-    vparams[] = @set params.jcn_ = jcn
-    nothing
-end
-
-#-------------------------
-# Striosome
-issupported(::Striosome) = true
-components(s::Striosome) = (s,)
-GraphDynamics.initialize_input(s::Subsystem{Striosome}) = 0.0
-GraphDynamics.subsystem_differential(s::Subsystem{Striosome}, _, _) = SubsystemStates{Striosome}((;))
-function GraphDynamics.apply_subsystem_differential!(_, s::Subsystem{Striosome}, jcn, t)
-    s.jcn_ref[] = jcn # We need to store the input to the Striosome because TAN and SNc blox can view it
-    nothing
-end
-function to_subsystem(s::Striosome)
-    states = SubsystemStates{Striosome, Float64, @NamedTuple{}}((;))
-    params = SubsystemParams{Striosome}((; H=1, H_learning=1.0, jcn_ref=Ref(0.0)))
-    #TODO: support observed variable ρ = H*jcn
-    Subsystem(states, params)
-end
-
-
-#-------------------------
-# TAN
-issupported(::TAN) = true
-components(t::TAN) = (t,)
-GraphDynamics.initialize_input(s::Subsystem{TAN}) = 0.0
-function GraphDynamics.apply_subsystem_differential!(_, s::Subsystem{TAN}, jcn, t)
-    nothing
-end
-GraphDynamics.subsystem_differential_requires_inputs(::Type{TAN}) = false
-function to_subsystem(s::TAN)
-    κ = getdefault(s.system.κ)
-    λ = getdefault(s.system.λ)
-    states = SubsystemStates{TAN, Float64, @NamedTuple{}}((;))
-    params = SubsystemParams{TAN}((; κ, λ))
-    #TODO: support observed variable R = min(κ, κ/(λ*jcn + sqrt(eps())))
-    Subsystem(states, params)
-end
-
-#-------------------------
-# SNc
-issupported(::SNc) = true
-components(s::SNc) = (s,)
-GraphDynamics.initialize_input(s::Subsystem{SNc}) = (;jcn,)
-GraphDynamics.subsystem_differential(s::Subsystem{SNc}, _, _) = SubsystemStates{SNc}((;))
-function GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{SNc}, args...)
-    nothing
-end
-GraphDynamics.subsystem_differential_requires_inputs(::Type{SNc}) = false
-function to_subsystem(s::SNc)
-    (;N_time_blocks, κ_DA, DA_reward) = s
-    
-    κ = getdefault(s.system.κ)
-    λ = getdefault(s.system.λ)
-    states = SubsystemStates{SNc, Float64, @NamedTuple{}}((;))
-    params = SubsystemParams{TAN}((;κ_DA, N_time_blocks, DA_reward, λ_DA, t_event=t_event+sqrt(eps(t_event)), jcn_=0.0))
-    #TODO: support observed variables R  ~ min(κ_DA, κ_DA/(λ_DA*jcn  + sqrt(eps())))
-    #                                 R_ ~ min(κ_DA, κ_DA/(λ_DA*jcn_ + sqrt(eps())))
-    Subsystem(states, params)
-end
-
-GraphDynamics.has_discrete_events(::Type{SNc}) = true
-GraphDynamics.discrete_events_require_inputs(::Type{SNc}) = true
-function GraphDynamics.discrete_event_condition((;t_event,)::Subsystem{SNc}, t, _)
-    t == t_event
-end
-GraphDynamics.event_times((;t_event)::Subsystem{SNc}) = t_event
-function GraphDynamics.apply_discrete_event!(integrator, _, vparams, s::Subsystem{SNc}, _, jcn)
-    # recording the values of jcn and H at the event time in the parameters jcn_ and H_
-    params = get_params(s)
-    vparams[] = @set params.jcn_ = jcn
-    nothing
-end

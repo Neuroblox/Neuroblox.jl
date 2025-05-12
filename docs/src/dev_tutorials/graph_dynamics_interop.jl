@@ -9,7 +9,7 @@ show you here the "manual" way of doing this, which is typically going to be bet
 ===============================================================================================================#
 
 using Neuroblox, ModelingToolkit, GraphDynamics
-using Neuroblox.GraphDynamicsInterop
+using Neuroblox.GraphDynamicsInterop: GraphDynamicsInterop, BasicConnection
 
 using Neuroblox: 
     paramscoping,
@@ -33,6 +33,7 @@ First, let's consider something that's suspiciously like the noisy Van der Pol o
 ===============================================================================================================#
 
 struct VanDerPol <: NeuralMassBlox
+    name
     params
     system
     namespace
@@ -68,25 +69,13 @@ struct VanDerPol <: NeuralMassBlox
             r ~ √(x^2 + y^2)
         ]
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+        new(name, p, sys, namespace)
     end
 end;
 
 #===============================================================================================================
 ### GraphDynamics version
 
-#### Marking as supported 
-
-First, lets mark VanDerPol as a supported type by defining `issupported`. 
-
-We'll also tell `GraphDynamicsInterop` that it's not a composite block by defining a method for `components`
-that just returns a Tuple containing the oscillator itself:
-===============================================================================================================#
-
-GraphDynamicsInterop.issupported(::VanDerPol) = true
-GraphDynamicsInterop.components(v::VanDerPol) = (v,)
-
-#===============================================================================================================
 #### Converting to Subsystem
 
 GraphDynamics.jl uses a type called `Subsystem` which is really a bundle around a `SubsystemStates` which stores
@@ -243,6 +232,7 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[v1.r], label="v1.r")
     lines!(ax, sol.t, sol[v2.r], label="v2.r")
+    display(f)
     f
 end
 
@@ -261,6 +251,7 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
     lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
+    display(f)
     f
 end
 
@@ -277,6 +268,7 @@ Now lets implement another random blox, the DBS Source blox from `Neuroblox/src/
 ===============================================================================================================#
 
 struct DBS <: Neuroblox.StimulusBlox
+    name::Symbol
     params::Vector{Num}
     system::ODESystem
     namespace::Union{Symbol, Nothing}
@@ -318,7 +310,7 @@ struct DBS <: Neuroblox.StimulusBlox
         eqs = [u ~ stimulus(t)]
         sys = System(eqs, t, sts, p; name=name)
         
-        new(p, sys, namespace, stimulus)
+        new(name, p, sys, namespace, stimulus)
     end
 end
 
@@ -330,11 +322,6 @@ This is a bit special because it doesn't actually have *any* dynamical state. It
 
 #### Basics
 ===============================================================================================================#
-
-GraphDynamicsInterop.issupported(::DBS) = true
-
-GraphDynamicsInterop.components(d::DBS) = (d,)
-
 
 GraphDynamics.initialize_input(s::Subsystem{DBS}) = (;)
 
@@ -385,12 +372,23 @@ function Neuroblox.Connector(
 end
 
 #===============================================================================================================
-Then the GraphDynamics version of this can be as simple as
+Then the GraphDynamics version of this requires that we define a `system_wiring_rule!` that defines what a connection
+are (In this case, it's trivial, but it can be more involved for composite structures):
 ===============================================================================================================#
 
-function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{DBS},
-                                                   sys_dst::Subsystem{VanDerPol},
-                                                   t)
+function GraphDynamics.system_wiring_rule!(g, blox_src::DBS, blox_dst::VanDerPol; weight, kwargs...)
+    conn = BasicConnection(weight)
+    add_connection!(g, blox_src, blox_dst; conn, weight, kwargs...)
+end
+
+#===============================================================================================================
+and then we define a method on `BasicConnection` that specifies the actual code to be evaluated for the connection
+in the system during solving:
+===============================================================================================================#
+
+function (c::BasicConnection)(sys_src::Subsystem{DBS},
+                              sys_dst::Subsystem{VanDerPol},
+                              t)
 
     w = c.weight
     jcn_x = 0.0 # do nothing to jcn_x
@@ -417,6 +415,7 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[v1.r], label="v1.r")
     lines!(ax, sol.t, sol[v2.r], label="v2.r")
+    display(f)
     f
 end
 
@@ -435,6 +434,7 @@ let
     ax = Axis(f[1, 1], xlabel="t")
     lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
     lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
+    display(f)
     f
 end
 

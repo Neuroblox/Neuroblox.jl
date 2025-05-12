@@ -741,7 +741,7 @@ struct LIFExciNeuron <: AbstractExciNeuronBlox
         end
 
         sts = @variables V(t)=-52 [output=true] S_AMPA(t)=0 S_GABA(t)=0 S_NMDA(t)=0 x(t)=0 S_AMPA_ext(t)=0 jcn(t) [input=true] 
-        eqs = [ 
+        eqs = [
             D(V) ~ (1 - is_refractory) * (- g_L * (V - V_L) - S_AMPA_ext * g_AMPA_ext * (V - V_E) - S_GABA * g_GABA * (V - V_I) - S_AMPA * g_AMPA * (V - V_E) - jcn) / C,
             D(S_AMPA) ~ - S_AMPA / τ_AMPA,
             D(S_GABA) ~ - S_GABA / τ_GABA,
