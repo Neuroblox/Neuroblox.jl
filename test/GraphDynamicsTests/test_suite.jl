@@ -110,9 +110,9 @@ function basic_smoketest()
         for (ProbType, alg, neurons) ∈ ((ODEProblem, Tsit5(), [IFNeuron(I_in=rand(), name=:lif1)
                                                                IFNeuron(I_in=rand(), name=:lif2)
                                                                QIFNeuron(I_in=rand(), name=:qif1)]),
-                                        (SDEProblem, RKMil(), [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3, freq=4)
-                                                               HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2, freq=6)
-                                                               HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=2, freq=3)]))
+                                        (SDEProblem, RKMil(), [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3)
+                                                               HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2)
+                                                               HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=1)]))
             @testset "$(join(unique(typeof.(neurons)), ", "))" begin
                 #let
                 g = MetaDiGraph()
@@ -394,7 +394,7 @@ function stochastic_hh_network_tests()
     end
     @testset "FSI tests" begin
         @named n1 = HHNeuronInhib_FSI_Adam_Blox(σ=1)
-        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2, freq=0.5)
+        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2)
         assembly = [n1, n2]
 
         g = MetaDiGraph()
@@ -406,8 +406,8 @@ function stochastic_hh_network_tests()
     end
     @testset "FSI tests" begin
         @named n1 = HHNeuronInhib_FSI_Adam_Blox(σ=1)
-        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2, freq=0.5)
-        @named n3 = HHNeuronInhib_FSI_Adam_Blox(σ=3, freq=0.9)
+        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2)
+        @named n3 = HHNeuronInhib_FSI_Adam_Blox(σ=3)
         assembly = [n1, n2, n3]
 
         g = MetaDiGraph()
