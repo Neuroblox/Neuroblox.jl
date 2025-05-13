@@ -180,13 +180,14 @@ struct JansenRit <: NeuralMassBlox
             #wrote inputs similarly to keep consistent
             return new(p, sys, namespace)
         else
-            sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
-            eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-                   D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-            sys = System(eqs, t, name=name)
-            #can't use outputs because x(t) is Num by then
-            #wrote inputs similarly to keep consistent
-            return new(p, sys, namespace)
+            error("Delay systems are currently not supported")
+            # sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
+            # eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
+            #        D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
+            # sys = System(eqs, t, name=name)
+            # #can't use outputs because x(t) is Num by then
+            # #wrote inputs similarly to keep consistent
+            # return new(p, sys, namespace)
         end
         sys = System(eqs, t, name=name)
         #can't use outputs because x(t) is Num by then

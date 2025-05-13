@@ -114,6 +114,7 @@ New Jansen-Rit tests
 end
 
 @testset "Jansen-Rit with delay" begin
+    @test_broken begin
     τ_factor = 1000
     @named Str = JansenRit(τ=0.0022*τ_factor, H=20/τ_factor, λ=300, r=0.3, delayed=true)
     @named GPE = JansenRit(τ=0.04*τ_factor, cortical=false, delayed=true) # all default subcortical except τ
@@ -158,6 +159,7 @@ end
     alg = MethodOfSteps(Vern7())
     sol_dde_with_delays = solve(prob, alg, saveat=1)
     @test sol_dde_with_delays.retcode == ReturnCode.Success
+    end
 end
 
 @testset "Wilson-Cowan" begin

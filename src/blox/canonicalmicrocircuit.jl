@@ -11,9 +11,9 @@ mutable struct JansenRitSPM <: NeuralMassBlox
         p = paramscoping(τ=τ, r=r)
         τ, r = p
 
-        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                  D(y) ~ -x/(τ*τ) + jcn/τ]
+        sts    = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t)=0.0 [input=true]
+        eqs    = [D(x) ~ y,
+                  D(y) ~ (-2*y - x/τ + jcn)/τ]
 
         sys = System(eqs, t, name=name)
         new(p, sys, namespace)

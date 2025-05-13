@@ -3,7 +3,7 @@ module MakieExtension
 isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using Neuroblox
-using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox, VLState, VLSetup
+using Neuroblox: AbstractBlox, AbstractNeuronBlox, CompositeBlox
 using Neuroblox: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons
 using Neuroblox: powerspectrum
 using SciMLBase: AbstractSolution, EnsembleSolution
@@ -14,8 +14,7 @@ using Statistics: mean, std
 using Colors: colormap
 
 import Neuroblox: meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, 
-                frplot, frplot!, voltage_stack, ecbarplot, ecbarplot!, freeenergy, freeenergy!,
-                adjacency, adjacency!
+                  frplot, frplot!, voltage_stack, adjacency, adjacency!
 import Neuroblox: powerspectrumplot, powerspectrumplot!
 
 @recipe(Adjacency, blox_or_graph) do scene
@@ -53,76 +52,6 @@ function Makie.plot!(p::Adjacency)
     heatmap!(p, Y, X, D; colormap = cm, colorrange)
 
     return p
-end
-
-@recipe(FreeEnergy, spDCMresults) do scene
-    Theme(
-        xlabel = "Iterations",
-        ylabel = "Free Energy",
-        title = ""
-    )
-end
-
-argument_names(::Type{<: FreeEnergy}) = (:spDCMresults)
-
-function Makie.plot!(p::FreeEnergy)
-    F = copy(p.spDCMresults[].F)
-    deleteat!(F, 1)   # remove the first value since that's always -Inf
-    
-    ax = current_axis()
-    ax.xlabel = p.xlabel[]
-    ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
-
-    lines!(p, 1:length(F), F)
-    scatter!(p, 1:length(F), F)
-    return p
-end
-
-@recipe(ECBarPlot, spDCMresults, spDCMsetup, groundtruth) do scene
-    Theme(
-        xlabel = "Parameter Name",
-        ylabel = "Effective Connectivity",
-        title = "",
-        colormap = :tab10
-    )
-end
-
-argument_names(::Type{<: ECBarPlot}) = (:spDCMresults, :spDCMsetup, :groundtruth)
-
-function Makie.plot!(p::ECBarPlot)
-    modelparam = p.spDCMsetup[].modelparam
-    xlabels = string.(collect(keys(modelparam)))
-    idx = []
-    for l in xlabels
-        if l[1] == 'A'
-            push!(idx, parse(Int64, l[2:end]))
-        end
-    end
-    np = length(idx)
-
-    ax = current_axis()
-    ax.xticks = (1:np, xlabels[1:np])
-    ax.xlabel = p.xlabel[]
-    ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
-
-    gt = copy(vec(p.groundtruth[]))   # get ground truth values
-    state = p.spDCMresults[]
-    μA = state.μθ_po[1:length(idx)]    # get estimated means of effective connectivity
-    var_A = diag(state.Σθ_po[1:np, 1:np])  # get variance of effective connectivity
-
-    colormap = Makie.to_colormap(p.colormap[])
-
-    x = 1:np
-    barplot!(p, x, μA, color=colormap[1], label="estimated values")
-    errorbars!(p, x, μA, sqrt.(var_A), whiskerwidth = 10, color=:red)
-    scatter!(p, x, gt[idx], markersize=10, color=colormap[2], label="ground truth")
-    return p
-end
-
-function Makie.get_plots(plot::ECBarPlot)
-    return plot.plots
 end
 
 @recipe(MeanField, blox, sol) do scene

@@ -10,7 +10,6 @@ Literate.markdown.([
     "./docs/src/tutorials/neural_assembly.jl",
     "./docs/src/tutorials/ping_network.jl",
     "./docs/src/tutorials/basal_ganglia.jl",
-    "./docs/src/tutorials/spectralDCM.jl",
     ],
     "./docs/src/tutorials";
     documenter = true
@@ -31,7 +30,7 @@ DocMeta.setdocmeta!(Neuroblox, :DocTestSetup, :(using Neuroblox); recursive = tr
 
 include("pages.jl")
 
-makedocs(sitename = "Neuroblox",
+makedocs(sitename = "Neuroblox Documentation",
     authors = "Neuroblox Inc.",
     modules = [Neuroblox],
     clean = true, doctest = false, linkcheck = false,
