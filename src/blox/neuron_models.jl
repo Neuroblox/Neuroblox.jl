@@ -168,8 +168,6 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
         namespace=nothing,
         E_syn=-80.0, 
         I_bg=1.172,
-        freq=0,
-        phase=0,
         τ=13,
         Cₘ=1.0,
 		σ=0.11,
@@ -204,8 +202,6 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 			E_K = -100 
 			E_L = -67 
 			I_bg=I_bg
-			freq = freq 
-			phase = phase
            	Cₘ = Cₘ
 			σ = σ
 			a = a
@@ -229,7 +225,7 @@ struct HHNeuronInhib_MSN_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)-G_M*mM*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)-G_M*mM*(V-E_K)+I_bg+I_syn+I_asc+I_in+σ*χ), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -256,8 +252,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
         namespace=nothing,
         E_syn=-80.0, 
         I_bg=6.2,
-        freq=0,
-        phase=0,
         τ=11,
 		τₛ=6.5,
         Cₘ=1.0,
@@ -296,8 +290,6 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 			E_K = -90 
 			E_L = -70 
 			I_bg=I_bg
-			freq = freq 
-			phase = phase
            	Cₘ = Cₘ
 			σ = σ
 			a = a
@@ -321,7 +313,7 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_gap+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg+I_syn+I_gap+I_asc+I_in+σ*χ), 
 			   D(n)~(n_inf(V)-n)/τₙ(V), 
 			   D(h)~(h_inf(V)-h)/τₕ(V),
 			   D(mD)~(mD_inf(V)-mD)/τₘD(V),
@@ -348,8 +340,6 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
         namespace=nothing,
         E_syn=0.0, 
         I_bg=1.8,
-        freq=0,
-        phase=0,
         τ=2,
         Cₘ=1.0,
 		σ=1.7,
@@ -382,8 +372,6 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 			E_K = -100 
 			E_L = -67 
 			I_bg=I_bg
-			freq = freq 
-			phase = phase
            	Cₘ = Cₘ
 			σ = σ
 			a = a
@@ -402,7 +390,7 @@ struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b + DBS_in))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in+σ*χ), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -428,8 +416,6 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
         namespace=nothing,
         E_syn=-80.0, 
         I_bg=3.4,
-        freq=0,
-        phase=0,
         τ=10,
         Cₘ=1.0,
 		σ=1.7,
@@ -462,8 +448,6 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 			E_K = -100 
 			E_L = -67 
 			I_bg=I_bg
-			freq = freq 
-			phase = phase
            	Cₘ = Cₘ
 			σ = σ
 			a = a
@@ -484,7 +468,7 @@ struct HHNeuronInhib_GPe_Adam_Blox <: AbstractInhNeuronBlox
 		G_asymp(v,a,b) = a*(1+tanh(v/b))
 		
 		eqs = [ 
-			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg*(sin(t*freq*2*pi/1000)+1)+I_syn+I_asc+I_in+σ*χ), 
+			   D(V)~(1/Cₘ)*(-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in+σ*χ), 
 			   D(n)~(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~(αₕ(V)*(1-h)-βₕ(V)*h),
