@@ -198,7 +198,7 @@ export HebbianPlasticity, HebbianModulationPlasticity
 export Agent, ClassificationEnvironment, GreedyPolicy, reset!
 export LearningBlox
 export CosineSource, CosineBlox, NoisyCosineBlox, PhaseBlox, ImageStimulus, ConstantInput, SpikeSource, PoissonSpikeTrain, generate_spike_times
-export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration, get_stimulus_function
+export DBS, ProtocolDBS, detect_transitions, compute_transition_times, compute_transition_values, get_protocol_duration, get_stimulus_function, SquareStimulus, BurstStimulus
 export BandPassFilterBlox
 export OUBlox, OUCouplingBlox, ARBlox
 export phase_inter, phase_sin_blox, phase_cos_blox
