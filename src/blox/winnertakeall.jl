@@ -20,8 +20,6 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
         G_syn_exci=3.0,
         G_syn_inhib=3.0,
         I_bg=zeros(N_exci),
-        freq=0.0,
-        phase=0.0,
         τ_exci=5,
         τ_inhib=70
     )  
@@ -40,8 +38,6 @@ struct WinnerTakeAllBlox{P} <: CompositeBlox
                     G_syn = G_syn_exci, 
                     τ = τ_exci,
                     I_bg = (I_bg isa Array) ? I_bg[i] : I_bg*rand(), # behave differently if I_bg is array
-                    freq = freq,
-                    phase = phase
             ) 
             for i in Base.OneTo(N_exci)
         ]

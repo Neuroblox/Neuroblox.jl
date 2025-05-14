@@ -3,6 +3,7 @@ using OrdinaryDiffEq
 using StochasticDiffEq
 using Statistics
 using SparseArrays
+using Peaks: argmaxima
 
 @testset "Voltage timeseries [LIFExciNeuron]" begin
     global_ns = :g 
@@ -79,35 +80,53 @@ end
 @testset "Powerspectrum" begin
 
     # AbstractNeuronBlox
-    nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=80)
-    nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=1)
-    assembly = [nn1, nn2]
-    
+    @named nn = HHNeuronExciBlox(I_bg=0.4)
+    @named dbs = DBS(
+                frequency=80.0,
+                amplitude=1.0,
+                pulse_width=0.5,
+                offset=0.0,
+                start_time=0.0,
+                smooth=0.0);
+
     g = MetaDiGraph()
-    add_blox!.(Ref(g), assembly)
-    add_edge!(g, 1, 2, :weight, 1)
-    
-    @named neuron_net = system_from_graph(g)
-    prob = ODEProblem(neuron_net, [], (0.0, 200), [])
+    add_edge!(g, dbs => nn, weight = 10.0)
+
+    @named sys = system_from_graph(g)
+    prob = ODEProblem(sys, [], (0.0, 500), [])
     sol = solve(prob, Vern7(), saveat=0.01)
-    ps = powerspectrum(nn1, sol, "V")
-    
-    peak_freq = ps.freq[argmax(ps.power[3:end])+2]
-    @test isapprox(peak_freq, 80, atol=1)
+    ps = powerspectrum(nn, sol, "V")
+
+    n = findfirst(ps.freq .> 100)
+    ind = only(argmaxima(ps.power[1:n], 4))
+    peak_freq = ps.freq[ind]
+
+    @test isapprox(peak_freq, 80, atol=0.5)
     
     # test Welch periodogram and windows
-    ps2 = powerspectrum(nn1, sol, "V", window = hamming) 
-    ps3 = powerspectrum(nn1, sol, "V", method = welch_pgram, window = hanning) 
-    peak_freq2 = ps2.freq[argmax(ps2.power[3:end])+2]
-    peak_freq3 = ps3.freq[argmax(ps3.power[3:end])+2]
+    ps2 = powerspectrum(nn, sol, "V", window = hamming) 
+    ps3 = powerspectrum(nn, sol, "V", method = welch_pgram, window = hanning) 
+
+    n = findfirst(ps2.freq .> 100)
+    ind = only(argmaxima(ps2.power[1:n], 4))
+    peak_freq2 = ps2.freq[ind]
+
+    n = findfirst(ps3.freq .> 100)
+    ind = only(argmaxima(ps3.power[1:n], 2))
+    peak_freq3 = ps3.freq[ind]
+
     @test isapprox(peak_freq, peak_freq2, atol=0.001)
     @test isapprox(peak_freq, peak_freq3, atol=1)
 
     # test resampling
     sol = solve(prob, Vern7())
-    ps4 = powerspectrum(nn1, sol, "V"; sampling_rate=0.01)
-    peak_freq4 = ps4.freq[argmax(ps4.power[3:end])+2]
-    @test peak_freq4 ≈ peak_freq
+    ps4 = powerspectrum(nn, sol, "V"; sampling_rate=0.01)
+
+    n = findfirst(ps4.freq .> 100)
+    ind = only(argmaxima(ps4.power[1:n], 4))
+    peak_freq4 = ps4.freq[ind]
+
+    @test isapprox(peak_freq, peak_freq4, atol=0.5)
 
     # CompositeBlox
     global_ns = :g 
@@ -119,7 +138,7 @@ end
     add_edge!(g,1,2, :weight, 44)
     neuron_net = system_from_graph(g; name=global_ns)
     prob = ODEProblem(neuron_net, [], (0.0, 1.0), [])
-    sol = solve(prob, Vern7())
+    sol = solve(prob, Vern7(), saveat=0.1)
     ps = powerspectrum(cb, sol, "V")
     ps2 = powerspectrum(cb, sol)
     @test all(ps.power .== ps2.power)
