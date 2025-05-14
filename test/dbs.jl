@@ -1,4 +1,5 @@
 using Neuroblox
+using SciMLBase
 using Test
 
 @testset "Detection of stimulus transitions" begin
@@ -125,4 +126,35 @@ end
 
     @test sum(isapprox.(transition_values, amplitude, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
     @test sum(isapprox.(transition_values, offset, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
+end
+
+@testset "Getting and changing stimulus function" begin
+    @named dbs = DBS(namespace=:g)
+    @named n1 = HHNeuronExciBlox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => n1, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    prob = ODEProblem(sys, [], (0,1), [])
+    stim_fun = get_stimulus_function(dbs)
+    stim_fun2 = get_stimulus_function(prob)
+    @test stim_fun == stim_fun2
+
+    stim2 = SquareStimulus(200, 2.5, 0.0, 0.0, 0.066, 1e-4)
+    prob2 = remake(prob; p=[sys.dbs.stimulus => stim2])
+    stim_fun3 = get_stimulus_function(prob2)
+    @test stim_fun3.frequency_khz == 0.2
+
+    @named dbs = ProtocolDBS(namespace=:g)
+    @named n1 = HHNeuronExciBlox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => n1, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    prob = ODEProblem(sys, [], (0,1), [])
+    stim_fun = get_stimulus_function(dbs)
+    stim_fun2 = get_stimulus_function(prob)
+    @test stim_fun == stim_fun2
+
+    t1 = get_protocol_duration(dbs)
+    t2 = get_protocol_duration(prob)
+    @test t1 == t2
 end
