@@ -170,7 +170,10 @@ function neuron_and_neural_mass_comparison_tests()
                         HarmonicOscillator(name=:ho1)
                         HarmonicOscillator(name=:ho2)
                         JansenRit(name=:jr1)
-                        JansenRit(name=:jr2)]
+                        JansenRit(name=:jr2)],
+                        [AdamPYR(name=:adampyr)],
+                        [AdamIN(name=:adamin)],
+                        [AdamNMDAR(name=:adamnmda)]
                        )
             if length(unknowns(LIFNeuron(;name=:_).system)) > 3
                 @warn "excluding LIFNeurons from test"

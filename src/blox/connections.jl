@@ -1202,3 +1202,66 @@ function Connector(
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
+
+function connection_equations(blox_src::AdamPYR, blox_dst::AdamAMPA, w)
+    eq = blox_dst.V ~ blox_src.V
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamAMPA, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.sₐₘₚₐ * blox_src.g * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamIN, blox_dst::AdamGABA, w)
+    eq = blox_dst.V ~ blox_src.V
+    
+    return eq
+end
+
+function connection_equations(blox_src::AdamGABA, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.sᵧ * blox_src.g * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
+function connection_equations(blox_src::AbstractAdamNeuron, blox_dst::AdamNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.V
+    end
+
+    return eq
+end
+
+function connection_equations(blox_src::AdamNMDAR, blox_dst::AbstractAdamNeuron, w)
+    eq = blox_dst.jcn ~ w * blox_src.g * blox_src.O_AA * (blox_dst.V - blox_src.E)
+    
+    return eq
+end
+
+function connection_equations(blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox, AdamPYR, AdamIN}, blox_dst::MoradiNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.z
+    end
+
+    return eq
+end
+
+function connection_equations(blox_src::AdamNMDAR, blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox, AdamPYR, AdamIN}, w)
+    Mg = 1 / (1 + blox_src.Mg_O * exp(-blox_src.z * blox_src.δ * blox_src.F * blox_src.V / (blox_src.R * blox_src.T)) / blox_src.IC_50)
+    I = (blox_src.w_C * blox_src.C + blox_src.w_B * blox_src.B - blox_src.A) * blox_src.g * Mg * (blox_src.V - blox_src.E)
+    
+    eq = blox_dst.jcn ~ w * I
+    
+    return eq
+end
