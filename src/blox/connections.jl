@@ -1266,7 +1266,7 @@ function connection_equations(blox_src::AdamNMDAR, blox_dst::AbstractAdamNeuron,
     return eq
 end
 
-function connection_equations(blox_src::Union{HHNeuronExciBlox, AdamPYR}, blox_dst::MoradiNMDAR, w; kwargs...)
+function connection_equations(blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox, AdamPYR, AdamIN}, blox_dst::MoradiNMDAR, w; kwargs...)
     reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
     
     eq = if reverse
@@ -1278,7 +1278,7 @@ function connection_equations(blox_src::Union{HHNeuronExciBlox, AdamPYR}, blox_d
     return eq
 end
 
-function connection_equations(blox_src::AdamNMDAR, blox_dst::Union{HHNeuronExciBlox, AdamPYR}, w)
+function connection_equations(blox_src::AdamNMDAR, blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox, AdamPYR, AdamIN}, w)
     Mg = 1 / (1 + blox_src.Mg_O * exp(-blox_src.z * blox_src.δ * blox_src.F * blox_src.V / (blox_src.R * blox_src.T)) / blox_src.IC_50)
     I = (blox_src.w_C * blox_src.C + blox_src.w_B * blox_src.B - blox_src.A) * blox_src.g * Mg * (blox_src.V - blox_src.E)
     
