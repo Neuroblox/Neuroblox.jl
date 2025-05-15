@@ -9,7 +9,7 @@ show you here the "manual" way of doing this, which is typically going to be bet
 ===============================================================================================================#
 
 using Neuroblox, ModelingToolkit, GraphDynamics
-using Neuroblox.GraphDynamicsInterop
+using Neuroblox.GraphDynamicsInterop: GraphDynamicsInterop, BasicConnection
 
 using Neuroblox: 
     paramscoping,
@@ -33,6 +33,7 @@ First, let's consider something that's suspiciously like the noisy Van der Pol o
 ===============================================================================================================#
 
 struct VanDerPol <: NeuralMassBlox
+    name
     params
     system
     namespace
@@ -68,25 +69,13 @@ struct VanDerPol <: NeuralMassBlox
             r ~ √(x^2 + y^2)
         ]
         sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+        new(name, p, sys, namespace)
     end
 end;
 
 #===============================================================================================================
 ### GraphDynamics version
 
-#### Marking as supported 
-
-First, lets mark VanDerPol as a supported type by defining `issupported`. 
-
-We'll also tell `GraphDynamicsInterop` that it's not a composite block by defining a method for `components`
-that just returns a Tuple containing the oscillator itself:
-===============================================================================================================#
-
-GraphDynamicsInterop.issupported(::VanDerPol) = true
-GraphDynamicsInterop.components(v::VanDerPol) = (v,)
-
-#===============================================================================================================
 #### Converting to Subsystem
 
 GraphDynamics.jl uses a type called `Subsystem` which is really a bundle around a `SubsystemStates` which stores
@@ -277,6 +266,7 @@ Now lets implement another random blox, the DBS Source blox from `Neuroblox/src/
 ===============================================================================================================#
 
 struct DBS <: Neuroblox.StimulusBlox
+    name::Symbol
     params::Vector{Num}
     system::ODESystem
     namespace::Union{Symbol, Nothing}
@@ -318,7 +308,7 @@ struct DBS <: Neuroblox.StimulusBlox
         eqs = [u ~ stimulus(t)]
         sys = System(eqs, t, sts, p; name=name)
         
-        new(p, sys, namespace, stimulus)
+        new(name, p, sys, namespace, stimulus)
     end
 end
 
@@ -330,11 +320,6 @@ This is a bit special because it doesn't actually have *any* dynamical state. It
 
 #### Basics
 ===============================================================================================================#
-
-GraphDynamicsInterop.issupported(::DBS) = true
-
-GraphDynamicsInterop.components(d::DBS) = (d,)
-
 
 GraphDynamics.initialize_input(s::Subsystem{DBS}) = (;)
 
@@ -388,9 +373,9 @@ end
 Then the GraphDynamics version of this can be as simple as
 ===============================================================================================================#
 
-function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{DBS},
-                                                   sys_dst::Subsystem{VanDerPol},
-                                                   t)
+function (c::BasicConnection)(sys_src::Subsystem{DBS},
+                              sys_dst::Subsystem{VanDerPol},
+                              t)
 
     w = c.weight
     jcn_x = 0.0 # do nothing to jcn_x
@@ -445,7 +430,90 @@ for s ∈ [v1.r, v2.r, v1.jcn_tot, v2.jcn_x]                   #src
 end                                                          #src
 
 #===============================================================================================================
-## TODO: A neuron model with events
+## Composite blox
 
-## TODO: Composite blox
+Some blox are modelled as a collection of sub-blox. Let's look at an example where we pretent we had a use for a
+structure which is a big bag of randomly connected VdP oscillators.
+
+Supporting structures like this in GraphDynamics can be as simple as defining a container for the sub-blox:
 ===============================================================================================================#
+struct BagOfVdP <: Neuroblox.CompositeBlox
+    name
+    vdps
+    weights
+    function BagOfVdP(;name, N_osc, θ=1.0, ϕ=0.1, weights=rand(N_osc, N_osc))
+        vdps = [VanDerPol(;name=Symbol("vdp", i), θ, ϕ) for i ∈ 1:N_osc]
+        new(name, vdps, weights)
+    end
+end
+
+#===============================================================================================================
+and then defining a `system_wiring_rule!` which tells GraphDynamics.jl how to 'flatten' this into a graph: 
+===============================================================================================================#
+using GraphDynamics: system_wiring_rule!
+function GraphDynamics.system_wiring_rule!(g, blox::BagOfVdP; kwargs...)
+    (;vdps, weights) = blox
+    for blox ∈ vdps
+        ## Recursively add the sub-structures to our graph
+        system_wiring_rule!(g, blox)
+    end
+    for (i, blox_src) ∈ enumerate(vdps)
+        for (j, blox_dst) ∈ enumerate(vdps)
+            if !iszero(weights[i, j])
+                ## Add connections between the blox
+                system_wiring_rule!(g, blox_src, blox_dst; weight=weights[i, j])
+            end
+        end
+    end
+end
+
+#===============================================================================================================
+Now lets define a connection between a `BagOfVdP` and our `DBS` stimulus blox where each VdP oscillator gets wired
+to the DBS blox. We can do this by defining a 3-arg method for `system_wiring_rule`: 
+===============================================================================================================#
+
+function GraphDynamics.system_wiring_rule!(g, blox_src::DBS, blox_dst::BagOfVdP; weight, kwargs...)
+    for vdp_dst ∈ blox_dst.vdps
+        system_wiring_rule!(g, blox_src, vdp_dst; weight, kwargs...)
+    end
+end
+
+#===============================================================================================================
+Finally, in order for this to work, we'll also need to define what a `BasicConnection` does between two VanDerPols:
+===============================================================================================================#
+
+function (c::BasicConnection)(src::Subsystem{VanDerPol}, dst::Subsystem{VanDerPol}, t)
+    w = c.weight
+    jcn_x = 0.0 # do nothing to jcn_x
+    jcn = w * src.x
+    (; jcn_x, jcn) # This must match the form of initialize_input(sys_dst)
+end
+
+#===============================================================================================================
+Now we can use our composite structure:
+===============================================================================================================#
+
+let
+
+    g = MetaDiGraph()
+    @named dbs = DBS()
+    @named vdps = BagOfVdP(N_osc=3)
+    add_edge!(g, dbs => vdps; weight=1.0)
+    
+    @named sys = system_from_graph(g; graphdynamics=true)
+
+    prob = SDEProblem(sys, [], (0.0, 10.0); seed=seed)
+    sol = solve(prob, RKMil())
+    f = Figure()
+    ax = Axis(f[1, 1], xlabel="t")
+    lines!(ax, sol.t, sol[:vdp1₊r], label="vdp1.r")
+    lines!(ax, sol.t, sol[:vdp2₊r], label="vdp2.r")
+    lines!(ax, sol.t, sol[:vdp3₊r], label="vdp3.r")
+    f
+end
+
+
+#===============================================================================================================
+## TODO: Events
+===============================================================================================================#
+

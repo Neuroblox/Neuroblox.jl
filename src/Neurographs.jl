@@ -298,7 +298,8 @@ If `graphdynamics=true` (defaults to `false`), the output will be a `GraphSystem
 function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
     if graphdynamics
         isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
-        GraphDynamicsInterop.graphsystem_from_graph(g; kwargs...)
+        gsys = to_graphsystem(g)
+        PartitionedGraphSystem(gsys)
     else
         if isnothing(name)
             throw(UndefKeywordError(:name))
@@ -308,6 +309,19 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
     
         return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
     end
+end
+
+function to_graphsystem(g::MetaDiGraph)
+    gsys = GraphSystem()
+    for i ∈ vertices(g)
+        add_node!(gsys, get_prop(g, i, :blox))
+    end
+    for e ∈ edges(g)
+        blox_src = get_prop(g, src(e), :blox)
+        blox_dst = get_prop(g, dst(e), :blox)
+        add_connection!(gsys, blox_src, blox_dst; props(g, e)...)
+    end
+    gsys
 end
 
 function system_from_graph(g::MetaDiGraph, conns::AbstractVector{<:Connector}, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)

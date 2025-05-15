@@ -17,8 +17,9 @@ if GROUP == "All" || GROUP == "GraphDynamics2"
     wta_tests()
     dbs_circuit_components()
     dbs_circuit()
-    discrete()
-    striatum_tests()
+    # discrete()
+    cortical_tests()
+    # striatum_tests()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics3"
