@@ -22,7 +22,7 @@ GraphDynamics = "bcd5d0fe-e6b7-4ef1-9848-780c183c7f4c"
 
 [compat]
 Documenter = "1"
-GraphDynamics = "0.2.8"
+GraphDynamics = "0.4.1"
 
 [sources]
 Neuroblox = {path = "../"}

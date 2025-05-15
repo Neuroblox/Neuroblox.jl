@@ -110,9 +110,9 @@ function basic_smoketest()
         for (ProbType, alg, neurons) ∈ ((ODEProblem, Tsit5(), [IFNeuron(I_in=rand(), name=:lif1)
                                                                IFNeuron(I_in=rand(), name=:lif2)
                                                                QIFNeuron(I_in=rand(), name=:qif1)]),
-                                        (SDEProblem, RKMil(), [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3, freq=4)
-                                                               HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2, freq=6)
-                                                               HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=2, freq=3)]))
+                                        (SDEProblem, RKMil(), [HHNeuronInhib_GPe_Adam_Blox(name=:nrn1, I_bg=3)
+                                                               HHNeuronInhib_GPe_Adam_Blox(name=:nrn2, I_bg=2)
+                                                               HHNeuronExci_STN_Adam_Blox(name=:nrn3,  I_bg=1)]))
             @testset "$(join(unique(typeof.(neurons)), ", "))" begin
                 #let
                 g = MetaDiGraph()
@@ -208,9 +208,9 @@ end
 function basic_hh_network_tests()
     Random.seed!(1234)
     @testset "HH Neuron excitatory & inhibitory network" begin
-        nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3, freq=4)
-        nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2, freq=6)
-        nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=2, freq=3)
+        nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=3)
+        nn2 = HHNeuronExciBlox(name=Symbol("nrn2"), I_bg=2)
+        nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), I_bg=1)
         assembly = [nn1, nn2, nn3]
         # Adjacency matrix : 
         #adj = [0   1 0
@@ -231,7 +231,7 @@ function vdp_test()
         @named vdp = VanDerPol()
         g = MetaDiGraph()
         add_blox!(g, vdp)
-        test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); u0map=[vdp.x => 0.0, vdp.y=>0.1], rtol=1e-10, alg=Vern7())
+        test_compare_du_and_sols(ODEProblem, g, (0.0, 1.0); u0map=[:vdp₊x => 0.0, :vdp₊y=>0.1], rtol=1e-10, alg=Vern7())
 
         @named vdpn = VanDerPol(include_noise=true)
         @named vdpn2 = VanDerPol(include_noise=true)
@@ -241,7 +241,7 @@ function vdp_test()
         add_edge!(g, 1, 2, :weight, 1.0)
         
         prob = test_compare_du_and_sols(SDEProblem, g, (0.0, 1.0);
-                                        u0map=[vdpn.x => 0.0, vdpn.y=>1.1], rtol=1e-10, alg=RKMil(), seed=123)
+                                        u0map=[:vdpn₊x => 0.0, :vdpn₊y=>1.1], rtol=1e-10, alg=RKMil(), seed=123)
     end
 end
 
@@ -394,7 +394,7 @@ function stochastic_hh_network_tests()
     end
     @testset "FSI tests" begin
         @named n1 = HHNeuronInhib_FSI_Adam_Blox(σ=1)
-        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2, freq=0.5)
+        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2)
         assembly = [n1, n2]
 
         g = MetaDiGraph()
@@ -406,8 +406,8 @@ function stochastic_hh_network_tests()
     end
     @testset "FSI tests" begin
         @named n1 = HHNeuronInhib_FSI_Adam_Blox(σ=1)
-        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2, freq=0.5)
-        @named n3 = HHNeuronInhib_FSI_Adam_Blox(σ=3, freq=0.9)
+        @named n2 = HHNeuronInhib_FSI_Adam_Blox(σ=2)
+        @named n3 = HHNeuronInhib_FSI_Adam_Blox(σ=3)
         assembly = [n1, n2, n3]
 
         g = MetaDiGraph()
@@ -416,8 +416,6 @@ function stochastic_hh_network_tests()
         add_edge!(g, 1, 3, Dict(:weight=> 100.12, :gap => false))
         add_edge!(g, 2, 1, Dict(:weight=> 100.13, :gap => true, :gap_weight => 1.0))
         add_edge!(g, 2, 3, Dict(:weight=> 100.0,  :gap => true, :gap_weight => 1.0))
-        # add_edge!(g, 3, 2, Dict(:weight=> 0.1,  :gap => true, :gap_weight=>1.0))
-        # add_edge!(g, 2, 1, Dict(:weight=> 0.1, :gap => true, :gap_weight=>2.0))
         tspan = (0.0, 1.0)
         test_compare_du_and_sols(SDEProblem, g, tspan; rtol=1e-8, alg=RKMil())
     end
@@ -658,145 +656,149 @@ function dbs_circuit()
     end
 end
 
-function discrete()
-    @testset "Discrete blox" begin
+# function discrete()
+#     @testset "Discrete blox" begin
+#         g = MetaDiGraph()
+#         @named n = HHNeuronExciBlox()
+#         @named m = Matrisome(t_event=8.0)
+#         @named t = TAN()
+#         add_blox!.((g,), (n, m, t))
+#         add_edge!(g, 1, 2, :weight, 1.0)
+#         add_edge!(g, 3, 2, Dict(:weight => 0.1, :t_event=>5.0))
+#         test_compare_du_and_sols(ODEProblem, g, (0.0, 20.0), rtol=1e-5, alg=Tsit5())
+#     end
+# end
+
+function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
+    @testset "LIF Exci / Inhib tests" begin
+        ## Describe what the local variables you define are for
+        global_ns = :g ## global name for the circuit. All components should be inside this namespace.
+        rng = MersenneTwister(1234)
+
+        spike_rate = 2.4 ## spikes / ms
+
+        f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
+        N_E = 24 ## total number of excitatory neurons
+        N_I = Int(ceil(N_E / 4)) ## total number of inhibitory neurons
+        N_E_selective = Int(ceil(f * N_E)) ## number of selective excitatory neurons
+        N_E_nonselective = N_E - 2 * N_E_selective ## number of non-selective excitatory neurons
+
+        w₊ = 1.7 
+        w₋ = 1 - f * (w₊ - 1) / (1 - f)
+
+        ## Use scaling factors for conductance parameters so that our abbreviated model 
+        ## can exhibit the same competition behavior between the two selective excitatory populations
+        ## as the larger model in Wang 2002 does.
+        exci_scaling_factor = 1600 / N_E
+        inh_scaling_factor = 400 / N_I
+
+        coherence = 0 # random dot motion coherence [%]
+        dt_spike_rate = 50 # update interval for the stimulus spike rate [ms]
+        μ_0 = 40e-3 # mean stimulus spike rate [spikes / ms]
+        ρ_A = ρ_B = μ_0 / 100
+        μ_A = μ_0 + ρ_A * coherence
+        μ_B = μ_0 + ρ_B * coherence 
+        σ = 4e-3 # standard deviation of stimulus spike rate [spikes / ms]
+
+        spike_rate_A = (distribution=Normal(μ_A, σ), dt=dt_spike_rate) # spike rate distribution for selective population A
+        spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
+
+        # Blox definitions
+        @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
+        @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1, rng);
+        @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+        @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
+
+        @named n1 = LIFExciNeuron()
+        @named n2 = LIFExciNeuron()
+        @named n3 = LIFInhNeuron()
+
         g = MetaDiGraph()
-        @named n = HHNeuronExciBlox()
-        @named m = Matrisome(t_event=8.0)
-        @named t = TAN()
-        add_blox!.((g,), (n, m, t))
-        add_edge!(g, 1, 2, :weight, 1.0)
-        add_edge!(g, 3, 2, Dict(:weight => 0.1, :t_event=>5.0))
-        test_compare_du_and_sols(ODEProblem, g, (0.0, 20.0), rtol=1e-5, alg=Tsit5())
+
+        add_edge!(g, background_input  => n1; weight = 1.0)
+        add_edge!(g, background_input2 => n1; weight = 0.0)
+        add_edge!(g, stim_A => n1;            weight = 1.0)
+        add_edge!(g, stim_B => n1;            weight = 1.0)
+        add_edge!(g, n1 => n2;                weight = 1.0)
+        add_edge!(g, n2 => n1;                weight = 2.0)
+        add_edge!(g, n3 => n1;                weight = 3.0)
+
+        test_compare_du_and_sols(ODEProblem, (deepcopy(g), g), tspan; rtol, alg=Tsit5())
     end
 end
 
-function lif_exci_inh_tests(;tspan=(0.0, 20.0), rtol=1e-8)
-    
-## Describe what the local variables you define are for
-    global_ns = :g ## global name for the circuit. All components should be inside this namespace.
-    rng = MersenneTwister(1234)
-
-    spike_rate = 2.4 ## spikes / ms
-
-    f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
-    N_E = 24 ## total number of excitatory neurons
-    N_I = Int(ceil(N_E / 4)) ## total number of inhibitory neurons
-    N_E_selective = Int(ceil(f * N_E)) ## number of selective excitatory neurons
-    N_E_nonselective = N_E - 2 * N_E_selective ## number of non-selective excitatory neurons
-
-    w₊ = 1.7 
-    w₋ = 1 - f * (w₊ - 1) / (1 - f)
-
-    ## Use scaling factors for conductance parameters so that our abbreviated model 
-    ## can exhibit the same competition behavior between the two selective excitatory populations
-    ## as the larger model in Wang 2002 does.
-    exci_scaling_factor = 1600 / N_E
-    inh_scaling_factor = 400 / N_I
-
-    coherence = 0 # random dot motion coherence [%]
-    dt_spike_rate = 50 # update interval for the stimulus spike rate [ms]
-    μ_0 = 40e-3 # mean stimulus spike rate [spikes / ms]
-    ρ_A = ρ_B = μ_0 / 100
-    μ_A = μ_0 + ρ_A * coherence
-    μ_B = μ_0 + ρ_B * coherence 
-    σ = 4e-3 # standard deviation of stimulus spike rate [spikes / ms]
-
-    spike_rate_A = (distribution=Normal(μ_A, σ), dt=dt_spike_rate) # spike rate distribution for selective population A
-    spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
-
-    # Blox definitions
-    @named background_input  = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
-    @named background_input2 = PoissonSpikeTrain(spike_rate + 0.1, tspan; namespace = global_ns, N_trains=1, rng);
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
-
-    @named n1 = LIFExciNeuron()
-    @named n2 = LIFExciNeuron()
-    @named n3 = LIFInhNeuron()
-
-    g = MetaDiGraph()
-    add_edge!(g, background_input  => n1; weight = 1.0)
-    add_edge!(g, background_input2 => n1; weight = 0.0)
-    add_edge!(g, stim_A => n1;            weight = 1.0)
-    add_edge!(g, stim_B => n1;            weight = 1.0)
-    add_edge!(g, n1 => n2;                weight = 1.0)
-    add_edge!(g, n2 => n1;                weight = 2.0)
-    add_edge!(g, n3 => n1;                weight = 3.0)
-    test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
-end
-
 function decision_making_test(;tspan=(0.0, 20.0), rtol=1e-5, N_E=24)
-    
-    ## Describe what the local variables you define are for
-    global_ns = :g ## global name for the circuit. All components should be inside this namespace.
-    rng = MersenneTwister(1234)
-    spike_rate = 2.4 ## spikes / ms
+    @testset "Decision Making Test" begin 
+        ## Describe what the local variables you define are for
+        global_ns = :g ## global name for the circuit. All components should be inside this namespace.
+        rng = MersenneTwister(1234)
+        spike_rate = 2.4 ## spikes / ms
 
-    f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
-    N_E ## total number of excitatory neurons
-    N_I = Int(ceil(N_E / 4)) ## total number of inhibitory neurons
-    N_E_selective = Int(ceil(f * N_E)) ## number of selective excitatory neurons
-    N_E_nonselective = N_E - 2 * N_E_selective ## number of non-selective excitatory neurons
+        f = 0.15 ## ratio of selective excitatory to non-selective excitatory neurons
+        N_E ## total number of excitatory neurons
+        N_I = Int(ceil(N_E / 4)) ## total number of inhibitory neurons
+        N_E_selective = Int(ceil(f * N_E)) ## number of selective excitatory neurons
+        N_E_nonselective = N_E - 2 * N_E_selective ## number of non-selective excitatory neurons
 
-    w₊ = 1.7 
-    w₋ = 1 - f * (w₊ - 1) / (1 - f)
+        w₊ = 1.7 
+        w₋ = 1 - f * (w₊ - 1) / (1 - f)
 
-    ## Use scaling factors for conductance parameters so that our abbreviated model 
-    ## can exhibit the same competition behavior between the two selective excitatory populations
-    ## as the larger model in Wang 2002 does.
-    exci_scaling_factor = 1600 / N_E
-    inh_scaling_factor = 400 / N_I
+        ## Use scaling factors for conductance parameters so that our abbreviated model 
+        ## can exhibit the same competition behavior between the two selective excitatory populations
+        ## as the larger model in Wang 2002 does.
+        exci_scaling_factor = 1600 / N_E
+        inh_scaling_factor = 400 / N_I
 
-    coherence = 0 # random dot motion coherence [%]
-    dt_spike_rate = 50 # update interval for the stimulus spike rate [ms]
-    μ_0 = 40e-3 # mean stimulus spike rate [spikes / ms]
-    ρ_A = ρ_B = μ_0 / 100
-    μ_A = μ_0 + ρ_A * coherence
-    μ_B = μ_0 + ρ_B * coherence 
-    σ = 4e-3 # standard deviation of stimulus spike rate [spikes / ms]
+        coherence = 0 # random dot motion coherence [%]
+        dt_spike_rate = 50 # update interval for the stimulus spike rate [ms]
+        μ_0 = 40e-3 # mean stimulus spike rate [spikes / ms]
+        ρ_A = ρ_B = μ_0 / 100
+        μ_A = μ_0 + ρ_A * coherence
+        μ_B = μ_0 + ρ_B * coherence 
+        σ = 4e-3 # standard deviation of stimulus spike rate [spikes / ms]
 
-    spike_rate_A = (distribution=Normal(μ_A, σ), dt=dt_spike_rate) # spike rate distribution for selective population A
-    spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
+        spike_rate_A = (distribution=Normal(μ_A, σ), dt=dt_spike_rate) # spike rate distribution for selective population A
+        spike_rate_B = (distribution=Normal(μ_B, σ), dt=dt_spike_rate) # spike rate distribution for selective population B
 
-    # Blox definitions
-    @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
+        # Blox definitions
+        @named background_input = PoissonSpikeTrain(spike_rate, tspan; namespace = global_ns, N_trains=1, rng);
 
-    @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
-    @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
+        @named stim_A = PoissonSpikeTrain(spike_rate_A, tspan; namespace = global_ns, rng);
+        @named stim_B = PoissonSpikeTrain(spike_rate_B, tspan; namespace = global_ns, rng);
 
-    @named n_A = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor);
-    @named n_B = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor) ;
-    @named n_ns = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_nonselective, weight = 1.0, exci_scaling_factor, inh_scaling_factor);
-    @named n_inh = LIFInhCircuitBlox(; namespace = global_ns, N_neurons = N_I, weight = 1.0, exci_scaling_factor, inh_scaling_factor);
+        @named n_A = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor);
+        @named n_B = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_selective, weight = w₊, exci_scaling_factor, inh_scaling_factor) ;
+        @named n_ns = LIFExciCircuitBlox(; namespace = global_ns, N_neurons = N_E_nonselective, weight = 1.0, exci_scaling_factor, inh_scaling_factor);
+        @named n_inh = LIFInhCircuitBlox(; namespace = global_ns, N_neurons = N_I, weight = 1.0, exci_scaling_factor, inh_scaling_factor);
 
-    g = MetaDiGraph()
+        g = MetaDiGraph()
 
-    add_edge!(g, background_input => n_A; weight = 1)
-    add_edge!(g, background_input => n_B; weight = 1)
-    add_edge!(g, background_input => n_ns; weight = 1)
-    add_edge!(g, background_input => n_inh; weight = 1)
+        add_edge!(g, background_input => n_A; weight = 1)
+        add_edge!(g, background_input => n_B; weight = 1)
+        add_edge!(g, background_input => n_ns; weight = 1)
+        add_edge!(g, background_input => n_inh; weight = 1)
 
-    add_edge!(g, stim_A => n_A; weight = 1)
-    add_edge!(g, stim_B => n_B; weight = 1)
+        add_edge!(g, stim_A => n_A; weight = 1)
+        add_edge!(g, stim_B => n_B; weight = 1)
 
-    add_edge!(g, n_A => n_B; weight = w₋)
-    add_edge!(g, n_A => n_ns; weight = 1)
-    add_edge!(g, n_A => n_inh; weight = 1)
+        add_edge!(g, n_A => n_B; weight = w₋)
+        add_edge!(g, n_A => n_ns; weight = 1)
+        add_edge!(g, n_A => n_inh; weight = 1)
 
-    add_edge!(g, n_B => n_A; weight = w₋)
-    add_edge!(g, n_B => n_ns; weight = 1)
-    add_edge!(g, n_B => n_inh; weight = 1)
+        add_edge!(g, n_B => n_A; weight = w₋)
+        add_edge!(g, n_B => n_ns; weight = 1)
+        add_edge!(g, n_B => n_inh; weight = 1)
 
-    add_edge!(g, n_ns => n_A; weight = w₋)
-    add_edge!(g, n_ns => n_B; weight = w₋)
-    add_edge!(g, n_ns => n_inh; weight = 1)
+        add_edge!(g, n_ns => n_A; weight = w₋)
+        add_edge!(g, n_ns => n_B; weight = w₋)
+        add_edge!(g, n_ns => n_inh; weight = 1)
 
-    add_edge!(g, n_inh => n_A; weight = 1)
-    add_edge!(g, n_inh => n_B; weight = 1)
-    add_edge!(g, n_inh => n_ns; weight = 1)
+        add_edge!(g, n_inh => n_A; weight = 1)
+        add_edge!(g, n_inh => n_B; weight = 1)
+        add_edge!(g, n_inh => n_ns; weight = 1)
 
-    test_compare_du_and_sols(ODEProblem, g, tspan; rtol, alg=Tsit5())
+        test_compare_du_and_sols(ODEProblem, (deepcopy(g), g), tspan; rtol, alg=Tsit5())
+    end
 end
 
 function ping_tests(;tspan=(0.0, 2.0))
