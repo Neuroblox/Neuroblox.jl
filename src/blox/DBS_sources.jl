@@ -116,10 +116,24 @@ struct SquareStimulus{T} <: Function
     pulse_width   :: T   # ms
     smooth        :: T
 
-    function SquareStimulus(f_hz, amp, off, t0, pw, smooth)
-        f_khz = f_hz/1000
-        Tprom = typeof(promote(f_khz, amp, off, t0, pw, smooth)[1])
-        return new{Tprom}(f_khz, amp, off, t0, pw, smooth)
+    function SquareStimulus(frequency_hz, amplitude, offset, start_time, pulse_width, smooth)
+
+        # validate inputs
+        @assert frequency_hz  ≥ 0 "`frequency` must be non-negative"
+        @assert amplitude     ≥ 0 "`amplitude` must be non-negative"
+        @assert pulse_width   ≥ 0 "`pulse_width` must be non-negative"
+        @assert smooth        ≥ 0 "`smooth` must be non-negative"
+
+        f_khz           = frequency_hz / 1000
+        period          = 1 / f_khz
+
+        # warn if pulse overlaps
+        if pulse_width ≥ period
+            @warn "`pulse_width` ≥ `period`: pulses may overlap (pulse_width = $(pulse_width) ms, period = $(period) ms)"
+        end
+
+        Tprom = typeof(promote(frequency_hz, amplitude, offset, start_time, pulse_width, smooth)[1])
+        return new{Tprom}(f_khz, amplitude, offset, start_time, pulse_width, smooth)
     end
 end
 
@@ -151,9 +165,25 @@ struct BurstStimulus{T} <: Function
     function BurstStimulus(frequency_hz, amplitude, offset, start_time,
                            pulse_width, smooth, pulses_per_burst,
                            bursts_per_block, pre_block_time, inter_burst_time)
+
+        # validate inputs
+        @assert frequency_hz        ≥ 0 "`frequency` must be non-negative"
+        @assert amplitude           ≥ 0 "`amplitude` must be non-negative"
+        @assert pulse_width         ≥ 0 "`pulse_width` must be non-negative"
+        @assert smooth              ≥ 0 "`smooth` must be non-negative"
+        @assert inter_burst_time    ≥ 0 "`inter_burst_time` must be non-negative"
+        @assert round(pulses_per_burst) == Int(pulses_per_burst) && pulses_per_burst ≥ 0 "`pulses_per_burst` must be a non-negative integer"
+        @assert round(bursts_per_block) == Int(bursts_per_block) && bursts_per_block ≥ 0 "`bursts_per_block` must be a non-negative integer"
+
+        f_khz           = frequency_hz / 1000
+        period          = 1 / f_khz
+
+        # warn if pulse overlaps
+        if pulse_width ≥ period
+            @warn "`pulse_width` ≥ `period`: pulses may overlap (pulse_width = $(pulse_width) ms, period = $(period) ms)"
+        end
+
         # Pre-compute some timing parameters
-        f_khz           = frequency_hz/1000
-        period          = 1/f_khz
         burst_duration  = pulses_per_burst * period
         cycle_duration  = burst_duration + inter_burst_time
         inter_pulse_time = max(0, period - pulse_width)
