@@ -146,22 +146,25 @@ struct BurstStimulus{T} <: Function
     period           :: T   # ms
     burst_duration   :: T   # ms
     cycle_duration   :: T   # ms
+    inter_pulse_time :: T   # ms
 
-    function BurstStimulus(f_hz, amp, off, t0, pw, smooth,
-                           pulses_per_burst,
-                           bursts_per_block,
-                           pre_block_time, inter_burst_time)
+    function BurstStimulus(frequency_hz, amplitude, offset, start_time,
+                           pulse_width, smooth, pulses_per_burst,
+                           bursts_per_block, pre_block_time, inter_burst_time)
         # Pre-compute some timing parameters
-        f_khz           = f_hz/1000
+        f_khz           = frequency_hz/1000
         period          = 1/f_khz
         burst_duration  = pulses_per_burst * period
         cycle_duration  = burst_duration + inter_burst_time
-        T = typeof(promote(f_khz, amp, off, t0, pw, smooth, pre_block_time, inter_burst_time)[1])
+        inter_pulse_time = max(0, period - pulse_width)
+        T = typeof(promote(f_khz, amplitude, offset, start_time, pulse_width, smooth,
+                           pulses_per_burst, bursts_per_block,
+                           pre_block_time, inter_burst_time)[1])
 
-        return new{T}(f_khz, amp, off, t0, pw, smooth,
+        return new{T}(f_khz, amplitude, offset, start_time, pulse_width, smooth,
                            pulses_per_burst, bursts_per_block,
                            pre_block_time, inter_burst_time,
-                           period, burst_duration, cycle_duration)
+                           period, burst_duration, cycle_duration, inter_pulse_time)
     end
 end
 
@@ -169,8 +172,8 @@ function (s::BurstStimulus)(t)
     (;frequency_khz, amplitude, offset,
         start_time, pulse_width, smooth,
         pulses_per_burst, bursts_per_block,
-        pre_block_time, inter_burst_time,
-        period, burst_duration, cycle_duration) = s
+        pre_block_time, inter_burst_time, period,
+        burst_duration, cycle_duration, inter_pulse_time) = s
 
     t_adj = t - pre_block_time
     current_burst = floor(t_adj / cycle_duration)
@@ -185,7 +188,7 @@ function (s::BurstStimulus)(t)
         offset,
         ifelse(current_burst ≥ bursts_per_block,
             offset,
-            ifelse(t_within ≥ burst_duration - pulse_width/2,
+            ifelse(t_within ≥ burst_duration - inter_pulse_time,
                 offset,
                 ifelse(iszero(smooth),
                     square(t_within, frequency_khz, amplitude, offset, start_time, pulse_width),
@@ -214,17 +217,14 @@ function square(t, f, amplitude, offset, start_time, pulse_width, δ)
 end
 
 # Non-smoothed square pulses
-function square(t, f, amplitude, offset, start_time, pulse_width)
-
-    saw1 = sawtooth(t - start_time, f, pulse_width)
-    saw2 = sawtooth(t - start_time, f, 0)
-    saw3 = sawtooth(-start_time, f, pulse_width)
-    saw4 = sawtooth(-start_time, f, 0)
-    
-    y = amplitude * (saw1 - saw2 - saw3 + saw4) + offset
-
-    return y
+@inline function square(t, f, amplitude, offset, start_time, pulse_width)
+    ifelse(phase(t, f, start_time) < pulse_width*f,
+            offset + amplitude,
+            offset)
 end
+
+# phase in [0,1)
+phase(t, f, t0) = f*(t - t0) - floor(f*(t - t0))
 
 # ------------------------------------------------------------------------------------------
 #  Utility functions
