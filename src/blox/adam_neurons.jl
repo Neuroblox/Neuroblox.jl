@@ -271,10 +271,10 @@ struct MoradiNMDAR <: AbstractReceptor
         E, k, V_0, τ_A, τ_B0, τ_C0, τ_g, w_B, w_C, λ_B, λ_C, a_B, a_C, Mg_O, IC_50, T, F, R, z, δ, Q_A_10, T_A_0, Q_B_10, T_B_0, Q_C_10, T_C_0, Q_g_10, T_g_0, spk_coeff = p
 
         sts = @variables begin 
-            A(t)
-            B(t)
-            C(t)
-            g(t)
+            A(t)=0
+            B(t)=0
+            C(t)=0
+            g(t)=0
             V(t)
             [input=true]
             jcn(t)
