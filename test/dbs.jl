@@ -1,5 +1,5 @@
 using Neuroblox
-using SciMLBase
+using OrdinaryDiffEq
 using Test
 
 @testset "Detection of stimulus transitions" begin
