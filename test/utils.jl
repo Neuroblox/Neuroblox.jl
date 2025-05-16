@@ -83,7 +83,7 @@ end
     @named nn = HHNeuronExciBlox(I_bg=0.4)
     @named dbs = DBS(
                 frequency=80.0,
-                amplitude=1.0,
+                amplitude=10.0,
                 pulse_width=0.5,
                 offset=0.0,
                 start_time=0.0,
