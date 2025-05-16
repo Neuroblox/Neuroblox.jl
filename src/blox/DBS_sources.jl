@@ -136,6 +136,9 @@ struct SquareStimulus{T} <: Function
     end
 end
 
+# for making Accessors.jl @set work
+SquareStimulus(f_khz, amp, off, t0, pw, sm, per) = SquareStimulus(f_khz*1000, amp, off, t0, pw, sm)
+
 function (s::SquareStimulus)(t)
     (;frequency_khz, amplitude, offset, start_time, pulse_width, smooth, period) = s
     ifelse(iszero(smooth),
@@ -194,6 +197,10 @@ struct BurstStimulus{T} <: Function
                            period, burst_duration, cycle_duration, inter_pulse_time)
     end
 end
+
+# for making Accessors.jl @set work
+BurstStimulus(f_khz, amp, off, t0, pw, sm, ppb, bpb, pbt, ibt, per, bdu, cd, ipt) =
+    BurstStimulus(f_khz*1000, amp, off, t0, pw, sm, ppb, bpb, pbt, ibt)
 
 function (s::BurstStimulus)(t)
     (;frequency_khz, amplitude, offset,
@@ -257,15 +264,19 @@ phase(t, f, t0) = f*(t - t0) - floor(f*(t - t0))
 #  Utility functions
 # ------------------------------------------------------------------------------------------
 
-function get_stimulus_function(dbs::Union{DBS, ProtocolDBS})
-    p = defaults(dbs.system)
-    p[only(parameters(dbs.system))]
+get_stimulus_function(dbs::Union{DBS, ProtocolDBS}) = ModelingToolkit.getdefault(dbs.system.stimulus)
+
+function get_stimulus_function(sys::AbstractTimeDependentSystem)
+    params = parameters(sys)
+    params_str = string.(params)
+    ind   = only(get_inds(params_str, Regex("₊stimulus⋆\$")))
+    return ModelingToolkit.getdefault(params[ind])
 end
 
 get_stimulus_function(prob::SciMLBase.AbstractDEProblem) = get_param_value(prob, "stimulus⋆")
 
 # total duration (ms) of a DBS protocol --------------------------------------
-function get_protocol_duration(dbs::Union{ProtocolDBS, SciMLBase.AbstractDEProblem})
+function get_protocol_duration(dbs::Union{ProtocolDBS, SciMLBase.AbstractDEProblem, AbstractTimeDependentSystem})
     stim = get_stimulus_function(dbs)
     @assert !(stim isa SquareStimulus) "You are using and endless SquareStimulus."
     stim.pre_block_time + stim.bursts_per_block * stim.cycle_duration - stim.inter_burst_time
@@ -335,8 +346,8 @@ get_inds(x::AbstractVector{<:Union{String,Symbol}}, pattern::Regex) =
 
 function get_param_value(prob::SciMLBase.AbstractDEProblem, name;
                          params=nothing, params_str=nothing)
-    params === nothing && (params = parameters(prob.f.sys))
-    params_str === nothing && (params_str = string.(params))
+    isnothing(params) && (params = parameters(prob.f.sys))
+    isnothing(params_str) && (params_str = string.(params))
     ind   = get_inds(params_str, Regex("₊$(name)\$"))
     @assert length(ind) == 1 "$(length(ind)) parameter(s) '$name' found"
     sym   = params[ind]

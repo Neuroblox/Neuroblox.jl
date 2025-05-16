@@ -137,12 +137,14 @@ end
     prob = ODEProblem(sys, [], (0,1), [])
     stim_fun = get_stimulus_function(dbs)
     stim_fun2 = get_stimulus_function(prob)
+    stim_fun3 = get_stimulus_function(sys)
     @test stim_fun == stim_fun2
+    @test stim_fun == stim_fun3
 
     stim2 = SquareStimulus(200, 2.5, 0.0, 0.0, 0.066, 1e-4)
     prob2 = remake(prob; p=[sys.dbs.stimulus => stim2])
-    stim_fun3 = get_stimulus_function(prob2)
-    @test stim_fun3.frequency_khz == 0.2
+    stim_fun4 = get_stimulus_function(prob2)
+    @test stim_fun4.frequency_khz == 0.2
 
     @named dbs = ProtocolDBS(namespace=:g)
     @named n1 = HHNeuronExciBlox()
@@ -152,9 +154,12 @@ end
     prob = ODEProblem(sys, [], (0,1), [])
     stim_fun = get_stimulus_function(dbs)
     stim_fun2 = get_stimulus_function(prob)
+    stim_fun3 = get_stimulus_function(sys)
     @test stim_fun == stim_fun2
+    @test stim_fun == stim_fun3
 
     t1 = get_protocol_duration(dbs)
     t2 = get_protocol_duration(prob)
+    t3 = get_protocol_duration(sys)
     @test t1 == t2
 end
