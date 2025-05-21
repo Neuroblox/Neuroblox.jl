@@ -86,6 +86,12 @@ function (c::BasicConnection)(blox_src, blox_dst, t)
     (; jcn = c.weight * output(blox_src))
 end
 
+struct ReverseConnection <: ConnectionRule
+    weight::Float64
+end
+
+Base.zero(::Type{<:ReverseConnection}) = ReverseConnection(0.0)
+
 struct PSPConnection <: ConnectionRule
     weight::Float64
 end
@@ -585,6 +591,16 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (; jcn = w * s * (V_I - V))
 end
 
+# #-------------------------
+# NMDA receptor 
+function GraphDynamics.system_wiring_rule!(g,
+                                        blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
+                                        blox_dst::MoradiNMDAR;
+                                        weight, reverse=false, kwargs...)
+    conn = reverse ? ReverseConnection(weight) : BasicConnection(weight)
+    
+    add_connection!(g, blox_src, blox_dst; conn, weight, reverse, kwargs...)
+end
 
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}}, sys_dst::Subsystem{MoradiNMDAR}, t)
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
