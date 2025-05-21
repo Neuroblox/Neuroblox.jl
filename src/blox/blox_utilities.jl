@@ -1,4 +1,4 @@
-function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, StimulusBlox, AbstractReceptor}, name::Symbol)
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, AbstractReceptor}, name::Symbol)
     # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
     if (name === :system) || (name === :namespace) || (name === :params)
