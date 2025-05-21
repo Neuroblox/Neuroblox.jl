@@ -1203,3 +1203,31 @@ function Connector(
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
+
+function connection_equations(blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, blox_dst::MoradiNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.z
+    end
+
+    return eq
+end
+
+
+function connection_equations(blox_src::MoradiNMDAR, blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, w; kwargs...)
+    Mg = 1 / (1 + blox_src.Mg_O * exp(-blox_src.z * blox_src.δ * blox_src.F * blox_src.V / (blox_src.R * blox_src.T)) / blox_src.IC_50)
+    I = -(blox_src.B - blox_src.A) * blox_src.g * Mg * (blox_src.V - blox_src.E)
+    
+    eq = blox_dst.I_syn ~ w * I
+    
+    return eq
+end
+
+function connection_equations(blox_src::VoltageClampSource, blox_dst::MoradiNMDAR, w; kwargs...)
+    eq = blox_dst.V ~ blox_src.V
+
+    return eq
+end
