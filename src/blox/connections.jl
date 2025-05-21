@@ -300,6 +300,7 @@ connection_equations(source, destination, w; kwargs...) = Equation[]
 function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractNeuronBlox, w; kwargs...)
     cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
 
+    @warn "The default connection equation `jcn ~ $(cr)` is used."
     return blox_dest.jcn ~ cr
 end
 
@@ -1201,4 +1202,32 @@ function Connector(
     eq = sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn) * sys_src.S * exp(-sys_src.χ/5)
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
+
+function connection_equations(blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, blox_dst::MoradiNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.z
+    end
+
+    return eq
+end
+
+
+function connection_equations(blox_src::MoradiNMDAR, blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, w; kwargs...)
+    Mg = 1 / (1 + blox_src.Mg_O * exp(-blox_src.z * blox_src.δ * blox_src.F * blox_src.V / (blox_src.R * blox_src.T)) / blox_src.IC_50)
+    I = -(blox_src.B - blox_src.A) * blox_src.g * Mg * (blox_src.V - blox_src.E)
+    
+    eq = blox_dst.I_syn ~ w * I
+    
+    return eq
+end
+
+function connection_equations(blox_src::VoltageClampSource, blox_dst::MoradiNMDAR, w; kwargs...)
+    eq = blox_dst.V ~ blox_src.V
+
+    return eq
 end

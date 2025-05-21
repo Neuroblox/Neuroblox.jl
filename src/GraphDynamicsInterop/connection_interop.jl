@@ -86,6 +86,12 @@ function (c::BasicConnection)(blox_src, blox_dst, t)
     (; jcn = c.weight * output(blox_src))
 end
 
+struct ReverseConnection <: ConnectionRule
+    weight::Float64
+end
+
+Base.zero(::Type{<:ReverseConnection}) = ReverseConnection(0.0)
+
 struct PSPConnection <: ConnectionRule
     weight::Float64
 end
@@ -583,4 +589,43 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (;s) = blox_src
     (;V) = blox_dst
     (; jcn = w * s * (V_I - V))
+end
+
+# #-------------------------
+# NMDA receptor 
+function GraphDynamics.system_wiring_rule!(g,
+                                        blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, 
+                                        blox_dst::MoradiNMDAR;
+                                        weight, reverse=false, kwargs...)
+    conn = reverse ? ReverseConnection(weight) : BasicConnection(weight)
+    
+    add_connection!(g, blox_src, blox_dst; conn, weight, reverse, kwargs...)
+end
+
+function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}}, sys_dst::Subsystem{MoradiNMDAR}, t)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.jcn = sys_src.z
+    
+    return acc
+end
+
+function (c::GraphDynamicsInterop.ReverseConnection)(sys_src::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}}, sys_dst::Subsystem{MoradiNMDAR}, t)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    acc = @set acc.V = sys_src.V
+    
+    return acc
+end
+
+function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Subsystem{MoradiNMDAR}, sys_dst::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}}, t)
+    acc = GraphDynamicsInterop.initialize_input(sys_dst)
+    
+    # HACK : we use sys_dst.V here because in another connection rule above we defined :
+    # sys_src.V = sys_dst.V
+    # However what we really need is sys_src.V which is an input state and this is why we can not access it here.
+    Mg = 1 / (1 + sys_src.Mg_O * exp(-sys_src.z * sys_src.δ * sys_src.F * sys_dst.V / (sys_src.R * sys_src.T)) / sys_src.IC_50)
+    I = -(sys_src.B - sys_src.A) * sys_src.g * Mg * (sys_dst.V - sys_src.E)
+    
+    acc = @set acc.I_syn = c.weight * I
+    
+    return acc
 end

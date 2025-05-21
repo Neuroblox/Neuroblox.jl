@@ -50,7 +50,10 @@ using ..Neuroblox:
     PINGNeuronInhib,
     AbstractPINGNeuron,
     Connector,
-    VanDerPol
+    VanDerPol,
+    MoradiNMDAR,
+    AbstractReceptor,
+    AbstractNeurotransmitter
 
 using GraphDynamics:
     GraphDynamics,
