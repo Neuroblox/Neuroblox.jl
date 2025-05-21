@@ -1,5 +1,24 @@
 abstract type AbstractSpikeSource <: StimulusBlox end
 
+struct VoltageClampSource <: StimulusBlox
+    namespace
+    system
+
+    function VoltageClampSource(clamp_schedule::Vector{@NamedTuple{t::T1, V::T2}}; name, namespace=nothing) where {T1, T2}
+        @variables V(t)=0 [output=true]
+        #@parameters V=0
+        eqs = [D(V) ~ 0]
+
+        cbs = map(clamp_schedule) do cs
+            [cs.t] => [V ~ cs.V]
+        end
+
+        sys = System(eqs, t, [V], []; name=name, discrete_events=cbs)
+
+        new(namespace, sys)
+    end
+end
+
 struct ConstantInput <: StimulusBlox
     namespace
     system
