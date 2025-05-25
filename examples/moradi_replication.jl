@@ -61,8 +61,8 @@ cbs_stop = [
     for t in 100:200:last(tspan)
 ]
 cbs_start = [
-        [t] => [hh1.I_bg ~ 2]
-        for t in 200:200:last(tspan)
+    [t] => [hh1.I_bg ~ 2]
+    for t in 200:200:last(tspan)
 ]
 
 sys = system(hh1; discrete_events=vcat(cbs_start, cbs_stop))
@@ -71,9 +71,8 @@ sol = solve(prob; saveat=0.05)
 
 lines(sol.t, sol[hh1.V])
 
-s = detect_spikes(hh1, sol; threshold=0)
-st = diff(sol.t[s.nzind])
-hist(st)
+st = inter_spike_intervals([hh1, hh1], sol; threshold=0)
+hist(st[:,1])
 
 using StatsBase
 
