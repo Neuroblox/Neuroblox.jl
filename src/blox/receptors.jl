@@ -94,8 +94,8 @@ struct MoradiNMDAR <: AbstractReceptor
                     δ=0.8,
                     spk_coeff=1
     )
-        p = paramscoping(E=E, k=k, V_0=V_0, τ_A=τ_A, τ_B=τ_B, τ_g=τ_g, Mg_O=Mg_O, IC_50=IC_50, T=T, F=F, R=R, z=z, δ=δ, spk_coeff=spk_coeff)
-        E, k, V_0, τ_A, τ_B, τ_g, Mg_O, IC_50, T, F, R, z, δ, spk_coeff = p
+        p = paramscoping(E=E, k=k, V_0=V_0, g_VI=g_VI, τ_A=τ_A, τ_B=τ_B, τ_g=τ_g, Mg_O=Mg_O, IC_50=IC_50, T=T, F=F, R=R, z=z, δ=δ, spk_coeff=spk_coeff)
+        E, k, V_0, g_VI, τ_A, τ_B, τ_g, Mg_O, IC_50, T, F, R, z, δ, spk_coeff = p
 
         sts = @variables begin 
             A(t)=0
@@ -105,7 +105,7 @@ struct MoradiNMDAR <: AbstractReceptor
             [input=true]
             jcn(t)
             [input=true]
-            I(t)=0
+            I(t)
         end
 
         g_VD(V) = k * (V - V_0)

@@ -1,4 +1,4 @@
-function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, AbstractReceptor}, name::Symbol)
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, AbstractReceptor, VoltageClampSource}, name::Symbol)
     # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
     if (name === :system) || (name === :namespace) || (name === :params)
@@ -406,7 +406,7 @@ end
 
 function detect_spikes(
     blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
-    threshold = nothing, tolerance = 1e-3, ts = nothing, kwargs...
+    threshold = nothing, tolerance = 1e-3, ts = nothing
 )
     namespaced_name = namespaced_nameof(blox)
 
@@ -473,6 +473,30 @@ function firing_rate(
     std_fr = std(firing_rates)
 
     return mean_fr, std_fr
+end
+
+function inter_spike_intervals(
+    blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
+    threshold = nothing, ts=nothing
+)
+    spikes = detect_spikes(blox, sol; threshold, ts)
+    ISI = diff(sol.t[spikes.nzind])
+
+    return ISI
+end
+
+function inter_spike_intervals(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
+)
+
+    neurons = get_neurons(blox)
+
+    ISIs = tmapreduce(sparse_hcat, neurons; scheduler, kwargs...) do neuron
+        inter_spike_intervals(neuron, sol; threshold, ts)
+    end
+
+    return ISIs
 end
 
 function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
