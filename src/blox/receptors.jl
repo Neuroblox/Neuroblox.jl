@@ -105,7 +105,7 @@ struct MoradiNMDAR <: AbstractReceptor
             [input=true]
             jcn(t)
             [input=true]
-            I(t)
+            I(t)=0
         end
 
         g_VD(V) = k * (V - V_0)
