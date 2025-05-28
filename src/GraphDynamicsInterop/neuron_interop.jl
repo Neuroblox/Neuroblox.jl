@@ -165,6 +165,17 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
     define_neuron(sys)
 end
 
+# computed properties isn't handled by `define_neuron`
+function GraphDynamics.computed_properties_with_inputs(receptor::Subsystem{MoradiNMDAR})
+    function I(receptor, (; V, jcn))
+        (;A, B, g, g_VI, E, Mg_O, z, δ, F, R, T, IC_50) = receptor
+        return (B - A) * (g_VI + g) * (V - E) * (1 / (1 + Mg_O * exp(- z * δ * F * V / (R * T)) / IC_50))
+    end
+    (;I)
+end
+
+
+
 function GraphDynamics.to_subsystem(s::PoissonSpikeTrain)
     states = SubsystemStates{PoissonSpikeTrain, Float64, @NamedTuple{}}((;))
     params = SubsystemParams{PoissonSpikeTrain}((;))
