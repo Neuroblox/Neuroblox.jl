@@ -105,7 +105,7 @@ struct MoradiNMDAR <: AbstractReceptor
             [input=true]
             jcn(t)
             [input=true]
-            I(t)=0
+            I(t)=0 # remove this initial guess so MTK does not throw an unbalanced system warning
         end
 
         g_VD(V) = k * (V - V_0)
