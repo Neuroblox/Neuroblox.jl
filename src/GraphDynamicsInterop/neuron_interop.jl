@@ -19,21 +19,25 @@ function define_neuron(sys; mod=@__MODULE__())
     params = parameters(system)
     t = Symbol(get_iv(system))
 
-    states = [s for s ∈ unknowns(system) if !MTK.isinput(s)]
+    get_diff_state = @rule D(~s) => (~s).f
+    r = (Postwalk ∘ Chain ∘ map)(unknowns(system)) do s
+        (@rule s => s.f)
+    end
+    differentials = map(equations(system)) do eq
+        (;lhs, rhs) = eq
+        (;diff_state=toexpr(get_diff_state(lhs);), ex=toexpr(r(rhs)))
+    end
+    differentials = filter(x -> !isnothing(x.diff_state), differentials)
+    
     inputs = [s for s ∈ unknowns(system) if  MTK.isinput(s)]
   
     p_syms = map(Symbol, params)
-    s_syms = map(x -> tosymbol(x; escape=false), states)
+    s_syms = map(x -> x.diff_state, differentials)
     input_syms = map(x -> tosymbol(x; escape=false), inputs)
 
     p_and_s_syms = [s_syms; p_syms]
 
-    r = (Postwalk ∘ Chain ∘ map)(unknowns(system)) do s
-        (@rule s => s.f)
-    end
-    rhss = map(equations(system)) do eq
-        toexpr(r(eq.rhs))
-    end
+    rhss = map(x -> x.ex, differentials)
     input_init = NamedTuple{(input_syms...,)}(ntuple(i -> 0.0, length(inputs)))
     
     @eval mod begin
@@ -62,7 +66,7 @@ function define_neuron(sys; mod=@__MODULE__())
         if any(row -> count(!iszero, row) > 1, eachrow(neqs))
             error("Attempted to construct subsystem with non-diagonal noise (i.e. the same noise parameter appears in multiple equations). This is not yet supported by GraphDynamics.jl")
         end
-        neqs_diag = map(eachindex(states)) do i
+        neqs_diag = map(eachindex(s_syms)) do i
             j = findfirst(!iszero, @view neqs[i, :])
             if isnothing(j)
                 0.0
@@ -169,3 +173,4 @@ end
 GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
 GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
 GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
+

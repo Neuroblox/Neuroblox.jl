@@ -2,6 +2,8 @@ module GraphDynamicsInterop
 
 using ..Neuroblox:
     Neuroblox,
+    D,
+    t,
     get_exci_neurons,
     get_connection_matrix,
     AbstractBlox,
@@ -52,8 +54,8 @@ using ..Neuroblox:
     Connector,
     VanDerPol,
     MoradiNMDAR,
-    AbstractReceptor,
-    AbstractNeurotransmitter
+    AbstractReceptor#,
+    # AbstractNeurotransmitter
 
 using GraphDynamics:
     GraphDynamics,
