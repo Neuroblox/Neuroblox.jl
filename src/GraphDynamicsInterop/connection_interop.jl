@@ -602,6 +602,15 @@ function GraphDynamics.system_wiring_rule!(g,
     add_connection!(g, blox_src, blox_dst; conn, weight, reverse, kwargs...)
 end
 
+function GraphDynamics.system_wiring_rule!(g,
+                                        blox_src::MoradiNMDAR, 
+                                        blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox};
+                                        weight, kwargs...)
+    conn = BasicConnection(weight)
+    
+    add_connection!(g, blox_src, blox_dst; conn, weight, kwargs...)
+end
+
 function (c::GraphDynamicsInterop.BasicConnection)(sys_src::Union{Subsystem{HHNeuronExciBlox}, Subsystem{HHNeuronInhibBlox}}, sys_dst::Subsystem{MoradiNMDAR}, t)
     acc = GraphDynamicsInterop.initialize_input(sys_dst)
     acc = @set acc.jcn = sys_src.z
