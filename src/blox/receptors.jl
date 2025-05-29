@@ -92,7 +92,8 @@ struct MoradiNMDAR <: AbstractReceptor
                     R=8.314, # Gas constant, J/(K*mol)
                     z=2, # Magnesium valence
                     δ=0.8,
-                    spk_coeff=1
+                    spk_coeff=0.05 # This was tuned by connecting two HHNeuronExciBlox together 
+                                # and comparing the direct AMPA current with the current flowing through this NMDAR blox.
     )
         p = paramscoping(E=E, k=k, V_0=V_0, g_VI=g_VI, τ_A=τ_A, τ_B=τ_B, τ_g=τ_g, Mg_O=Mg_O, IC_50=IC_50, T=T, F=F, R=R, z=z, δ=δ, spk_coeff=spk_coeff)
         E, k, V_0, g_VI, τ_A, τ_B, τ_g, Mg_O, IC_50, T, F, R, z, δ, spk_coeff = p
@@ -105,7 +106,7 @@ struct MoradiNMDAR <: AbstractReceptor
             [input=true]
             jcn(t)
             [input=true]
-            I(t)
+            I(t)=0 # remove this initial guess so MTK does not throw an unbalanced system warning
         end
 
         g_VD(V) = k * (V - V_0)

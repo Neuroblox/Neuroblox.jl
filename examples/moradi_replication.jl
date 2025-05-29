@@ -5,7 +5,8 @@ using Distributions
 using StatsBase
 using CairoMakie
 
-
+# Plot figures from the Moradi et al paper
+#-------------------------------------
 @named src = VoltageClampSource([(t=50, V=-80), (t=100, V=40)])
 @named nmda = MoradiNMDAR(; τ_g=50)
 
@@ -28,32 +29,8 @@ lines!(ax, sol.t, sol[src.V])
 fig
 
 
-@named hh1 = HHNeuronExciBlox(; I_bg=0.8, G_syn=3)
-@named hh2 = HHNeuronExciBlox(; I_bg=0.2, G_syn=3)
-@named nmda = MoradiNMDAR(; spk_coeff=2)
-
-g = MetaDiGraph()
-add_edge!(g, hh1 => nmda; weight=1)
-add_edge!(g, hh2 => nmda; weight=1, reverse=true)
-add_edge!(g, nmda => hh2; weight=1)
-
-add_edge!(g, hh1 => hh2; weight=1)
-
-tspan = (0.0, 5000.0)
-@named sys = system_from_graph(g, graphdynamics=true)
-prob = ODEProblem(sys, [], tspan)
-sol = solve(prob; saveat=0.05)
-
-I_ampa = sol[hh1.G] .* (0 .- sol[hh2.V])
-
-fig = Figure()
-ax = Axis(fig[1,1])
-
-lines!(ax, sol.t, I_ampa; color=:blue)
-lines!(ax,sol.t, sol[nmda.I]; color=:green)
-fig
-
-
+# Simulate bursting behavior as a prototype for optimization
+#-------------------------------------
 @named hh1 = HHNeuronExciBlox(; I_bg=1.8, G_syn=3)
 tspan = (0.0, 5000.0)
 cbs_stop = [
@@ -73,8 +50,6 @@ lines(sol.t, sol[hh1.V])
 
 st = inter_spike_intervals([hh1, hh1], sol; threshold=0)
 hist(st[:,1])
-
-using StatsBase
 
 function bimodal_coeff(d; N=100_000)
     samples = rand(d, N)
