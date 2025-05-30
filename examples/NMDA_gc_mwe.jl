@@ -67,6 +67,6 @@ for (i, ne_dst) ∈ enumerate(PYR)
 end
 
 tspan = (0.0, 50.0)
-for _ ∈ 1:10
-    sys = system_from_graph(g, graphdynamics=true)
+for _ ∈ 1:50
+    global sys = system_from_graph(g, graphdynamics=true)
 end
