@@ -1,6 +1,7 @@
 abstract type AbstractSpikeSource <: StimulusBlox end
 
 struct VoltageClampSource <: StimulusBlox
+    name
     namespace
     system
 
@@ -15,11 +16,12 @@ struct VoltageClampSource <: StimulusBlox
 
         sys = System(eqs, t, [V], []; name=name, discrete_events=cbs)
 
-        new(namespace, sys)
+        new(name, namespace, sys)
     end
 end
 
 struct ConstantInput <: StimulusBlox
+    name
     namespace
     system
 
@@ -29,7 +31,7 @@ struct ConstantInput <: StimulusBlox
         eqs = [u ~ I]
         sys = System(eqs, t, [u], [I]; name=name)
 
-        new(namespace, sys)
+        new(name, namespace, sys)
     end
 end
 
@@ -46,6 +48,7 @@ end
 @register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
 
 mutable struct ImageStimulus <: StimulusBlox
+    const name
     const namespace
     const system
     const IMG # Matrix[pixels X stimuli]
@@ -93,7 +96,7 @@ mutable struct ImageStimulus <: StimulusBlox
 
         ps_namespaced = namespace_parameters(get_namespaced_sys(sys))
 
-        new(namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
+        new(name, namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
