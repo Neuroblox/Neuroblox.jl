@@ -1,13 +1,15 @@
 # Continuous square‑pulse DBS stimulus
 struct DBS <: StimulusBlox
-    system    :: ODESystem
-    namespace :: Union{Symbol,Nothing}
+    name        ::Symbol
+    system      ::ODESystem
+    namespace   ::Union{Symbol,Nothing}
 end
 
 # Burst DBS stimulus
 struct ProtocolDBS <: StimulusBlox
-    system    :: ODESystem
-    namespace :: Union{Symbol,Nothing}
+    name        ::Symbol
+    system      ::ODESystem
+    namespace   ::Union{Symbol,Nothing}
 end
 
 """
@@ -47,7 +49,7 @@ function DBS(;
     eqs = [u ~ stimulus(t)]
     sys = ODESystem(eqs, t, [u], stim_param; name=name)
 
-    return DBS(sys, namespace)
+    return DBS(name, sys, namespace)
 end
 
 """
@@ -88,7 +90,7 @@ function ProtocolDBS(;
     pre_block_time=200.0,
     inter_burst_time=200.0
     )
-
+    
     stim = BurstStimulus(frequency, amplitude, offset, start_time, pulse_width, smooth,
                          pulses_per_burst, bursts_per_block,
                          pre_block_time, inter_burst_time)
@@ -100,7 +102,7 @@ function ProtocolDBS(;
     eqs = [u ~ stimulus(t)]
     sys = ODESystem(eqs, t, [u], stim_param; name=name)
 
-    return ProtocolDBS(sys, namespace)
+    return ProtocolDBS(name, sys, namespace)
 end
 
 # ------------------------------------------------------------------------------------------
