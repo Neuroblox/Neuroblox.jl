@@ -21,7 +21,8 @@ function set_weight!(prob, name_src, name_dst, conn::Conn) where {Conn <: Connec
             if names_partitioned[i][j] == name_src
                 i_src = i
                 j_src = j
-            elseif names_partitioned[i][j] == name_dst
+            end
+            if names_partitioned[i][j] == name_dst
                 i_dst = i
                 j_dst = j
             end
