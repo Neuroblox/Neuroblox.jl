@@ -499,6 +499,20 @@ function inter_spike_intervals(
     return ISIs
 end
 
+function flat_inter_spike_intervals(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
+)
+
+    neurons = get_neurons(blox)
+
+    ISIs = tmapreduce(sparse_vcat, neurons; scheduler, kwargs...) do neuron
+        inter_spike_intervals(neuron, sol; threshold, ts)
+    end
+
+    return ISIs
+end
+
 function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)
                           
     namespaced_name = namespaced_nameof(blox)
