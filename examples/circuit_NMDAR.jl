@@ -1,7 +1,7 @@
 using Neuroblox
 using Neuroblox: namespaced_nameof
 using GraphDynamics
-using Neuroblox.GraphDynamicsInterop: BasicConnection
+using Neuroblox.GraphDynamicsInterop: HHConnection
 using OrdinaryDiffEq
 using Random
 using Distributions
@@ -86,35 +86,35 @@ function objective(x, sys, PYR_neurons, currents, weights, tspan, target_bimodal
 
     for t in weights[:w_PYR_INP]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_PYR_INP))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_PYR_INP))
     end
 
     for t in weights[:w_INP_INP]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_INP_INP))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INP_INP))
     end
 
     for t in weights[:w_INT_INP]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_INT_INP))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INT_INP))
     end
 
     for t in weights[:w_PYR_PYR]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_PYR_PYR))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_PYR_PYR))
     end
 
     for t in weights[:w_INP_PYR]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_INP_PYR))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INP_PYR))
     end
 
     for t in weights[:w_INT_PYR]
         name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, BasicConnection(w_INT_PYR))
+        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INT_PYR))
     end
 
-    sol = solve(prob; saveat=0.05)
+    sol = solve(prob, Rodas4P(); saveat=0.05, abstol=1e-6, reltol=1e-6)
 
     st = flat_inter_spike_intervals(PYR_neurons, sol; threshold=0)
     bm = bimodal_coeff(st)
@@ -222,7 +222,10 @@ obj = OptimizationFunction(
     (p, hyperp) -> objective(p, sys, PYR, currents, weights, tspan, target_bimodal_coeff), 
     Optimization.AutoFiniteDiff()
 )
-p0 = [1.8, 0.2, -0.5, 1, 1, 1, 1, 1, 1]
-prob = OptimizationProblem(obj, p0, lb=[-3, -3, -3, 0, 0, 0, 0, 0, 0], ub=[3, 3, 3, 20, 20, 20, 20, 20, 20])
-sol = solve(prob, Optimization.LBFGS())
+p0 = [1.8, 0.2, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+prob = OptimizationProblem(obj, p0, lb=[-3, -3, -3, 0, 0, 0, 0, 0, 0], ub=[3, 3, 3, 3, 3, 3, 3, 3, 3])
+
+#alg = BBO_adaptive_de_rand_1_bin_radiuslimited()
+alg = Optimization.LBFGS()
+sol = solve(prob, alg)
 
