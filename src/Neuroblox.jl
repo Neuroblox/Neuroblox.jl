@@ -196,7 +196,7 @@ export Neuron
 export qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, VanDerPol, Generic2dOscillator, kuramoto_oscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, LateralAmygdalaBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox,
     HHNeuronInhib_GPe_Adam_Blox, Striatum_MSN_Adam, Striatum_FSI_Adam, GPe_Adam, STN_Adam, LIFExciCircuitBlox, LIFInhCircuitBlox
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, KuramotoOscillator
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc
@@ -218,8 +218,8 @@ export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, changetune
-export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
-export BalloonModel, LeadField, boldsignal_endo_balloon
+export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars, get_ff_inh_num
+export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export NGNMM_Izh, NGNMM_QIF, NGNMM_theta, NextGenerationEIBlox
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, adjacency, adjacency!

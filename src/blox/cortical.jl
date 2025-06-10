@@ -17,6 +17,7 @@ struct CorticalBlox <: CompositeBlox
         G_syn_inhib=4.0,
         G_syn_ff_inhib=3.5,
         I_bg_ar=0,
+        I_bg_ff_inhib=0,
         τ_exci=5,
         τ_inhib=70,
         kwargs...
@@ -46,6 +47,7 @@ struct CorticalBlox <: CompositeBlox
             namespace = namespaced_name(namespace, name),
             E_syn = E_syn_inhib,
             G_syn = G_syn_ff_inhib,
+            I_bg = I_bg_ff_inhib,
             τ = τ_inhib
         )
 
@@ -81,6 +83,95 @@ struct CorticalBlox <: CompositeBlox
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
         new(namespace, vcat(wtas, n_ff_inh), sys, bc, connection_matrices, kwargs)
+    end
+end
+
+struct LateralAmygdalaBlox <: CompositeBlox
+    namespace
+    parts
+    system
+    connector
+    kwargs
+
+    function LateralAmygdalaBlox(;
+        name, 
+        N_wta=10,
+        N_ff_inh=5, #number of feedforward inhibitory neurons
+        namespace=nothing,
+        N_exci=5,
+        E_syn_exci=0.0,
+        E_syn_inhib=-70,
+        G_syn_exci=3.0,
+        G_syn_inhib=4.0,
+        G_syn_ff_inhib=3.5,
+        freq=0.0,
+        phase=0.0,
+        I_bg_ar=0,
+        I_bg_ff_inhib=0,
+        τ_exci=5,
+        τ_inhib=70,
+        kwargs...
+            )
+        
+        wtas = map(1:(N_wta * N_ff_inh)) do i
+            if I_bg_ar isa Array
+                I_bg = I_bg_ar[i]
+            else
+                I_bg = I_bg_ar
+            end
+            WinnerTakeAllBlox(;
+                name=Symbol("wta$i"),
+                namespace=namespaced_name(namespace, name),
+                N_exci,
+                E_syn_exci,
+                E_syn_inhib,
+                G_syn_exci,
+                G_syn_inhib,
+                I_bg = I_bg,
+                freq,
+                phase,
+                τ_exci,
+                τ_inhib    
+            )
+        end
+
+        n_ff_inh = map(1:N_ff_inh) do i
+            HHNeuronInhibBlox(
+                name = Symbol("ff_inh$i"),
+                namespace = namespaced_name(namespace, name),
+                E_syn = E_syn_inhib,
+                G_syn = G_syn_ff_inhib,
+                I_bg = I_bg_ff_inhib,
+                τ = τ_inhib
+            )
+        end
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
+        
+        for k in 1:N_ff_inh
+            for i in 1:N_wta
+                for j in 1:N_wta
+                    if j != i
+                        # users can supply a matrix of connection matrices.
+                        # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
+                        # neuron l from wta j.
+                        if haskey(kwargs, :connection_matrices)
+                            kwargs_ij = merge(kwargs, Dict(:connection_matrix => kwargs[:connection_matrices][i+((k-1)*N_wta), j+((k-1)*N_wta)]))
+                        else
+                            kwargs_ij = Dict(kwargs)
+                        end
+                        add_edge!(g, i+((k-1)*N_wta), j+((k-1)*N_wta), kwargs_ij)
+                    end
+                end
+                add_edge!(g, N_wta*N_ff_inh+k, i+((k-1)*N_wta), Dict(:weight => 1))
+            end
+        end
+
+        bc = connectors_from_graph(g)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
+
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
     end
 end
 
