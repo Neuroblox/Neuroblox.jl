@@ -255,6 +255,12 @@ function get_weightmatrix(kwargs, name_blox1, name_blox2)
     end
 end
 
+function get_ff_inh_num(kwargs, name_blox1)
+    get(kwargs, :ff_inh_num) do 
+        error("feedforward inhibition neuron number from $name_blox1 is not specified")
+    end
+end
+
 function get_delay(kwargs, name_blox1, name_blox2)
     get(kwargs, :delay) do 
 #        @debug "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
