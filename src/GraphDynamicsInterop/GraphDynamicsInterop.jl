@@ -161,7 +161,5 @@ using StatsBase:
 include("neuron_interop.jl")
 include("connection_interop.jl")
 
-
-
 end#module GraphDynamicsInterop
 
