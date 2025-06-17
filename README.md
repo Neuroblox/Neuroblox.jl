@@ -3,6 +3,7 @@
 | [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] | [![][CI-img]][CI-url] | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14192732.svg)](https://doi.org/10.5281/zenodo.14192732)
 
 ## Neuroblox.jl
+
 ## About
 Neuroblox.jl is designed for computational neuroscience and psychiatry applications. Our tools range from control circuit system identification to brain circuit simulations bridging scales from spiking neurons to fMRI-derived circuits, parameter-fitting models to neuroimaging data, interactions between the brain and other physiological systems, experimental optimization, and scientific machine learning.
 
