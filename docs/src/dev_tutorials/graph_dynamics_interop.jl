@@ -85,7 +85,7 @@ of the object (or be important to it in some other way).
 We need to teach `GraphDynamicsInterop` how to convert a `VanDerPol` into a `Subsystem{VanDerPol}`
 ===============================================================================================================#
 
-function GraphDynamicsInterop.to_subsystem(v::VanDerPol)
+function GraphDynamics.to_subsystem(v::VanDerPol)
     ## Extract the default values of the parameters θ and ϕ
     θ = GraphDynamicsInterop.recursive_getdefault(v.θ)
     ϕ = GraphDynamicsInterop.recursive_getdefault(v.ϕ)
@@ -248,15 +248,15 @@ let
     global sol1_gdy = sol #src
     f = Figure()
     ax = Axis(f[1, 1], xlabel="t")
-    lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
-    lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
+    lines!(ax, sol.t, sol[v1.r], label="v1.r")
+    lines!(ax, sol.t, sol[v2.r], label="v2.r")
     f
 end
 
 #
 
 for s ∈ [v1.r, v2.r, v1.jcn_tot, v2.jcn_x]                   #src
-    @test sol1_mtk[s, end] ≈ sol1_gdy[Symbol(s.val.f), end]  #src
+    @test sol1_mtk[s, end] ≈ sol1_gdy[s, end]                #src
 end                                                          #src
 
 #===============================================================================================================
@@ -418,8 +418,8 @@ let
     global sol2_gdy = sol #src
     f = Figure()
     ax = Axis(f[1, 1], xlabel="t")
-    lines!(ax, sol.t, sol[:v1₊r], label="v1.r")
-    lines!(ax, sol.t, sol[:v2₊r], label="v2.r")
+    lines!(ax, sol.t, sol[v1.r], label="v1.r")
+    lines!(ax, sol.t, sol[v2.r], label="v2.r")
     f
 end
 
@@ -439,11 +439,11 @@ Supporting structures like this in GraphDynamics can be as simple as defining a 
 ===============================================================================================================#
 struct BagOfVdP <: Neuroblox.CompositeBlox
     name
-    vdps
+    parts
     weights
     function BagOfVdP(;name, N_osc, θ=1.0, ϕ=0.1, weights=rand(N_osc, N_osc))
-        vdps = [VanDerPol(;name=Symbol("vdp", i), θ, ϕ) for i ∈ 1:N_osc]
-        new(name, vdps, weights)
+        parts = [VanDerPol(;name=Symbol(name, "₊vdp", i), θ, ϕ) for i ∈ 1:N_osc]
+        new(name, parts, weights)
     end
 end
 
@@ -452,13 +452,13 @@ and then defining a `system_wiring_rule!` which tells GraphDynamics.jl how to 'f
 ===============================================================================================================#
 using GraphDynamics: system_wiring_rule!
 function GraphDynamics.system_wiring_rule!(g, blox::BagOfVdP; kwargs...)
-    (;vdps, weights) = blox
-    for blox ∈ vdps
+    (;parts, weights) = blox
+    for blox ∈ parts
         ## Recursively add the sub-structures to our graph
         system_wiring_rule!(g, blox)
     end
-    for (i, blox_src) ∈ enumerate(vdps)
-        for (j, blox_dst) ∈ enumerate(vdps)
+    for (i, blox_src) ∈ enumerate(parts)
+        for (j, blox_dst) ∈ enumerate(parts)
             if !iszero(weights[i, j])
                 ## Add connections between the blox
                 system_wiring_rule!(g, blox_src, blox_dst; weight=weights[i, j])
@@ -473,7 +473,7 @@ to the DBS blox. We can do this by defining a 3-arg method for `system_wiring_ru
 ===============================================================================================================#
 
 function GraphDynamics.system_wiring_rule!(g, blox_src::DBS, blox_dst::BagOfVdP; weight, kwargs...)
-    for vdp_dst ∈ blox_dst.vdps
+    for vdp_dst ∈ blox_dst.parts
         system_wiring_rule!(g, blox_src, vdp_dst; weight, kwargs...)
     end
 end
@@ -494,7 +494,6 @@ Now we can use our composite structure:
 ===============================================================================================================#
 
 let
-
     g = MetaDiGraph()
     @named dbs = DBS()
     @named vdps = BagOfVdP(N_osc=3)
@@ -506,9 +505,9 @@ let
     sol = solve(prob, RKMil())
     f = Figure()
     ax = Axis(f[1, 1], xlabel="t")
-    lines!(ax, sol.t, sol[:vdp1₊r], label="vdp1.r")
-    lines!(ax, sol.t, sol[:vdp2₊r], label="vdp2.r")
-    lines!(ax, sol.t, sol[:vdp3₊r], label="vdp3.r")
+    lines!(ax, sol.t, sol[vdps.parts[1].r], label="vdp1.r")
+    lines!(ax, sol.t, sol[vdps.parts[2].r], label="vdp2.r")
+    lines!(ax, sol.t, sol[vdps.parts[3].r], label="vdp3.r")
     f
 end
 
