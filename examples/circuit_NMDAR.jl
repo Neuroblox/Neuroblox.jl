@@ -1,7 +1,6 @@
 using Neuroblox
 using Neuroblox: namespaced_nameof
 using GraphDynamics
-using Neuroblox.GraphDynamicsInterop: HHConnection
 using OrdinaryDiffEq
 using Random
 using Distributions
@@ -9,39 +8,6 @@ using StatsBase
 using Optimization
 using OptimizationBBO
 using CairoMakie
-
-rule_type(::ConnectionMatrix{N, CR}) where {N, CR} = CR
-function set_weight!(prob, name_src, name_dst, conn::Conn) where {Conn <: ConnectionRule}
-    (; connection_matrices) = prob.p
-    names_partitioned = prob.f.sys.names_partitioned
-    i_src = i_dst = nothing
-    j_src = j_dst = nothing
-    for i ∈ eachindex(names_partitioned)
-        for j ∈ eachindex(names_partitioned[i])
-            if names_partitioned[i][j] == name_src
-                i_src = i
-                j_src = j
-            end
-            if names_partitioned[i][j] == name_dst
-                i_dst = i
-                j_dst = j
-            end
-        end
-    end
-    if any(isnothing, (i_src, j_src))
-        error("No subsystem named $name_src was found in the problem.")
-    end
-    if any(isnothing, ( i_dst, j_dst))
-        error("No subsystem named $name_dst was found in the problem.")
-    end
-    conn_types = [rule_type(connection_matrices[i]) for i ∈ 1:length(connection_matrices)]
-    nc = findfirst(RT -> Conn <: RT, conn_types)
-    if isnothing(nc)
-        error("Problem has no connection matrix of eltype $Conn, available eltypes are $(join(conn_types, ", "))")
-    end
-    connection_matrices[nc][i_src, i_dst][j_src, j_dst] = conn
-    prob
-end
 
 function bimodal_coeff(samples)
     N = length(samples)
@@ -73,48 +39,24 @@ function generate_target_bimodal_coeff()
     return bimodal_coeff(st)
 end
 
-function objective(x, sys, PYR_neurons, currents, weights, tspan, target_bimodal_coeff)
+function objective(x, prob, PYR_neurons, currents, weights, tspan, target_bimodal_coeff)
     I_bg_PYR, I_bg_INP, I_bg_INT, w_PYR_INP, w_INP_INP, w_INT_INP, w_PYR_PYR, w_INP_PYR, w_INT_PYR = x
 
     p = vcat(
         [I_bg => I_bg_PYR for I_bg in currents[:I_bg_PYR]],
         [I_bg => I_bg_INP for I_bg in currents[:I_bg_INP]],
-        [I_bg => I_bg_INT for I_bg in currents[:I_bg_INT]]
+        [I_bg => I_bg_INT for I_bg in currents[:I_bg_INT]],
+        [w => w_PYR_INP for w in weights[:w_PYR_INP]],
+        [w => w_INP_INP for w in weights[:w_INP_INP]],
+        [w => w_INT_INP for w in weights[:w_INT_INP]],
+        [w => w_PYR_PYR for w in weights[:w_PYR_PYR]],
+        [w => w_INP_PYR for w in weights[:w_INP_PYR]],
+        [w => w_INT_PYR for w in weights[:w_INT_PYR]],
     )
 
-    prob = ODEProblem(sys, [], tspan, p)
-
-    for t in weights[:w_PYR_INP]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_PYR_INP))
-    end
-
-    for t in weights[:w_INP_INP]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INP_INP))
-    end
-
-    for t in weights[:w_INT_INP]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INT_INP))
-    end
-
-    for t in weights[:w_PYR_PYR]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_PYR_PYR))
-    end
-
-    for t in weights[:w_INP_PYR]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INP_PYR))
-    end
-
-    for t in weights[:w_INT_PYR]
-        name_src, name_dst = t
-        set_weight!(prob, name_src, name_dst, HHConnection{false}(w_INT_PYR))
-    end
-
-    sol = solve(prob, Rodas4P(); saveat=0.05, abstol=1e-6, reltol=1e-6)
+    prob_new = remake(prob; p = p)
+    
+    sol = solve(prob_new, Rodas4P(); saveat=0.05, abstol=1e-6, reltol=1e-6)
 
     st = flat_inter_spike_intervals(PYR_neurons, sol; threshold=0)
     bm = bimodal_coeff(st)
@@ -146,12 +88,12 @@ currents = Dict(
 )
 
 weights = Dict(
-    :w_PYR_INP => Tuple{Symbol, Symbol}[], 
-    :w_INP_INP => Tuple{Symbol, Symbol}[], 
-    :w_INT_INP => Tuple{Symbol, Symbol}[],
-    :w_PYR_PYR => Tuple{Symbol, Symbol}[],
-    :w_INP_PYR => Tuple{Symbol, Symbol}[],
-    :w_INT_PYR => Tuple{Symbol, Symbol}[]
+    :w_PYR_INP => Symbol[], 
+    :w_INP_INP => Symbol[],
+    :w_INT_INP => Symbol[],
+    :w_PYR_PYR => Symbol[],
+    :w_INP_PYR => Symbol[],
+    :w_INT_PYR => Symbol[],
 )
 
 g = MetaDiGraph()
@@ -166,21 +108,21 @@ for ni_dst ∈ INP
 
         add_edge!(g, ne_src => ni_dst; weight=1/N_PYR_INP)
 
-        push!(weights[:w_PYR_INP], (namespaced_nameof(ne_src), namespaced_nameof(ni_dst)))
+        push!(weights[:w_PYR_INP], Symbol(:w_, namespaced_nameof(ne_src), :_, namespaced_nameof(ni_dst)))
     end
 
     idx_INP_src = sample(Base.OneTo(N_INP), N_INP_INP; replace = false)
     for ni_src ∈ INP[idx_INP_src]
         add_edge!(g, ni_src => ni_dst; weight=1/N_INP_INP)
 
-        push!(weights[:w_INP_INP], (namespaced_nameof(ni_src), namespaced_nameof(ni_dst)))
+        push!(weights[:w_INP_INP], Symbol(:w_, namespaced_nameof(ni_src), :_, namespaced_nameof(ni_dst)))
     end
 
     idx_INT_src = sample(Base.OneTo(N_INT), N_INT_INP; replace = false)
     for ni_src ∈ INT[idx_INT_src]
         add_edge!(g, ni_src => ni_dst; weight=1/N_INT_INP)
 
-        push!(weights[:w_INT_INP], (namespaced_nameof(ni_src), namespaced_nameof(ni_dst)))
+        push!(weights[:w_INT_INP], Symbol(:w_, namespaced_nameof(ni_src), :_, namespaced_nameof(ni_dst)))
     end
 end
 
@@ -195,33 +137,41 @@ for (i, ne_dst) ∈ enumerate(PYR)
 
         add_edge!(g, ne_src => ne_dst; weight=1/N_PYR_PYR)
 
-        push!(weights[:w_PYR_PYR], (namespaced_nameof(ne_src), namespaced_nameof(ne_dst)))
+        push!(weights[:w_PYR_PYR], Symbol(:w_, namespaced_nameof(ne_src), :_, namespaced_nameof(ne_dst)))
     end
 
     idx_INP_src = sample(Base.OneTo(N_INP), N_INP_PYR; replace = false)
     for ni_src ∈ INP[idx_INP_src]
         add_edge!(g, ni_src => ne_dst; weight=1/N_INP_PYR)
 
-        push!(weights[:w_INP_PYR], (namespaced_nameof(ni_src), namespaced_nameof(ne_dst)))
+        push!(weights[:w_INP_PYR], Symbol(:w_, namespaced_nameof(ni_src), :_, namespaced_nameof(ne_dst)))
     end
 
     idx_INT_src = sample(Base.OneTo(N_INT), N_INT_PYR; replace = false)
     for ni_src ∈ INT[idx_INT_src]
         add_edge!(g, ni_src => ne_dst; weight=1/N_INT_PYR)
 
-        push!(weights[:w_INT_PYR], (namespaced_nameof(ni_src), namespaced_nameof(ne_dst)))
+        push!(weights[:w_INT_PYR], Symbol(:w_, namespaced_nameof(ni_src), :_, namespaced_nameof(ne_dst)))
     end
 end
 
 tspan = (0.0, 2000.0)
 sys = system_from_graph(g; name=:g, graphdynamics=true)
-
 target_bimodal_coeff = generate_target_bimodal_coeff()
 
-obj = OptimizationFunction(
-    (p, hyperp) -> objective(p, sys, PYR, currents, weights, tspan, target_bimodal_coeff), 
-    Optimization.AutoFiniteDiff()
-)
+# make the arguments to `objective` local variables before passing them to the closure. Otherwise, the closure will be slower
+# due to referencing non-constant global variables
+obj = let prob_inner = ODEProblem(sys, [], tspan, []),
+    PYR = PYR,
+    currents = currents,
+    weights = weights,
+    target_bimodal_coeff = target_bimodal_coeff
+    
+    OptimizationFunction(
+        (p, hyperp) -> objective(p, prob_old, PYR, currents, weights, tspan, target_bimodal_coeff), 
+        Optimization.AutoFiniteDiff()
+    )
+end
 p0 = [1.8, 0.2, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 prob = OptimizationProblem(obj, p0, lb=[-3, -3, -3, 0, 0, 0, 0, 0, 0], ub=[3, 3, 3, 3, 3, 3, 3, 3, 3])
 
