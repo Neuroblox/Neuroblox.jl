@@ -78,29 +78,94 @@ function GraphDynamics.system_wiring_rule!(g,
     add_connection!(g, blox_src, blox_dst; conn, weight, kwargs...)
 end
 
-struct BasicConnection <: ConnectionRule
-    weight::Float64
+
+##----------------------------------------------
+
+struct BasicConnection{T} <: ConnectionRule
+    weight::T
+    BasicConnection{T}(x) where {T} = new{T}(x)
+    BasicConnection(x::T) where {T} = new{float(T)}(x)
 end
-Base.zero(::Type{<:BasicConnection}) = BasicConnection(0.0)
+function GraphDynamics.connection_property_namemap(::BasicConnection, name_src, name_dst)
+    (; weight = Symbol(:w_, name_src, :_, name_dst))
+end
+Base.zero(::Type{<:BasicConnection{T}}) where {T} = BasicConnection(zero(T))
+Base.zero(::Type{BasicConnection}) = BasicConnection(0.0)
+
 function (c::BasicConnection)(blox_src, blox_dst, t)
     (; jcn = c.weight * output(blox_src))
 end
 
-struct ReverseConnection <: ConnectionRule
-    weight::Float64
-end
+##----------------------------------------------
 
-Base.zero(::Type{<:ReverseConnection}) = ReverseConnection(0.0)
-
-struct PSPConnection <: ConnectionRule
-    weight::Float64
+struct ReverseConnection{T} <: ConnectionRule
+    weight::T
+    ReverseConnection{T}(x) where {T} = new{T}(x)
+    ReverseConnection(x::T) where {T} = new{float(T)}(x)
 end
-Base.zero(::Type{<:PSPConnection}) = PSPConnection(0.0)
+Base.zero(::Type{ReverseConnection{T}}) where {T} = ReverseConnection(zero(T))
+Base.zero(::Type{ReverseConnection}) = ReverseConnection(0.0)
+
+##----------------------------------------------
+
+struct PSPConnection{T} <: ConnectionRule
+    weight::T
+    PSPConnection{T}(x) where {T} = new{T}(x)
+    PSPConnection(x::T) where {T} = new{float(T)}(x)
+end
+function GraphDynamics.connection_property_namemap(::PSPConnection, name_src, name_dst)
+    (; weight = Symbol(:w_PSP_, name_src, :_, name_dst))
+end
+Base.zero(::Type{PSPConnection}) = PSPConnection(0.0)
+Base.zero(::Type{PSPConnection{T}}) where {T} = PSPConnection(zero(T))
+
 function (c::PSPConnection)(sys_src::Subsystem{<:AbstractNeuronBlox}, sys_dst::Subsystem{<:AbstractNeuronBlox}, t)
     (;jcn = c.weight * sys_src.G * (sys_src.E_syn - sys_dst.V))
 end
 
 ##----------------------------------------------
+
+struct HHConnection_STA{T} <: ConnectionRule
+    w::T
+    HHConnection_STA{T}(x) where {T} = new{T}(x)
+    HHConnection_STA(x::T) where {T} = new{float(T)}(x)
+end
+function GraphDynamics.connection_property_namemap(::HHConnection_STA, name_src, name_dst)
+    (; w = Symbol(:w_STA_, name_src, :_, name_dst))
+end
+Base.zero(::Type{HHConnection_STA{T}}) where {T} = HHConnection_STA(zero(T))
+Base.zero(::Type{HHConnection_STA}) = HHConnection_STA(0.0)
+
+##----------------------------------------------
+
+struct HHConnection_GAP{T} <: ConnectionRule
+    w_gap::T
+    HHConnection_GAP{T}(x) where {T} = new{T}(x)
+    HHConnection_GAP(x::T) where {T} = new{float(T)}(x)
+end
+Base.zero(::Type{HHConnection_GAP}) = HHConnection_GAP(0.0)
+Base.zero(::Type{HHConnection_GAP{T}}) where {T} = HHConnection_GAP(zero(T))
+
+function GraphDynamics.connection_property_namemap(::HHConnection_GAP, name_src, name_dst)
+    (; w_gap = Symbol(:w_GAP_, name_src, :_, name_dst))
+end
+
+##----------------------------------------------
+
+struct HHConnection_GAP_Reverse{T} <: ConnectionRule
+    w_gap_rev::T
+    HHConnection_GAP_Reverse{T}(x) where {T} = new{T}(x)
+    HHConnection_GAP_Reverse(x::T) where {T} = new{float(T)}(x)
+end
+Base.zero(::Type{HHConnection_GAP_Reverse{T}}) where {T} = HHConnection_GAP_Reverse(zero(T))
+Base.zero(::Type{HHConnection_GAP_Reverse}) = HHConnection_GAP_Reverse(0.0)
+
+function GraphDynamics.connection_property_namemap(::HHConnection_GAP_Reverse, name_src, name_dst)
+    (; w_gap_rev = Symbol(:w_GAP_reverse_, name_src, :_, name_dst))
+end
+
+##----------------------------------------------
+
 
 function GraphDynamics.system_wiring_rule!(g, 
     HH_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
@@ -110,17 +175,32 @@ function GraphDynamics.system_wiring_rule!(g,
     if haskey(kwargs, :learning_rule)
         error(ArgumentError("got a connection with `:learning_rule` set, this is not yet supported."))
     end
-    STA = sta & !(HH_src isa HHNeuronInhib_FSI_Adam_Blox) # Don't hit STA rules for FSI
-    conn = HHConnection{STA}(weight)
+    if sta & !(HH_src isa HHNeuronInhib_FSI_Adam_Blox) # Don't hit STA rules for FSI
+        conn = HHConnection_STA(weight)
+    else
+        conn = BasicConnection(weight)
+    end
     add_connection!(g, HH_src, HH_dst; conn, weight, kwargs...)
 end
 
-struct HHConnection{STA} <: ConnectionRule
-    w::Float64
+function (c::BasicConnection)(HH_src::Union{Subsystem{HHNeuronExciBlox},
+                                            Subsystem{HHNeuronInhibBlox},
+                                            Subsystem{HHNeuronInhib_FSI_Adam_Blox},
+                                            Subsystem{HHNeuronInhib_MSN_Adam_Blox},
+                                            Subsystem{HHNeuronExci_STN_Adam_Blox},
+                                            Subsystem{HHNeuronInhib_GPe_Adam_Blox}}, 
+                              HH_dst::Union{Subsystem{HHNeuronExciBlox},
+                                            Subsystem{HHNeuronInhibBlox},
+                                            Subsystem{HHNeuronInhib_FSI_Adam_Blox},
+                                            Subsystem{HHNeuronInhib_MSN_Adam_Blox},
+                                            Subsystem{HHNeuronExci_STN_Adam_Blox},
+                                            Subsystem{HHNeuronInhib_GPe_Adam_Blox}},
+                              t)
+    acc = initialize_input(HH_dst)
+    I_syn = -c.weight * HH_src.G * (HH_dst.V - HH_src.E_syn)
+    @set acc.I_syn = I_syn
 end
-HHConnection(w) = HHConnection{false}(w) # default to no STA
-Base.zero(::Type{HHConnection{STA}}) where {STA} = HHConnection{STA}(0.0)
-function (c::HHConnection{STA})(HH_src::Union{Subsystem{HHNeuronExciBlox},
+function (c::HHConnection_STA)(HH_src::Union{Subsystem{HHNeuronExciBlox},
                                               Subsystem{HHNeuronInhibBlox},
                                               Subsystem{HHNeuronInhib_FSI_Adam_Blox},
                                               Subsystem{HHNeuronInhib_MSN_Adam_Blox},
@@ -131,19 +211,16 @@ function (c::HHConnection{STA})(HH_src::Union{Subsystem{HHNeuronExciBlox},
                                               Subsystem{HHNeuronInhib_FSI_Adam_Blox},
                                               Subsystem{HHNeuronInhib_MSN_Adam_Blox},
                                               Subsystem{HHNeuronExci_STN_Adam_Blox},
-                                              Subsystem{HHNeuronInhib_GPe_Adam_Blox}}) where {STA}
+                                              Subsystem{HHNeuronInhib_GPe_Adam_Blox}},
+                               t)
     acc = initialize_input(HH_dst)
-    if STA
-        I_syn = -c.w * HH_dst.Gₛₜₚ * HH_src.G * (HH_dst.V - HH_src.E_syn)
-    else
-        I_syn = -c.w * HH_src.G * (HH_dst.V - HH_src.E_syn)
-    end
+    I_syn = -c.w * HH_dst.Gₛₜₚ * HH_src.G * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn
 end
-function (c::HHConnection{false})(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox},
-                                  HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
+function (c::BasicConnection)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox},
+                              HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
     acc = initialize_input(HH_dst)
-    I_syn = -c.w * HH_src.Gₛ * (HH_dst.V - HH_src.E_syn)
+    I_syn = -c.weight * HH_src.Gₛ * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn
 end
 
@@ -158,14 +235,11 @@ function GraphDynamics.system_wiring_rule!(g,
         # Add a reverse GAP connection from the dst to the src so that its I_gap is modified too
         add_connection!(g, HH_dst, HH_src; conn=HHConnection_GAP_Reverse(gap_weight))
     end
-    conn = HHConnection(weight)
+    conn = BasicConnection(weight)
     add_connection!(g, HH_src, HH_dst; conn, weight, gap, kwargs...)
 end
 
-struct HHConnection_GAP <: ConnectionRule
-    w_gap::Float64
-end
-Base.zero(::Type{HHConnection_GAP}) = HHConnection_GAP(0.0, 0.0, 0.0)
+
 function ((;w_gap)::HHConnection_GAP)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, 
                                       HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
     acc = initialize_input(HH_dst)
@@ -173,10 +247,6 @@ function ((;w_gap)::HHConnection_GAP)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_B
     acc
 end
 
-struct HHConnection_GAP_Reverse <: ConnectionRule
-    w_gap_rev::Float64
-end
-Base.zero(::Type{HHConnection_GAP_Reverse}) = HHConnection_GAP_Reverse(0.0)
 function ((;w_gap_rev)::HHConnection_GAP_Reverse)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, 
                                                   HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
     acc = initialize_input(HH_dst)
@@ -291,11 +361,14 @@ function GraphDynamics.system_wiring_rule!(h,
     add_connection!(h, stim, blox_dst; kwargs..., conn)
 end
 
-struct PoissonSpikeConn <: ConnectionRule
-    w::Float64
+struct PoissonSpikeConn{T} <: ConnectionRule
+    w::T
     t_spikes::Set{Float64}
+    PoissonSpikeConn{T}(x, t_spikes) where {T} = new{T}(x, t_spikes)
+    PoissonSpikeConn(x::T, t_spikes) where {T} = new{float(T)}(x, t_spikes)
 end
 Base.zero(::Type{PoissonSpikeConn}) = PoissonSpikeConn(0.0, Set{Float64}())
+Base.zero(::Type{PoissonSpikeConn{T}}) where {T} = PoissonSpikeConn(zero(T), Set{Float64}())
 function ((;w)::PoissonSpikeConn)(stim::Subsystem{PoissonSpikeTrain},
                                   blox_dst::Union{Subsystem{LIFExciNeuron}, Subsystem{LIFInhNeuron}}, t)
     initialize_input(blox_dst)
@@ -562,13 +635,16 @@ end
 
 # #-------------------------
 # PING Network
-struct PINGConnection <: ConnectionRule
-    w::Float64
-    V_E::Float64
-    V_I::Float64
+struct PINGConnection{T} <: ConnectionRule
+    w::T
+    V_E::T
+    V_I::T
+    PINGConnection{T}(w, V_E, V_I) where {T} = new{float(T)}(w, V_E, V_I)
+    PINGConnection(w::T, V_E::U, V_I::V) where {T, U, V} = new{float(promote_type(T, U, V))}(w, V_E, V_I)
 end
 PINGConnection(w; V_E=0.0, V_I=-80.0) = PINGConnection(w, V_E, V_I)
 Base.zero(::Type{PINGConnection}) = PINGConnection(0.0, 0.0, 0.0)
+Base.zero(::Type{PINGConnection{T}}) where {T} = PINGConnection(zero(T), zero(T), zero(T))
 
 function GraphDynamics.system_wiring_rule!(g, blox_src::AbstractPINGNeuron, blox_dst::AbstractPINGNeuron; weight, kwargs...)
     V_E = get(kwargs, :V_E, 0.0)
