@@ -406,7 +406,7 @@ end
 
 function detect_spikes(
     blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
-    threshold = nothing, tolerance = 1e-3, ts = nothing
+    threshold = nothing, tolerance = 1e-3, ts = nothing, scheduler=:serial
 )
     namespaced_name = namespaced_nameof(blox)
 
@@ -493,6 +493,20 @@ function inter_spike_intervals(
     neurons = get_neurons(blox)
 
     ISIs = tmapreduce(sparse_hcat, neurons; scheduler, kwargs...) do neuron
+        inter_spike_intervals(neuron, sol; threshold, ts)
+    end
+
+    return ISIs
+end
+
+function flat_inter_spike_intervals(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
+)
+
+    neurons = get_neurons(blox)
+
+    ISIs = tmapreduce(sparse_vcat, neurons; scheduler, kwargs...) do neuron
         inter_spike_intervals(neuron, sol; threshold, ts)
     end
 
