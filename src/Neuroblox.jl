@@ -185,7 +185,7 @@ function adjacency! end
 
 function __init__()
     #if Preferences.@load_preference("PrintLicense", true)
-        print_license()
+        # print_license()
     #end
 end
 

@@ -16,7 +16,7 @@ abstract type AbstractPINGNeuron <: AbstractNeuronBlox end
 ```
 where ``jcn`` is any input to the blox. Note that this is a modified Hodgkin-Huxley formalism with an additional synaptic accumulation term.
 Synapses are added into the ``jcn`` term by connecting the postsynaptic neuron's voltage to the presynaptic neuron's output:
-```math
+```math2
 jcn = w*s*(V_E - V)
 ```
 where ``w`` is the weight of the synapse and ``V_E`` is the reversal potential of the excitatory synapse.

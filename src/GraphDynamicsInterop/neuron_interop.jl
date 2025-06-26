@@ -14,7 +14,7 @@ function output end
 
 function define_neuron(sys; mod=@__MODULE__())
     T = typeof(sys)
-    name = nameof(sys)
+    name = namespaced_nameof(sys)
     system = structural_simplify(sys.system; fully_determined=false)
     params = parameters(system)
     t = Symbol(get_iv(system))
@@ -173,15 +173,3 @@ function GraphDynamics.computed_properties_with_inputs(receptor::Subsystem{Morad
     end
     (;I)
 end
-
-
-
-function GraphDynamics.to_subsystem(s::PoissonSpikeTrain)
-    states = SubsystemStates{PoissonSpikeTrain, Float64, @NamedTuple{}}((;))
-    params = SubsystemParams{PoissonSpikeTrain}((;))
-    Subsystem(states, params)
-end
-GraphDynamics.initialize_input(s::Subsystem{PoissonSpikeTrain}) = (;)
-GraphDynamics.apply_subsystem_differential!(_, ::Subsystem{PoissonSpikeTrain}, _, _) = nothing
-GraphDynamics.subsystem_differential_requires_inputs(::Type{PoissonSpikeTrain}) = false
-

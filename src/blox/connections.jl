@@ -300,7 +300,7 @@ connection_equations(source, destination, w; kwargs...) = Equation[]
 function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractNeuronBlox, w; kwargs...)
     cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
 
-    @warn "The default connection equation `jcn ~ $(cr)` is used."
+    #@warn "The default connection equation `jcn ~ $(cr)` is used."
     return blox_dest.jcn ~ cr
 end
 
