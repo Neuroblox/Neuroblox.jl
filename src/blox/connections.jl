@@ -236,7 +236,7 @@ function hypergeometric_connections(neurons_src, neurons_dest, name_out, name_in
     out_degree = Int(ceil(N_connects / length(neurons_src)))
     in_degree =  Int(ceil(N_connects / length(neurons_dest)))
     wt = get_weight(kwargs,name_out, name_in)
-
+    @info "" name_out name_in (; density, out_degree, in_degree, N_connects)
     C = Connector[]
     outgoing_connections = zeros(Int, length(neurons_src))
     for neuron_postsyn in neurons_dest
@@ -873,6 +873,7 @@ sample_poisson(λ) = rand(Poisson(λ))
     Non-symbolic, time-block-based way of `@register_symbolic sample_poisson(λ)`. 
 """
 function sample_affect!(integ, u, p, ctx)
+    @show integ.p[p[2]]
     R = min(integ.p[p[1]]/(integ.p[p[2]] + sqrt(eps())), integ.p[p[1]])
     v = rand(Poisson(R))
     integ.p[p[3]] = v

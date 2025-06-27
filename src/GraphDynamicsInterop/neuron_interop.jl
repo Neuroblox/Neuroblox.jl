@@ -165,6 +165,13 @@ for sys ∈ [HHNeuronExciBlox(name=:hhne)
     define_neuron(sys)
 end
 
+has_t_block_event(::Type{HHNeuronExciBlox}) = true
+is_t_block_event_time(::Type{HHNeuronExciBlox}, key, t) = key == :t_block_late
+t_block_event_requires_inputs(::Type{HHNeuronExciBlox}) = false
+function apply_t_block_event!(vstates, _, s::Subsystem{HHNeuronExciBlox}, _, _)
+    vstates[:spikes_window] = 0.0
+end
+
 # computed properties isn't handled by `define_neuron`
 function GraphDynamics.computed_properties_with_inputs(receptor::Subsystem{MoradiNMDAR})
     function I(receptor, (; V, jcn))

@@ -113,7 +113,7 @@ Base.zero(::Type{<:EventConnection{T}}) where {T} = EventConnection(zero(T), (;)
 Base.zero(::Type{<:EventConnection}) = EventConnection(0.0, (;))
 
 GraphDynamics.has_discrete_events(::EventConnection) = true
-GraphDynamics.has_discrete_events(::Type{EventConnection{NT}}) where {NT} = true
+GraphDynamics.has_discrete_events(::Type{<:EventConnection{NT}}) where {NT} = true
 function GraphDynamics.discrete_event_condition((;event_times)::EventConnection, t)
     t ∈ event_times
 end
@@ -196,8 +196,8 @@ function GraphDynamics.system_wiring_rule!(g,
     HH_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox};
     weight, sta=false, learning_rule=NoLearningRule(), kwargs...)
     
-    maybe_set_state_pre!(learning_rule, namespaced_name(HH_src.name, "spikes_cumulative"))
-    maybe_set_state_post!(learning_rule, namespaced_name(HH_dst.name, "spikes_cumulative"))
+    learning_rule = maybe_set_state_pre(learning_rule, namespaced_name(HH_src.name, "spikes_cumulative"))
+    learning_rule = maybe_set_state_post(learning_rule, namespaced_name(HH_dst.name, "spikes_cumulative"))
     if sta & !(HH_src isa HHNeuronInhib_FSI_Adam_Blox) # Don't hit STA rules for FSI
         conn = HHConnection_STA(weight)
     else
@@ -643,8 +643,8 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem,
                                            kwargs...)
     
     conn = BasicConnection(weight)
-    maybe_set_state_pre!( learning_rule, Symbol(namespaced_nameof(sys_src), :₊spikes_cumulative))
-    maybe_set_state_post!(learning_rule, Symbol(namespaced_nameof(sys_dst), :₊H_learning))
+     learning_rule = maybe_set_state_pre( learning_rule, Symbol(namespaced_nameof(sys_src), :₊spikes_cumulative))
+     learning_rule = maybe_set_state_post(learning_rule, Symbol(namespaced_nameof(sys_dst), :₊H_learning))
     add_connection!(g, sys_src, sys_dst; weight, conn, learning_rule, kwargs...)
 end
 function (c::BasicConnection)(sys_src::Subsystem{HHNeuronExciBlox}, sys_dst::Subsystem{<:Union{Matrisome, Striosome}}, t)
@@ -670,7 +670,6 @@ function GraphDynamics.apply_discrete_event!(integrator,
                                              ec::EventConnection,
                                              m_src::Subsystem{Matrisome},
                                              m_dst::Subsystem{Matrisome})
-
     (;params_partitioned, partition_plan, connection_matrices) = integrator.p
     u = integrator.u
     t = integrator.t
@@ -839,9 +838,6 @@ function GraphDynamics.system_wiring_rule!(g, cb_src::Union{CorticalBlox,STN,Tha
 end
 
 function GraphDynamics.system_wiring_rule!(g::GraphSystem, blox_src::Union{Striatum, GPi, GPe}, blox_dst::Union{GPi, GPe}; kwargs...)
-    # if (blox_src isa Striatum) && (blox_dst isa GPi)
-    #     error()
-    # end
     neurons_src = get_inh_neurons(blox_src)
     neurons_dst = get_inh_neurons(blox_dst)
     hypergeometric_connections!(g, neurons_src, neurons_dst,
@@ -870,6 +866,7 @@ function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name
     out_degree = Int(ceil(N_connects / length(neurons_src)))
     in_degree =  Int(ceil(N_connects / length(neurons_dst)))
     wt = get_weight(kwargs, name_src, name_dst)
+    # @info "" name_src name_dst (; density, out_degree, in_degree, N_connects)
     outgoing_connections = zeros(Int, length(neurons_src))
     for neuron_postsyn in neurons_dst
         rem = findall(x -> x < out_degree, outgoing_connections)
@@ -918,7 +915,7 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem, cb::CorticalBlox, str
     if haskey(kwargs, :learning_rule)
         lr = kwargs.learning_rule
         matr = get_matrisome(str)
-        maybe_set_state_post!(lr, namespaced_name(namespaced_nameof(matr), "H_learning"))
+        lr = maybe_set_state_post(lr, namespaced_name(namespaced_nameof(matr), "H_learning"))
         kwargs = (kwargs..., learning_rule=lr)
     end
     hypergeometric_connections!(g,

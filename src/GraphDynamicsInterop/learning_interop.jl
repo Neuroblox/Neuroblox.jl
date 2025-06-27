@@ -1,3 +1,21 @@
+function maybe_set_state_pre(lr::AbstractLearningRule, state)
+    if isnothing(lr.state_pre)
+        @set lr.state_pre = state
+    else
+        lr
+    end
+end
+
+function maybe_set_state_post(lr::AbstractLearningRule, state)
+    if isnothing(lr.state_post)
+        @set lr.state_post = state
+    else
+        lr
+    end
+end
+maybe_set_state_pre(lr::NoLearningRule, state) = lr
+maybe_set_state_post(lr::NoLearningRule, state) = lr
+
 function action_selection_from_graph(g::GraphSystem)
     sels = [blox for blox in nodes(g) if blox isa AbstractActionSelection]
     if isempty(sels)
@@ -27,7 +45,11 @@ struct GDYAgent{S,P,A,LR,CM} <: Agent
     learning_rules::LR
     connection_matrices::CM
 end
-function Neuroblox.Agent(g::GraphSystem; name, t_block=missing, u0=[], p=[], kwargs...)
+function Neuroblox.Agent(g::GraphSystem; name, t_block=missing, u0=[], p=[], graphdynamics=true, kwargs...)
+    if !graphdynamics
+        return Agent(MetaDiGraph(g); name, t_block, u0, p, kwargs...)
+    end
+    
     if !ismissing(t_block)
         global_events=[PeriodicCallback(t_block_event(:t_block_early), t_block - √(eps(float(t_block)))),
                        PeriodicCallback(t_block_event(:t_block_late), t_block  +2*√(eps(float(t_block))))]
@@ -103,10 +125,12 @@ function Neuroblox.run_experiment!(agent::GDYAgent, env::ClassificationEnvironme
             next!(prog, showvalues=showvalues(;trace, N_trials))
         end
     catch e;
-        #rethrow(e)
-        @warn "" e
-    finally
-        finish!(prog)
+        if e isa InterruptException
+            @warn "Interrupted! Bailing out now"
+            finish!(prog)
+        else
+            rethrow(e)
+        end
     end
     trace
 end
@@ -183,14 +207,17 @@ function update_trial_stimulus!(prob, env::ClassificationEnvironment)
 end
 
 function apply_learning_rules!(sol, prob, learning_rules, feedback)
-    (;connection_matrices, params_partitioned) = prob.p
-    _apply_learning_rules!(sol, params_partitioned, connection_matrices, learning_rules, feedback)
+    (;connection_matrices, params_partitioned, names_partitioned) = prob.p
+    _apply_learning_rules!(sol, params_partitioned, connection_matrices, learning_rules,
+                           names_partitioned,
+                           feedback)
 end
 
 function _apply_learning_rules!(sol,
                                 params_partitioned::NTuple{Len, Any},
                                 connection_matrices::ConnectionMatrices{NConn},
                                 learning_rules::ConnectionMatrices{NLearn},
+                                names_partitioned,
                                 feedback) where {Len, NConn, NLearn}
     for i ∈ eachindex(params_partitioned)
         for k ∈ eachindex(params_partitioned)
@@ -204,16 +231,20 @@ function _apply_learning_rules!(sol,
                             #         Tk=get_tag(typeof(first(params_partitioned[k]))),
                             #         Ti=get_tag(typeof(first(params_partitioned[i]))),
                             #         )
+                            # @info "" inds
                             for j ∈ eachindex(params_partitioned[i])
                                 for (l, rule) ∈ maybe_sparse_enumerate_col(M_learning, j)
                                     conn = M[l, j]
                                     Δw = weight_gradient(rule, sol, conn.weight, feedback)
+                                    name_dst = names_partitioned[i][j]
+                                    name_src = names_partitioned[k][l]
                                     if !isfinite(Δw)
-                                        name_dst = params_partitioned[i][j].name
-                                        name_src = params_partitioned[k][l].name
                                         @warn "non-finite gradient" name_dst name_src Δw
                                     end
-                                    M[l, j] = @reset conn.weight += Δw
+                                    # if startswith(String(name_src), "VAC") && startswith(String(name_dst), "AC")
+                                    #     println((; Δw=round(Δw, sigdigits=4), name_src, name_dst))
+                                    # end
+                                    M[l, j] = @reset conn.weight += (Δw)
                                 end
                             end
                         end

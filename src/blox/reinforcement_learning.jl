@@ -10,14 +10,13 @@ mutable struct HebbianPlasticity <:AbstractLearningRule
     state_post::Union{Nothing, Num, Symbol}
     t_pre::Union{Nothing, Float64}
     t_post::Union{Nothing, Float64}
-
-    function HebbianPlasticity(; 
+end
+function HebbianPlasticity(;
         K, W_lim, 
         state_pre=nothing, state_post=nothing,
         t_pre=nothing, t_post=nothing
     )
-        new(K, W_lim, state_pre, state_post, t_pre, t_post)
-    end
+    HebbianPlasticity(K, W_lim, state_pre, state_post, t_pre, t_post)
 end
 
 function (hp::HebbianPlasticity)(val_pre, val_post, w, feedback)
@@ -48,14 +47,13 @@ mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     t_post::Union{Nothing, Float64}
     t_mod::Union{Nothing, Float64}
     modulator
-
-    function HebbianModulationPlasticity(; 
-        K, decay, α, θₘ, modulator=nothing,
-        state_pre=nothing, state_post=nothing, 
-        t_pre=nothing, t_post=nothing, t_mod=nothing,   
-    )
-        new(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
-    end
+end
+function HebbianModulationPlasticity(; 
+    K, decay, α, θₘ, modulator=nothing,
+    state_pre=nothing, state_post=nothing, 
+    t_pre=nothing, t_post=nothing, t_mod=nothing,   
+)
+    HebbianModulationPlasticity(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
 end
 
 dlogistic(x) = logistic(x) * (1 - logistic(x)) 
@@ -181,6 +179,7 @@ function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
     comp_vals = map(p.competitor_states) do sym
         sol(p.t_decision; idxs=sym)
     end
+    # @show comp_vals
     return argmax(comp_vals)
 end
 
@@ -227,7 +226,7 @@ function Agent(g::MetaDiGraph; name, graphdynamics=false, kwargs...)
     policy = action_selection_from_graph(g)
     lr =  narrowtype(learning_rules(conns))  
 
-    Agent(sys, prob, policy, lr, conns)
+    MTKAgent(sys, prob, policy, lr, conns)
 end
 
 function run_experiment!(agent::MTKAgent, env::ClassificationEnvironment; verbose=false, t_warmup=0, kwargs...)

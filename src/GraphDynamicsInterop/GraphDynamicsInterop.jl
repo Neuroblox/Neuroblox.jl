@@ -75,8 +75,6 @@ using ..Neuroblox:
     get_eval_times,
     get_eval_states,
     dlogistic,
-    maybe_set_state_post!,
-    maybe_set_state_pre!,
     ClassificationEnvironment,
     increment_trial!,
     reset!,
@@ -89,7 +87,9 @@ using ..Neuroblox:
     Agent,
     run_experiment!,
     run_warmup,
-    run_trial!
+    run_trial!,
+    add_blox!,
+    add_edge!
 
 using GraphDynamics:
     GraphDynamics,
@@ -218,6 +218,21 @@ function get_density(kwargs, name_src, name_dst)
     density = get(kwargs, :density) do
         error("No connection density specified between $name_src and $name_dst")
     end
+end
+
+# TODO: put this in a GraphDynamics extension, since it's piracy
+function MetaGraphs.MetaDiGraph(g::GraphSystem)
+    g2 = MetaDiGraph()
+    d = Dict{Any, Int}()
+    i = 0
+    for node ∈ nodes(g)
+        add_blox!(g2, node)
+        d[node] = (i += 1)
+    end
+    for (; src, dst, data) ∈ connections(g)
+        add_edge!(g2, d[src], d[dst], Dict(pairs(data)...))
+    end
+    g2
 end
 
 include("neuron_interop.jl")
