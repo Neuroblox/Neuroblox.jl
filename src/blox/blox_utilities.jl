@@ -64,6 +64,20 @@ function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
+get_wtas(n::WinnerTakeAllBlox) = [n]
+get_wtas(n) = []
+
+function get_wtas(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_wtas(x), vcat, b.parts)
+end
+
+get_ff_inh_neurons(n::AbstractInhNeuronBlox) = [n]
+get_ff_inh_neurons(n) = []
+
+function get_ff_inh_neurons(b::Union{LateralAmygdalaBlox, CorticalBlox})
+    mapreduce(x -> get_ff_inh_neurons(x), vcat, b.parts)
+end
+
 get_neurons(n::AbstractNeuronBlox) = [n]
 get_neurons(n) = []
 
@@ -252,6 +266,12 @@ end
 function get_weightmatrix(kwargs, name_blox1, name_blox2)
     get(kwargs, :weightmatrix) do
         error("Connection weight from $name_blox1 to $name_blox2 is not specified.")
+    end
+end
+
+function get_ff_inh_num(kwargs, name_blox1)
+    get(kwargs, :ff_inh_num) do 
+        error("feedforward inhibition neuron number from $name_blox1 is not specified")
     end
 end
 

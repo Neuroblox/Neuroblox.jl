@@ -16,6 +16,7 @@ struct CorticalBlox <: CompositeBlox
         G_syn_inhib=4.0,
         G_syn_ff_inhib=3.5,
         I_bg_ar=0,
+        I_bg_ff_inhib=0,
         τ_exci=5,
         τ_inhib=70,
         kwargs...
@@ -45,6 +46,7 @@ struct CorticalBlox <: CompositeBlox
             namespace = namespaced_name(namespace, name),
             E_syn = E_syn_inhib,
             G_syn = G_syn_ff_inhib,
+            I_bg = I_bg_ff_inhib,
             τ = τ_inhib
         )
 
