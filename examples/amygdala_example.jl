@@ -3,20 +3,18 @@ using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to mu
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
 using DataFrames ## to format the data into DataFrames
-using DifferentialEquations
-using MetaGraphs
 
 global_ns = :g 
-@named ASC1 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
-@named ASC2 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
-@named ASC3 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26)
-@named LA = LateralAmygdalaBlox(N_wta=10, N_ff_inh=5, N_exci=5, density=0.002, weight=1, I_bg_ar=5, I_bg_ff_inhib=0, G_syn_ff_inhib= 3; namespace=global_ns)
-@named CB = CorticalBlox(N_wta=10, N_ff_inh=5, N_exci=5, density=0.01, weight=1, I_bg_ar=0.1,  I_bg_ff_inhib=0.5; namespace=global_ns)
-nn1 = HHNeuronInhibBlox(name=Symbol("nrn1"), E_syn=-70, G_syn = 5, I_bg=1.0, namespace=global_ns)
-nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns)
-nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns)
-nn4 = HHNeuronInhibBlox(name=Symbol("nrn4"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns)
-nn5 = HHNeuronInhibBlox(name=Symbol("nrn5"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns)
+@named ASC1 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26);
+@named ASC2 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26);
+@named ASC3 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26);
+@named LA = LateralAmygdalaBlox(N_wta=10, N_ff_inh=5, N_exci=5, density=0.002, weight=1, I_bg_ar=5, I_bg_ff_inhib=0, G_syn_ff_inhib= 3; namespace=global_ns);
+@named CB = CorticalBlox(N_wta=10, N_ff_inh=5, N_exci=5, density=0.01, weight=1, I_bg_ar=0.1,  I_bg_ff_inhib=0.5; namespace=global_ns);
+nn1 = HHNeuronInhibBlox(name=Symbol("nrn1"), E_syn=-70, G_syn = 5, I_bg=1.0, namespace=global_ns);
+nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns);
+nn3 = HHNeuronInhibBlox(name=Symbol("nrn3"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns);
+nn4 = HHNeuronInhibBlox(name=Symbol("nrn4"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns);
+nn5 = HHNeuronInhibBlox(name=Symbol("nrn5"), E_syn=-70, G_syn = 5, I_bg=0, namespace=global_ns);
 
 w_LA_to_CB = zeros(Float32, (250, 50))
 for i in 1:250
@@ -55,8 +53,11 @@ add_edge!(g, nn1 => LA, ff_inh_num = 4, weight = 0.5)
 #add_edge!(g, nn3 => LA, ff_inh_num = 2, weight = 0.5)
 #add_edge!(g, nn4 => LA, ff_inh_num = 1, weight = 0.5)
 #add_edge!(g, nn5 => LA, ff_inh_num = 0, weight = 0.5)
-@named sys = system_from_graph(g)
-prob = ODEProblem(sys, [], (0.0, 1000), [])
+@named sys = system_from_graph(g; graphdynamics=true);
+
+
+
+prob = ODEProblem(sys, [], (0.0, 1000), []);
 sol = solve(prob, Vern7(), saveat=0.1)
 #stackplot(neuron_set, sol)
 neuron_set_LA = get_neurons(LA)
