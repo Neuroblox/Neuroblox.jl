@@ -6,6 +6,10 @@ using ..Neuroblox:
     t,
     get_exci_neurons,
     get_connection_matrix,
+    get_inh_neurons,
+    get_ff_inh_neurons,
+    get_wtas,
+    get_ff_inh_num,
     AbstractBlox,
     AbstractNeuronBlox,
     NeuralMassBlox,
@@ -35,6 +39,7 @@ using ..Neuroblox:
     NonNoisy,
     KuramotoOscillator,
     CorticalBlox,
+    LateralAmygdalaBlox,
     STN,
     Thalamus,
     GPi,
@@ -54,8 +59,8 @@ using ..Neuroblox:
     Connector,
     VanDerPol,
     MoradiNMDAR,
-    AbstractReceptor#,
-    # AbstractNeurotransmitter
+    AbstractReceptor
+    # AbstractNeurotransmitter   
 
 using GraphDynamics:
     GraphDynamics,
