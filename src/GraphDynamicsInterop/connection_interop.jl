@@ -488,6 +488,70 @@ function GraphDynamics.system_wiring_rule!(g, c::CorticalBlox; kwargs...)
     end
 end
 
+##----------------------------------------------
+# Amygdala circuit
+function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaBlox; kwargs...)
+    wtas = get_wtas(c)
+    ff_neurons = get_ff_inh_neurons(c)
+
+    N_ff_neuron = length(ff_neurons)
+    N_wta = Int(length(wtas) / N_ff_neuron)
+
+    system_wiring_rule!.((g,), wtas)
+    system_wiring_rule!.((g,), ff_neurons)
+
+    for k in eachindex(ff_neurons)
+        for i in Base.OneTo(N_wta)
+            wta_i = Int(i+((k-1)*N_wta))
+            for j in Base.OneTo(N_wta)
+                wta_j = Int(j+((k-1)*N_wta))
+                if j != i
+                    if haskey(c.kwargs, :connection_matrices)
+                        kwargs_ij = merge(c.kwargs, Dict(:connection_matrix => c.kwargs[:connection_matrices][i+((k-1)*N_wta), j+((k-1)*N_wta)]))
+                    else
+                        kwargs_ij = Dict(c.kwargs)
+                    end
+                    system_wiring_rule!(g, wtas[wta_i], wtas[wta_j]; kwargs_ij...)
+                end
+            end
+            system_wiring_rule!(g, ff_neurons[k], wtas[wta_i]; weight = 1.0)
+        end
+    end
+end
+
+function GraphDynamics.system_wiring_rule!(g, neuron_src::Union{HHNeuronInhibBlox, NGNMM_theta}, la_dst::LateralAmygdalaBlox; kwargs...)
+    neurons_dst = get_inh_neurons(la_dst)
+    num = get_ff_inh_num(kwargs, namespaced_nameof(la_dst))
+    system_wiring_rule!(g, neuron_src, neurons_dst[end-num]; kwargs...) 
+end
+
+function GraphDynamics.system_wiring_rule!(g, la_src::LateralAmygdalaBlox, la_dst::LateralAmygdalaBlox; kwargs...)
+    neurons_dst = get_exci_neurons(blox_dst)
+    neurons_src = get_exci_neurons(blox_src)
+
+    hypergeometric_connections!(g, neurons_src, neurons_dst, namespaced_nameof(la_src), namespaced_nameof(la_dst); kwargs...)
+end
+
+function (c::BasicConnection)(
+    sys_src::Subsystem{NGNMM_theta}, 
+    sys_dst::Subsystem{<:Union{HHNeuronExciBlox, HHNeuronInhibBlox}}, 
+    t
+)
+    a = sys_src.aₑ
+    b = sys_src.bₑ
+    f = (1/(sys_src.Cₑ*π))*(1-a^2-b^2)/(1+2*a+a^2+b^2)   
+
+    acc = initialize_input(sys_dst)
+    @set acc.I_asc = w*f
+    
+    return acc
+end
+
+function GraphDynamics.system_wiring_rule!(g, blox_src::NGNMM_theta, neuron_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; weight, kwargs...)
+    conn = BasicConnection(weight)
+    add_connection!(g, blox_src, neuron_dst; conn, weight, kwargs...)  
+end
+
 #----------------------------------------------
 # Striatum_MSN_Adam
 function GraphDynamics.system_wiring_rule!(g, s::Striatum_MSN_Adam; kwargs...)
