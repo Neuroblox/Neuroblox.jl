@@ -479,7 +479,7 @@ function GraphDynamics.system_wiring_rule!(g, c::CorticalBlox; kwargs...)
                 if haskey(c.kwargs, :connection_matrices)
                     kwargs_ij = merge(c.kwargs, Dict(:connection_matrix => c.kwargs[:connection_matrices][i, j]))
                 else
-                    kargs_ij = Dict(c.kwargs)
+                    kwargs_ij = Dict(c.kwargs)
                 end
                 system_wiring_rule!(g, wtas[i], wtas[j]; kwargs_ij...)
             end
