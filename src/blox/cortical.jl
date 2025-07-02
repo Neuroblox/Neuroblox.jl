@@ -193,8 +193,6 @@ struct LateralAmygdalaBlox <: CompositeBlox
         G_syn_exci=3.0,
         G_syn_inhib=4.0,
         G_syn_ff_inhib=3.5,
-        freq=0.0,
-        phase=0.0,
         I_bg_ar=0,
         I_bg_ff_inhib=0,
         τ_exci=5,
@@ -217,8 +215,6 @@ struct LateralAmygdalaBlox <: CompositeBlox
                 G_syn_exci,
                 G_syn_inhib,
                 I_bg = I_bg,
-                freq,
-                phase,
                 τ_exci,
                 τ_inhib    
             )
