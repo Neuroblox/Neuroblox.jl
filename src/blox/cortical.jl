@@ -198,7 +198,7 @@ struct LateralAmygdalaBlox <: CompositeBlox
         τ_exci=5,
         τ_inhib=70,
         kwargs...
-            )
+)
         
         wtas = map(1:(N_wta * N_ff_inh)) do i
             if I_bg_ar isa Array
@@ -256,6 +256,7 @@ struct LateralAmygdalaBlox <: CompositeBlox
         bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
+        kwargs = merge(kwargs, Dict(:N_wta => N_wta))
         new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
     end
 end
