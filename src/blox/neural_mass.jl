@@ -531,7 +531,7 @@ struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
         p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
         Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
         sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s*κ)*r,
                 D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
                 D(w) ~ a*(b*V - w) + wⱼ*r,
                 D(s) ~ -s/τₛ + sⱼ*r
@@ -544,7 +544,7 @@ struct NGNMM_Izh{IsNoisy} <: NeuralMassBlox
         Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ = p
         sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
         @brownian ξ
-        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s)*r,
+        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s*κ)*r,
                 D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + ζ*ξ + jcn - (π*r)^2,
                 D(w) ~ a*(b*V - w) + wⱼ*r,
                 D(s) ~ -s/τₛ + sⱼ*r
