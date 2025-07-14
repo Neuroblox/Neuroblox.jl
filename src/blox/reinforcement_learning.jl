@@ -6,18 +6,17 @@ struct NoLearningRule <: AbstractLearningRule end
 mutable struct HebbianPlasticity <:AbstractLearningRule
     const K::Float64
     const W_lim::Float64
-    state_pre::Union{Nothing, Num}
-    state_post::Union{Nothing, Num}
-    t_pre::Float64
-    t_post::Float64
-
-    function HebbianPlasticity(; 
+    state_pre::Union{Nothing, Num, Symbol}
+    state_post::Union{Nothing, Num, Symbol}
+    t_pre::Union{Nothing, Float64}
+    t_post::Union{Nothing, Float64}
+end
+function HebbianPlasticity(;
         K, W_lim, 
         state_pre=nothing, state_post=nothing,
         t_pre=nothing, t_post=nothing
     )
-        new(K, W_lim, state_pre, state_post, t_pre, t_post)
-    end
+    HebbianPlasticity(K, W_lim, state_pre, state_post, t_pre, t_post)
 end
 
 function (hp::HebbianPlasticity)(val_pre, val_post, w, feedback)
@@ -37,25 +36,24 @@ get_eval_times(l::HebbianPlasticity) = [l.t_pre, l.t_post]
 
 get_eval_states(l::HebbianPlasticity) = [l.state_pre, l.state_post]
 
-mutable struct HebbianModulationPlasticity{M} <: AbstractLearningRule
+mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     const K::Float64
     const decay::Float64
     const α::Float64
     const θₘ::Float64
-    state_pre::Union{Nothing, Num}
-    state_post::Union{Nothing, Num}
-    t_pre::Float64
-    t_post::Float64
-    t_mod::Float64
-    modulator::M
-
-    function HebbianModulationPlasticity(; 
-        K, decay, α, θₘ, modulator=nothing,
-        state_pre=nothing, state_post=nothing, 
-        t_pre=nothing, t_post=nothing, t_mod=nothing,   
-    )
-        new{typeof(modulator)}(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
-    end
+    state_pre::Union{Nothing, Num, Symbol}
+    state_post::Union{Nothing, Num, Symbol}
+    t_pre::Union{Nothing, Float64}
+    t_post::Union{Nothing, Float64}
+    t_mod::Union{Nothing, Float64}
+    modulator
+end
+function HebbianModulationPlasticity(; 
+    K, decay, α, θₘ, modulator=nothing,
+    state_pre=nothing, state_post=nothing, 
+    t_pre=nothing, t_post=nothing, t_mod=nothing,   
+)
+    HebbianModulationPlasticity(K, decay, α, θₘ, state_pre, state_post, t_pre, t_post, t_mod, modulator)
 end
 
 dlogistic(x) = logistic(x) * (1 - logistic(x)) 
@@ -66,7 +64,7 @@ function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w,
     ϵ = feedback - (hmp.modulator.κ_DA - DA)
     
    # Δw = hmp.K * val_post * val_pre * DA * (DA - DA_baseline) * dlogistic(DA) - hmp.decay * w
-    Δw = maximum([hmp.K * val_post * val_pre * ϵ * (ϵ + hmp.θₘ) * dlogistic(hmp.α * (ϵ + hmp.θₘ)) - hmp.decay * w, -w])
+    Δw = max((hmp.K * val_post * val_pre * ϵ * (ϵ + hmp.θₘ) * dlogistic(hmp.α * (ϵ + hmp.θₘ)) - hmp.decay * w), -w)
 
     return Δw
 end
@@ -88,12 +86,14 @@ function maybe_set_state_pre!(lr::AbstractLearningRule, state)
     if isnothing(lr.state_pre)
         lr.state_pre = state
     end
+    lr
 end
 
 function maybe_set_state_post!(lr::AbstractLearningRule, state)
     if isnothing(lr.state_post)
         lr.state_post = state
     end
+    lr
 end
 
 maybe_set_state_pre!(lr::NoLearningRule, state) = lr
@@ -165,19 +165,19 @@ abstract type AbstractActionSelection <: AbstractBlox end
 mutable struct GreedyPolicy <: AbstractActionSelection
     const name::Symbol
     const namespace::Symbol
-    competitor_states::Vector{Num}
-    competitor_params::Vector{Num}
+    competitor_states::Union{Vector{Symbol}, Vector{Num}}
+    competitor_params::Union{Vector{Symbol}, Vector{Num}}
     const t_decision::Float64
 
-    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=nothing, competitor_params=nothing)
-        sts = isnothing(competitor_states) ? Num[] : competitor_states
-        ps = isnothing(competitor_states) ? Num[] : competitor_params
-        new(name, namespace, sts, ps, t_decision)
+    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=Num[], competitor_params=Num[])
+        new(name, namespace, competitor_states, competitor_params, t_decision)
     end
 end
 
 function (p::GreedyPolicy)(sol::SciMLBase.AbstractSciMLSolution)
-    comp_vals = sol(p.t_decision; idxs=p.competitor_states)
+    comp_vals = map(p.competitor_states) do sym
+        sol(p.t_decision; idxs=sym)
+    end
     return argmax(comp_vals)
 end
 
@@ -197,33 +197,37 @@ get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
 
 get_eval_states(gp::GreedyPolicy) = gp.competitor_states
 
-mutable struct Agent{S,P,A,LR,C}
+abstract type Agent end
+mutable struct MTKAgent{S,P,A,LR,C} <: Agent
     system::S
     problem::P
     action_selection::A
     learning_rules::LR
     connector::C
-
-    function Agent(g::MetaDiGraph; name, kwargs...)
-        conns = connectors_from_graph(g)
-        
-        t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
-        # TODO: add another version that uses system_from_graph(g,bc,params;)
-        sys = system_from_graph(g, conns; name, t_block, allow_parameter=false)
-
-        u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
-        p = haskey(kwargs, :p) ? kwargs[:p] : []
-        
-        prob = ODEProblem(sys, u0, (0.,1.), p)
-        
-        policy = action_selection_from_graph(g)
-        lr =  narrowtype(learning_rules(conns))  
-
-        new{typeof(sys), typeof(prob), typeof(policy), typeof(lr), typeof(conns)}(sys, prob, policy, lr, conns)
+end
+function Agent(g::MetaDiGraph; name, graphdynamics=false, kwargs...)
+    if graphdynamics
+        gsys = to_graphsystem(g)
+        return Agent(gsys; name, kwargs...)
     end
+    conns = connectors_from_graph(g)
+    
+    t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
+    # TODO: add another version that uses system_from_graph(g,bc,params;)
+    sys = system_from_graph(g, conns; name, t_block, allow_parameter=false)
+
+    u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
+    p = haskey(kwargs, :p) ? kwargs[:p] : []
+    
+    prob = ODEProblem(sys, u0, (0.,1.), p)
+    
+    policy = action_selection_from_graph(g)
+    lr =  narrowtype(learning_rules(conns))  
+
+    MTKAgent(sys, prob, policy, lr, conns)
 end
 
-function run_experiment!(agent::Agent, env::ClassificationEnvironment; verbose=false, t_warmup=0, kwargs...)
+function run_experiment!(agent::MTKAgent, env::ClassificationEnvironment; verbose=false, t_warmup=0, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
@@ -270,7 +274,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment; verbose=f
     return trace
 end
 
-function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::String; verbose=false, t_warmup=0, kwargs...)
+function run_experiment!(agent::MTKAgent, env::ClassificationEnvironment, save_path::String; verbose=false, t_warmup=0, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
@@ -334,7 +338,7 @@ function run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path
     return trace
 end
 
-function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwargs...)
+function run_warmup(agent::MTKAgent, env::ClassificationEnvironment, t_warmup; kwargs...)
 
     prob = remake(agent.problem; tspan=(0, t_warmup))
     if haskey(kwargs, :alg)
@@ -347,7 +351,7 @@ function run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; kwar
     return u0
 end
 
-function run_trial!(agent::Agent, env::ClassificationEnvironment, weights, u0; kwargs...)
+function run_trial!(agent::MTKAgent, env::ClassificationEnvironment, weights, u0; kwargs...)
 
     prob = agent.problem
     action_selection = agent.action_selection

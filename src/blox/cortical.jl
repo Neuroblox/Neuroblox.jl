@@ -3,6 +3,7 @@ struct CorticalBlox <: CompositeBlox
     parts
     system
     connector
+    connection_matrices
     kwargs
 
     function CorticalBlox(;
@@ -48,19 +49,23 @@ struct CorticalBlox <: CompositeBlox
             τ = τ_inhib
         )
 
+        # users can supply a matrix of connection matrices.
+        # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
+        # neuron l from wta j.
+        connection_matrices = get(kwargs, :connection_matrices) do
+            map(Iterators.product(1:N_wta, 1:N_wta)) do (i, j)
+                get_connection_matrix(kwargs,
+                                      Symbol("wta$i"), Symbol("wta$j"),
+                                      N_exci, N_exci)
+            end
+        end
+
         g = MetaDiGraph()
         add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
         for i in 1:N_wta
             for j in 1:N_wta
                 if j != i
-                    # users can supply a matrix of connection matrices.
-                    # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
-                    # neuron l from wta j.
-                    if haskey(kwargs, :connection_matrices)
-                        kwargs_ij = merge(kwargs, Dict(:connection_matrix => kwargs[:connection_matrices][i, j]))
-                    else
-                        kwargs_ij = Dict(kwargs)
-                    end
+                    kwargs_ij = merge(kwargs, Dict(:connection_matrix => connection_matrices[i, j]))
                     add_edge!(g, i, j, kwargs_ij)
                 end
             end
@@ -75,7 +80,7 @@ struct CorticalBlox <: CompositeBlox
         # to potentially add more terms to the same connections.
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
 
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc, connection_matrices, kwargs)
     end
 end
 
