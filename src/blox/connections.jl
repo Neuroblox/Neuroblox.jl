@@ -176,10 +176,10 @@ function generate_weight_param(blox_out, blox_in; kwargs...)
     name_in = namespaced_nameof(blox_in)
 
     weight = get_weight(kwargs, name_out, name_in)
-    w_name = Symbol("w_$(name_out)_$(name_in)")
     if typeof(weight) == Num   # Symbol
         w = weight
     else
+        w_name = Symbol("w_$(name_out)_$(name_in)")
         w = only(@parameters $(w_name)=weight [tunable=false])
     end    
 
@@ -202,7 +202,7 @@ function generate_gap_weight_param(blox_out, blox_in; kwargs...)
 end
 
 """
-    Helper to merge delay and weight into a single vector
+    Helper to merge delay and weight into a single vector as well as extract parameters in case of an edge containing an expressions
 """
 function params(bc::Connector)
     wt = map(weights(bc)) do w
@@ -322,6 +322,7 @@ connection_equations(source, destination, w; kwargs...) = Equation[]
 function connection_equations(blox_src::AbstractNeuronBlox, blox_dest::AbstractNeuronBlox, w; kwargs...)
     cr = get_connection_rule(kwargs, blox_src, blox_dest, w)
 
+    @warn "The default connection equation `jcn ~ $(cr)` is used."
     return blox_dest.jcn ~ cr
 end
 
@@ -462,24 +463,6 @@ end
 sigmoid(x, r) = one(x) / (one(x) + exp(-r*x))
 
 function Connector(
-    blox_src::JansenRitSPM12, 
-    blox_dest::JansenRitSPM12; 
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-
-    x = only(outputs(blox_src; namespaced=true))
-    r = namespace_expr(blox_src.params[2], sys_src)
-
-    eq = sys_dest.jcn ~ sigmoid(x, r)*w
-
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=[w, r])
-end
-
-function Connector(
     blox_src::NeuralMassBlox, 
     blox_dest::NeuralMassBlox; 
     kwargs...
@@ -491,19 +474,16 @@ function Connector(
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
     x = only(outputs(blox_src; namespaced=true))
-    if x isa Num
-        eq = sys_dest.jcn ~ x*w
-
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
+    if haskey(kwargs, :delay)
+        error("Delay connections are currently not supported")
+        # delay = get_delay(kwargs, nameof(sys_src), nameof(sys_dest))
+        # τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
+        # τ = only(@parameters $(τ_name)=delay)
+        # eq = sys_dest.jcn ~ x(t-τ)*w
+        # return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ, learning_rule=Dict(w => lr))
     else
-        @variables t
-        delay = get_delay(kwargs, nameof(sys_src), nameof(sys_dest))
-        τ_name = Symbol("τ_$(nameof(sys_src))_$(nameof(sys_dest))")
-        τ = only(@parameters $(τ_name)=delay)
-
-        eq = sys_dest.jcn ~ x(t-τ)*w
-
-        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, delay=τ, learning_rule=Dict(w => lr))
+        eq = sys_dest.jcn ~ x*w
+        return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
     end    
 end
 
@@ -1175,7 +1155,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::CompositeBlox;
     kwargs...
 )
@@ -1188,7 +1168,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::AbstractNeuronBlox;
     kwargs...
 )
@@ -1203,7 +1183,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::NeuralMassBlox;
     kwargs...
 )
@@ -1218,7 +1198,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::DBS,
+    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::HHNeuronExci_STN_Adam_Blox;
     kwargs...
 )
@@ -1280,4 +1260,32 @@ function Connector(
     eq = sys_dest.I_syn ~ -w * sys_src.G * (sys_dest.V - sys_src.E_syn) * sys_src.S * exp(-sys_src.χ/5)
 
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
+
+function connection_equations(blox_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, blox_dst::MoradiNMDAR, w; kwargs...)
+    reverse = haskey(Dict(kwargs), :reverse) ? kwargs[:reverse] : false
+    
+    eq = if reverse
+        blox_dst.V ~ blox_src.V
+    else
+        blox_dst.jcn ~ blox_src.z
+    end
+
+    return eq
+end
+
+
+function connection_equations(blox_src::MoradiNMDAR, blox_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox}, w; kwargs...)
+    Mg = 1 / (1 + blox_src.Mg_O * exp(-blox_src.z * blox_src.δ * blox_src.F * blox_src.V / (blox_src.R * blox_src.T)) / blox_src.IC_50)
+    I = -(blox_src.B - blox_src.A) * (blox_src.g_VI + blox_src.g) * Mg * (blox_dst.V - blox_src.E)
+    
+    eq = blox_dst.I_syn ~ w * I
+    
+    return eq
+end
+
+function connection_equations(blox_src::VoltageClampSource, blox_dst::MoradiNMDAR, w; kwargs...)
+    eq = blox_dst.V ~ blox_src.V
+
+    return eq
 end

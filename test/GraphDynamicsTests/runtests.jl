@@ -17,12 +17,15 @@ if GROUP == "All" || GROUP == "GraphDynamics2"
     wta_tests()
     dbs_circuit_components()
     dbs_circuit()
-    discrete()
-    striatum_tests()
+    # discrete()
+    cortical_tests()
+    # striatum_tests()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics3"
     lif_exci_inh_tests()
     decision_making_test()
     ping_tests()
+    auto_tsit5_gdy_test()
+    sensitivity_test()
 end

@@ -65,8 +65,6 @@ struct Striatum_MSN_Adam <: CompositeBlox
         N_inhib = 100,
         E_syn_inhib=-80,
         I_bg=1.172*ones(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=13,
         σ=0.11,
         density=0.3,
@@ -81,8 +79,6 @@ struct Striatum_MSN_Adam <: CompositeBlox
                     E_syn = E_syn_inhib, 
                     τ = τ_inhib,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i],
                     σ=σ,
                     G_M=G_M
             ) 
@@ -135,8 +131,6 @@ struct Striatum_FSI_Adam  <: CompositeBlox
         N_inhib = 50,
         E_syn_inhib=-80,
         I_bg=6.2*ones(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=11,
         τ_inhib_s=6.5,
         σ=1.2,
@@ -154,8 +148,6 @@ struct Striatum_FSI_Adam  <: CompositeBlox
                     τ = τ_inhib,
                     τₛ = τ_inhib_s,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i],
                     σ=σ
             ) 
             for i in Base.OneTo(N_inhib)
@@ -216,8 +208,6 @@ struct GPe_Adam <: CompositeBlox
         N_inhib = 80,
         E_syn_inhib=-80,
         I_bg=3.4*ones(N_inhib),
-        freq=zeros(N_inhib),
-        phase=zeros(N_inhib),
         τ_inhib=10,
         σ=1.7,
         density=0.0,
@@ -231,8 +221,6 @@ struct GPe_Adam <: CompositeBlox
                     E_syn = E_syn_inhib, 
                     τ = τ_inhib,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i],
                     σ=σ
             ) 
             for i in Base.OneTo(N_inhib)
@@ -285,8 +273,6 @@ struct STN_Adam <: CompositeBlox
         N_exci = 40,
         E_syn_exci=0.0,
         I_bg=1.8*ones(N_exci),
-        freq=zeros(N_exci),
-        phase=zeros(N_exci),
         τ_exci=2,
         σ=1.7,
         density=0.0,
@@ -300,8 +286,6 @@ struct STN_Adam <: CompositeBlox
                     E_syn = E_syn_exci, 
                     τ = τ_exci,
                     I_bg = I_bg[i],
-                    freq = freq[i],
-                    phase = phase[i],
                     σ=σ
             ) 
             for i in Base.OneTo(N_exci)

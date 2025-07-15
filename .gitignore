@@ -6,4 +6,6 @@ Manifest.toml
 neuroblox.code-workspace
 *.mat
 .DS_Store
-docs/build
+docs/build/
+*~
+*#

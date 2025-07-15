@@ -3,17 +3,17 @@
 """
 Jansen-Rit model block for canonical micro circuit, analogous to the implementation in SPM12
 """
-mutable struct JansenRitSPM12 <: NeuralMassBlox
+mutable struct JansenRitSPM <: NeuralMassBlox
     params
     system
     namespace
-    function JansenRitSPM12(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
+    function JansenRitSPM(;name, namespace=nothing, τ=1.0, r=2.0/3.0)
         p = paramscoping(τ=τ, r=r)
         τ, r = p
 
-        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
-        eqs    = [D(x) ~ y - ((2/τ)*x),
-                  D(y) ~ -x/(τ*τ) + jcn/τ]
+        sts    = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t)=0.0 [input=true]
+        eqs    = [D(x) ~ y,
+                  D(y) ~ (-2*y - x/τ + jcn)/τ]
 
         sys = System(eqs, t, name=name)
         new(p, sys, namespace)
@@ -27,10 +27,10 @@ mutable struct CanonicalMicroCircuitBlox <: CompositeBlox
     connector
 
     function CanonicalMicroCircuitBlox(;name, namespace=nothing, τ_ss=0.002, τ_sp=0.002, τ_ii=0.016, τ_dp=0.028, r_ss=2.0/3.0, r_sp=2.0/3.0, r_ii=2.0/3.0, r_dp=2.0/3.0)
-        @named ss = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_ss, r=r_ss)  # spiny stellate
-        @named sp = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_sp, r=r_sp)  # superficial pyramidal
-        @named ii = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
-        @named dp = JansenRitSPM12(;namespace=namespaced_name(namespace, name), τ=τ_dp, r=r_dp)  # deep pyramidal
+        @named ss = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_ss, r=r_ss)  # spiny stellate
+        @named sp = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_sp, r=r_sp)  # superficial pyramidal
+        @named ii = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_ii, r=r_ii)  # inhibitory interneurons granular layer
+        @named dp = JansenRitSPM(;namespace=namespaced_name(namespace, name), τ=τ_dp, r=r_dp)  # deep pyramidal
 
         g = MetaDiGraph()
         sblox_parts = vcat(ss, sp, ii, dp)

@@ -1,4 +1,4 @@
-function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox}, name::Symbol)
+function Base.getproperty(b::Union{AbstractNeuronBlox, NeuralMassBlox, AbstractReceptor, VoltageClampSource}, name::Symbol)
     # TO DO : Some of the fields below besides `system` and `namespace` 
     # are redundant and we should clean them up. 
     if (name === :system) || (name === :namespace) || (name === :params)
@@ -327,88 +327,6 @@ function get_weights(agent::Agent, blox_out, blox_in)
     return pv[map_idxs[idxs_weight]]
 end
 
-"""
-    function get_dynamic_states(sys)
-    
-    Function extracts states from the system that are dynamic variables, 
-    get also indices of external inputs (u(t)) and measurements (like bold(t))
-    Arguments:
-    - `sys`: MTK system
-
-    Returns:
-    - `sts`: states/unknowns of the system that are neither external inputs nor measurements, i.e. these are the dynamic states
-    - `idx`: indices of these states
-"""
-function get_dynamic_states(sys)
-    itr = Iterators.filter(enumerate(unknowns(sys))) do (_, s)
-        !((getdescription(s) == "ext_input") || (getdescription(s) == "measurement"))
-    end
-    sts = map(x -> x[2], itr)
-    idx = map(x -> x[1], itr)
-    return sts, idx
-end
-
-function get_eqidx_tagged_vars(sys, tag)
-    idx = Int[]
-    vars = []
-    eqs = equations(sys)
-    for s in unknowns(sys)
-        if getdescription(s) == tag
-            push!(vars, s)
-        end
-    end
-
-    for v in vars
-        for (i, e) in enumerate(eqs)
-            for s in Symbolics.get_variables(e)
-                if string(s) == string(v)
-                    push!(idx, i)
-                end
-            end
-        end
-    end
-    return idx, vars
-end
-
-function get_idx_tagged_vars(sys, tag)
-    idx = Int[]
-    for (i, s) in enumerate(unknowns(sys))
-        if (getdescription(s) == tag)
-            push!(idx, i)
-        end
-    end
-    return idx
-end
-
-"""
-    function addnontunableparams(param, model)
-    
-    Function adds parameters of a model that were not marked as tunable to a list of tunable parameters
-    and respects the MTK ordering of parameters.
-
-    Arguments:
-    - `paramlist`: parameters of an MTK system that were tagged as tunable
-    - `sys`: MTK system
-
-    Returns:
-    - `completeparamlist`: complete parameter list of a system, including those that were not tagged as tunable
-"""
-function addnontunableparams(paramlist, sys)
-    completeparamlist = []
-    k = 0
-  
-    for p in parameters(sys)
-        if istunable(p)
-            k += 1
-            push!(completeparamlist, paramlist[k])
-        else
-            push!(completeparamlist, Symbolics.getdefaultval(p))
-        end
-    end
-    append!(completeparamlist, paramlist[k+1:end])
-    return completeparamlist
-end
-
 function get_connection_rule(kwargs, bloxout, bloxin, w)
     cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
@@ -488,7 +406,7 @@ end
 
 function detect_spikes(
     blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
-    threshold = nothing, tolerance = 1e-3, ts = nothing, kwargs...
+    threshold = nothing, tolerance = 1e-3, ts = nothing, scheduler=:serial
 )
     namespaced_name = namespaced_nameof(blox)
 
@@ -555,6 +473,44 @@ function firing_rate(
     std_fr = std(firing_rates)
 
     return mean_fr, std_fr
+end
+
+function inter_spike_intervals(
+    blox::AbstractNeuronBlox, sol::SciMLBase.AbstractSolution; 
+    threshold = nothing, ts=nothing
+)
+    spikes = detect_spikes(blox, sol; threshold, ts)
+    ISI = diff(sol.t[spikes.nzind])
+
+    return ISI
+end
+
+function inter_spike_intervals(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
+)
+
+    neurons = get_neurons(blox)
+
+    ISIs = tmapreduce(sparse_hcat, neurons; scheduler, kwargs...) do neuron
+        inter_spike_intervals(neuron, sol; threshold, ts)
+    end
+
+    return ISIs
+end
+
+function flat_inter_spike_intervals(
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
+)
+
+    neurons = get_neurons(blox)
+
+    ISIs = tmapreduce(sparse_vcat, neurons; scheduler, kwargs...) do neuron
+        inter_spike_intervals(neuron, sol; threshold, ts)
+    end
+
+    return ISIs
 end
 
 function state_timeseries(blox, sol::SciMLBase.AbstractSolution, state::String; ts=nothing)

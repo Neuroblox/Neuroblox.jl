@@ -1,18 +1,25 @@
 abstract type AbstractSpikeSource <: StimulusBlox end
 
-struct ConstantInput <: StimulusBlox
+struct VoltageClampSource <: StimulusBlox
+    name
     namespace
     system
 
-    function ConstantInput(; name, namespace=nothing, I=1)
-        @variables u(t) [output=true, description="ext_input"]
-        @parameters I=I
-        eqs = [u ~ I]
-        sys = System(eqs, t, [u], [I]; name=name)
+    function VoltageClampSource(clamp_schedule::Vector{@NamedTuple{t::T1, V::T2}}; name, namespace=nothing) where {T1, T2}
+        @variables V(t)=0 [output=true]
+        #@parameters V=0
+        eqs = [D(V) ~ 0]
 
-        new(namespace, sys)
+        cbs = map(clamp_schedule) do cs
+            [cs.t] => [V ~ cs.V]
+        end
+
+        sys = System(eqs, t, [V], []; name=name, discrete_events=cbs)
+
+        new(name, namespace, sys)
     end
 end
+
 
 struct PulsesInput <: StimulusBlox
     namespace
@@ -42,89 +49,18 @@ struct PulsesInput <: StimulusBlox
 end
 
 
-# Simple input blox
-mutable struct ExternalInput <: StimulusBlox
+struct ConstantInput <: StimulusBlox
+    name
     namespace
     system
 
-    function ExternalInput(;name, I=0.0, namespace=nothing)
-        sts = @variables u(t)=0.0 [output=true, irreducible=true, description="ext_input"]
+    function ConstantInput(; name, namespace=nothing, I=1)
+        @variables u(t) [output=true, description="ext_input"]
+        @parameters I=I
         eqs = [u ~ I]
-        odesys = System(eqs, t, sts, []; name=name)
+        sys = System(eqs, t, [u], [I]; name=name)
 
-        new(namespace, odesys)
-    end
-end
-
-#CosineSource
-mutable struct CosineSource	
-    f::Num
-    a::Num
-    phi::Num
-    offset::Num
-    tstart::Num
-    connector::Num
-    system::ODESystem
-    function CosineSource(;name, f=18, a=10, phi=0, offset=0, tstart=0)
-        @named source = Blocks.Cosine(frequency=f, amplitude=a, phase=phi, 		 
-                        offset=offset, start_time=tstart, smooth=false)	
-        new(f, a, phi, offset, tstart, source.output.u, source)
-    end
-end
-
-#CosineBlox
-mutable struct CosineBlox
-    amplitude::Num
-    frequency::Num
-    phase::Num
-    connector::Num
-    system::ODESystem
-    function CosineBlox(;name, amplitude=1, frequency=20, phase=0)
-
-        sts    = @variables jcn(t) u(t)=0.0
-        params = @parameters amplitude=amplitude frequency=frequency phase=phase
-
-        eqs = [u ~ amplitude * cos(2 * pi * frequency * (t) + phase)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-
-        new(amplitude, frequency, phase, odesys.u, odesys)
-    end
-end
-
-#NoisyCosineBlox
-mutable struct NoisyCosineBlox
-    amplitude::Num
-    frequency::Num
-    connector::Num
-    system::ODESystem
-    function NoisyCosineBlox(;name, amplitude=1, frequency=20) 
-
-        sts    = @variables  u(t)=0.0 jcn(t)
-        params = @parameters amplitude=amplitude frequency=frequency
-
-        eqs    = [u   ~ amplitude * cos(2 * pi * frequency * (t) + jcn)]
-        odesys = ODESystem(eqs, t, sts, params; name=name)
-
-        new(amplitude, frequency, odesys.u, odesys)
-    end
-end
-
-#PhaseBlox
-mutable struct PhaseBlox
-    connector::Num
-    system::ODESystem
-    function PhaseBlox(;name, phase_range=0, phase_data=0) 
-
-        data        = convert(Vector{Float64}, phase_data)
-        range       = convert(Vector{Float64}, phase_range)
-        phase_input = CubicSpline(data, range)
-
-        sts         = @variables  u(t)=0.0 jcn(t)
-
-        eqs         = [u ~ phase_input(t)]
-        odesys      = ODESystem(eqs, t, sts, []; name=name)
-
-        new(odesys.u, odesys)
+        new(name, namespace, sys)
     end
 end
 
@@ -141,6 +77,7 @@ end
 @register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
 
 mutable struct ImageStimulus <: StimulusBlox
+    const name
     const namespace
     const system
     const IMG # Matrix[pixels X stimuli]
@@ -188,7 +125,7 @@ mutable struct ImageStimulus <: StimulusBlox
 
         ps_namespaced = namespace_parameters(get_namespaced_sys(sys))
 
-        new(namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
+        new(name, namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
     end
 
     function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)

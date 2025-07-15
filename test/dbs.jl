@@ -1,4 +1,5 @@
 using Neuroblox
+using OrdinaryDiffEq
 using Test
 
 @testset "Detection of stimulus transitions" begin
@@ -13,21 +14,25 @@ using Test
     t = tspan[1]:dt:tspan[2]
 
     @named dbs = DBS(namespace=:g, frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, start_time=start_time, smooth=smooth, offset=offset)
-    stimulus = dbs.stimulus.(t)
+    stim_fun = get_stimulus_function(dbs)
+    stimulus = stim_fun.(t)
+    
     transitions_inds = detect_transitions(t, stimulus; atol=0.05)
     transition_times1 = t[transitions_inds]
     transition_values1 = stimulus[transitions_inds]
-    transition_times2 = compute_transition_times(dbs.stimulus, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
+    transition_times2 = compute_transition_times(stim_fun, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
     transition_values2 = compute_transition_values(transition_times2, t, stimulus)
     @test all(isapprox.(transition_times1, transition_times2, rtol=1e-3))
     @test all(isapprox.(transition_values1, transition_values2, rtol=1e-2))
 
     smooth = 1e-10
     @named dbs = DBS(namespace=:g, frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, start_time=start_time, smooth=smooth, offset=offset)
-    transition_times_smoothed = compute_transition_times(dbs.stimulus, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
+    stim_fun = get_stimulus_function(dbs)
+    transition_times_smoothed = compute_transition_times(stim_fun, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
     smooth = 0
     @named dbs = DBS(namespace=:g, frequency=frequency, amplitude=amplitude, pulse_width=pulse_width, start_time=start_time, smooth=smooth, offset=offset)
-    transition_times_non_smooth = compute_transition_times(dbs.stimulus, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
+    stim_fun = get_stimulus_function(dbs)
+    transition_times_non_smooth = compute_transition_times(stim_fun, frequency, dt, tspan, start_time, pulse_width; atol=0.05)
     @test all(isapprox.(transition_times_smoothed, transition_times_non_smooth))
 end
 
@@ -90,16 +95,17 @@ end
 
     # Test pre-block period
     ts = 0.0:0.1:pre_block_time-1
-    @test all(dbs.stimulus.(ts) .== offset)
+    stim_fun = get_stimulus_function(dbs)
+    @test all(stim_fun.(ts) .== offset)
 
     # Should see pulses within burst
     period = 1000.0/frequency  # period in ms from 100Hz
     ts = [pre_block_time + pulse_width/2 + i*period for i in 0:pulses_per_burst-1]
-    @test all(dbs.stimulus.(ts) .≈ amplitude)
+    @test all(stim_fun.(ts) .≈ amplitude)
 
     # Test inter-burst period
     t_between = pre_block_time + pulses_per_burst*period + inter_burst_time/2  # middle of inter-burst
-    @test dbs.stimulus(t_between) == offset
+    @test stim_fun(t_between) == offset
 
     # Test protocol duration
     duration = get_protocol_duration(dbs)
@@ -112,11 +118,48 @@ end
     t_end = duration + inter_burst_time
     tspan = (0.0, t_end)
     ts = tspan[1]:0.001:tspan[2]
-    stimulus = dbs.stimulus.(ts)
+    stim_fun = get_stimulus_function(dbs)
+    stimulus = stim_fun.(ts)
     transitions_inds = detect_transitions(ts, stimulus; atol=0.005)
     transition_times = ts[transitions_inds]
     transition_values = stimulus[transitions_inds]
 
     @test sum(isapprox.(transition_values, amplitude, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
     @test sum(isapprox.(transition_values, offset, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
+end
+
+@testset "Getting and changing stimulus function" begin
+    @named dbs = DBS(namespace=:g)
+    @named n1 = HHNeuronExciBlox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => n1, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    prob = ODEProblem(sys, [], (0,1), [])
+    stim_fun = get_stimulus_function(dbs)
+    stim_fun2 = get_stimulus_function(prob)
+    stim_fun3 = get_stimulus_function(sys)
+    @test stim_fun == stim_fun2
+    @test stim_fun == stim_fun3
+
+    stim2 = SquareStimulus(200, 2.5, 0.0, 0.0, 0.066, 1e-4)
+    prob2 = remake(prob; p=[sys.dbs.stimulus => stim2])
+    stim_fun4 = get_stimulus_function(prob2)
+    @test stim_fun4.frequency_khz == 0.2
+
+    @named dbs = ProtocolDBS(namespace=:g)
+    @named n1 = HHNeuronExciBlox()
+    g = MetaDiGraph()
+    add_edge!(g, dbs => n1, weight = 1.0)
+    sys = system_from_graph(g; name=:test)
+    prob = ODEProblem(sys, [], (0,1), [])
+    stim_fun = get_stimulus_function(dbs)
+    stim_fun2 = get_stimulus_function(prob)
+    stim_fun3 = get_stimulus_function(sys)
+    @test stim_fun == stim_fun2
+    @test stim_fun == stim_fun3
+
+    t1 = get_protocol_duration(dbs)
+    t2 = get_protocol_duration(prob)
+    t3 = get_protocol_duration(sys)
+    @test t1 == t2
 end
