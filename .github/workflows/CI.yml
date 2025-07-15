@@ -11,14 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        group:
-          - Basics
-          - Advanced
-          - GraphDynamics1
-          - GraphDynamics2
-          - GraphDynamics3
-        version:
-          - '1'
+        include:
+          - group: Basics
+            flag: 'O1'
+            version: '1'
+          - group: Advanced
+            flag: 'O1'
+            version: '1'
+          - group: Small_CS_RL_Pipeline
+            flag: 'O3'
+            version: '1'
+          - group: GraphDynamics1
+            flag: 'O1'
+            version: '1'
+          - group: GraphDynamics2
+            flag: 'O1'
+            version: '1'
+          - group: GraphDynamics3
+            flag: 'O1'
+            version: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2

@@ -17,3 +17,20 @@ end
 
 
 @time @safetestset "GraphDynamics vs MTK tests" begin include("GraphDynamicsTests/runtests.jl") end
+
+if GROUP == "All" || GROUP == "Small_CS_RL_Pipeline"
+    @time @safetestset "Full Reinforcement Learning Test" begin
+        include("cs_rl_testsuite.jl")
+        trace = small_corticostriatal_learning_run(N_trials=500)[100:end]
+        accuracy = sum(row -> row.iscorrect, trace)/length(trace)
+        @test accuracy >= 0.7
+    end
+end
+if GROUP == "All" || GROUP == "Full_CS_RL_Pipeline"
+    @time @safetestset "Full Reinforcement Learning Test" begin
+        include("cs_rl_testsuite.jl")
+        trace = big_corticostriatal_learning_run(N_trials=500)[100:end]
+        accuracy = sum(row -> row.iscorrect, trace)/length(trace)
+        @test accuracy >= 0.7
+    end
+end
