@@ -9,3 +9,4 @@ neuroblox.code-workspace
 docs/build/
 *~
 *#
+/LocalPreferences.toml
