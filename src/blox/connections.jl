@@ -1169,21 +1169,6 @@ end
 
 function Connector(
     blox_src::Union{DBS, ProtocolDBS},
-    blox_dest::AbstractNeuronBlox;
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-    
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    
-    eq = sys_dest.I_in ~ w * sys_src.u
-    
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
-end
-
-function Connector(
-    blox_src::Union{DBS, ProtocolDBS},
     blox_dest::NeuralMassBlox;
     kwargs...
 )
