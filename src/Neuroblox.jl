@@ -186,7 +186,7 @@ function adjacency end
 function adjacency! end
 
 function __init__()
-    if Preferences.@load_preference("PrintLicense", "true") == "true"
+    if parse(Bool, Preferences.@load_preference("PrintLicense", "true"))
         print_license()
     end
 end
