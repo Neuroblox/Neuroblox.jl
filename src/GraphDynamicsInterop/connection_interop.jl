@@ -855,6 +855,7 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem, blox_src::HHNeuronExc
     end
 end
 
+# Adapted from the version of hypergeometric_connections in src/blox/connections.jl
 function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; rng=default_rng(), kwargs...)
     density = get_density(kwargs, name_src, name_dst)
     N_connects = density * length(neurons_dst) * length(neurons_src)
@@ -882,6 +883,7 @@ function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name
     end
 end
 
+# Adapted from the version of indegree_constrained_connections in src/blox/connections.jl
 function indegree_constrained_connections!(g,
                                            neurons_src, neurons_dst,
                                            name_src, name_dst; kwargs...)
