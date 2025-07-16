@@ -24,26 +24,47 @@ using GraphDynamics.SymbolicIndexingInterface
 
 using ForwardDiff: ForwardDiff
 using FiniteDiff: FiniteDiff
+using DiffEqCallbacks: DiffEqCallbacks, PeriodicCallback
+
+using Neuroblox.GraphDynamicsInterop: t_block_event
+
+using DataFrames: DataFrames, DataFrame
+using CSV: CSV
+
+rrng() = Xoshiro(rand(Int))
+
 
 function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
                                   u0map=[], param_map=[],
                                   rtol,
-                                  parallel=true, mtk=true, alg=nothing)
+                                  parallel=true, mtk=true, alg=nothing, params_to_compare=[],
+                                  t_block=missing,
+                                  save_everystep=false,
+                                  cse=true)
     if g isa Tuple
         (gl, gr) = g
     else
-        gl = g
-        gr = g
+        gl = deepcopy(g)
+        gr = deepcopy(g)
     end
     @named gsys = system_from_graph(gl; graphdynamics=true)
     state_names = variable_symbols(gsys)
-    sol_grp, du_grp = let sys = gsys
-        prob = ODEProblem(sys, u0map, tspan, param_map)
+    sol_grp, du_grp, sol_grp_obj = let sys = gsys
+        if !ismissing(t_block)
+            global_events = [
+                PeriodicCallback(t_block_event(:t_block_early), t_block - √(eps(float(t_block)))),
+                PeriodicCallback(t_block_event(:t_block_late), t_block  +2*√(eps(float(t_block))))
+            ]
+        else
+            global_events = []
+        end
+            
+        prob = ODEProblem(sys, u0map, tspan, param_map; global_events)
         (; f, u0, p) = prob
         du = similar(u0)
         f(du, u0, p, 1.0)
 
-        sol = solve(prob, alg)
+        sol = solve(prob, alg; save_everystep)
         @test sol.retcode == ReturnCode.Success
         sol_u_reordered = map(state_names) do name
             sol[name][end]
@@ -51,17 +72,17 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
         du_reordered = map(state_names) do name
             getu(sys, name)(du)
         end
-        sol_u_reordered, du_reordered
+        sol_u_reordered, du_reordered, sol
     end
    
     if mtk
-        sol_mtk, du_mtk = let @named sys = system_from_graph(gr)
-            prob = ODEProblem(sys, u0map, tspan, param_map)
+        sol_mtk, du_mtk, sol_mtk_obj = let @named sys = system_from_graph(gr; graphdynamics=false, t_block)
+            prob = ODEProblem(sys, u0map, tspan, param_map; cse)
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
-
-            sol = solve(prob, alg)
+            # display(f.f.f_iip)
+            sol = solve(prob, alg; save_everystep)
             @test sol.retcode == ReturnCode.Success
             sol_u_reordered = map(state_names) do name
                 sol[name][end]
@@ -71,25 +92,37 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
             #     getu(sys, name)(du)
             # end
             du_reordered = du
-            sol_u_reordered, du_reordered
+            sol_u_reordered, du_reordered, sol
         end
-        @debug "" norm(sol_grp .- sol_mtk) / norm(sol_mtk)
         for i ∈ eachindex(state_names)
             if !isapprox(sol_grp[i], sol_mtk[i]; rtol=rtol)
                 @debug  "" i state_names[i] sol_grp[i] sol_mtk[i]
             end
         end
+        @debug "" norm(sol_grp .- sol_mtk) / norm(sol_mtk)
         @test sort(du_grp) ≈ sort(du_mtk) # due to the MTK getu bug, we'll compare the sorted versions
         @test sol_grp ≈ sol_mtk rtol=rtol
+        for name ∈ params_to_compare
+             @debug name last(getsym(sol_grp_obj, name)(sol_grp_obj)) (getsym(sol_mtk_obj, name)(sol_mtk_obj))
+            @test last(getsym(sol_grp_obj, name)(sol_grp_obj)) ≈ (getsym(sol_mtk_obj, name)(sol_mtk_obj)) rtol=rtol
+        end
     end
     if parallel
-        sol_grp_p, du_grp_p = let sys = gsys
-            prob = ODEProblem(sys, u0map, tspan, param_map, scheduler=StaticScheduler())
+        sol_grp_p, du_grp_p, sol_grp_p_obj = let sys = gsys
+            if !ismissing(t_block)
+                global_events = [
+                    PeriodicCallback(t_block_event(:t_block_early), t_block - √(eps(float(t_block)))),
+                    PeriodicCallback(t_block_event(:t_block_late), t_block  +2*√(eps(float(t_block))))
+                ]
+            else
+                global_events = []
+            end
+            prob = ODEProblem(sys, u0map, tspan, param_map; scheduler=StaticScheduler(), global_events)
             (; f, u0, p) = prob
             du = similar(u0)
             f(du, u0, p, 1.0)
 
-            sol = solve(prob, alg)
+            sol = solve(prob, alg; save_everystep)
             @test sol.retcode == ReturnCode.Success
             sol_u_reordered = map(state_names) do name
                 sol[name][end]
@@ -97,10 +130,13 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
             du_reordered = map(state_names) do name
                 getu(sys, name)(du)
             end
-            sol_u_reordered, du_reordered
+            sol_u_reordered, du_reordered, sol
         end
         @test du_grp ≈ du_grp_p
         @test sol_grp ≈ sol_grp_p rtol=rtol
+        for name ∈ params_to_compare
+            @test last(getsym(sol_grp_obj, name)(sol_grp_obj)) ≈ last(getsym(sol_grp_p_obj, name)(sol_grp_p_obj)) rtol=rtol
+        end
     end
 end
 
@@ -468,49 +504,73 @@ end
 function cortical_tests()
     Random.seed!(1234)
     @testset "Cortical blox" begin
-        N_wta = 2
-        N_exci = 5
-        I_bg = [5 .* rand(N_exci) for _ ∈ 1:N_wta]
-        weight = 1.0
-        density = 0.5
-        tspan = (0, 1.0)
-        namespace = :g
-        connection_matrices = map(Iterators.product(1:N_wta, 1:N_wta)) do _
-            rand(Bernoulli(density), N_exci, N_exci)
+        let N_wta = 2, N_exci = 5
+            @testset "Single CB" for I_bg ∈ [0, [5 .* rand(N_exci) for _ ∈ 1:N_wta]]
+                weight = 1.0
+                density = 0.5
+                tspan = (0, 1.0)
+                namespace = :g
+                g = GraphSystem()
+                @named cb = CorticalBlox(;N_wta, N_exci, I_bg_ar=0, density, weight, namespace,
+                                         rng=Xoshiro(1234))
+                add_node!(g, cb)
+                test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-1, alg=Tsit5(), parallel=false)
+            end
         end
-        g1 = let g = MetaDiGraph()
-            @named cb = CorticalBlox(;N_wta, N_exci, I_bg_ar=I_bg, density, weight, namespace, connection_matrices)
-            add_blox!(g, cb)
-            g
+        @testset "CB - CB coupling" begin
+            weight = 1.0
+            density = 0.5
+            tspan = (0, 1.0)
+            namespace = :g
+            g = GraphSystem()
+            @named cb1 = CorticalBlox(;N_wta=2, N_exci=3, I_bg_ar=0, density=0.5, weight, namespace,
+                                      rng=Xoshiro(1234))
+            @named cb2 = CorticalBlox(;N_wta=3, N_exci=2, I_bg_ar=0, density=0.76, weight, namespace,
+                                      rng=Xoshiro(1234))
+            add_connection!(g, cb1, cb2; weight=1.0, density=0.25)
+            
+            test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-1, alg=Tsit5(), parallel=false)
         end
-        g2 = let g = MetaDiGraph()
-            @named cb = CorticalBlox(;N_wta, N_exci, I_bg_ar=I_bg, density, weight, namespace, connection_matrices)
-            add_blox!(g, cb)
-            g
-        end
-        test_compare_du_and_sols(ODEProblem, (g1, g2), tspan; rtol=1e-10, alg=Tsit5(), parallel=false)
     end
 end
 
 
-function striatum_tests(; sim_len=1.5)
+function striatum_tests(; sim_len=1.5, t_block=90)
     tspan = (0.0, sim_len)
-    let g = MetaDiGraph()
-        namespace = :g
-        @named s1 = Striatum(;namespace)
-        add_blox!(g, s1)
-        test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-9, alg=Tsit5())
+    Random.seed!(1234)
+    @testset "Single Striatum" begin
+        let g = MetaDiGraph()
+            namespace = :g
+            @named s1 = Striatum(;namespace)
+            add_blox!(g, s1)
+            test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-9, alg=Tsit5())
+        end
     end
-    let g = MetaDiGraph()
-        namespace = :g
-        @named s1 = Striatum(;namespace, N_inhib=20, E_syn_inhib=-71.0, G_syn_inhib=1.3)
-        @named s2 = Striatum(;namespace, N_inhib=30, E_syn_inhib=-69.0, G_syn_inhib=1.1)
-        
-        add_blox!(g, s1)
-        add_blox!(g, s2)
-        add_edge!(g, 1, 2, :t_event, 1.5)
-        
-        test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-9, alg=Tsit5())
+    @testset "Striatum Coupling" begin
+        g = let g = GraphSystem()
+            namespace = :g
+            
+            @named cb = CorticalBlox(;N_wta=2, N_exci=3, I_bg_ar=0, density=0.5, weight=1.0, namespace,
+                                     rng=rrng())
+            @named s1 = Striatum(;namespace, N_inhib=5,  E_syn_inhib=-71.0, G_syn_inhib=1.1)
+            @named s2 = Striatum(;namespace, N_inhib=10, E_syn_inhib=-69.0, G_syn_inhib=1.1)
+            
+            add_node!(g, s1)
+            add_node!(g, s2)
+            add_connection!(g, cb, s1; weight = 0.075, density = 0.04, rng=rrng())
+            add_connection!(g, cb, s2; weight = 0.075, density = 0.04, rng=rrng())
+            add_connection!(g, s1, s2; t_event=181.0, rng=rrng())
+            add_connection!(g, s2, s1; t_event=181.0, rng=rrng())
+            g
+        end
+
+        params_to_compare = [
+            :s1₊matrisome₊jcn_,
+            :s2₊matrisome₊jcn_,
+            :s1₊matrisome₊H_,
+            :s2₊matrisome₊H_,
+        ]
+        test_compare_du_and_sols(ODEProblem, (g), tspan; rtol=1e-9, alg=Tsit5(), params_to_compare, t_block, parallel=true)
     end
 end
 

@@ -297,9 +297,7 @@ If `graphdynamics=true` (defaults to `false`), the output will be a `GraphSystem
 """
 function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t_block=missing, simplify=true, graphdynamics=false, kwargs...)
     if graphdynamics
-        isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
-        gsys = to_graphsystem(g)
-        PartitionedGraphSystem(gsys)
+        system_from_graph(to_graphsystem(g), p; kwargs...)
     else
         if isnothing(name)
             throw(UndefKeywordError(:name))
@@ -309,6 +307,14 @@ function system_from_graph(g::MetaDiGraph, p::Vector{Num}=Num[]; name=nothing, t
     
         return system_from_graph(g, conns, p; name, t_block, simplify, kwargs...)
     end
+end
+
+function system_from_graph(g::GraphSystem, p=Num[]; graphdynamics=true, kwargs...)
+    if !graphdynamics
+        return system_from_graph(to_metadigraph(g), p; graphdynamics, kwargs...)
+    end
+    isempty(p) || error(ArgumentError("The GraphDynamics.jl backend does yet support extra parameter lists. Got $p."))
+    PartitionedGraphSystem(g)
 end
 
 function to_graphsystem(g::MetaDiGraph)

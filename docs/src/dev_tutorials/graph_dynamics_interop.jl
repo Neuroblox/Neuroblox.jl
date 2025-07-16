@@ -106,7 +106,7 @@ Here it is in action:
 ===============================================================================================================#
 
 let @named v = VanDerPol(;θ=10.0)
-    sys = GraphDynamicsInterop.to_subsystem(v)
+    sys = GraphDynamics.to_subsystem(v)
     @info "States and params out of a Subsystem:" sys.x sys.y sys.θ sys.ϕ
     @test sys.x == 0.0   #src
     @test sys.y == 0.0   #src

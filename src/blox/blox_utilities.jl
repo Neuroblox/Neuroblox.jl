@@ -287,7 +287,7 @@ function get_connection_matrix(kwargs, name_out, name_in, N_out, N_in)
     connection_matrix = get(kwargs, :connection_matrix) do
         density = get_density(kwargs, name_out, name_in)
         dist = Bernoulli(density)
-        rng = get(kwargs, :rng, Random.default_rng())
+        rng = get(kwargs, :rng, default_rng())
         rand(rng, dist, sz...)
     end
     if size(connection_matrix) != sz
