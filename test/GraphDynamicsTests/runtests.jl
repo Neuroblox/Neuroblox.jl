@@ -19,7 +19,7 @@ if GROUP == "All" || GROUP == "GraphDynamics2"
     dbs_circuit()
     # discrete()
     cortical_tests()
-    # striatum_tests()
+    striatum_tests()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics3"

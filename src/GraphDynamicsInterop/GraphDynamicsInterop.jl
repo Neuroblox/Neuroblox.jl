@@ -5,9 +5,13 @@ using ..Neuroblox:
     D,
     t,
     get_exci_neurons,
+    get_inh_neurons,
+    get_matrisome,
+    get_striosome,
     get_connection_matrix,
     AbstractBlox,
     AbstractNeuronBlox,
+    AbstractDiscrete,
     NeuralMassBlox,
     HarmonicOscillator,
     JansenRit,
@@ -24,6 +28,7 @@ using ..Neuroblox:
     HHNeuronInhib_GPe_Adam_Blox,
     WinnerTakeAllBlox,
     namespaced_nameof,
+    namespaced_name,
     NGNMM_theta,
     get_namespaced_sys,
     Striatum,
@@ -54,12 +59,44 @@ using ..Neuroblox:
     Connector,
     VanDerPol,
     MoradiNMDAR,
-    AbstractReceptor#,
-    # AbstractNeurotransmitter
+    AbstractReceptor,
+    ImageStimulus,
+    increment_pixel!,
+    StimulusBlox,
+    CompositeBlox
+    
+using ..Neuroblox:
+    AbstractEnvironment,
+    AbstractLearningRule,
+    NoLearningRule,
+    HebbianPlasticity,
+    HebbianModulationPlasticity,
+    weight_gradient,
+    get_eval_times,
+    get_eval_states,
+    dlogistic,
+    ClassificationEnvironment,
+    increment_trial!,
+    reset!,
+    get_trial_stimulus,
+    AbstractActionSelection,
+    GreedyPolicy,
+    connect_action_selection!,
+    get_eval_states,
+    get_eval_times,
+    Agent,
+    run_experiment!,
+    run_warmup,
+    run_trial!,
+    add_blox!,
+    add_edge!,
+    get_learning_rule,
+    action_selection_from_graph
 
 using GraphDynamics:
     GraphDynamics,
     GraphSystem,
+    PartitionedGraphSystem,
     GraphSystemConnection,
     Subsystem,
     ConnectionRule,
@@ -84,7 +121,10 @@ using GraphDynamics:
     add_node!,
     connections,
     has_connection,
-    system_wiring_rule!
+    system_wiring_rule!,
+    make_connection_matrices,
+    partitioned,
+    maybe_sparse_enumerate_col
 
 using Random:
     Random,
@@ -130,14 +170,15 @@ using SparseArrays:
 
 using RecursiveArrayTools: ArrayPartition
 
-using Base: @propagate_inbounds
+using Base: @propagate_inbounds, isstored
 using Base.Iterators: map as imap
 using Base.Iterators: filter as ifilter
 
 using Distributions:
     Distributions,
     Bernoulli,
-    Poisson
+    Poisson,
+    Uniform
 
 using Accessors:
     Accessors,
@@ -146,7 +187,8 @@ using Accessors:
 
 using SciMLBase:
     SciMLBase,
-    add_tstop!
+    add_tstop!,
+    remake
 
 using Symbolics:
     Symbolics,
@@ -158,8 +200,47 @@ using StatsBase:
     StatsBase,
     countmap
 
+using DiffEqCallbacks:
+    DiffEqCallbacks,
+    PeriodicCallback
+
+using ProgressMeter:
+    ProgressMeter,
+    Progress,
+    next!,
+    finish!
+
+
+function get_weight(kwargs, name_src, name_dst)
+    get(kwargs, :weight) do
+        error("No connection weight specified between $name_src and $name_dst")
+    end
+end
+function get_density(kwargs, name_src, name_dst)
+    density = get(kwargs, :density) do
+        error("No connection density specified between $name_src and $name_dst")
+    end
+end
+
+function to_metadigraph(g::GraphSystem)
+    g2 = MetaDiGraph()
+    d = Dict{Any, Int}()
+    i = 0
+    for node ∈ nodes(g)
+        add_blox!(g2, node)
+        d[node] = (i += 1)
+    end
+    for (; src, dst, data) ∈ connections(g)
+        add_edge!(g2, d[src], d[dst], Dict(pairs(data)...))
+    end
+    g2
+end
+
 include("neuron_interop.jl")
+include("discrete_interop.jl")
+include("sources_interop.jl")
 include("connection_interop.jl")
+include("learning_interop.jl")
 
 end#module GraphDynamicsInterop
 
