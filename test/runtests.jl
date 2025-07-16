@@ -26,11 +26,13 @@ if GROUP == "All" || GROUP == "Small_CS_RL_Pipeline"
         @test accuracy >= 0.7
     end
 end
-if GROUP == "All" || GROUP == "Full_CS_RL_Pipeline"
+if GROUP == "Full_CS_RL_Pipeline"
     @time @safetestset "Full Reinforcement Learning Test" begin
         include("cs_rl_testsuite.jl")
         trace = big_corticostriatal_learning_run(N_trials=500)[100:end]
         accuracy = sum(row -> row.iscorrect, trace)/length(trace)
         @test accuracy >= 0.7
     end
+else
+    @info "Skipping the big corticostriatal learning test. In order to run this test, launch julia with the envrionment variable `GROUP=Full_CS_RL_Pipeline`"
 end
