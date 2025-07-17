@@ -9,6 +9,10 @@ using ..Neuroblox:
     get_matrisome,
     get_striosome,
     get_connection_matrix,
+    get_inh_neurons,
+    get_ff_inh_neurons,
+    get_wtas,
+    get_ff_inh_num,
     AbstractBlox,
     AbstractNeuronBlox,
     AbstractDiscrete,
@@ -40,6 +44,7 @@ using ..Neuroblox:
     NonNoisy,
     KuramotoOscillator,
     CorticalBlox,
+    LateralAmygdalaBlox,
     STN,
     Thalamus,
     GPi,
@@ -92,6 +97,7 @@ using ..Neuroblox:
     add_edge!,
     get_learning_rule,
     action_selection_from_graph
+
 
 using GraphDynamics:
     GraphDynamics,
