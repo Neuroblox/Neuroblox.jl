@@ -68,7 +68,9 @@ using ..Neuroblox:
     ImageStimulus,
     increment_pixel!,
     StimulusBlox,
-    CompositeBlox
+    CompositeBlox,
+    PulsesInput,
+    to_vector
     
 using ..Neuroblox:
     AbstractEnvironment,
