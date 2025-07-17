@@ -708,19 +708,6 @@ function Connector(
 end
 
 function Connector(
-    blox_src::NGNMM_theta, 
-    blox_dest::LateralAmygdalaBlox;
-    kwargs...
-)
-    neurons_dest = get_inh_neurons(blox_dest)
-    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_dest))
-    conn = Connector(blox_src, neurons_dest[end-num]; kwargs...) 
-    #note the ff_inh_num need to be total number of feedforward inhibition neurons - actual index
-
-    return conn
-end
-
-function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox},
     blox_dest::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox};
     kwargs...

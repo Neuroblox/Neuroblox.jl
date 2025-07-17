@@ -1022,7 +1022,7 @@ function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaBlox; kwargs...)
     end
 end
 
-function GraphDynamics.system_wiring_rule!(g, neuron_src::Union{HHNeuronInhibBlox, NGNMM_theta}, la_dst::LateralAmygdalaBlox; kwargs...)
+function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaBlox; kwargs...)
     neurons_dst = get_inh_neurons(la_dst)
     num = get_ff_inh_num(kwargs, namespaced_nameof(la_dst))
     num = to_vector(num)
