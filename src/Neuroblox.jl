@@ -23,6 +23,7 @@ using DSP, Statistics
 
 using Interpolations
 using Random
+using Random: default_rng
 using OrderedCollections
 
 using StatsBase: sample
@@ -113,9 +114,10 @@ include("blox/reinforcement_learning.jl")
 #include("gui/GUI.jl")
 include("blox/connections.jl")
 include("blox/blox_utilities.jl")
-include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
 include("Neurographs.jl")
 include("adjacency.jl")
+include("GraphDynamicsInterop/GraphDynamicsInterop.jl")
+using .GraphDynamicsInterop: to_metadigraph
 
 const Neuron = AbstractNeuronBlox
 const SpikeSource = AbstractSpikeSource

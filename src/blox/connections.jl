@@ -230,18 +230,17 @@ end
 
 Base.merge(c1::Connector, c2::Connector) = Base.merge!(deepcopy(c1), c2)
 
-function hypergeometric_connections(neurons_src, neurons_dest, name_out, name_in; kwargs...)
+function hypergeometric_connections(neurons_src, neurons_dest, name_out, name_in; rng=default_rng(), kwargs...)
     density = get_density(kwargs, name_out, name_in)
     N_connects =  density * length(neurons_dest) * length(neurons_src)
     out_degree = Int(ceil(N_connects / length(neurons_src)))
     in_degree =  Int(ceil(N_connects / length(neurons_dest)))
     wt = get_weight(kwargs,name_out, name_in)
-
     C = Connector[]
     outgoing_connections = zeros(Int, length(neurons_src))
     for neuron_postsyn in neurons_dest
         rem = findall(x -> x < out_degree, outgoing_connections)
-        idx = sample(rem, min(in_degree, length(rem)); replace=false)
+        idx = sample(rng, rem, min(in_degree, length(rem)); replace=false)
         if length(wt) == 1
             for neuron_presyn in neurons_src[idx]
                 push!(C, Connector(neuron_presyn, neuron_postsyn; kwargs...))
@@ -259,7 +258,7 @@ function hypergeometric_connections(neurons_src, neurons_dest, name_out, name_in
 end
 
 function indegree_constrained_connection_matrix(density, N_src, N_dst; kwargs...)
-    rng = get(kwargs, :rng, Random.default_rng())
+    rng = get(kwargs, :rng, default_rng())
     in_degree =  Int(ceil(density * N_src))
     conn_mat = falses(N_src, N_dst)
     for j ∈ 1:N_dst
@@ -630,11 +629,10 @@ function Connector(
     neurons_src = get_exci_neurons(blox_src)
     neurons_dest = get_exci_neurons(blox_dest)
     # users can supply a :connection_matrix to the graph edge, where
-    # connection_matrix[i, j] determines if neurons_src[i] is connected to neurons_src[j] 
+    # connection_matrix[i, j] determines if neurons_src[i] is connected to neurons_src[j]
     connection_matrix = get_connection_matrix(kwargs,
                                               namespaced_nameof(blox_src), namespaced_nameof(blox_dest),
                                               length(neurons_src), length(neurons_dest))
-    
     C = Connector[]
     for (j, neuron_postsyn) in enumerate(neurons_dest)
         name_postsyn = namespaced_nameof(neuron_postsyn)
@@ -730,10 +728,10 @@ function Connector(
     neurons_dest = get_inh_neurons(str)
     neurons_src = get_exci_neurons(cb)
 
+    rng = get(kwargs, :rng, Random.default_rng())
     w = get_weight(kwargs, namespaced_nameof(cb), namespaced_nameof(str))
-
     dist = Uniform(0,1)
-    wt_ar = 2*w*rand(dist, length(neurons_src)) # generate a uniform distribution of weight with average value w 
+    wt_ar = 2*w*rand(rng, dist, length(neurons_src)) # generate a uniform distribution of weight with average value w 
     kwargs = (kwargs..., weight=wt_ar)
 
     if haskey(kwargs, :learning_rule)
@@ -835,7 +833,6 @@ function Connector(
     kwargs... 
 )
     striosome = get_striosome(blox_src)
-    
     return Connector(striosome, blox_dest; kwargs...)
 end
 
@@ -852,7 +849,6 @@ function Connector(
     eq = sys_dest.jcn ~ w*sys_src.H*sys_src.jcn
 
     lr = get_learning_rule(kwargs, nameof(sys_src), nameof(sys_dest))
-
     return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w, learning_rule=Dict(w => lr))
 end
 
@@ -874,7 +870,7 @@ sample_poisson(λ) = rand(Poisson(λ))
 """
 function sample_affect!(integ, u, p, ctx)
     R = min(integ.p[p[1]]/(integ.p[p[2]] + sqrt(eps())), integ.p[p[1]])
-    v = rand(Poisson(R))
+    v = rand(integ.p[p[4]], Poisson(R))
     integ.p[p[3]] = v
 end
 
@@ -889,7 +885,7 @@ function Connector(
     w = generate_weight_param(blox_src, blox_dest; kwargs...)
 
     t_event = get_event_time(kwargs, nameof(blox_src), nameof(blox_dest))
-    cb = [t_event+sqrt(eps(t_event))] => (sample_affect!, [], [sys_src.κ, sys_src.jcn, sys_dest.TAN_spikes], [])
+    cb = [t_event+sqrt(eps(t_event))] => (sample_affect!, [], [sys_src.κ, sys_src.jcn, sys_dest.TAN_spikes, sys_src.rng], [])
 
     eq = sys_dest.jcn ~ w*sys_dest.TAN_spikes
 

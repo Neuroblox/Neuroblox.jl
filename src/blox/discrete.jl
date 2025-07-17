@@ -54,9 +54,9 @@ struct TAN <: AbstractDiscrete
     system
     namespace
 
-    function TAN(; name, namespace=nothing, κ=100, λ=1)
+    function TAN(; name, namespace=nothing, κ=100, λ=1, rng=Xoshiro(rand(Int)))
         sts = @variables R(t)
-        ps = @parameters κ=κ λ=λ jcn=0 [input=true]
+        ps = @parameters κ=κ λ=λ jcn=0 [input=true] rng::typeof(rng)=rng
         eqs = [
                 R ~ min(κ, κ/(λ*jcn + sqrt(eps())))
               ]
