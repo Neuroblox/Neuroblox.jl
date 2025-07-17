@@ -529,8 +529,8 @@ function weight_matrix_connections!(g, neurons_src, neurons_dst, name_src, name_
 end
 
 function GraphDynamics.system_wiring_rule!(g::GraphSystem,
-                                           blox_src::Union{CorticalBlox,STN,Thalamus},
-                                           blox_dst::Union{CorticalBlox,STN,Thalamus}; kwargs...)
+                                           blox_src::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox},
+                                           blox_dst::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox}; kwargs...)
     neurons_dst = get_exci_neurons(blox_dst)
     neurons_src = get_exci_neurons(blox_src)
     name_dst = namespaced_nameof(blox_dst)
@@ -1026,13 +1026,6 @@ function GraphDynamics.system_wiring_rule!(g, neuron_src::Union{HHNeuronInhibBlo
     neurons_dst = get_inh_neurons(la_dst)
     num = get_ff_inh_num(kwargs, namespaced_nameof(la_dst))
     system_wiring_rule!(g, neuron_src, neurons_dst[end-num]; kwargs...) 
-end
-
-function GraphDynamics.system_wiring_rule!(g, la_src::LateralAmygdalaBlox, la_dst::LateralAmygdalaBlox; kwargs...)
-    neurons_dst = get_exci_neurons(blox_dst)
-    neurons_src = get_exci_neurons(blox_src)
-
-    hypergeometric_connections!(g, neurons_src, neurons_dst, namespaced_nameof(la_src), namespaced_nameof(la_dst); kwargs...)
 end
 
 function (c::BasicConnection)(
