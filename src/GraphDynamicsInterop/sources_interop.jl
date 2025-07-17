@@ -40,7 +40,7 @@ function GraphDynamics.to_subsystem(s::PulsesInput)
     states = SubsystemStates{PulsesInput}()
     (;name, times_on, times_off, pulse_switch, base_line, pulse_amp) = s
     I = base_line
-    params = SubsystemParams{PulsesInput}(;name, times_on, times_off, pulse_switch, base_line, pulse_amp, I)
+    params = SubsystemParams{PulsesInput}(;name, times_on, times_off, pulse_switch, base_line, pulse_amp=recursive_getdefault(pulse_amp), I)
     Subsystem(states, params)
 end
 GraphDynamics.initialize_input(s::Subsystem{PulsesInput}) = (;)
