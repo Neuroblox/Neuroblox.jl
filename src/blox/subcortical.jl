@@ -230,6 +230,8 @@ struct Thalamus <: CompositeBlox
         ]
 
         g = MetaDiGraph()
+        add_blox!.(Ref(g), n_exci)
+
         if isnothing(connection_matrix)
             connection_matrix = subcortical_connection_matrix(density, N_exci, weight)
         end
@@ -237,7 +239,7 @@ struct Thalamus <: CompositeBlox
             for j in 1:N_exci
                 cij = connection_matrix[i,j]
                 if !iszero(cij)
-                    add_edge!(g, i, j, Dict(:weight => cij))
+                    add_edge!(g, n_exci[i] => n_exci[j]; weight => cij)
                 end
             end
         end
