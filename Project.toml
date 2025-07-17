@@ -1,6 +1,6 @@
 name = "Neuroblox"
 uuid = "769b91e5-4c60-41ee-bfae-153c84203cb2"
-version = "0.6.0-DEV"
+version = "0.6.0"
 repo = "https://github.com/Neuroblox/Neuroblox.jl.git"
 
 [workspace]
