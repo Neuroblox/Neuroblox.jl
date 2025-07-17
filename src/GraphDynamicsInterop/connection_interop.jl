@@ -1055,7 +1055,6 @@ function GraphDynamics.system_wiring_rule!(g, blox_src::NGNMM_theta, neuron_dst:
     add_connection!(g, blox_src, neuron_dst; conn, weight, kwargs...)  
 end
 
->>>>>>> f88145a (add GD wiring rules for the Amygdala circuit)
 #----------------------------------------------
 # Striatum_MSN_Adam
 function GraphDynamics.system_wiring_rule!(g, s::Striatum_MSN_Adam; kwargs...)
