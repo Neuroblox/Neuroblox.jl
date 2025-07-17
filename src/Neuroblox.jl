@@ -48,6 +48,8 @@ using LogExpFunctions: logistic
 
 using GraphDynamics: GraphDynamics, GraphSystem, add_connection!, add_node!, PartitionedGraphSystem
 
+using Preferences: Preferences
+
 # define abstract types for Neuroblox
 abstract type AbstractBlox end # Blox is the abstract type for Blox that are displayed in the GUI
 abstract type AbstractComponent end
@@ -186,9 +188,9 @@ function adjacency end
 function adjacency! end
 
 function __init__()
-    #if Preferences.@load_preference("PrintLicense", true)
+    if parse(Bool, Preferences.@load_preference("PrintLicense", "true"))
         print_license()
-    #end
+    end
 end
 
 
