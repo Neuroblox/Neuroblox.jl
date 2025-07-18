@@ -302,7 +302,7 @@ function weight_matrix_connections(neurons_src, neurons_dst, name_src, name_dst;
     C = Connector[]
     for j ∈ 1:N_dst
         for i ∈ 1:N_src
-            if conn_mat[i, j] > 0
+            if !iszero(conn_mat[i, j])
                 kwargs_ij = (kwargs..., weight=conn_mat[i, j])
                 push!(C, Connector(neurons_src[i], neurons_dst[j]; kwargs_ij...))
             end
