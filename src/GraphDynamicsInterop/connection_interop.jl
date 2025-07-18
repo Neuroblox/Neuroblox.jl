@@ -529,16 +529,19 @@ function weight_matrix_connections!(g, neurons_src, neurons_dst, name_src, name_
 end
 
 function GraphDynamics.system_wiring_rule!(g::GraphSystem,
-                                           blox_src::Union{CorticalBlox,STN,Thalamus},
-                                           blox_dst::Union{CorticalBlox,STN,Thalamus}; kwargs...)
+                                           blox_src::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox},
+                                           blox_dst::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox}; kwargs...)
     neurons_dst = get_exci_neurons(blox_dst)
     neurons_src = get_exci_neurons(blox_src)
     name_dst = namespaced_nameof(blox_dst)
     name_src = namespaced_nameof(blox_src)
-    if haskey(kwargs, :weightmatrix)
-        weight_matrix_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
+
+    if cr == :gradient
+        conn = density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     else
-        hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+        conn = hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     end
 end
 
@@ -883,6 +886,18 @@ function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name
     end
 end
 
+function density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    density = get_density(kwargs, name_src, name_dst)
+    N_dst = length(neurons_dst)
+
+    for ns in neurons_src
+        idxs = findall(rand(N_dst) .<= density)
+        for i in idxs
+            system_wiring_rule!(g, ns, neurons_dst[i]; kwargs...)
+        end
+    end
+end
+
 # Adapted from the version of indegree_constrained_connections in src/blox/connections.jl
 function indegree_constrained_connections!(g,
                                            neurons_src, neurons_dst,
@@ -991,6 +1006,65 @@ function (c::PINGConnection)(blox_src::Subsystem{PINGNeuronInhib}, blox_dst::Sub
     (; jcn = w * s * (V_I - V))
 end
 
+##----------------------------------------------
+# Amygdala circuit
+function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaBlox; kwargs...)
+    wtas = get_wtas(c)
+    ff_neurons = get_ff_inh_neurons(c)
+
+    N_ff_neuron = length(ff_neurons)
+    N_wta = Int(length(wtas) / N_ff_neuron)
+
+    system_wiring_rule!.((g,), wtas)
+    system_wiring_rule!.((g,), ff_neurons)
+
+    for k in eachindex(ff_neurons)
+        for i in Base.OneTo(N_wta)
+            wta_i = Int(i+((k-1)*N_wta))
+            for j in Base.OneTo(N_wta)
+                wta_j = Int(j+((k-1)*N_wta))
+                if j != i
+                    if haskey(c.kwargs, :connection_matrices)
+                        kwargs_ij = merge(c.kwargs, Dict(:connection_matrix => c.kwargs[:connection_matrices][i+((k-1)*N_wta), j+((k-1)*N_wta)]))
+                    else
+                        kwargs_ij = Dict(c.kwargs)
+                    end
+                    system_wiring_rule!(g, wtas[wta_i], wtas[wta_j]; kwargs_ij...)
+                end
+            end
+            system_wiring_rule!(g, ff_neurons[k], wtas[wta_i]; weight = 1.0)
+        end
+    end
+end
+
+function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaBlox; kwargs...)
+    neurons_dst = get_inh_neurons(la_dst)
+    num = get_ff_inh_num(kwargs, namespaced_nameof(la_dst))
+    num = to_vector(num)
+    for n in num
+        system_wiring_rule!(g, neuron_src, neurons_dst[end-n]; kwargs...) 
+    end
+end
+
+function (c::BasicConnection)(
+    sys_src::Subsystem{NGNMM_theta}, 
+    sys_dst::Subsystem{<:Union{HHNeuronExciBlox, HHNeuronInhibBlox}}, 
+    t
+)
+    a = sys_src.aₑ
+    b = sys_src.bₑ
+    f = (1/(sys_src.Cₑ*π))*(1-a^2-b^2)/(1+2*a+a^2+b^2)   
+
+    acc = initialize_input(sys_dst)
+    @set acc.I_asc = w*f
+    
+    return acc
+end
+
+function GraphDynamics.system_wiring_rule!(g, blox_src::NGNMM_theta, neuron_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox}; weight, kwargs...)
+    conn = BasicConnection(weight)
+    add_connection!(g, blox_src, neuron_dst; conn, weight, kwargs...)  
+end
 
 #----------------------------------------------
 # Striatum_MSN_Adam

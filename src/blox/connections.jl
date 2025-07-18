@@ -290,6 +290,43 @@ function indegree_constrained_connections(neurons_src, neurons_dst, name_src, na
     return reduce(merge!, C)
 end
 
+function density_gradient_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    density = get_density(kwargs, name_src, name_dst)
+    N_dst = length(neurons_dst)
+
+    C = Connector[]
+    for ns in neurons_src
+        idxs = findall(rand(N_dst) .<= density)
+        for i in idxs
+            push!(C, Connector(ns, neurons_dst[i]; kwargs...))
+        end
+    end
+
+    return reduce(merge!, C)
+end
+
+function weight_matrix_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    N_src = length(neurons_src)
+    N_dst = length(neurons_dst)
+    conn_mat = get_weightmatrix(kwargs, name_src, name_dst)
+
+    if size(conn_mat) != (N_src, N_dst)
+        error("The connection matrix must be of size $(N_src) x $(N_dst)")
+    end
+
+    C = Connector[]
+    for j ∈ 1:N_dst
+        for i ∈ 1:N_src
+            if !iszero(conn_mat[i, j])
+                kwargs_ij = (kwargs..., weight=conn_mat[i, j])
+                push!(C, Connector(neurons_src[i], neurons_dst[j]; kwargs_ij...))
+            end
+        end
+    end
+
+    return reduce(merge!, C)
+end
+
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
 
 connection_equations(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...).equation
@@ -669,15 +706,34 @@ function Connector(
 end
 
 function Connector(
-    blox_src::Union{CorticalBlox,STN,Thalamus},
-    blox_dest::Union{CorticalBlox,STN,Thalamus};
+    blox_src::HHNeuronInhibBlox, 
+    blox_dest::LateralAmygdalaBlox;
     kwargs...
 )
-    neurons_dest = get_exci_neurons(blox_dest)
+    neurons_dest = get_inh_neurons(blox_dest)
+    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_dest))
+    conn = Connector(blox_src, neurons_dest[end-num]; kwargs...) 
+    #note the ff_inh_num need to be total number of feedforward inhibition neurons - actual index
+
+    return conn
+end
+
+function Connector(
+    blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox},
+    blox_dst::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox};
+    kwargs...
+)
+    neurons_dest = get_exci_neurons(blox_dst)
     neurons_src = get_exci_neurons(blox_src)
 
-    conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...)
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
+    if cr == :gradient
+        conn = density_gradient_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
+    else
+        conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
+    end
+    
     return conn
 end
 

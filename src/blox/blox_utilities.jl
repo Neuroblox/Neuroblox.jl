@@ -64,6 +64,20 @@ function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
+get_wtas(n::WinnerTakeAllBlox) = [n]
+get_wtas(n) = []
+
+function get_wtas(b::Union{AbstractComponent, CompositeBlox})
+    mapreduce(x -> get_wtas(x), vcat, b.parts)
+end
+
+get_ff_inh_neurons(n::AbstractInhNeuronBlox) = [n]
+get_ff_inh_neurons(n) = []
+
+function get_ff_inh_neurons(b::Union{LateralAmygdalaBlox, CorticalBlox})
+    mapreduce(x -> get_ff_inh_neurons(x), vcat, b.parts)
+end
+
 get_neurons(n::AbstractNeuronBlox) = [n]
 get_neurons(n) = []
 
@@ -255,6 +269,12 @@ function get_weightmatrix(kwargs, name_blox1, name_blox2)
     end
 end
 
+function get_ff_inh_num(kwargs, name_blox1)
+    get(kwargs, :ff_inh_num) do 
+        error("feedforward inhibition neuron number from $name_blox1 is not specified")
+    end
+end
+
 function get_delay(kwargs, name_blox1, name_blox2)
     get(kwargs, :delay) do 
 #        @debug "Delay constant from $name_blox1 to $name_blox2 is not specified. It is assumed that there is no delay."
@@ -327,7 +347,20 @@ function get_weights(agent::Agent, blox_out, blox_in)
     return pv[map_idxs[idxs_weight]]
 end
 
-function get_connection_rule(kwargs, bloxout, bloxin, w)
+function get_connection_rule(kwargs, blox_src::CompositeBlox, blox_dst::CompositeBlox)
+    cr = get(kwargs, :connection_rule) do
+        @info "Connection type from $(namespaced_nameof(blox_src)) to $(namespaced_nameof(blox_dst)) not specified. Defaulting to a hypergeometric connection."
+        :hypergeometric
+    end
+    cr = Symbol(cr) # in case of String kwarg
+    if (cr == :hypergeometric) || (cr == :gradient)
+        return cr
+    else
+        @error "Connection rule not recognized. Available option are $("hypergeometric") and $("gradient")."
+    end
+end
+
+function get_connection_rule(kwargs, bloxout::Union{AbstractNeuronBlox, NeuralMassBlox}, bloxin::Union{AbstractNeuronBlox, NeuralMassBlox}, w)
     cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
         name_blox2 = nameof(bloxin)

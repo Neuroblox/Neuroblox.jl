@@ -3,6 +3,21 @@
     all subcprtical blox used in cortico-striatal model are defined here
 
 """
+
+# internal connectivity matrix
+function subcortical_connection_matrix(density, N, weight)
+    connection_matrix = zeros(N, N)
+    idxs = 1:N
+    for i in idxs
+        for j in idxs
+            if !(i==j) && (rand()<=density && connection_matrix[j, i] == 0)
+                connection_matrix[i, j] = weight 
+            end
+        end
+    end
+    connection_matrix
+end
+
 struct Striatum <: CompositeBlox
     namespace
     parts
@@ -186,6 +201,7 @@ struct Thalamus <: CompositeBlox
     system
     connector
     mean
+    connection_matrix
 
     function Thalamus(;
         name, 
@@ -194,7 +210,12 @@ struct Thalamus <: CompositeBlox
         E_syn_exci=0,
         G_syn_exci=3,
         I_bg=3*ones(N_exci),
-        τ_exci=5
+        freq=zeros(N_exci),
+        phase=zeros(N_exci),
+        τ_exci=5,
+        density=0.0,
+        weight=1,
+        connection_matrix=nothing
     )
         n_exci = [
             HHNeuronExciBlox(
@@ -207,12 +228,21 @@ struct Thalamus <: CompositeBlox
             ) 
             for i in Base.OneTo(N_exci)
         ]
-
+        
         g = MetaDiGraph()
-        for i in Base.OneTo(N_exci)
-            add_blox!(g, n_exci[i])
+        add_blox!.(Ref(g), n_exci)
+        
+        if isnothing(connection_matrix)
+            connection_matrix = subcortical_connection_matrix(density, N_exci, weight)
         end
-
+        for i in 1:N_exci
+            for j in 1:N_exci
+                cij = connection_matrix[i,j]
+                if !iszero(cij)
+                    add_edge!(g, n_exci[i] => n_exci[j]; weight = cij)
+                end
+            end
+        end
         parts = n_exci
         
         bc = connectors_from_graph(g)
@@ -226,10 +256,9 @@ struct Thalamus <: CompositeBlox
             [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
         end
 
-        new(namespace, parts, sys, bc, m)
+        new(namespace, parts, sys, bc, m, connection_matrix)
     end
 end   
-
 
 struct STN <: CompositeBlox
     namespace
@@ -285,3 +314,89 @@ struct STN <: CompositeBlox
         new(namespace, parts, sys, bc, m)
     end
 end    
+
+struct LateralAmygdalaBlox <: CompositeBlox
+    namespace
+    parts
+    system
+    connector
+    kwargs
+
+    function LateralAmygdalaBlox(;
+        name, 
+        N_wta=10,
+        N_ff_inh=5, #number of feedforward inhibitory neurons
+        namespace=nothing,
+        N_exci=5,
+        E_syn_exci=0.0,
+        E_syn_inhib=-70,
+        G_syn_exci=3.0,
+        G_syn_inhib=4.0,
+        G_syn_ff_inhib=3.5,
+        I_bg_ar=0,
+        I_bg_ff_inhib=0,
+        τ_exci=5,
+        τ_inhib=70,
+        kwargs...
+)
+        
+        wtas = map(1:(N_wta * N_ff_inh)) do i
+            if I_bg_ar isa Array
+                I_bg = I_bg_ar[i]
+            else
+                I_bg = I_bg_ar
+            end
+            WinnerTakeAllBlox(;
+                name=Symbol("wta$i"),
+                namespace=namespaced_name(namespace, name),
+                N_exci,
+                E_syn_exci,
+                E_syn_inhib,
+                G_syn_exci,
+                G_syn_inhib,
+                I_bg = I_bg,
+                τ_exci,
+                τ_inhib    
+            )
+        end
+
+        n_ff_inh = map(1:N_ff_inh) do i
+            HHNeuronInhibBlox(
+                name = Symbol("ff_inh$i"),
+                namespace = namespaced_name(namespace, name),
+                E_syn = E_syn_inhib,
+                G_syn = G_syn_ff_inhib,
+                I_bg = I_bg_ff_inhib,
+                τ = τ_inhib
+            )
+        end
+
+        g = MetaDiGraph()
+        add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
+        
+        for k in 1:N_ff_inh
+            for i in 1:N_wta
+                for j in 1:N_wta
+                    if j != i
+                        # users can supply a matrix of connection matrices.
+                        # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
+                        # neuron l from wta j.
+                        if haskey(kwargs, :connection_matrices)
+                            kwargs_ij = merge(kwargs, Dict(:connection_matrix => kwargs[:connection_matrices][i+((k-1)*N_wta), j+((k-1)*N_wta)]))
+                        else
+                            kwargs_ij = Dict(kwargs)
+                        end
+                        add_edge!(g, i+((k-1)*N_wta), j+((k-1)*N_wta), kwargs_ij)
+                    end
+                end
+                add_edge!(g, N_wta*N_ff_inh+k, i+((k-1)*N_wta), Dict(:weight => 1))
+            end
+        end
+
+        bc = connectors_from_graph(g)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
+
+        kwargs = merge(kwargs, Dict(:N_wta => N_wta))
+        new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
+    end
+end
