@@ -293,9 +293,7 @@ end
 function weight_matrix_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     N_src = length(neurons_src)
     N_dst = length(neurons_dst)
-    @show N_src, N_dst
     conn_mat = get_weightmatrix(kwargs, name_src, name_dst)
-    @show conn_mat 
 
     if size(conn_mat) != (N_src, N_dst)
         error("The connection matrix must be of size $(N_src) x $(N_dst)")
@@ -306,8 +304,6 @@ function weight_matrix_connections(neurons_src, neurons_dst, name_src, name_dst;
         for i ∈ 1:N_src
             if conn_mat[i, j] > 0
                 kwargs_ij = (kwargs..., weight=conn_mat[i, j])
-                @show kwargs_ij
-
                 push!(C, Connector(neurons_src[i], neurons_dst[j]; kwargs_ij...))
             end
         end
