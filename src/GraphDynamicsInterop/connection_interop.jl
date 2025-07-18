@@ -535,10 +535,13 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem,
     neurons_src = get_exci_neurons(blox_src)
     name_dst = namespaced_nameof(blox_dst)
     name_src = namespaced_nameof(blox_src)
-    if haskey(kwargs, :weightmatrix)
-        weight_matrix_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
+
+    if cr == :gradient
+        conn = density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     else
-        hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+        conn = hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     end
 end
 
@@ -880,6 +883,18 @@ function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name
             end
         end
         outgoing_connections[idx] .+= 1
+    end
+end
+
+function density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    density = get_density(kwargs, name_src, name_dst)
+    N_dst = length(neurons_dst)
+
+    for ns in neurons_src
+        idxs = findall(rand(N_dst) .<= density)
+        for i in idxs
+            system_wiring_rule!(g, ns, neurons_dst[i]; kwargs...)
+        end
     end
 end
 

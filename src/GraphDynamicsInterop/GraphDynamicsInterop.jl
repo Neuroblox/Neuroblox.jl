@@ -13,6 +13,7 @@ using ..Neuroblox:
     get_ff_inh_neurons,
     get_wtas,
     get_ff_inh_num,
+    get_connection_rule,
     AbstractBlox,
     AbstractNeuronBlox,
     AbstractDiscrete,
