@@ -347,7 +347,20 @@ function get_weights(agent::Agent, blox_out, blox_in)
     return pv[map_idxs[idxs_weight]]
 end
 
-function get_connection_rule(kwargs, bloxout, bloxin, w)
+function get_connection_rule(kwargs, blox_src::CompositeBlox, blox_dst::CompositeBlox)
+    cr = get(kwargs, :connection_rule) do
+        @info "Connection type from $(namespaced_nameof(blox_src)) to $(namespaced_nameof(blox_dst)) not specified. Defaulting to a hypergeometric connection."
+        :hypergeometric
+    end
+    cr = Symbol(cr) # in case of String kwarg
+    if (cr == :hypergeometric) || (cr == :gradient)
+        return cr
+    else
+        @error "Connection rule not recognized. Available option are $("hypergeometric") and $("gradient")."
+    end
+end
+
+function get_connection_rule(kwargs, bloxout::Union{AbstractNeuronBlox, NeuralMassBlox}, bloxin::Union{AbstractNeuronBlox, NeuralMassBlox}, w)
     cr = get(kwargs, :connection_rule) do
         name_blox1 = nameof(bloxout)
         name_blox2 = nameof(bloxin)
