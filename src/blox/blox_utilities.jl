@@ -36,7 +36,7 @@ function changetune(model, parlist)
 end
 
 get_HH_exci_neurons(n::HHNeuronExciBlox) = [n]
-get_HH_exci_neurons(n) = []
+get_HH_exci_neurons(n) = AbstractNeuronBlox[]
 
 function get_HH_exci_neurons(g::MetaDiGraph)
     mapreduce(x -> get_HH_exci_neurons(x), vcat, get_bloxs(g))
@@ -47,7 +47,7 @@ function get_HH_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
 end
 
 get_exci_neurons(n::AbstractExciNeuronBlox) = [n]
-get_exci_neurons(n) = []
+get_exci_neurons(n) = AbstractExciNeuronBlox[]
 
 function get_exci_neurons(g::MetaDiGraph)
     mapreduce(x -> get_exci_neurons(x), vcat, get_bloxs(g))
@@ -58,28 +58,28 @@ function get_exci_neurons(b::Union{AbstractComponent, CompositeBlox})
 end
 
 get_inh_neurons(n::AbstractInhNeuronBlox) = [n]
-get_inh_neurons(n) = []
+get_inh_neurons(n) = AbstractInhNeuronBlox[]
 
 function get_inh_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_inh_neurons(x), vcat, b.parts)
 end
 
 get_wtas(n::WinnerTakeAllBlox) = [n]
-get_wtas(n) = []
+get_wtas(n) = WinnerTakeAllBlox[]
 
 function get_wtas(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_wtas(x), vcat, b.parts)
 end
 
 get_ff_inh_neurons(n::AbstractInhNeuronBlox) = [n]
-get_ff_inh_neurons(n) = []
+get_ff_inh_neurons(n) = AbstractInhNeuronBlox[]
 
 function get_ff_inh_neurons(b::Union{LateralAmygdalaBlox, CorticalBlox})
     mapreduce(x -> get_ff_inh_neurons(x), vcat, b.parts)
 end
 
 get_neurons(n::AbstractNeuronBlox) = [n]
-get_neurons(n) = []
+get_neurons(n) = AbstractNeuronBlox[]
 
 function get_neurons(b::Union{AbstractComponent, CompositeBlox})
     mapreduce(x -> get_neurons(x), vcat, b.parts)
@@ -459,7 +459,7 @@ function detect_spikes(
 end
 
 function detect_spikes(
-    blox::Union{CompositeBlox, AbstractVector}, sol::SciMLBase.AbstractSolution;
+    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
     threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
 )
 
