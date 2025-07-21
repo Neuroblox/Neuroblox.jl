@@ -38,9 +38,9 @@ end
 
 function GraphDynamics.to_subsystem(s::PulsesInput)
     states = SubsystemStates{PulsesInput}()
-    (;name, times_on, times_off, pulse_switch, base_line, pulse_amp) = s
-    I = base_line
-    params = SubsystemParams{PulsesInput}(;name, times_on, times_off, pulse_switch, base_line, pulse_amp=recursive_getdefault(pulse_amp), I)
+    (;name, times_on, times_off, pulse_switch, baseline, pulse_amp) = s
+    I = baseline
+    params = SubsystemParams{PulsesInput}(;name, times_on, times_off, pulse_switch, baseline, pulse_amp=recursive_getdefault(pulse_amp), I)
     Subsystem(states, params)
 end
 GraphDynamics.initialize_input(s::Subsystem{PulsesInput}) = (;)
@@ -53,7 +53,7 @@ GraphDynamics.event_times((;times_on, times_off)::Subsystem{PulsesInput}) = [tim
 GraphDynamics.discrete_event_condition(s::Subsystem{PulsesInput}, t, _) = (t ∈ s.times_on || t ∈ s.times_off)
 function GraphDynamics.apply_discrete_event!(integrator, sview, pview, s::Subsystem{PulsesInput}, _)
     (;t) = integrator
-    (;times_on, times_off, pulse_amp, pulse_switch, base_line) = s
+    (;times_on, times_off, pulse_amp, pulse_switch, baseline) = s
     params = pview[]
     for i ∈ eachindex(times_on, pulse_switch)
         if t == times_on[i]
@@ -61,7 +61,7 @@ function GraphDynamics.apply_discrete_event!(integrator, sview, pview, s::Subsys
         end
     end
     if t ∈ times_off
-        pview[] = @reset params.I = base_line
+        pview[] = @reset params.I = baseline
     end
     nothing
 end

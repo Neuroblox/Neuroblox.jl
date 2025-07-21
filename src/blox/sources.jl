@@ -27,22 +27,22 @@ struct PulsesInput <: StimulusBlox
     times_on
     times_off
     pulse_switch
-    base_line
+    baseline
     pulse_amp
 
-    function PulsesInput(; name, namespace=nothing, base_line=0, pulse_amp=1, pulse_switch=[1], t_start=[0], pulse_width=100)
+    function PulsesInput(; name, namespace=nothing, baseline=0.0, pulse_amp=1.0, t_start=[0], pulse_width=100, pulse_switch=ones(length(t_start)))
         @variables u(t) [output=true, description="ext_input"]
-        @parameters I=base_line pulse_amp=pulse_amp
+        @parameters I=baseline pulse_amp=pulse_amp
         eqs = [u ~ I]
 
         on = [t_start[1]] => [I~pulse_amp*pulse_switch[1]]
-        off = [t_start[1]+pulse_width] => [I~base_line]
+        off = [t_start[1]+pulse_width] => [I~baseline]
 
         dc = [on,off]
 
         for i in collect(2:length(t_start))
             on = [t_start[i]] => [I~pulse_amp*pulse_switch[i]]
-            off = [t_start[i]+pulse_width] => [I~base_line]
+            off = [t_start[i]+pulse_width] => [I~baseline]
             push!(dc,on)
             push!(dc,off)
         end
@@ -50,7 +50,7 @@ struct PulsesInput <: StimulusBlox
         sys = System(eqs, t, [u], [I, pulse_amp]; name=name, discrete_events=dc)
 
         times_off = t_start .+ pulse_width 
-        new(name, namespace, sys, t_start, times_off, pulse_switch, base_line, pulse_amp)
+        new(name, namespace, sys, t_start, times_off, pulse_switch, baseline, pulse_amp)
     end
 end
 
