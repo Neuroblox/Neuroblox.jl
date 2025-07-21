@@ -459,7 +459,7 @@ function detect_spikes(
 end
 
 function detect_spikes(
-    blox::Union{CompositeBlox, AbstractVector{<:AbstractNeuronBlox}}, sol::SciMLBase.AbstractSolution;
+    blox::Union{CompositeBlox, AbstractVector}, sol::SciMLBase.AbstractSolution;
     threshold = nothing, ts=nothing, scheduler=:serial, kwargs...
 )
 
