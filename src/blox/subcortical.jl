@@ -217,6 +217,8 @@ struct Thalamus <: CompositeBlox
         weight=1,
         connection_matrix=nothing
     )
+        I_bg = I_bg isa Array ? I_bg : fill(I_bg, N_exci)
+        
         n_exci = [
             HHNeuronExciBlox(
                     name = Symbol("exci$i"),
