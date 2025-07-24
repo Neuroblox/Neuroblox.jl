@@ -529,8 +529,8 @@ function weight_matrix_connections!(g, neurons_src, neurons_dst, name_src, name_
 end
 
 function GraphDynamics.system_wiring_rule!(g::GraphSystem,
-                                           blox_src::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox},
-                                           blox_dst::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaBlox}; kwargs...)
+                                           blox_src::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaCluster},
+                                           blox_dst::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaCluster}; kwargs...)
     neurons_dst = get_exci_neurons(blox_dst)
     neurons_src = get_exci_neurons(blox_src)
     name_dst = namespaced_nameof(blox_dst)
@@ -1008,17 +1008,42 @@ end
 
 ##----------------------------------------------
 # Amygdala circuit
-function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaBlox; kwargs...)
+function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaCluster; kwargs...)
     wtas = get_wtas(c)
-    ff_neurons = get_ff_inh_neurons(c)
+    neuron_ff_inh = only(get_ff_inh_neurons(c))
 
-    N_ff_neuron = length(ff_neurons)
+    N_wta = length(wtas)
+
+    system_wiring_rule!.((g,), wtas)
+    system_wiring_rule!(g, neuron_ff_inh)
+
+    for i in Base.OneTo(N_wta)
+        for j in Base.OneTo(N_wta)
+            if j != i
+                if haskey(c.kwargs, :connection_matrices)
+                    kwargs_ij = merge(c.kwargs, Dict(:connection_matrix => c.kwargs[:connection_matrices][i, j]))
+                else
+                    kwargs_ij = Dict(c.kwargs)
+                end
+                system_wiring_rule!(g, wtas[i], wtas[j]; kwargs_ij...)
+    
+            end
+        end
+        system_wiring_rule!(g, neuron_ff_inh, wtas[i]; weight = 1)
+    end
+end
+
+function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdala; kwargs...)
+    wtas = get_wtas(c)
+    neurons_ff_inh = get_ff_inh_neurons(c)
+
+    N_ff_neuron = length(neurons_ff_inh)
     N_wta = Int(length(wtas) / N_ff_neuron)
 
     system_wiring_rule!.((g,), wtas)
-    system_wiring_rule!.((g,), ff_neurons)
+    system_wiring_rule!.((g,), neurons_ff_inh)
 
-    for k in eachindex(ff_neurons)
+    for k in eachindex(neurons_ff_inh)
         for i in Base.OneTo(N_wta)
             wta_i = Int(i+((k-1)*N_wta))
             for j in Base.OneTo(N_wta)
@@ -1032,17 +1057,23 @@ function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaBlox; kwargs...)
                     system_wiring_rule!(g, wtas[wta_i], wtas[wta_j]; kwargs_ij...)
                 end
             end
-            system_wiring_rule!(g, ff_neurons[k], wtas[wta_i]; weight = 1.0)
+            system_wiring_rule!(g, neurons_ff_inh[k], wtas[wta_i]; weight = 1.0)
         end
     end
 end
 
-function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaBlox; kwargs...)
-    neurons_dst = get_inh_neurons(la_dst)
+function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaCluster; kwargs...)
+    neuron_ff_inh = only(get_ff_inh_neurons(la_dst))
+    
+    system_wiring_rule!(g, neuron_src, neuron_ff_inh; kwargs...) 
+end
+
+function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdala; kwargs...)
+    neurons_ff_inh = get_ff_inh_neurons(la_dst)
     num = get_ff_inh_num(kwargs, namespaced_nameof(la_dst))
     num = to_vector(num)
     for n in num
-        system_wiring_rule!(g, neuron_src, neurons_dst[end-n]; kwargs...) 
+        system_wiring_rule!(g, neuron_src, neurons_ff_inh[n]; kwargs...) 
     end
 end
 
