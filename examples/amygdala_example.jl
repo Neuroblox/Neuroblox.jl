@@ -1,57 +1,95 @@
 using Neuroblox
 using OrdinaryDiffEq 
 using CairoMakie 
+using Optimization
+using OptimizationOptimJL
 
-global_ns = :g 
-#@named ASC1 = NextGenerationEIBlox(;namespace=global_ns, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26);
-@named LA = LateralAmygdalaBlox(; 
-    namespace=global_ns, 
-    N_wta=10, 
-    N_ff_inh=5, 
-    N_exci=5, 
-    density=0.01, 
-    weight=1, 
-    I_bg_ar=1, 
-    I_bg_ff_inhib=0, 
-);
-@named CB = CorticalBlox(; 
-    namespace=global_ns, 
-    N_wta=10, 
-    N_exci=5, 
-    density=0.01, 
-    weight=1, 
-    I_bg_ar=0.1,
-    I_bg_ff_inhib=0.5
-);
+using Optim
 
-@named InfC = PulsesInput(;
-    namespace=global_ns, 
-    pulse_width=1000, 
-    pulse_amp=5,
-    t_start = [500]
-);
+function objective(x, data)
+    I_bg_CB, I_bg_LA, pulse_amp, dens_CB_LA, dens_LA_CB, dens_LA = x
 
-@named Thal_core = Thalamus(;
-    namespace=global_ns,
-    N_exci=25,
-    I_bg=-2.5 .+ (2.75)*rand(25),
-    density=0.03,
-    weight=1.3
-); 
+    global_ns = :g
+    N_LA_clusters = 5
 
-g = MetaDiGraph()
-add_edge!(g, InfC => Thal_core; weight = 1)
-add_edge!(g, Thal_core => CB; connection_rule=:gradient, weight = 1, density = 0.04)
-add_edge!(g, LA => CB; connection_rule=:gradient, density=0.1, weight=1)
-add_edge!(g, CB => LA; connection_rule=:gradient, density=0.1, weight=1)
+    LA_clusters = map(Base.OneTo(N_LA_clusters)) do i
+        LateralAmygdalaCluster(;
+            name=Symbol("LA_$i"), 
+            namespace=global_ns, 
+            N_wta=10, 
+            N_exci=5, 
+            density=dens_LA, 
+            weight=1, 
+            I_bg_ar=I_bg_LA, 
+            I_bg_ff_inhib=0.2, 
+        )
+    end
+    
+    @named CB = CorticalBlox(; 
+        namespace=global_ns, 
+        N_wta=10, 
+        N_exci=5, 
+        density=0.05, 
+        weight=1, 
+        I_bg_ar=I_bg_CB,
+        I_bg_ff_inhib=0.2
+    );
 
-#add_edge!(g, ASC1 => LA; ff_inh_num = [4, 3, 2], weight=44)
-#add_edge!(g, ASC1 => CB; weight = 20)
+    @named Thal_core = Thalamus(;
+        namespace=global_ns,
+        N_exci=25,
+        I_bg=-2.5 .+ (2.75)*rand(25),
+        density=0.03,
+        weight=1.3
+    ); 
 
-@named sys = system_from_graph(g; graphdynamics=true);
-prob = ODEProblem(sys, [], (0.0, 2000), []);
-sol = solve(prob, Vern7(), saveat=0.1)
+    @named InfC = PulsesInput(;
+        namespace=global_ns, 
+        pulse_width=1000, 
+        pulse_amp=pulse_amp,
+        t_start = [250]
+    );
 
-n_exci = Neuroblox.get_exci_neurons(LA);
-frplot(n_exci, sol; threshold=-10, win_size=10)
-frplot(CB, sol; threshold=-10, win_size=10)
+    g = MetaDiGraph()
+    add_edge!(g, InfC => Thal_core; weight = 1)
+    add_edge!(g, Thal_core => CB; weight = 1, density = 0.04)
+
+    for i in Base.OneTo(N_LA_clusters)
+        add_edge!(g, LA_clusters[i] => CB; connection_rule=:gradient, density=dens_LA_CB, weight=1)
+        add_edge!(g, CB => LA_clusters[i]; connection_rule=:gradient, density=dens_CB_LA, weight=1)
+    end
+    
+    @named sys = system_from_graph(g; graphdynamics=true);
+    prob = ODEProblem(sys, [], (0.0, 2000), []);
+    sol = solve(prob; saveat=0.1)
+
+
+    n_exci = mapreduce(x -> Neuroblox.get_exci_neurons(x), vcat, LA_clusters)
+    fr = firing_rate(n_exci, sol; threshold=-10, win_size=100)
+    
+    SciMLBase.successful_retcode(sol) || return Inf
+    return sum((fr .- data).^2)
+end
+
+fr_data = [0.75, 0.7, 0.9, 1.2, 0.8, 1.3, 1.6, 1.1, 1.2, 1.1, 0.8, 0.8, 0.8, 0.8, 1.1, 1.0, 0.6, 0.5, 0.6, 0.75] 
+
+p0 = [1, 1, 1, 0.05, 0.05, 0.05]
+lb = [-5, -5, 0, 0, 0, 0]
+ub = [5, 5, 5, 1, 1, 1]
+
+using Logging
+Logging.disable_logging(Logging.Info)
+
+sol = optimize(x -> objective(x, fr_data), p0, LBFGS())
+
+#=
+obj = OptimizationFunction(
+    (p, hyperp) -> objective(p, fr_data), 
+    Optimization.AutoFiniteDiff()
+)
+
+prob = OptimizationProblem(obj, p0; lb, ub)
+
+alg = BFGS()
+sol = solve(prob, alg)
+=#
