@@ -707,20 +707,24 @@ end
 
 function Connector(
     blox_src::HHNeuronInhibBlox, 
-    blox_dest::LateralAmygdalaBlox;
+    blox_dest::LateralAmygdala;
     kwargs...
-)
-    neurons_dest = get_inh_neurons(blox_dest)
+)   
+    # returns only the feedforward neurons of LateralAmygdala without recursively going into its parts and returning other inhibitory neurons
+    neurons_ff_inh = get_ff_inh_neurons(blox_dest) 
     num = get_ff_inh_num(kwargs, namespaced_nameof(blox_dest))
-    conn = Connector(blox_src, neurons_dest[end-num]; kwargs...) 
-    #note the ff_inh_num need to be total number of feedforward inhibition neurons - actual index
+    num = to_vector(num)
+
+    conn = mapreduce(merge!, neurons_ff_inh) do neuron
+        Connector(blox_src, neuron; kwargs...)
+    end 
 
     return conn
 end
 
 function Connector(
-    blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox},
-    blox_dst::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaBlox};
+    blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster},
+    blox_dst::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster};
     kwargs...
 )
     neurons_dest = get_exci_neurons(blox_dst)

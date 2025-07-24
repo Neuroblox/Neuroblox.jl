@@ -74,7 +74,7 @@ end
 get_ff_inh_neurons(n::AbstractInhNeuronBlox) = [n]
 get_ff_inh_neurons(n) = AbstractInhNeuronBlox[]
 
-function get_ff_inh_neurons(b::Union{LateralAmygdalaBlox, CorticalBlox})
+function get_ff_inh_neurons(b::Union{LateralAmygdalaCluster, LateralAmygdala, CorticalBlox})
     mapreduce(x -> get_ff_inh_neurons(x), vcat, b.parts)
 end
 
