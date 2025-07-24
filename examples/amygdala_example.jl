@@ -61,8 +61,7 @@ function objective(x, data)
     
     @named sys = system_from_graph(g; graphdynamics=true);
     prob = ODEProblem(sys, [], (0.0, 2000), []);
-    sol = solve(prob; saveat=0.1)
-
+    sol = solve(prob, TRBDF2(); saveat=0.1, abstol=1e-2, reltol=1e-2)
 
     n_exci = mapreduce(x -> Neuroblox.get_exci_neurons(x), vcat, LA_clusters)
     fr = firing_rate(n_exci, sol; threshold=-10, win_size=100)
