@@ -539,7 +539,7 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem,
     cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
     if cr == :gradient
-        conn = density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+        conn = density_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     else
         conn = hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     end
@@ -886,7 +886,7 @@ function hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name
     end
 end
 
-function density_gradient_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+function density_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     density = get_density(kwargs, name_src, name_dst)
     N_dst = length(neurons_dst)
 

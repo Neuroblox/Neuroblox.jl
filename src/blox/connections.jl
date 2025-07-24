@@ -290,7 +290,7 @@ function indegree_constrained_connections(neurons_src, neurons_dst, name_src, na
     return reduce(merge!, C)
 end
 
-function density_gradient_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+function density_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     density = get_density(kwargs, name_src, name_dst)
     N_dst = length(neurons_dst)
 
@@ -733,7 +733,7 @@ function Connector(
     cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
     if cr == :gradient
-        conn = density_gradient_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
+        conn = density_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
     else
         conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
     end
