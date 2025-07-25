@@ -290,6 +290,28 @@ function indegree_constrained_connections(neurons_src, neurons_dst, name_src, na
     return reduce(merge!, C)
 end
 
+function weight_matrix_connections(neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    N_src = length(neurons_src)
+    N_dst = length(neurons_dst)
+    conn_mat = get_weightmatrix(kwargs, name_src, name_dst)
+    
+    if size(conn_mat) != (N_src, N_dst)
+        error("The connection matrix must be of size $(N_src) x $(N_dst)")
+    end
+
+    C = Connector[]
+    for j ∈ 1:N_dst
+        for i ∈ 1:N_src
+            if conn_mat[i, j] > 0
+                kwargs_ij = (kwargs..., weight=conn_mat[i, j])
+                push!(C, Connector(neurons_src[i], neurons_dst[j]; kwargs_ij...))
+            end
+        end
+    end
+
+    return reduce(merge!, C)
+end
+
 connection_rule(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...)
 
 connection_equations(blox_src, blox_dest; kwargs...) = Connector(blox_src, blox_dest; kwargs...).equation
@@ -531,6 +553,38 @@ function Connector(
 end
 
 function Connector(
+    blox_src::StimulusBlox,
+    blox_dest::Union{HHNeuronExciBlox,HHNeuronInhibBlox};
+    kwargs...)
+
+    sys_src = get_namespaced_sys(blox_src)
+    sys_dest = get_namespaced_sys(blox_dest)
+
+    w = generate_weight_param(blox_src, blox_dest; kwargs...)
+    x = only(outputs(blox_src; namespaced=true))
+
+    eq = sys_dest.I_in ~ x*w
+
+    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
+end
+
+function Connector(
+    blox_src::StimulusBlox,
+    blox_dest::Thalamus;
+    kwargs...)
+
+    neurons = get_exci_neurons(blox_dest)
+
+    conn = mapreduce(merge!, neurons) do neuron
+        Connector(blox_src, neuron; kwargs...)
+    end
+
+    return conn    
+end
+
+
+
+function Connector(
     blox_src::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam},
     blox_dest::Union{Striatum_MSN_Adam,Striatum_FSI_Adam,GPe_Adam};
     kwargs...
@@ -676,7 +730,11 @@ function Connector(
     neurons_dest = get_exci_neurons(blox_dest)
     neurons_src = get_exci_neurons(blox_src)
 
-    conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...)
+    if haskey(kwargs, :weightmatrix)
+        conn = weight_matrix_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...)
+    else
+        conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...)
+    end
 
     return conn
 end
@@ -1103,21 +1161,6 @@ function Connector(
     end
 
     return conn
-end
-
-function Connector(
-    blox_src::Union{DBS, ProtocolDBS},
-    blox_dest::AbstractNeuronBlox;
-    kwargs...
-)
-    sys_src = get_namespaced_sys(blox_src)
-    sys_dest = get_namespaced_sys(blox_dest)
-    
-    w = generate_weight_param(blox_src, blox_dest; kwargs...)
-    
-    eq = sys_dest.I_in ~ w * sys_src.u
-    
-    return Connector(nameof(sys_src), nameof(sys_dest); equation=eq, weight=w)
 end
 
 function Connector(
