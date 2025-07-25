@@ -4,6 +4,8 @@
 Creates a winner-take-all local circuit found in neocortex,
 typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
 and receive feedback inhibition from that interneuron.
+
+adopted from: Coultrip, Robert, Richard Granger, and Gary Lynch. “A Cortical Model of Winner-Take-All Competition via Lateral Inhibition.” Neural Networks 5, no. 1 (January 1, 1992): 47-54.
 """
 struct WinnerTakeAllBlox{P} <: CompositeBlox
     namespace
