@@ -131,7 +131,7 @@ function runningperf(trace; len=min(150, length(trace)))
     end / len
 end
 
-function Neuroblox.run_experiment!(agent::GDYAgent, env::ClassificationEnvironment; t_warmup=0, verbose=false, kwargs...)
+function Neuroblox.run_experiment!(agent::GDYAgent, env::ClassificationEnvironment, save_path::Union{Nothing, String}=nothing; t_warmup=0, verbose=false, kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
@@ -145,19 +145,24 @@ function Neuroblox.run_experiment!(agent::GDYAgent, env::ClassificationEnvironme
         print("Warmed up in: ")
     end
     trace = @NamedTuple{trial::Int, iscorrect::Bool, action::Int, time::Float64}[]
-    prog = Progress(N_trials; showspeed=true, enabled=verbose)
+    if verbose
+        prog = Progress(N_trials; showspeed=true, enabled=verbose)
+    end
     try
         for trial ∈ 1:N_trials
             (;time, gctime) = @timed begin
-                _, iscorrect, action = @noinline run_trial!(agent, env; kwargs...)
+                sol, iscorrect, action = @noinline run_trial!(agent, env; kwargs...)
             end
-            push!(trace, (;trial, iscorrect, action, time))            
-            next!(prog, showvalues=showvalues(;trace, N_trials))
+            push!(trace, (;trial, iscorrect, action, time))
+            verbose && next!(prog, showvalues=showvalues(;trace, N_trials))
+            if !isnothing(save_path)
+                save_voltages(sol, save_path, trial)
+            end
         end
     catch e;
         if e isa InterruptException
             @warn "Interrupted! Bailing out now"
-            finish!(prog)
+            verbose && finish!(prog)
         else
             rethrow(e)
         end

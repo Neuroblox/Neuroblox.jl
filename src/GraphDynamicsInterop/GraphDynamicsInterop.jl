@@ -91,7 +91,8 @@ using ..Neuroblox:
     add_blox!,
     add_edge!,
     get_learning_rule,
-    action_selection_from_graph
+    action_selection_from_graph,
+    save_voltages
 
 using GraphDynamics:
     GraphDynamics,
