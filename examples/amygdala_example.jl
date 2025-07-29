@@ -1,13 +1,17 @@
 using Neuroblox
 using OrdinaryDiffEq 
-using CairoMakie 
-using Optimization
-using OptimizationOptimJL
+using LogExpFunctions: logistic
+using Logging
+Logging.disable_logging(Logging.Info)
 
-using Optim
+using CairoMakie 
 
 function objective(x, data)
-    I_bg_CB, I_bg_LA, pulse_amp, dens_CB_LA, dens_LA_CB, dens_LA = x
+    I_bg_CB, I_bg_LA, pulse_amp, uncon_dens_CB_LA, uncon_dens_LA_CB, uncon_dens_LA = x
+
+    dens_CB_LA = logistic(uncon_dens_CB_LA)
+    dens_LA_CB = logistic(uncon_dens_LA_CB)
+    dens_LA = logistic(uncon_dens_LA)
 
     global_ns = :g
     N_LA_clusters = 5
