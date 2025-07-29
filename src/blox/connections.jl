@@ -514,10 +514,9 @@ function Connector(
     end
 end
 
-# additional dispatch to connect to a stimulus blox, first crafted for ExternalInput
 function Connector(
     blox_src::StimulusBlox,
-    blox_dest::NeuralMassBlox;
+    blox_dest::Union{NeuralMassBlox, AbstractNeuronBlox};
     kwargs...)
 
     sys_src = get_namespaced_sys(blox_src)
