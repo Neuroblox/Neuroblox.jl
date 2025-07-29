@@ -1,10 +1,11 @@
 using Neuroblox
 using OrdinaryDiffEq 
+using NonlinearSolve
 using LogExpFunctions: logistic
 using Logging
 Logging.disable_logging(Logging.Info)
 
-using CairoMakie 
+using CairoMakie
 
 function objective(x, data)
     I_bg_CB, I_bg_LA, pulse_amp, uncon_dens_CB_LA, uncon_dens_LA_CB, uncon_dens_LA = x
@@ -76,14 +77,15 @@ end
 
 fr_data = [0.75, 0.7, 0.9, 1.2, 0.8, 1.3, 1.6, 1.1, 1.2, 1.1, 0.8, 0.8, 0.8, 0.8, 1.1, 1.0, 0.6, 0.5, 0.6, 0.75] 
 
-p0 = [1, 1, 1, 0.05, 0.05, 0.05]
+p0 = [1, 1, 1, -4, -4, -4]
 lb = [-5, -5, 0, 0, 0, 0]
 ub = [5, 5, 5, 1, 1, 1]
 
-using Logging
-Logging.disable_logging(Logging.Info)
+prob = NonlinearLeastSquaresProblem(objective, p0, fr_data)
 
-sol = optimize(x -> objective(x, fr_data), p0, LBFGS())
+res = solve(prob, FastShortcutNLLSPolyalg())
+
+# sol = optimize(x -> objective(x, fr_data), p0, BFGS())
 
 #=
 obj = OptimizationFunction(
