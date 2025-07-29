@@ -722,6 +722,30 @@ function Connector(
     return conn
 end
 
+unction Connector(
+    blox_src::CentralAmygdalaBlox, 
+    blox_dest::LateralAmygdalaCluster;
+    kwargs...
+)
+    neurons_src = get_inh_neurons(blox_src)
+    neurons_dest = get_inh_neurons(blox_dest)
+    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_src))
+    conn = hypergeometric_connections(neurons_src[1:(end-num)], neurons_dest[(end-num):end], nameof(blox_src), nameof(blox_dest); kwargs...) 
+    return conn
+end
+
+function Connector(
+    blox_src::LateralAmygdalaCluster, 
+    blox_dest::CentralAmygdalaBlox;
+    kwargs...
+)
+    neurons_src = get_inh_neurons(blox_src)
+    neurons_dest = get_inh_neurons(blox_dest)
+    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_src))
+    conn = hypergeometric_connections(neurons_src[(end-num):end], neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dest); kwargs...) 
+    return conn
+end
+
 function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster},
     blox_dst::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster};

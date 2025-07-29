@@ -437,3 +437,79 @@ struct LateralAmygdala <: CompositeBlox
         new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
     end
 end
+
+struct CentralAmygdalaBlox <: CompositeBlox
+    namespace
+    parts
+    system
+    connector
+    mean
+
+    function CentralAmygdalaBlox(;
+        name, 
+        namespace=nothing,
+        N_inhib_group=5,
+        N_inhib_per_group=6,
+        N_inhib_fsi=5,
+        E_syn_inhib=-70,
+        E_syn_inhib_fsi=-80,
+        G_syn_inhib=8,
+        I_bg=2*ones(N_inhib_group * N_inhib_per_group),
+        I_bg_fsi=6.2*ones(N_inhib_fsi),
+        τ_inhib_fsi=11,
+        τ_inhib_fsi_s=6.5,
+        σ=1.2,
+        τ_inhib=70,
+        weight = 1
+    )
+        N_inhib = N_inhib_group * N_inhib_per_group
+        n_inh = [
+            HHNeuronInhibBlox(
+                    name = Symbol("inh$i"),
+                    namespace = namespaced_name(namespace, name), 
+                    E_syn = E_syn_inhib, 
+                    G_syn = G_syn_inhib, 
+                    τ = τ_inhib,
+                    I_bg = I_bg[i],
+            ) 
+            for i in Base.OneTo(N_inhib)
+        ]
+        
+        n_fsi = [
+            HHNeuronInhib_FSI_Adam_Blox(
+                    name = Symbol("fsi$i"),
+                    namespace = namespaced_name(namespace, name), 
+                    E_syn = E_syn_inhib_fsi,  
+                    τ = τ_inhib_fsi,
+                    τₛ = τ_inhib_fsi_s,
+                    I_bg = I_bg_fsi[i],
+                    σ=σ
+            ) 
+            for i in Base.OneTo(N_inhib_fsi)
+        ]
+
+        g = MetaDiGraph()
+        parts = vcat(n_inh, n_fsi)
+        add_blox!.(Ref(g), parts)
+
+        for i in 1:N_inhib_fsi
+            for j in 1:N_inhib
+                add_edge!(g, i+N_inhib, j, Dict(:weight => weight))
+            end
+        end
+
+        bc = connectors_from_graph(g)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
+        
+        m = if isnothing(namespace) 
+            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
+        else
+            @variables t
+            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
+            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
+        end
+
+        new(namespace, parts, sys, bc, m)
+    end
+
+end 
