@@ -198,7 +198,7 @@ function GraphDynamics.system_wiring_rule!(g,
     
     learning_rule = maybe_set_state_pre(learning_rule, namespaced_name(HH_src.name, "spikes_cumulative"))
     learning_rule = maybe_set_state_post(learning_rule, namespaced_name(HH_dst.name, "spikes_cumulative"))
-    if sta & !(HH_src isa HHNeuronInhib_FSI_Adam_Blox) # Don't hit STA rules for FSI
+    if sta & !(HH_src isa Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI}) # Don't hit STA rules for FSI
         conn = HHConnection_STA(weight)
     else
         conn = BasicConnection(weight)
@@ -211,7 +211,8 @@ function (c::BasicConnection)(HH_src::Union{Subsystem{HHNeuronExciBlox},
                                             Subsystem{HHNeuronInhib_FSI_Adam_Blox},
                                             Subsystem{HHNeuronInhib_MSN_Adam_Blox},
                                             Subsystem{HHNeuronExci_STN_Adam_Blox},
-                                            Subsystem{HHNeuronInhib_GPe_Adam_Blox}}, 
+                                            Subsystem{HHNeuronInhib_GPe_Adam_Blox},
+                                            Subsystem{HHNeuronFSI}}, 
                               HH_dst::Union{Subsystem{HHNeuronExciBlox},
                                             Subsystem{HHNeuronInhibBlox},
                                             Subsystem{HHNeuronInhib_FSI_Adam_Blox},
@@ -240,8 +241,8 @@ function (c::HHConnection_STA)(HH_src::Union{Subsystem{HHNeuronExciBlox},
     I_syn = -c.weight * HH_dst.Gₛₜₚ * HH_src.G * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn
 end
-function (c::BasicConnection)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox},
-                              HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
+function (c::BasicConnection)(HH_src::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}},
+                              HH_dst::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, t)
     acc = initialize_input(HH_dst)
     I_syn = -c.weight * HH_src.Gₛ * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn

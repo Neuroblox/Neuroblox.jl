@@ -141,6 +141,7 @@ end
 
 for sys ∈ [HHNeuronExciBlox(name=:hhne)
            HHNeuronInhibBlox(name=:hhni)
+           HHNeuronFSI(name=:hhnfsi)
            HHNeuronInhib_MSN_Adam_Blox(name=:hhni_msn_adam)
            HHNeuronInhib_FSI_Adam_Blox(name=:hhni_fsi_adam)
            HHNeuronExci_STN_Adam_Blox(name=:hhne_stn_adam)

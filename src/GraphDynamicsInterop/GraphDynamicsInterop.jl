@@ -27,6 +27,7 @@ using ..Neuroblox:
     LIFNeuron,
     HHNeuronExciBlox,
     HHNeuronInhibBlox,
+    HHNeuronFSI,
     HHNeuronInhib_MSN_Adam_Blox,
     HHNeuronInhib_FSI_Adam_Blox,
     HHNeuronExci_STN_Adam_Blox,
