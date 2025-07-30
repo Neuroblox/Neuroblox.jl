@@ -241,8 +241,16 @@ function (c::HHConnection_STA)(HH_src::Union{Subsystem{HHNeuronExciBlox},
     I_syn = -c.weight * HH_dst.Gₛₜₚ * HH_src.G * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn
 end
-function (c::BasicConnection)(HH_src::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}},
-                              HH_dst::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, t)
+
+function (c::BasicConnection)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox},
+                              HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
+    acc = initialize_input(HH_dst)
+    I_syn = -c.weight * HH_src.Gₛ * (HH_dst.V - HH_src.E_syn)
+    @set acc.I_syn = I_syn
+end
+
+function (c::BasicConnection)(HH_src::Subsystem{HHNeuronFSI},
+                              HH_dst::Subsystem{HHNeuronFSI}, t)
     acc = initialize_input(HH_dst)
     I_syn = -c.weight * HH_src.Gₛ * (HH_dst.V - HH_src.E_syn)
     @set acc.I_syn = I_syn
