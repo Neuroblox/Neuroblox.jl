@@ -460,7 +460,6 @@ struct CentralAmygdalaBlox <: CompositeBlox
         τ_inhib_fsi_s=6.5,
         σ=1.2,
         τ_inhib=70,
-        weight = 1,
         kwargs...
     )
         N_inhib = N_inhib_group * N_inhib_per_group
@@ -495,14 +494,17 @@ struct CentralAmygdalaBlox <: CompositeBlox
 
         for i in 1:N_inhib_fsi
             for j in 1:N_inhib
-                add_edge!(g, n_fsi[i] => n_inh[j]; weight, kwargs...)
+                add_edge!(g, n_fsi[i] => n_inh[j]; kwargs...)
             end
         end
 
         bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
+        # Make sure to add weight in the kwargs so that GraphDynamics doesn't complain 
+        if !haskey(kwargs, :weight)
+            kwargs = merge(NamedTuple(kwargs), (weight=1,))
+        end
         new(namespace, parts, sys, bc, kwargs)
     end
-
 end 
