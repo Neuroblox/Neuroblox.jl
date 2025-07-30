@@ -48,6 +48,7 @@ using ..Neuroblox:
     CorticalBlox,
     LateralAmygdalaCluster,
     LateralAmygdala,
+    CentralAmygdalaBlox,
     STN,
     Thalamus,
     GPi,

@@ -1063,6 +1063,18 @@ function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdala; kwargs...)
     end
 end
 
+function GraphDynamics.system_wiring_rule!(g, c::CentralAmygdalaBlox; kwargs...)
+    neurons = get_inh_neurons(c)
+    idxs_fsi = findall(n -> n isa HHNeuronFSI, neurons)
+    idxs_inh = setdiff(Base.OneTo(length(neurons)), idxs_fsi)
+
+    for i in idxs_fsi
+        for j in idxs_inh
+            system_wiring_rule!(g, neurons[i], neurons[j]; c.kwargs...)
+        end
+    end
+end
+
 function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaCluster; kwargs...)
     neuron_ff_inh = only(get_ff_inh_neurons(la_dst))
     
