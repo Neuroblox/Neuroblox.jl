@@ -192,8 +192,8 @@ end
 
 
 function GraphDynamics.system_wiring_rule!(g, 
-    HH_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
-    HH_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox};
+    HH_src::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronFSI, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}, 
+    HH_dst::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronFSI, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox};
     weight, sta=false, learning_rule=NoLearningRule(), kwargs...)
     
     learning_rule = maybe_set_state_pre(learning_rule, namespaced_name(HH_src.name, "spikes_cumulative"))
@@ -249,8 +249,8 @@ function (c::BasicConnection)(HH_src::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blo
 end
 
 function GraphDynamics.system_wiring_rule!(g,
-                                           HH_src::HHNeuronInhib_FSI_Adam_Blox, 
-                                           HH_dst::HHNeuronInhib_FSI_Adam_Blox; weight, gap=false, kwargs...)
+                                           HH_src::Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI}, 
+                                           HH_dst::Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI}; weight, gap=false, kwargs...)
 
     if gap
         gap_weight = get(kwargs, :gap_weight, 0.0)
@@ -264,15 +264,15 @@ function GraphDynamics.system_wiring_rule!(g,
 end
 
 
-function ((;w_gap)::HHConnection_GAP)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, 
-                                      HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
+function ((;w_gap)::HHConnection_GAP)(HH_src::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, 
+                                      HH_dst::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, t)
     acc = initialize_input(HH_dst)
     acc = @set acc.I_gap = -w_gap * (HH_dst.V - HH_src.V)
     acc
 end
 
-function ((;w_gap_rev)::HHConnection_GAP_Reverse)(HH_src::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, 
-                                                  HH_dst::Subsystem{HHNeuronInhib_FSI_Adam_Blox}, t)
+function ((;w_gap_rev)::HHConnection_GAP_Reverse)(HH_src::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, 
+                                                  HH_dst::Union{Subsystem{HHNeuronInhib_FSI_Adam_Blox}, Subsystem{HHNeuronFSI}}, t)
     acc = initialize_input(HH_dst)
     acc = @set acc.I_gap = -w_gap_rev * (HH_dst.V - HH_src.V)
     acc
