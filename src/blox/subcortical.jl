@@ -443,7 +443,7 @@ struct CentralAmygdalaBlox <: CompositeBlox
     parts
     system
     connector
-    mean
+    kwargs
 
     function CentralAmygdalaBlox(;
         name, 
@@ -460,7 +460,8 @@ struct CentralAmygdalaBlox <: CompositeBlox
         τ_inhib_fsi_s=6.5,
         σ=1.2,
         τ_inhib=70,
-        weight = 1
+        weight = 1,
+        kwargs...
     )
         N_inhib = N_inhib_group * N_inhib_per_group
         n_inh = [
@@ -494,22 +495,14 @@ struct CentralAmygdalaBlox <: CompositeBlox
 
         for i in 1:N_inhib_fsi
             for j in 1:N_inhib
-                add_edge!(g, n_fsi[i] => n_inh[j]; weight = weight)
+                add_edge!(g, n_fsi[i] => n_inh[j]; weight, kwargs...)
             end
         end
 
         bc = connectors_from_graph(g)
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
         
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m)
+        new(namespace, parts, sys, bc, kwargs)
     end
 
 end 
