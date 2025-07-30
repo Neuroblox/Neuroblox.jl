@@ -198,7 +198,7 @@ export Neuron
 export qif_neuron, if_neuron, hh_neuron_excitatory, 
     hh_neuron_inhibitory, VanDerPol, Generic2dOscillator, kuramoto_oscillator
 export HHNeuronExciBlox, HHNeuronInhibBlox, IFNeuron, LIFNeuron, QIFNeuron, IzhikevichNeuron, LIFExciNeuron, LIFInhNeuron,
-    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, LateralAmygdalaCluster, LateralAmygdala, CentralAmygdalaBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHFSIBlox, HHNeuronExci_STN_Adam_Blox,
+    CanonicalMicroCircuitBlox, WinnerTakeAllBlox, CorticalBlox, LateralAmygdalaCluster, LateralAmygdala, CentralAmygdalaBlox, SuperCortical, HHNeuronInhib_MSN_Adam_Blox, HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI, HHNeuronExci_STN_Adam_Blox,
     HHNeuronInhib_GPe_Adam_Blox, Striatum_MSN_Adam, Striatum_FSI_Adam, GPe_Adam, STN_Adam, LIFExciCircuitBlox, LIFInhCircuitBlox
 export LinearNeuralMass, HarmonicOscillator, JansenRit, WilsonCowan, LarterBreakspear, KuramotoOscillator
 export Matrisome, Striosome, Striatum, GPi, GPe, Thalamus, STN, TAN, SNc

@@ -335,11 +335,11 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 	end
 end	
 
-struct HHFSIBlox <: AbstractInhNeuronBlox
+struct HHNeuronFSI <: AbstractInhNeuronBlox
     system
     namespace
 
-	function HHFSIBlox(;
+	function HHNeuronFSI(;
         name, 
         namespace=nothing,
         E_syn=-80.0, 

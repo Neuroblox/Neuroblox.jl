@@ -476,7 +476,7 @@ struct CentralAmygdalaBlox <: CompositeBlox
         ]
         
         n_fsi = [
-            HHNeuronInhib_FSI_Adam_Blox(
+            HHNeuronFSI(
                     name = Symbol("fsi$i"),
                     namespace = namespaced_name(namespace, name), 
                     E_syn = E_syn_inhib_fsi,  
