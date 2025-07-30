@@ -331,6 +331,92 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 	end
 end	
 
+struct HHNeuronInhib_FSI_Remove_Noise_Blox <: AbstractInhNeuronBlox
+    system
+    namespace
+
+	function HHNeuronInhib_FSI_Remove_Noise_Blox(;
+        name, 
+        namespace=nothing,
+        E_syn=-80.0, 
+        I_bg=6.2,
+        τ=11,
+		τₛ=6.5,
+        Cₘ=1.0,
+		σ=1.2,
+		a=4,
+		b=10,
+		T=37
+    )
+		sts = @variables begin 
+			V(t)=-70.00 
+			n(t)=0.032 
+			h(t)=0.059 
+			mD(t)=0.05
+			hD(t)=0.059
+			I_syn(t)
+			[input=true] 
+			I_gap(t)
+			[input=true] 
+            I_in(t)
+            [input=true]
+			I_asc(t)
+			[input=true]
+			G(t)=0.0 
+			[output=true] 
+			Gₛ(t)=0.0 
+			[output=true] 
+		end
+
+		ps = @parameters begin 
+			E_syn=E_syn 
+			G_Na = 112.5 
+			G_K  = 225 
+			G_L = 0.25 
+			G_D = 6
+			E_Na = 50 
+			E_K = -90 
+			E_L = -70 
+			I_bg=I_bg
+           	Cₘ = Cₘ
+			σ = σ
+			a = a
+			b = b
+			T = T
+            τ = τ
+            τₛ = τₛ
+		end
+
+		n_inf(v) = 1/(1+exp(-(v+12.4)/6.8))
+	    τₙ(v) = (0.087+11.4/(1+exp((v+14.6)/8.6)))*(0.087+11.4/(1+exp(-(v-1.3)/18.7)))
+	    m_inf(v) = 1/(1+exp(-(v+24)/11.5))
+     	h_inf(v) = 1/(1+exp((v+58.3)/6.7))
+	    τₕ(v) = 0.5 + 14/(1+exp((v+60)/12))
+		mD_inf(v) = 1/(1+exp(-(v+50)/20))
+		τₘD(v) = 2
+		hD_inf(v) = 1/(1+exp((v+70)/6))
+		τₕD(v) = 150
+		G_asymp(v,a,b) = a*(1+tanh(v/b))
+
+		eqs = [ 
+			   D(V)~(1/Cₘ)*(-G_Na*m_inf(V)^3*h*(V-E_Na)-G_K*n^2*(V-E_K)-G_L*(V-E_L)-G_D*mD^3*hD*(V-E_K)+I_bg+I_syn+I_gap+I_asc+I_in+σ), 
+			   D(n)~(n_inf(V)-n)/τₙ(V), 
+			   D(h)~(h_inf(V)-h)/τₕ(V),
+			   D(mD)~(mD_inf(V)-mD)/τₘD(V),
+			   D(hD)~(hD_inf(V)-hD)/τₕD(V),
+			   D(G)~(-1/τ)*G + G_asymp(V,a,b)*(1-G),
+			   D(Gₛ)~(-1/τₛ)*Gₛ + G_asymp(V,a,b)*(1-Gₛ)
+		]
+        
+		sys = System(
+            eqs, t, sts, ps; 
+			name = Symbol(name)
+			)
+
+		new(sys, namespace)
+	end
+end
+
 struct HHNeuronExci_STN_Adam_Blox <: AbstractExciNeuronBlox
     system
     namespace

@@ -431,10 +431,10 @@ struct LateralAmygdala <: CompositeBlox
         add_blox!.(Ref(g), LA_clusters)
 
         bc = connectors_from_graph(g)
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
+        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(LA_clusters; name)
 
         kwargs = merge(kwargs, Dict(:N_wta => N_wta))
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc, kwargs)
+        new(namespace, LA_clusters, sys, bc, kwargs)
     end
 end
 
@@ -494,7 +494,7 @@ struct CentralAmygdalaBlox <: CompositeBlox
 
         for i in 1:N_inhib_fsi
             for j in 1:N_inhib
-                add_edge!(g, i+N_inhib, j, Dict(:weight => weight))
+                add_edge!(g, n_fsi[i] => n_inh[j]; weight = weight)
             end
         end
 
