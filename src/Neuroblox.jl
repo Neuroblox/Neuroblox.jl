@@ -218,14 +218,14 @@ export create_adjacency_edges!, adjmatrixfromdigraph
 export get_namespaced_sys, nameof
 export run_experiment!, run_trial!
 export addnontunableparams, changetune
-export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars, get_ff_inh_num
+export get_weights, get_dynamic_states, get_idx_tagged_vars, get_eqidx_tagged_vars
 export BalloonModel,LeadField, boldsignal_endo_balloon
 export PINGNeuronExci, PINGNeuronInhib
 export NGNMM_Izh, NGNMM_QIF, NGNMM_theta, NextGenerationEIBlox
 export meanfield, meanfield!, rasterplot, rasterplot!, stackplot, stackplot!, frplot, frplot!, voltage_stack, adjacency, adjacency!
 export powerspectrumplot, powerspectrumplot!, welch_pgram, periodogram, hanning, hamming
 export detect_spikes, mean_firing_rate, firing_rate, inter_spike_intervals, flat_inter_spike_intervals
-export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_neuron_color
+export voltage_timeseries, meanfield_timeseries, state_timeseries, get_neurons, get_exci_neurons, get_inh_neurons, get_ff_inh_neurons, get_neuron_color
 export AdjacencyMatrix, Connector, connection_rule, connection_equations, connection_spike_affects, connection_learning_rules, connection_callbacks
 export inputs, outputs, equations, unknowns, parameters, discrete_events
 export MetabolicHHNeuron
