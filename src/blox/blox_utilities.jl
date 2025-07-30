@@ -361,9 +361,9 @@ function get_connection_rule(kwargs, blox_src::CompositeBlox, blox_dst::Composit
 end
 
 function get_connection_rule(kwargs, bloxout::Union{AbstractNeuronBlox, NeuralMassBlox}, bloxin::Union{AbstractNeuronBlox, NeuralMassBlox}, w)
+    name_blox1 = nameof(bloxout)
+    name_blox2 = nameof(bloxin)
     cr = get(kwargs, :connection_rule) do
-        name_blox1 = nameof(bloxout)
-        name_blox2 = nameof(bloxin)
         @info "Neuron connection rule from $name_blox1 to $name_blox2 is not specified. It is assumed that there is a basic weighted connection."
         cr = "basic"
     end
