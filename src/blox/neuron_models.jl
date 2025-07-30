@@ -28,6 +28,8 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
             [output=true]
 			z(t)=0.0
 			Gₛₜₚ(t)=0.0 
+			jcn(t) 
+			[input=true]
             spikes_cumulative(t)=0.0
             spikes_window(t)=0.0
 		end
@@ -61,7 +63,7 @@ struct HHNeuronExciBlox <: AbstractExciNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 		eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in+jcn, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),
@@ -109,6 +111,8 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
             G(t)=0.0 
 			[output=true] 
 			z(t)=0.0
+			jcn(t) 
+			[input=true]
             spikes_cumulative(t)=0.0
             spikes_window(t)=0.0
 		end
@@ -140,7 +144,7 @@ struct HHNeuronInhibBlox <: AbstractInhNeuronBlox
 		ϕ = 5 
 		G_asymp(v,G_syn) = (G_syn/(1 + exp(-4.394*((v-V_shift)/V_range))))
 	 	eqs = [ 
-			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in, 
+			   D(V)~-G_Na*m^3*h*(V-E_Na)-G_K*n^4*(V-E_K)-G_L*(V-E_L)+I_bg+I_syn+I_asc+I_in+jcn, 
 			   D(n)~ϕ*(αₙ(V)*(1-n)-βₙ(V)*n), 
 			   D(m)~ϕ*(αₘ(V)*(1-m)-βₘ(V)*m), 
 			   D(h)~ϕ*(αₕ(V)*(1-h)-βₕ(V)*h),

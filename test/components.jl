@@ -817,3 +817,53 @@ end
     @test_skip minimum(t_below) < 50 && maximum(t_below) > 150
 
 end
+
+@testset "ConstantInput - QIFNeuron connection" begin
+    @named inp = ConstantInput(; I=4);
+    @named blox = QIFNeuron();
+
+    g = MetaDiGraph();
+    add_edge!(g, inp => blox, weight = 1);
+
+    @named sys = system_from_graph(g);
+    tspan = (0, 100);
+    prob = ODEProblem(sys, [], tspan);
+    sol = solve(prob, Tsit5());
+
+    @test !all(iszero(detect_spikes(blox, sol)))
+
+    @named inp = ConstantInput(; I=0);
+
+    g = MetaDiGraph();
+    add_edge!(g, inp => blox, weight = 1);
+
+    @named sys = system_from_graph(g);
+    tspan = (0, 100);
+    prob = ODEProblem(sys, [], tspan);
+    sol = solve(prob, Tsit5());
+
+    @test all(iszero(detect_spikes(blox, sol)))
+end
+
+@testset "ConstantInput - HHNeuronExciBlox connection" begin
+    @named inp = ConstantInput(; I=4);
+    @named blox = QIFNeuron();
+    g = MetaDiGraph();
+    add_edge!(g, inp => blox, weight = 1);
+    @named sys = system_from_graph(g);
+    tspan = (0, 100);
+    prob = ODEProblem(sys, [], tspan);
+    sol = solve(prob, Tsit5());
+
+    @test !all(iszero(detect_spikes(blox, sol; threshold=-10)))
+
+    @named inp = ConstantInput(; I=0);
+    g = MetaDiGraph();
+    add_edge!(g, inp => blox, weight = 1);
+    @named sys = system_from_graph(g);
+    tspan = (0, 100);
+    prob = ODEProblem(sys, [], tspan);
+    sol = solve(prob, Tsit5());
+
+    @test all(iszero(detect_spikes(blox, sol; threshold=-10)))
+end
