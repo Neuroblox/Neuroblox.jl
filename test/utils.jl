@@ -193,3 +193,24 @@ end
         @test isapprox(freq, 12, atol=0.5) 
     end
 end
+
+@testset "Get feedforward neurons from CompositeBlox" begin
+    @named la = LateralAmygdala(;
+        N_clusters=5,
+        density=0.1,
+        weight=1
+    );
+    @test length(get_ff_inh_neurons(la)) == 5
+
+    @named la = LateralAmygdalaCluster(;
+        density=0.1,
+        weight=1
+    );
+    @test length(get_ff_inh_neurons(la)) == 1
+
+    @named c = CorticalBlox(;
+        density=0.1,
+        weight=1
+    );
+    @test length(get_ff_inh_neurons(c)) == 1
+end
