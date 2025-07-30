@@ -418,7 +418,7 @@ function Connector(
 end
 
 function Connector(
-    blox_src::HHNeuronInhib_FSI_Adam_Blox,
+    blox_src::Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI},
     blox_dest::Union{HHNeuronExciBlox, HHNeuronInhibBlox, HHNeuronInhib_MSN_Adam_Blox, HHNeuronExci_STN_Adam_Blox, HHNeuronInhib_GPe_Adam_Blox}; 
     kwargs...
 )
@@ -433,8 +433,8 @@ function Connector(
 end
 
 function Connector(
-    blox_src::HHNeuronInhib_FSI_Adam_Blox,
-    blox_dest::HHNeuronInhib_FSI_Adam_Blox; 
+    blox_src::Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI},
+    blox_dest::Union{HHNeuronInhib_FSI_Adam_Blox, HHNeuronFSI}; 
     kwargs...
 )
     sys_src = get_namespaced_sys(blox_src)
