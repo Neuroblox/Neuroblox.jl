@@ -331,11 +331,11 @@ struct HHNeuronInhib_FSI_Adam_Blox <: AbstractInhNeuronBlox
 	end
 end	
 
-struct HHNeuronInhib_FSI_Remove_Noise_Blox <: AbstractInhNeuronBlox
+struct HHFSIBlox <: AbstractInhNeuronBlox
     system
     namespace
 
-	function HHNeuronInhib_FSI_Remove_Noise_Blox(;
+	function HHFSIBlox(;
         name, 
         namespace=nothing,
         E_syn=-80.0, 
