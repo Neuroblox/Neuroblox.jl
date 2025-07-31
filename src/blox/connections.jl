@@ -738,11 +738,20 @@ function Connector(
     blox_dest::CentralAmygdalaBlox;
     kwargs...
 )
-    neurons_src = get_ff_inh_neurons(blox_src)
+    neurons_src = get_exci_neurons(blox_src)
     neurons_dest = get_inh_neurons(blox_dest)
-    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_src))
-    conn = hypergeometric_connections(neurons_src, neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dest); kwargs...) 
+    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_dest))
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dest)
+
+    if cr == :gradient
+        conn = density_connections(neurons_src, neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dst); kwargs...)
+    else
+        conn = hypergeometric_connections(neurons_src, neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dest); kwargs...)
+    end
+    
     return conn
+
 end
 
 function Connector(
