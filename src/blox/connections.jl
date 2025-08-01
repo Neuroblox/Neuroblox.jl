@@ -727,7 +727,7 @@ function Connector(
     kwargs...
 )
     neurons_src = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_src))
-    neurons_dst = get_ff_inh_neurons(blox_dest)
+    neurons_dst = get_ff_inh_neurons(blox_dst)
     
     conn = hypergeometric_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...) 
     
@@ -742,7 +742,7 @@ function Connector(
     neurons_src = get_exci_neurons(blox_src)
     neurons_dst = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_dst))
 
-    cr = get_connection_rule(kwargs, blox_src, blox_dest)
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
     if cr == :density
         conn = density_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
