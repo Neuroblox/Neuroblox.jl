@@ -1106,6 +1106,26 @@ function GraphDynamics.system_wiring_rule!(g, c::CentralAmygdalaBlox; kwargs...)
     end
 end
 
+function GraphDynamics.system_wiring_rule!(g, blox_src::CentralAmygdalaBlox, blox_dst::LateralAmygdala; kwargs...)
+    neurons_src = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_src))
+    neurons_dst = get_ff_inh_neurons(blox_dst)
+    
+    hypergeometric_connections!(g, neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...) 
+end
+
+function GraphDynamics.system_wiring_rule!(g, blox_src::LateralAmygdala, blox_dst::CentralAmygdalaBlox; kwargs...)
+    neurons_src = get_exci_neurons(blox_src)
+    neurons_dst = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_dst))
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
+
+    if cr == :density
+        density_connections!(g, neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    else
+        hypergeometric_connections!(g, neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    end
+end
+
 function GraphDynamics.system_wiring_rule!(g, neuron_src::HHNeuronInhibBlox, la_dst::LateralAmygdalaCluster; kwargs...)
     neuron_ff_inh = only(get_ff_inh_neurons(la_dst))
     
