@@ -539,7 +539,7 @@ end
 
 function GraphDynamics.system_wiring_rule!(g::GraphSystem,
                                            blox_src::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaCluster},
-                                           blox_dst::Union{CorticalBlox,STN,Thalamus, LateralAmygdalaCluster}; kwargs...)
+                                           blox_dst::Union{CorticalBlox,STN,Thalamus}; kwargs...)
     neurons_dst = get_exci_neurons(blox_dst)
     neurons_src = get_exci_neurons(blox_src)
     name_dst = namespaced_nameof(blox_dst)
@@ -547,10 +547,33 @@ function GraphDynamics.system_wiring_rule!(g::GraphSystem,
 
     cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
-    if cr == :gradient
+    if cr == :density
         conn = density_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
     else
         conn = hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    end
+end
+
+function GraphDynamics.system_wiring_rule!(g::GraphSystem,
+                                           blox_src::Union{CorticalBlox, LateralAmygdalaCluster},
+                                           blox_dst::LateralAmygdalaCluster; kwargs...)
+    neurons_dst = get_exci_neurons(blox_dst)
+    neurons_src = get_exci_neurons(blox_src)
+    name_dst = namespaced_nameof(blox_dst)
+    name_src = namespaced_nameof(blox_src)
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
+    if cr == :density
+        density_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    else
+        hypergeometric_connections!(g, neurons_src, neurons_dst, name_src, name_dst; kwargs...)
+    end
+
+    neurons_inh_dst = get_ff_inh_neurons(blox_dst)
+    if cr == :density
+        density_connections!(g, neurons_src, neurons_inh_dst, name_src, name_dst; kwargs...)
+    else
+        hypergeometric_connections!(g, neurons_src, neurons_inh_dst, name_src, name_dst; kwargs...)
     end
 end
 
