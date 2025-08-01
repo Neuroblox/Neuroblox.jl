@@ -824,6 +824,29 @@ function Connector(
 end
 
 function Connector(
+    blox_src::LateralAmygdala,
+    blox_dst::CorticalBlox;
+    kwargs...
+)
+    la_clusters = get_parts(blox_src)
+
+    density = get_density(kwargs, nameof(blox_src), nameof(blox_dst))
+    density = if density isa AbstractVector 
+        length(density) == length(la_clusters) || error("Density in the connection from $(nameof(blox_src)) to $(nameof(blox_dst)) needs to be either a scalar or a vector of the same length as the clusters in $(nameof(blox_dst)).")
+        density
+    else
+        fill(density, length(la_clusters))
+    end
+
+    conn = mapreduce(merge!, enumerate(la_clusters)) do (i, lac)
+        kwargs_i = merge(kwargs, Dict(:density => density[i]))
+        Connector(lac, blox_dst; kwargs_i...)
+    end
+
+    return conn
+end
+
+function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus},
     blox_dest::Union{GPi, GPe};
     kwargs...
