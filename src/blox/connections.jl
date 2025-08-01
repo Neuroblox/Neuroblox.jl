@@ -756,7 +756,7 @@ end
 
 function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster},
-    blox_dst::Union{CorticalBlox,STN,Thalamus,LateralAmygdalaCluster};
+    blox_dst::Union{CorticalBlox,STN,Thalamus};
     kwargs...
 )
     neurons_dest = get_exci_neurons(blox_dst)
@@ -772,10 +772,33 @@ function Connector(
     
     return conn
 end
+
+function Connector(
+    blox_src::Union{CorticalBlox, LateralAmygdalaCluster},
+    blox_dst::LateralAmygdalaCluster;
+    kwargs...
+)
+    neurons_dst = get_exci_neurons(blox_dst)
+    neurons_src = get_exci_neurons(blox_src)
+
+    cr = get_connection_rule(kwargs, blox_src, blox_dst)
+
     conn_exci = if cr == :density
         density_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    else
+        hypergeometric_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    end
+    
+    neurons_inh_dst = get_ff_inh_neurons(blox_dst)
+
     conn_inh = if cr == :density
         density_connections(neurons_src, neurons_inh_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    else
+        hypergeometric_connections(neurons_src, neurons_inh_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    end
+
+    return merge(conn_exci, conn_inh)
+end
 
 function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus},
