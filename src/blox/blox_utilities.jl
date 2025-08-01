@@ -349,7 +349,7 @@ end
 
 function get_connection_rule(kwargs, blox_src::CompositeBlox, blox_dst::CompositeBlox)
     cr = get(kwargs, :connection_rule) do
-        @info "Connection type from $(namespaced_nameof(blox_src)) to $(namespaced_nameof(blox_dst)) not specified. Defaulting to a hypergeometric connection."
+        @info "Connection rule from $(namespaced_nameof(blox_src)) to $(namespaced_nameof(blox_dst)) not specified. Defaulting to a hypergeometric connection."
         :hypergeometric
     end
     cr = Symbol(cr) # in case of String kwarg
