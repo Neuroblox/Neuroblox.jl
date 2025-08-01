@@ -723,31 +723,31 @@ end
 
 function Connector(
     blox_src::CentralAmygdalaBlox, 
-    blox_dest::LateralAmygdala;
+    blox_dst::LateralAmygdala;
     kwargs...
 )
-    neurons_src = get_inh_neurons(blox_src)
-    neurons_dest = get_ff_inh_neurons(blox_dest)
-    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_src))
-    conn = hypergeometric_connections(neurons_src[1:(end-num)], neurons_dest, nameof(blox_src), nameof(blox_dest); kwargs...) 
+    neurons_src = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_src))
+    neurons_dst = get_ff_inh_neurons(blox_dest)
+    
+    conn = hypergeometric_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...) 
+    
     return conn
 end
 
 function Connector(
     blox_src::LateralAmygdala, 
-    blox_dest::CentralAmygdalaBlox;
+    blox_dst::CentralAmygdalaBlox;
     kwargs...
 )
     neurons_src = get_exci_neurons(blox_src)
-    neurons_dest = get_inh_neurons(blox_dest)
-    num = get_ff_inh_num(kwargs, namespaced_nameof(blox_dest))
+    neurons_dst = filter(n -> !(n isa HHNeuronFSI), get_inh_neurons(blox_dst))
 
     cr = get_connection_rule(kwargs, blox_src, blox_dest)
 
     if cr == :gradient
-        conn = density_connections(neurons_src, neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dst); kwargs...)
+        conn = density_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
     else
-        conn = hypergeometric_connections(neurons_src, neurons_dest[1:(end-num)], nameof(blox_src), nameof(blox_dest); kwargs...)
+        conn = hypergeometric_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
     end
     
     return conn
