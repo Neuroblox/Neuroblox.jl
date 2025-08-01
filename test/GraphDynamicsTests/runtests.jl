@@ -20,6 +20,7 @@ if GROUP == "All" || GROUP == "GraphDynamics2"
     # discrete()
     cortical_tests()
     striatum_tests()
+    cortical_amygdala_circuit_test()
 end
 
 if GROUP == "All" || GROUP == "GraphDynamics3"

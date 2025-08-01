@@ -911,6 +911,25 @@ function ping_tests(;tspan=(0.0, 2.0))
     test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
 end
 
+function cortical_amygdala_circuit_test()
+    @testset "Cortical-Lateral Amygdala-Central Amygdala circuit" begin
+        tspan = (0, 20)
+        global_ns = :g
+        
+        @named c = CorticalBlox(; namespace=global_ns, N_wta=2, density=0.5, weight=1);
+        @named la = LateralAmygdala(; namespace=global_ns, N_clusters=2, N_wta=2, density=0.5, weight=1);
+        @named ca = CentralAmygdalaBlox(; namespace=global_ns, N_inhib_groups=2, weight=1);
+
+        g = MetaDiGraph()
+        add_edge!(g, c => la; connection_rule=:density, density=[0.9, 0.7], weight=1)
+        add_edge!(g, la => c; connection_rule=:density, density=[0.4, 0.8], weight=1)
+        add_edge!(g, la => ca; density=0.5, weight=1)
+        add_edge!(g, ca => la; density=0.6, weight=1)
+
+        test_compare_du_and_sols(ODEProblem, g, tspan; rtol=1e-7, alg=Tsit5())
+    end
+end
+
 function auto_tsit5_gdy_test()
     # ensure https://github.com/Neuroblox/GraphDynamics.jl/pull/23 stays fixed
     # This solver involves switching out some types mid solve, which made older
