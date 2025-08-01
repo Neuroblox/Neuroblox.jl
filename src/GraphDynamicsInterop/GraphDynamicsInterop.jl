@@ -14,6 +14,7 @@ using ..Neuroblox:
     get_wtas,
     get_ff_inh_num,
     get_connection_rule,
+    get_parts,
     AbstractBlox,
     AbstractNeuronBlox,
     AbstractDiscrete,
