@@ -353,7 +353,7 @@ function get_connection_rule(kwargs, blox_src::CompositeBlox, blox_dst::Composit
         :hypergeometric
     end
     cr = Symbol(cr) # in case of String kwarg
-    if (cr == :hypergeometric) || (cr == :gradient)
+    if (cr == :hypergeometric) || (cr == :density)
         return cr
     else
         @error "Connection rule not recognized. Available option are $("hypergeometric") and $("gradient")."

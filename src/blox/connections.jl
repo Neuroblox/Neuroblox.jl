@@ -744,7 +744,7 @@ function Connector(
 
     cr = get_connection_rule(kwargs, blox_src, blox_dest)
 
-    if cr == :gradient
+    if cr == :density
         conn = density_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
     else
         conn = hypergeometric_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
@@ -764,7 +764,7 @@ function Connector(
 
     cr = get_connection_rule(kwargs, blox_src, blox_dst)
 
-    if cr == :gradient
+    if cr == :density
         conn = density_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
     else
         conn = hypergeometric_connections(neurons_src, neurons_dest, nameof(blox_src), nameof(blox_dst); kwargs...)
@@ -772,6 +772,10 @@ function Connector(
     
     return conn
 end
+    conn_exci = if cr == :density
+        density_connections(neurons_src, neurons_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
+    conn_inh = if cr == :density
+        density_connections(neurons_src, neurons_inh_dst, nameof(blox_src), nameof(blox_dst); kwargs...)
 
 function Connector(
     blox_src::Union{CorticalBlox,STN,Thalamus},
