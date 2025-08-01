@@ -410,8 +410,8 @@ struct LateralAmygdala <: CompositeBlox
         
         LA_clusters = map(Base.OneTo(N_clusters)) do i
             LateralAmygdalaCluster(;
-                name, 
-                namespace=nothing,
+                name=Symbol("cluster$i"), 
+                namespace=namespaced_name(namespace, name),
                 N_wta,
                 N_exci,
                 E_syn_exci,
