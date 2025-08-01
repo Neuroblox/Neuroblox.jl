@@ -448,13 +448,13 @@ struct CentralAmygdalaBlox <: CompositeBlox
     function CentralAmygdalaBlox(;
         name, 
         namespace=nothing,
-        N_inhib_group=5,
+        N_inhib_groups=5,
         N_inhib_per_group=6,
         N_inhib_fsi=5,
         E_syn_inhib=-70,
         E_syn_inhib_fsi=-80,
         G_syn_inhib=8,
-        I_bg=2*ones(N_inhib_group * N_inhib_per_group),
+        I_bg=2*ones(N_inhib_groups * N_inhib_per_group),
         I_bg_fsi=6.2*ones(N_inhib_fsi),
         τ_inhib_fsi=11,
         τ_inhib_fsi_s=6.5,
@@ -462,7 +462,7 @@ struct CentralAmygdalaBlox <: CompositeBlox
         τ_inhib=70,
         kwargs...
     )
-        N_inhib = N_inhib_group * N_inhib_per_group
+        N_inhib = N_inhib_groups * N_inhib_per_group
         n_inh = [
             HHNeuronInhibBlox(
                     name = Symbol("inh$i"),
