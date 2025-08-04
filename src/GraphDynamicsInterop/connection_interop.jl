@@ -1086,17 +1086,13 @@ function GraphDynamics.system_wiring_rule!(g, c::LateralAmygdalaCluster; kwargs.
 
     system_wiring_rule!.((g,), wtas)
     system_wiring_rule!(g, neuron_ff_inh)
-
-    for i in Base.OneTo(N_wta)
-        for j in Base.OneTo(N_wta)
+    (; connection_matrices) = c
+    for i in eachindex(wtas)
+        for j in eachindex(wtas)
             if j != i
-                if haskey(c.kwargs, :connection_matrices)
-                    kwargs_ij = merge(c.kwargs, Dict(:connection_matrix => c.kwargs[:connection_matrices][i, j]))
-                else
-                    kwargs_ij = Dict(c.kwargs)
-                end
+                kwargs_ij = merge(NamedTuple(c.kwargs),
+                                  (; connection_matrix = connection_matrices[i, j]))
                 system_wiring_rule!(g, wtas[i], wtas[j]; kwargs_ij...)
-    
             end
         end
         system_wiring_rule!(g, neuron_ff_inh, wtas[i]; weight = 1)

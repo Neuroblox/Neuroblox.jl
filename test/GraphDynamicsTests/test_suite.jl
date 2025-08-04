@@ -916,8 +916,8 @@ function cortical_amygdala_circuit_test()
         tspan = (0, 20)
         global_ns = :g
         
-        @named c = CorticalBlox(; namespace=global_ns, N_wta=2, density=0.5, weight=1);
-        @named la = LateralAmygdala(; namespace=global_ns, N_clusters=2, N_wta=2, density=0.5, weight=1);
+        @named c = CorticalBlox(; namespace=global_ns, N_wta=2, density=0.5, weight=1, rng=rrng());
+        @named la = LateralAmygdala(; namespace=global_ns, N_clusters=2, N_wta=2, density=0.5, weight=1, rng=rrng());
         @named ca = CentralAmygdalaBlox(; namespace=global_ns, N_inhib_groups=2, weight=1);
 
         g = MetaDiGraph()

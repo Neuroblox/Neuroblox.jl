@@ -322,6 +322,7 @@ struct LateralAmygdalaCluster <: CompositeBlox
     parts
     system
     connector
+    connection_matrices
     kwargs
 
     function LateralAmygdalaCluster(;
@@ -343,7 +344,7 @@ struct LateralAmygdalaCluster <: CompositeBlox
         I_bg = I_bg isa Array ? I_bg : fill(I_bg, N_wta)
         wtas = map(Base.OneTo(N_wta)) do i
             WinnerTakeAllBlox(;
-                name=Symbol("wta$i"),
+                name=Symbol("la_wta$i"),
                 namespace=namespaced_name(namespace, name),
                 N_exci,
                 E_syn_exci,
@@ -365,12 +366,21 @@ struct LateralAmygdalaCluster <: CompositeBlox
                 τ = τ_inhib
         )
         
+        connection_matrices = get(kwargs, :connection_matrices) do
+            map(Iterators.product(1:N_wta, 1:N_wta)) do (i, j)
+                get_connection_matrix(kwargs,
+                                      Symbol("la_wta$i"), Symbol("la_wta$j"),
+                                      N_exci, N_exci)
+            end
+        end
+
         g = MetaDiGraph()
         add_blox!.((g,), vcat(wtas, neuron_ff_inh))
 
         for i in 1:N_wta
             for j in 1:N_wta
-                   j != i && add_edge!(g, wtas[i] => wtas[j]; kwargs...)
+                kwargs_ij = merge(kwargs, Dict(:connection_matrix => connection_matrices[i, j]))
+                j != i && add_edge!(g, wtas[i] => wtas[j]; kwargs_ij...)
             end
             add_edge!(g, neuron_ff_inh => wtas[i]; weight = 1)
         end
@@ -379,7 +389,7 @@ struct LateralAmygdalaCluster <: CompositeBlox
         sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, neuron_ff_inh); name)
 
         kwargs = merge(kwargs, Dict(:N_wta => N_wta))
-        new(namespace, vcat(wtas, neuron_ff_inh), sys, bc, kwargs)
+        new(namespace, vcat(wtas, neuron_ff_inh), sys, bc, connection_matrices, kwargs)
     end
 end
 
