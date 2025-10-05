@@ -1,9 +1,10 @@
-# Publications - Code - Data
+# Publications - Data - Code
 
-1. Biomimetic model of corticostriatal micro-assemblies discovers new neural code, Anand Pathak, Scott L. Brincat, Haris Organtzidis, Helmut H. Strey, Sageanne Senneff, Evan G. Antzoulatos2, Lilianne R. Mujica-Parodi, Earl K. Miller, and Richard Granger
+1. **Biomimetic Model of Corticostriatal Micro-Assemblies Discovers New Neural Code**.
+   Pathak, A.; Brincat, S.; Senneff, S.; Hofmann, D.; Strey, H. H.; Mujica-Parodi, L. R.; Miller, E. K.; and Granger, R. M. Nature Communications(In Press). 2025.
+   
+   Publication: [Preprint](https://www.biorxiv.org/content/10.1101/2023.11.06.565902v3)
 
-Publication: [preprint](https://www.biorxiv.org/content/10.1101/2023.11.06.565902v3)
-
-Data: [Open Science Foundation] (https://osf.io/mdghu/)
-
-Code: [GitHub] (https://github.com/Neuroblox/corticostriatal-circuit-notebook)
+   Data: [OSF](https://osf.io/mdghu/)
+  
+   Code: [GitHub](https://github.com/Neuroblox/corticostriatal-circuit-notebook)
