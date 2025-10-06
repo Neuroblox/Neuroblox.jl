@@ -35,7 +35,7 @@ pkg"registry add General"
 
 Neuroblox is free for non-commerical and academic use. For full details of the license, please see 
 [the Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, get in contact
-with sales@neuroblox.org.
+with info@neuroblox.ai.
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://neuroblox.github.io/NeurobloxDocsHost/dev
