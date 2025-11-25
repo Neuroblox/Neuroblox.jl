@@ -37,7 +37,7 @@
 # Let's create an oscillating circuit by connecting two Wilson-Cowan neural masses:
 
 using Neuroblox
-using OrdinaryDiffEq
+using OrdinaryDiffEqRosenbrock
 using CairoMakie
 
 ## Create two Wilson-Cowan blox
@@ -62,7 +62,7 @@ add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
 # Now, let's build the complete model:
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g; graphdynamics = true)
 
 # This creates a differential equations system from our graph representation using ModelingToolkit and symbolically simplifies it for efficient computation.
 

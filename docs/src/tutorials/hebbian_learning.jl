@@ -1,7 +1,7 @@
 # # Synaptic plasticity and Reinforcement Learning
 
 using Neuroblox 
-using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
+using OrdinaryDiffEqDefault, OrdinaryDiffEqVerner ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Random ## for generating random variables
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
@@ -25,10 +25,10 @@ model_name=:g
 @named stim = ImageStimulus(image_set; namespace=model_name, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
-@named VAC = CorticalBlox(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
-@named AC = CorticalBlox(; namespace=model_name, N_wta=2, N_exci=5, density=0.05, weight=1) 
+@named VAC = Cortical(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
+@named AC = Cortical(; namespace=model_name, N_wta=2, N_exci=5, density=0.05, weight=1) 
 ## ascending system blox, modulating frequency set to 16 Hz
-@named ASC1 = NextGenerationEIBlox(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
+@named ASC1 = NextGenerationEI(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
 
 ## define learning rule
 hebbian_cort = HebbianPlasticity(K=5e-5, W_lim=7, t_pre=trial_dur, t_post=trial_dur) 
@@ -76,10 +76,10 @@ model_name=:g
 @named stim = ImageStimulus(image_set; namespace=model_name, t_stimulus=trial_dur, t_pause=0); 
 
 ## cortical blox
-@named VAC = CorticalBlox(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
-@named AC = CorticalBlox(; namespace=model_name, N_wta=2, N_exci=5, density=0.05, weight=1) 
+@named VAC = Cortical(; namespace=model_name, N_wta=4, N_exci=5,  density=0.05, weight=1) 
+@named AC = Cortical(; namespace=model_name, N_wta=2, N_exci=5, density=0.05, weight=1) 
 ## ascending system blox, modulating frequency set to 16 Hz
-@named ASC1 = NextGenerationEIBlox(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
+@named ASC1 = NextGenerationEI(; namespace=model_name, Cₑ=2*26,Cᵢ=1*26, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑᵢ=0.6*26, kᵢₑ=0.6*26) 
 
 ## striatum blocks
 @named STR1 = Striatum(; namespace=model_name, N_inhib=5) 

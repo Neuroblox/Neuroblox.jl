@@ -1,0 +1,26 @@
+name = "NeurobloxSynapticBlox"
+uuid = "07666d11-74ed-43ff-badd-c2050c738c55"
+version = "0.1.0"
+authors = ["Mason Protter <mason.protter@icloud.com>"]
+
+[workspace]
+projects = ["test"]
+
+[deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GraphDynamics = "bcd5d0fe-e6b7-4ef1-9848-780c183c7f4c"
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+NeurobloxBase = "c1a47a78-a13f-4f42-9de5-c5b922306e53"
+NeurobloxBasics = "6341abd9-5539-449d-87b3-7e81c4d50fb5"
+NeurobloxPharma = "6d6291d7-c437-44bd-acf4-438a4f54bfaa"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[compat]
+Accessors = "0.1.42"
+Distributions = "0.25.120"
+GraphDynamics = "0.5"
+ModelingToolkit = "9.75.0"
+Reexport = "1.2.2"
+StatsBase = "0.34.6"

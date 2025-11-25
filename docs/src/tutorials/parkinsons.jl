@@ -45,7 +45,7 @@
 # We're now going to set up this model using code. Let's start by importing the necessary libraries and defining our neural masses:
 
 using Neuroblox
-using OrdinaryDiffEq
+using OrdinaryDiffEqTsit5
 using CairoMakie
 
 # The original paper uses parameters in seconds, but all models in Neuroblox have milliseconds as their time unit. We therefore specify a scaling factor to use the paramters from the paper:

@@ -91,7 +91,7 @@ weight_FSI_MSN = ḡ_FSI_MSN / (N_FSI * density_FSI_MSN) ## normalized synaptic 
 g = MetaDiGraph()
 add_edge!(g, fsi => msn, weight = weight_FSI_MSN, density = density_FSI_MSN)
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g; graphdynamics = true)
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
@@ -145,7 +145,7 @@ add_edge!(g, msn => gpe, weight = weight_MSN_GPe, density = density_MSN_GPe)
 add_edge!(g, gpe => stn, weight = weight_GPe_STN, density = density_GPe_STN)
 add_edge!(g, stn => fsi, weight = weight_STN_FSI, density = density_STN_FSI)
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g; graphdynamics = true)
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
 ens_sol = solve(ens_prob, RKMil(), dt=dt, saveat = dt, trajectories = 3);
@@ -208,7 +208,7 @@ add_edge!(g, msn => gpe, weight = weight_MSN_GPe, density = density_MSN_GPe)
 add_edge!(g, gpe => stn, weight = weight_GPe_STN, density = density_GPe_STN)
 add_edge!(g, stn => fsi, weight = weight_STN_FSI, density = density_STN_FSI)
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g; graphdynamics = true)
 
 prob = SDEProblem(sys, [], tspan, [])
 ens_prob = EnsembleProblem(prob)
