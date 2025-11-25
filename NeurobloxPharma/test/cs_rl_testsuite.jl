@@ -2,6 +2,7 @@ using NeurobloxPharma, GraphDynamics, Test, Random, OrdinaryDiffEqVerner, OhMyTh
 using DataFrames: DataFrames, DataFrame
 using CSV: CSV
 using Random
+using Test
 
 rrng() = Xoshiro(rand(Int))
 
