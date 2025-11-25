@@ -1,0 +1,172 @@
+name: CI
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  test_Neuroblox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("Neuroblox"; julia_args=["-O1"])'
+        env:
+          JULIA_NUM_THREADS: 4
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxBase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxBase"; julia_args=["-O1"])'
+        env:
+          JULIA_NUM_THREADS: 4
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxBasics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxBasics"; julia_args=["-O1"])'
+        env:
+          JULIA_NUM_THREADS: 4
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxDBS:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxDBS"; julia_args=["-O1"])'
+        env:
+          JULIA_NUM_THREADS: 4
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxPharma1:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - group: Basics
+          - group: MTK_Small_RL_Pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxPharma"; julia_args=["-O3"])'
+        env:
+          JULIA_NUM_THREADS: 4
+          GROUP: ${{ matrix.group }}
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxPharma2:
+    runs-on: [self-hosted, CI]
+    timeout-minutes: 1200
+    strategy:
+      matrix:
+        include:
+          - group: Full_CS_RL_Pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxPharma"; julia_args=["-O3"])'
+        env:
+          JULIA_NUM_THREADS: 4
+          GROUP: ${{ matrix.group }}
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxSynapticBlox1:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - group: Basics
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxSynapticBlox"; julia_args=["-O3"])'
+        env:
+          JULIA_NUM_THREADS: 4
+          GROUP: ${{ matrix.group }}
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info
+
+  test_NeurobloxSynapticBlox2:
+    runs-on: [self-hosted, CI]
+    timeout-minutes: 1200
+    strategy:
+      matrix:
+        include:
+          - group: Full_CS_RL_Pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxSynapticBlox"; julia_args=["-O3"])'
+        env:
+          JULIA_NUM_THREADS: 4
+          GROUP: ${{ matrix.group }}
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info

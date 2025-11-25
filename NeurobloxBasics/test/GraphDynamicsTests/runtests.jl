@@ -1,0 +1,12 @@
+include(joinpath(@__DIR__(), "../../../NeurobloxBase/test/test_utils.jl"))
+include(joinpath(@__DIR__(), "test_suite.jl"))
+
+basic_smoketest()
+neuron_and_neural_mass_comparison_tests()
+vdp_test()
+kuramoto_test()
+lif_exci_inh_tests()
+decision_making_test()
+ping_tests()
+auto_tsit5_gdy_test()
+sensitivity_test()

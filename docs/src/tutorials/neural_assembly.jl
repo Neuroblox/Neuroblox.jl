@@ -25,7 +25,7 @@
 
 
 using Neuroblox
-using OrdinaryDiffEq ## to build the ODE problem and solve it, gain access to multiple solvers from this
+using OrdinaryDiffEqVerner ## to build the ODE problem and solve it, gain access to multiple solvers from this
 using Random ## for generating random variables
 using CairoMakie ## for customized plotting recipies for blox
 using CSV ## to read data from CSV files
@@ -33,7 +33,7 @@ using DataFrames ## to format the data into DataFrames
 using Downloads ## to download image stimuli files
 
 # define a single excitatory neuron 'blox' with steady input current I_bg = 0.5 microA/cm2
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.5)
+nn1 = HHNeuronExci(name=Symbol("nrn1"), I_bg=0.5)
 
 # define graph and add the single neuron 'blox' as a single node into the graph
 g = MetaDiGraph() ## defines a graph
@@ -68,9 +68,9 @@ global_namespace=:g
 
 ## define three neurons, two excitatory and one inhibitory 
 
-nn1 = HHNeuronExciBlox(name=Symbol("nrn1"), I_bg=0.4, namespace=global_namespace)
-nn2 = HHNeuronInhibBlox(name=Symbol("nrn2"), I_bg=0.1, namespace=global_namespace)
-nn3 = HHNeuronExciBlox(name=Symbol("nrn3"), I_bg=1.4, namespace=global_namespace)
+nn1 = HHNeuronExci(name=Symbol("nrn1"), I_bg=0.4, namespace=global_namespace)
+nn2 = HHNeuronInhib(name=Symbol("nrn2"), I_bg=0.1, namespace=global_namespace)
+nn3 = HHNeuronExci(name=Symbol("nrn3"), I_bg=1.4, namespace=global_namespace)
 
 ## defien graph and connect the nodes with the edges (synapses in this case), with the synaptic 'weights' specified as arguments
 g = MetaDiGraph()
@@ -96,10 +96,10 @@ stackplot([nn1,nn2,nn3], sol)	## stackplot(<blox or array of blox>, sol)
 global_namespace=:g 
 N_exci = 5; ##number of excitatory neurons
 
-n_inh = HHNeuronInhibBlox(name = Symbol("inh"), namespace=global_namespace, G_syn = 4.0, τ = 70) ##feedback inhibitory interneuron neuron
+n_inh = HHNeuronInhib(name = Symbol("inh"), namespace=global_namespace, G_syn = 4.0, τ = 70) ##feedback inhibitory interneuron neuron
 
 ##creating an array of excitatory pyramidal neurons
-n_excis = [HHNeuronExciBlox(
+n_excis = [HHNeuronExci(
                             name = Symbol("exci$i"),
                             namespace=global_namespace, 
                             G_syn = 3.0, 
@@ -114,7 +114,7 @@ for i in Base.OneTo(N_exci)
     add_edge!(g, n_excis[i] => n_inh, weight = 1.0)
 end
 
-@named sys = system_from_graph(g)
+@named sys = system_from_graph(g; graphdynamics = true)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 stackplot(vcat(n_excis, n_inh), sol)
@@ -127,13 +127,13 @@ stackplot(vcat(n_excis, n_inh), sol)
 
 global_namespace=:g
 N_exci = 5 ##number of excitatory neurons in each WTA circuit
-wta1 = WinnerTakeAllBlox(name=Symbol("wta1"), I_bg=5.0, N_exci=N_exci, namespace=global_namespace) ##for a single valued input current, each neuron of the WTA circuit will recieve a uniformly distributed random input from 0 to I_bg  
-wta2 = WinnerTakeAllBlox(name=Symbol("wta2"), I_bg=4.0, N_exci=N_exci, namespace=global_namespace)
+wta1 = WinnerTakeAll(name=Symbol("wta1"), I_bg=5.0, N_exci=N_exci, namespace=global_namespace) ##for a single valued input current, each neuron of the WTA circuit will recieve a uniformly distributed random input from 0 to I_bg  
+wta2 = WinnerTakeAll(name=Symbol("wta2"), I_bg=4.0, N_exci=N_exci, namespace=global_namespace)
 
 g = MetaDiGraph()
 add_edge!(g, wta1 => wta2, weight=1, density=0.5) ##density keyword sets the connection probability from each excitatory neuron of source WTA circuit to each excitatory neuron of target WTA circuit
 
-sys = system_from_graph(g, name=global_namespace)
+sys = system_from_graph(g, name=global_namespace; graphdynamics = true)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -156,7 +156,7 @@ I_bg=5.0 ##background input
 density=0.01 ##connection density between WTA circuits
 
 ##creating array of WTA ciruits
-wtas = [WinnerTakeAllBlox(;
+wtas = [WinnerTakeAll(;
                            name=Symbol("wta$i"),
                            namespace=global_namespace,
                            N_exci=N_exci,
@@ -166,7 +166,7 @@ wtas = [WinnerTakeAllBlox(;
                           ) for i = 1:N_wta]
 
 ##feed-forward interneurons (get input from other pyramidal cells and from the ascending system, largely controls the rhythm)
-n_ff_inh = HHNeuronInhibBlox(;
+n_ff_inh = HHNeuronInhib(;
                              name=Symbol("ff_inh"),
                              namespace=global_namespace,
                              G_syn=G_syn_ff_inhib
@@ -184,7 +184,7 @@ for i in 1:N_wta
     add_edge!(g, n_ff_inh => wtas[i], weight=1)
 end
 
-sys = system_from_graph(g, name=global_namespace)
+sys = system_from_graph(g, name=global_namespace; graphdynamics = true)
 prob = ODEProblem(sys, [], (0.0, 1000), [])
 sol = solve(prob, Vern7(), saveat=0.1)
 
@@ -201,23 +201,23 @@ global_namespace=:g
 
 ## define ascending system block using a Next Generation Neural Mass model as described in Byrne et. al. 2020.
 ## the parameters are fixed to generate a 16 Hz modulating frequency in the cortical neurons  
-@named ASC1 = NextGenerationEIBlox(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
+@named ASC1 = NextGenerationEI(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
 
 ## define the superficial layer cortical block using inbuilt function
 ## Number if WTA circuits = N_wta=45; number of pyramidal neurons in each WTA circuit = N_exci = 5;
-@named CB = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1, I_bg_ar=7; namespace=global_namespace)
+@named CB = Cortical(N_wta=10, N_exci=5, density=0.01, weight=1, I_bg_ar=7; namespace=global_namespace)
 
 ## define graph and connect ASC1->CB
 g = MetaDiGraph()
 add_edge!(g, ASC1 => CB, weight=44)
 
 ## solve the system for time 0 to 1000 ms
-sys = system_from_graph(g, name=global_namespace)
+sys = system_from_graph(g, name=global_namespace; graphdynamics = true)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1);
 
 # plot neuron time series
-neuron_set = get_neurons(CB) ## extract neurons from a composite block like CorticalBlox
+neuron_set = get_neurons(CB) ## extract neurons from a composite block like Cortical
 n_neurons = 50 ## set number nof neurons to display in the stackplot
 stackplot(neuron_set[1:n_neurons], sol)
 
@@ -239,10 +239,10 @@ powerspectrumplot(CB, sol)
 # create cortical blocks for visual area cortex (VAC), anterior cortex (AC) and ascending system block (ASC1)
 global_namespace=:g
 ## cortical blox
-@named VAC = CorticalBlox(N_wta=10, N_exci=5,  density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
-@named AC = CorticalBlox(N_wta=10, N_exci=5, density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
+@named VAC = Cortical(N_wta=10, N_exci=5,  density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
+@named AC = Cortical(N_wta=10, N_exci=5, density=0.01, weight=1,I_bg_ar=0; namespace=global_namespace) 
 ## ascending system blox, modulating frequency set to 16 Hz
-@named ASC1 = NextGenerationEIBlox(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
+@named ASC1 = NextGenerationEI(;namespace=global_namespace, Cₑ=2*26,Cᵢ=1*26, Δₑ=0.5, Δᵢ=0.5, η_0ₑ=10.0, η_0ᵢ=0.0, v_synₑₑ=10.0, v_synₑᵢ=-10.0, v_synᵢₑ=10.0, v_synᵢᵢ=-10.0, alpha_invₑₑ=10.0/26, alpha_invₑᵢ=0.8/26, alpha_invᵢₑ=10.0/26, alpha_invᵢᵢ=0.8/26, kₑₑ=0.0*26, kₑᵢ=0.6*26, kᵢₑ=0.6*26, kᵢᵢ=0*26) 
 
 # create an image source block which takes image data from a .csv file and gives input to visual cortex
 
@@ -270,7 +270,7 @@ add_edge!(g, ASC1 => AC, weight=44)
 add_edge!(g, VAC => AC, weight=3, density=0.08)
 
 ## define system and solve
-sys = system_from_graph(g, name=global_namespace)
+sys = system_from_graph(g, name=global_namespace; graphdynamics = true)
 prob = ODEProblem(sys, [], (0.0, 1000), []) ## tspan = (0,1000)
 sol = solve(prob, Vern7(), saveat=0.1);
 
