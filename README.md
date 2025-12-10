@@ -12,7 +12,7 @@ We employ ModelingToolkit.jl to describe the dynamical behavior of blox as symbo
 
 ## Installation
 
-Neuroblox is available in the [NeurobloxRegistry](https://github.com/Neuroblox/NeurobloxRegistry). In order to install the NeurobloxRegistry simply run
+Neuroblox is available in the [NeurobloxRegistry](add https://github.com/Neuroblox/NeurobloxRegistry). In order to install the NeurobloxRegistry simply run
 
 ``` julia
 using Pkg
@@ -35,7 +35,7 @@ pkg"registry add General"
 
 Neuroblox is free for non-commerical and academic use. For full details of the license, please see 
 [the Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, get in contact
-with sales@neuroblox.org.
+with info@neuroblox.ai.
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://neuroblox.github.io/NeurobloxDocsHost/dev
