@@ -22,7 +22,7 @@ pkg"registry add https://github.com/Neuroblox/NeurobloxRegistry"
 and then Neuroblox can be installed like any other julia package with
 
 ``` julia
-Pkg.add("Neuroblox)
+Pkg.add("Neuroblox")
 ```
 
 If this is your first time using Julia, you *may* also need to add the General registry, which can be done with
