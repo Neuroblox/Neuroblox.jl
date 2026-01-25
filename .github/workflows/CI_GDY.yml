@@ -1,0 +1,36 @@
+name: CI_GDY
+on:
+  pull_request:
+    branches: master
+    paths:
+      - GraphDynamics/**
+      - .github/workflows/CI_GDY.yml
+  push:
+    branches: master
+    paths:
+      - GraphDynamics/**
+      - .github/workflows/CI_GDY.yml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+jobs:
+  test_GDY:
+    runs-on: [self-hosted, CI]
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.10'
+          - '1.12.2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: 'GraphDynamics'
+      - name: Run tests
+        run: julia --project=GraphDynamics -e 'using Pkg; Pkg.test("GraphDynamics"; julia_args=["-O3"])'
+        env:
+          JULIA_NUM_THREADS: 4

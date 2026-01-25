@@ -5,24 +5,29 @@
                       t_pre = nothing,
                       t_post = nothing)
 
-Hebbian learning rule. Every trial of the RL experiment, update the weight according to the following:
+Hebbian plasticity rule. The connection weight is updated according to :
 
 ```math
-    w_{j+1} = w_j + \\text{feedback} × Kx_\\text{pre}x_\\text{post}(W_\\text{lim} - w)
+    w_{j+1} = w_j + \\text{feedback} × K x_\\text{pre} x_\\text{post} (W_\\text{lim} - w)
 ```
-where `feedback` indicates the correctness of the agent's action during the trial, and the `x` indicate the activities of the pre- and post-synaptic neurons.
+where `feedback` is a binary indicator of the correctness of the model's action, 
+and `x` indicates the activity of the pre- and post-synaptic neuron states `state_pre` and `state_post` at timepoints `t_pre` and `t_post` respectively.
 
 Arguments:
-    - K: the learning rate of the connection
-    - W_lim: the maximum weight for the connection
+    - K : the learning rate of the connection
+    - W_lim : the maximum weight for the connection
+    - state_pre : state of the presynaptic neuron that is used in the plasticity rule (by default this is state `V` in neurons).
+    - state_post : state_pre : state of the postsynaptic neuron that is used in the plasticity rule (by default this is state `V` in neurons). 
+    - t_pre : timepoint at which `state_pre` is evaluated to be used in the plasticity rule.
+    - t_post : t_pre : timepoint at which `state_post` is evaluated to be used in the plasticity rule.
 
 See also [`HebbianModulationPlasticity`](@ref).
 """
 mutable struct HebbianPlasticity <:AbstractLearningRule
     const K::Float64
     const W_lim::Float64
-    state_pre::Union{Nothing, Num, Symbol}
-    state_post::Union{Nothing, Num, Symbol}
+    state_pre::Union{Nothing, Symbol}
+    state_post::Union{Nothing, Symbol}
     t_pre::Union{Nothing, Float64}
     t_post::Union{Nothing, Float64}
 end
@@ -40,7 +45,7 @@ function (hp::HebbianPlasticity)(val_pre, val_post, w, feedback)
     return Δw
 end
 
-function weight_gradient(hp::HebbianPlasticity, sol, w, feedback)
+function NeurobloxBase.weight_gradient(hp::HebbianPlasticity, sol, w, feedback)
     val_pre = only(sol(hp.t_pre; idxs = [hp.state_pre]))
     val_post = only(sol(hp.t_post; idxs = [hp.state_post]))
 
@@ -60,19 +65,27 @@ get_eval_states(l::HebbianPlasticity) = [l.state_pre, l.state_post]
                                 t_mod = nothing,
                                 modulator = nothing)
 
-Hebbian learning rule, but modulated by the dopamine reward prediction error. The weight update is largest when the reward prediction error is far from the modulation threshold θₘ.
+Hebbian plasticity rule, modulated by the dopamine reward prediction error. The weight update is largest when the reward prediction error is far from the modulation threshold `θₘ`.
 
 ```math
     ϵ = \\text{feedback} - (\\text{DA}_b - \\text{DA})
-    w_{j+1} = w_j + \\max(\\times Kx_\\text{pre}x_\\text{post}ϵ(ϵ + θₘ) dσ(α(ϵ + θₘ)) - \\text{decay} × w, -w)
+    w_{j+1} = w_j + \\max(\\times K x_\\text{pre} x_\\text{post} ϵ(ϵ + θₘ) dσ(α(ϵ + θₘ)) - \\text{decay} × w, -w)
 ```
-where `feedback` indicates the correctness of the agent's action during the trial, DA_b is the baseline dopamine level and DA is the modulator's dopamine release, and dσ is the derivative of the logistic function. The decay prevents the weights from diverging.
+where `feedback` is a binary indicator of the correctness of the model's action, 
+`DA_b` is the baseline dopamine level, `DA` is the modulator's dopamine release, 
+`dσ` is the derivative of the logistic function,
+and `x` indicates the activity of the pre- and post-synaptic neuron states `state_pre` and `state_post` at timepoints `t_pre` and `t_post` respectively. 
+The decay prevents the weights from diverging.
 
 Arguments:
     - K: the learning rate of the connection
     - decay: Decay of the weight update
     - α: the selectivity of the derivative of the logistic function
     - θₘ: the modulation threshold for the reward prediction error
+    - state_pre : state of the presynaptic neuron that is used in the plasticity rule (by default this is state `V` in neurons).
+    - state_post : state_pre : state of the postsynaptic neuron that is used in the plasticity rule (by default this is state `V` in neurons). 
+    - t_pre : timepoint at which `state_pre` is evaluated to be used in the plasticity rule.
+    - t_post : t_pre : timepoint at which `state_post` is evaluated to be used in the plasticity rule.
 
 See also [`HebbianPlasticity`](@ref).
 """
@@ -81,8 +94,8 @@ mutable struct HebbianModulationPlasticity <: AbstractLearningRule
     const decay::Float64
     const α::Float64
     const θₘ::Float64
-    state_pre::Union{Nothing, Num, Symbol}
-    state_post::Union{Nothing, Num, Symbol}
+    state_pre::Union{Nothing, Symbol}
+    state_post::Union{Nothing, Symbol}
     t_pre::Union{Nothing, Float64}
     t_post::Union{Nothing, Float64}
     t_mod::Union{Nothing, Float64}
@@ -109,7 +122,7 @@ function (hmp::HebbianModulationPlasticity)(val_pre, val_post, val_modulator, w,
     return Δw
 end
 
-function weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
+function NeurobloxBase.weight_gradient(hmp::HebbianModulationPlasticity, sol, w, feedback)
     state_mod = get_modulator_state(hmp.modulator)
     val_pre = sol(hmp.t_pre; idxs = hmp.state_pre)
     val_post = sol(hmp.t_post; idxs = hmp.state_post)
@@ -135,15 +148,13 @@ Arguments:
 - 
 """
 mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
-    const name::Symbol
-    const namespace::Symbol
     const source::S
     const category::Vector{Int}
     const N_trials::Int
     const t_trial::Float64
     current_trial::Int
     
-    function ClassificationEnvironment(data::DataFrame; name, namespace=nothing, t_stimulus, t_pause)
+    function ClassificationEnvironment(data::DataFrame; t_stimulus, t_pause)
         stim = ImageStimulus(
                         data; 
                         name=:stim, 
@@ -154,10 +165,10 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
         
         N_trials = stim.N_stimuli
 
-        ClassificationEnvironment(stim, N_trials; name, namespace)
+        ClassificationEnvironment(stim, N_trials)
     end
 
-    function ClassificationEnvironment(data::DataFrame, N_trials; name, namespace=nothing, t_stimulus, t_pause)
+    function ClassificationEnvironment(data::DataFrame, N_trials; t_stimulus, t_pause)
         stim = ImageStimulus(
                         data; 
                         name=:stim, 
@@ -166,25 +177,25 @@ mutable struct ClassificationEnvironment{S} <: AbstractEnvironment
                         t_pause
         )
 
-        ClassificationEnvironment(stim, N_trials; name, namespace)
+        ClassificationEnvironment(stim, N_trials)
     end
     
-    function ClassificationEnvironment(stim::ImageStimulus; name, namespace=nothing)
-        N_trials = stim.N_stimuli
+    function ClassificationEnvironment(stim::ImageStimulus)
+        N_trials = stim.param_vals.N_stimuli
 
-        ClassificationEnvironment(stim, N_trials; name, namespace)
+        ClassificationEnvironment(stim, N_trials)
     end
 
-    function ClassificationEnvironment(stim::ImageStimulus, N_trials; name, namespace=nothing)
-        t_trial = stim.t_stimulus + stim.t_pause
+    function ClassificationEnvironment(stim::ImageStimulus, N_trials)
+        t_trial = stim.param_vals.t_stimulus + stim.param_vals.t_pause
 
-        new{typeof(stim)}(Symbol(name), Symbol(namespace), stim, stim.category, N_trials, t_trial, 1)
+        new{typeof(stim)}(stim, stim.param_vals.category, N_trials, t_trial, 1)
     end
 end
 
 (env::ClassificationEnvironment)(action) = action == env.category[env.current_trial]
 
-function get_trial_stimulus(env::ClassificationEnvironment)
+function NeurobloxBase.get_trial_stimulus(env::ClassificationEnvironment)
     stim_params = env.source.stim_parameters
     stim_values = env.source.IMG[:, env.current_trial]
 
@@ -192,18 +203,18 @@ function get_trial_stimulus(env::ClassificationEnvironment)
 end
 
 """
-    GreedyPolicy(; name, t_decision, namespace, competitor_states = Num[], competitor_params = Num[])
+    GreedyPolicy(; name, t_decision, namespace, competitor_states = Symbol[])
 
-A policy that performs classification by picking the state with the highest value among `competitor_states`. `t_decision` is the time of the decision.
+A policy that makes a choice by picking the state with the highest value among `competitor_states` which represent each available choice. `t_decision` is the time of the decision.
 """
 mutable struct GreedyPolicy <: AbstractActionSelection
     const name::Symbol
     const namespace::Symbol
-    competitor_states::Union{Vector{Symbol}, Vector{Num}}
-    competitor_params::Union{Vector{Symbol}, Vector{Num}}
+    competitor_states::Vector{Symbol}
+    competitor_params::Vector{Symbol}
     const t_decision::Float64
 
-    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=Num[], competitor_params=Num[])
+    function GreedyPolicy(; name, t_decision, namespace=nothing, competitor_states=Symbol[], competitor_params=Symbol[])
         new(name, namespace, competitor_states, competitor_params, t_decision)
     end
 end
@@ -219,110 +230,72 @@ get_eval_times(gp::GreedyPolicy) = [gp.t_decision]
 
 get_eval_states(gp::GreedyPolicy) = gp.competitor_states
 
-mutable struct MTKAgent{S,P,A,LR,C} <: AbstractAgent
+struct Agent{S,P,A,LR,CM} <: AbstractAgent
     system::S
     problem::P
     action_selection::A
     learning_rules::LR
-    connector::C
+    connection_matrices::CM
 end
 
 """
-    Agent(g::MetaDiGraph; name, graphdynamics=false, kwargs...)
+    Agent(g::GraphSystem; t_block=missing, u0=[], p=[], kwargs...)
 
-Create a RL agent from a graph representing a neural circuit. This contains the system constructed from the graph, as well as its policy, connections, and the learning rules of each connection, which are extracted from the graph. The `graphdynamics` kwarg sets whether to construct a GraphDynamics system or ModelingToolkit system from the graph.
+A reinforcement learning agent, used to interact with an AbstractEnvironment to simulate a learning task.
+
+Arguments : 
+- g : A GraphSystem containing the model that the agent is using to make choices and update its connections during reinforcement learning.
+
+Keyword arguments : 
+- u0 : Initial conditions for the model in g. If not provided then default values will be used.
+- p : Parameter values for the model in g. If not provided then default values will be used.
+- t_block : The time period of a PeriodicCallback which will reset the cumulative spike counter of neurons in the model. This is optional and can be useful when the plasticity rules require number of spikes within specific time windows to update connection weights.
+- kwargs... : All other keyword arguments are passed to the ODEProblem that is constructed inside the agent and solved during run_experiment! and run_trial! . 
 """
-function Agent(g::MetaDiGraph; name, graphdynamics=false, kwargs...)
-    if graphdynamics
-        gsys = to_graphsystem(g)
-        return Agent(gsys; name, kwargs...)
+function Agent(g::GraphSystem; t_block=missing, u0=[], p=[], kwargs...)
+    if !ismissing(t_block)
+        global_events=[PeriodicCallback(t_block_event(:t_block_early), t_block - √(eps(float(t_block)))),
+                       PeriodicCallback(t_block_event(:t_block_late), t_block  +2*√(eps(float(t_block))))]
+    else
+        global_events=[]
     end
-    conns = connectors_from_graph(g)
-    
-    t_block = haskey(kwargs, :t_block) ? kwargs[:t_block] : missing
-    # TODO: add another version that uses system_from_graph(g,bc,params;)
-    sys = system_from_graph(g, conns; name, t_block, allow_parameter=false)
-
-    u0 = haskey(kwargs, :u0) ? kwargs[:u0] : []
-    p = haskey(kwargs, :p) ? kwargs[:p] : []
-    
-    prob = ODEProblem(sys, u0, (0.,1.), p)
-    
+    prob = ODEProblem(g, u0, (0.,1.), p; global_events, kwargs...)
     policy = action_selection_from_graph(g)
-    lr =  narrowtype(learning_rules(conns))  
-
-    MTKAgent(sys, prob, policy, lr, conns)
+    learning_rules = GraphDynamics.OrderedDict(((; nc, k,i,j,l) => kwargs.learning_rule for (; kwargs, nc,k,i,j,l) ∈ connections(g.flat_graph)
+                                      if get(kwargs, :learning_rule, NoLearningRule()) != NoLearningRule()))
+    conn = prob.p.connection_matrices
+    Agent(g, prob, policy, learning_rules, conn)
 end
 
-function run_experiment!(agent::MTKAgent,
-                         env::ClassificationEnvironment,
-                         save_path=nothing;
-                         monitor=nothing,
-                         modulator=nothing,
-                         t_warmup=0,
-                         interrupt_token = Threads.Atomic{Bool}(false),
-                         kwargs...)
+function NeurobloxBase.run_experiment!(agent::Agent, env::ClassificationEnvironment, save_path::Union{Nothing, String}=nothing, blocks=nothing;
+                                       t_warmup=0,
+                                       monitor=nothing,
+                                       interrupt_token = Threads.Atomic{Bool}(false),
+                                       modulator=nothing,
+                                       kwargs...)
     N_trials = env.N_trials
     t_trial = env.t_trial
     tspan = (0, t_trial)
-
-    sys = get_system(agent)
-    defs = ModelingToolkit.get_defaults(sys)
-    learning_rules = agent.learning_rules
-
-    stim_params = get_trial_stimulus(env)
-    init_params = ModelingToolkit.MTKParameters(sys, merge(defs, stim_params))
-
     if t_warmup > 0
-        u0 = run_warmup(agent, env, t_warmup; kwargs...)
-        agent.problem = remake(agent.problem; tspan, u0=u0, p=init_params)
+        u0 = @noinline run_warmup(agent, env, t_warmup; kwargs...)
+        @reset agent.problem = remake(agent.problem; tspan, u0=u0)
     else
-        agent.problem = remake(agent.problem; tspan, p=init_params)
+        @reset agent.problem = remake(agent.problem; tspan)
     end
     
-    
-
-    weights = Dict{Num, Float64}()
-    for w in keys(learning_rules)
-        weights[w] = defs[w]
-    end
-
-    #=
-    # TO DO: Ideally we should use save_idxs here to save some memory for long solves.
-    # However it does not seem possible currently to either do time interpolation on the solution
-    # or access observed states when save_idxs is used. Need to check with SciML people.
-    states = unknowns(sys)
-    idxs_V = findall(s -> occursin("₊V(t)", s), String.(Symbol.(states)))
-
-    states_learning = mapreduce(get_eval_states, union, values(learning_rules))
-    action_selection = agent.action_selection 
-    if !isnothing(action_selection)
-        states_learning = union(states_learning, get_eval_states(action_selection))
-    end
-    
-    idxs_learning = map(states_learning) do sl
-        findfirst(s -> occursin(String(Symbol(sl)), String(Symbol(s))), states)
-    end
-    filter!(!isnothing, idxs_learning)
-    
-    save_idxs = union(idxs_V, idxs_learning)
-    =#
     if isnothing(modulator)
         trace = (; trial=Int[], correct=Bool[], action=Int[], time=Float64[])
     else
         trace = (; trial=Int[], correct=Bool[], action=Int[], time=Float64[], DA=Float64[])
     end
-    try 
-        for trial in 1:N_trials
+    try
+        for trial ∈ 1:N_trials
             if interrupt_token[]
                 @warn "Interrupted! Bailing out now"
                 break
             end
-            (;time,) = @timed begin
-                sol, iscorrect, action = run_trial!(agent, env, weights, nothing; kwargs...)
-            end
-            if !isnothing(save_path)
-                save_voltages(sol, save_path, trial)
+            (;time, gctime) = @timed begin
+                sol, iscorrect, action = @noinline run_trial!(agent, env; kwargs...)
             end
             push!(trace.trial, trial)
             push!(trace.correct, iscorrect)
@@ -332,6 +305,15 @@ function run_experiment!(agent::MTKAgent,
                 push!(trace.DA, get_DA(sol, modulator, iscorrect))
             end
             update_monitor!(monitor, sol, action, iscorrect, trace)
+            if !isnothing(save_path)
+                save_voltages(sol, save_path, trial)
+                if !isnothing(blocks)
+                    save_voltages_block(sol, save_path, trial, blocks)
+                end
+                if !isnothing(modulator)
+                    save_DA(sol, modulator, iscorrect, save_path, trial)
+                end
+            end
         end
     catch e;
         if e isa InterruptException
@@ -340,40 +322,24 @@ function run_experiment!(agent::MTKAgent,
             rethrow(e)
         end
     end
-    return trace
+    trace
 end
 
-function run_warmup(agent::MTKAgent, env::ClassificationEnvironment, t_warmup; kwargs...)
-
+function NeurobloxBase.run_warmup(agent::Agent, env::ClassificationEnvironment, t_warmup; alg, kwargs...)
     prob = remake(agent.problem; tspan=(0, t_warmup))
-    if haskey(kwargs, :alg)
-        sol = solve(prob, kwargs[:alg]; save_everystep=false, kwargs...)
-    else
-        sol = solve(prob; alg_hints = [:stiff], save_everystep=false, kwargs...)
-    end
+    sol = solve(prob, alg; save_everystep=false, kwargs...)
     u0 = sol[:,end] # last value of state vector
-
     return u0
 end
 
-function run_trial!(agent::MTKAgent, env::ClassificationEnvironment, weights, u0; kwargs...)
-
+function NeurobloxBase.run_trial!(agent::Agent, env; alg, kwargs...)
     prob = agent.problem
     action_selection = agent.action_selection
     learning_rules = agent.learning_rules
-    sys = get_system(agent)
-    defs = ModelingToolkit.get_defaults(sys)
 
-    if haskey(kwargs, :alg)
-        sol = solve(prob, kwargs[:alg]; kwargs...)
-    else
-        sol = solve(prob; alg_hints = [:stiff], kwargs...)
-    end
-
-    # u0 = sol[1:end,end] # next run should continue where the last one ended   
-    # In the paper we assume sufficient time interval before next stimulus so that
-    # system reaches back to steady state, so we don't continue from previous trial's endpoint
-
+    update_trial_stimulus!(prob, env)
+    
+    sol = solve(prob, alg; kwargs...)
     if isnothing(action_selection)
         feedback = 1
         action = 0
@@ -381,23 +347,21 @@ function run_trial!(agent::MTKAgent, env::ClassificationEnvironment, weights, u0
         action = action_selection(sol)
         feedback = env(action)
     end
-
-    for (w, rule) in learning_rules
-        w_val = weights[w]
-        Δw = weight_gradient(rule, sol, w_val, feedback)
-        weights[w] += Δw
-    end
-    
+    apply_learning_rules!(sol, prob, learning_rules, feedback)
     increment_trial!(env)
-
-    stim_params = get_trial_stimulus(env)
-    new_params = ModelingToolkit.MTKParameters(sys, merge(defs, weights, stim_params))
-
-    agent.problem = remake(prob; p = new_params)
-
+    
     return sol, feedback, action
 end
 
+function update_trial_stimulus!(prob, env::ClassificationEnvironment)
+    (;params_partitioned) = prob.p
+    for i ∈ eachindex(params_partitioned)
+        if eltype(params_partitioned[i]) <: SubsystemParams{ImageStimulus}
+            stim = only(params_partitioned[i])
+            stim.current_image .= stim.IMG[:, env.current_trial]
+        end
+    end
+end
 
 function save_voltages(sol, filepath, numtrial)
     df = DataFrame(sol)

@@ -1,14 +1,16 @@
 using NeurobloxPharma
-using OrdinaryDiffEqDefault
+using OrdinaryDiffEqVerner
 using Statistics
 
 @testset "Inter-Spike Intervals [AbstractNeuron and Vector{<:AbstractNeuron}]" begin
-
-    @named hh1 = HHNeuronExci(; I_bg=0.4)
     tspan = (0.0, 1000.0)
-    sys = system(hh1)
-    prob = ODEProblem(sys, [], tspan)
-    sol = solve(prob; saveat=0.05)
+    @graph g begin
+        @nodes begin
+            hh1 = HHNeuronExci(; I_bg=0.4)
+        end
+    end
+    prob = ODEProblem(g, [], tspan)
+    sol = solve(prob, Vern7(); saveat=0.05)
 
     ISIs = inter_spike_intervals(hh1, sol; threshold=0)
     freq = 1e3/mean(ISIs)

@@ -1,5 +1,6 @@
 using NeurobloxDBS
 using Test
+using GraphDynamics
 
 @testset "Detection of stimulus transitions" begin
     frequency = 130.0
@@ -37,12 +38,14 @@ end
 
 @testset "DBS connections" begin
     # Test DBS -> Adam's STN
-    @named dbs = DBS()
-    @named stn = HHNeuronExci_STN_Adam()
-    g = MetaDiGraph()
-    add_edge!(g, dbs => stn, weight = 1.0)
-    sys = system_from_graph(g; name=:test)
-    @test sys isa SDESystem
+    g = @graph begin
+        @nodes begin
+            dbs = DBS()
+            stn = HHNeuronExci_STN_Adam()
+        end
+        @connections dbs => stn, [weight = 1.0]
+    end
+    @test g.flat_graph.is_stochastic
 end
 
 @testset "ProtocolDBS" begin
@@ -105,4 +108,3 @@ end
     @test sum(isapprox.(transition_values, amplitude, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
     @test sum(isapprox.(transition_values, offset, atol=0.1)) == 2*bursts_per_block*pulses_per_burst
 end
-

@@ -1,0 +1,9 @@
+\begin{align}
+\mathtt{n1\_synapse.G\_asymp}\left( t \right) &= \frac{\mathtt{n1.G\_syn}}{1 + e^{\frac{ - 4.394 \left(  - \mathtt{n1.V\_shift} + \mathtt{n1.V}\left( t \right) \right)}{\mathtt{n1.V\_range}}}} \\
+\mathtt{n2.I\_syn}\left( t \right) &=  - \left(  - \mathtt{n1\_synapse.E\_syn} + \mathtt{n2.V}\left( t \right) \right) \mathtt{n1\_synapse.g} \mathtt{w\_n1\_synapse\_n2} \mathtt{n1\_synapse.G}\left( t \right) \\
+\mathtt{n2.I\_in}\left( t \right) &= 0 \\
+\mathtt{n2.I\_asc}\left( t \right) &= 0 \\
+\mathtt{n2.jcn}\left( t \right) &= 0 \\
+\frac{\mathrm{d} \mathtt{n1\_synapse.G}\left( t \right)}{\mathrm{d}t} &= \frac{ - \mathtt{n1\_synapse.G}\left( t \right)}{\mathtt{n1\_synapse.\tau{_2}}} + \mathtt{n1\_synapse.z}\left( t \right) \\
+\frac{\mathrm{d} \mathtt{n1\_synapse.z}\left( t \right)}{\mathrm{d}t} &= \mathtt{n1\_synapse.G\_asymp}\left( t \right) + \frac{ - \mathtt{n1\_synapse.z}\left( t \right)}{\mathtt{n1\_synapse.\tau{_1}}}
+\end{align}

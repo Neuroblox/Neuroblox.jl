@@ -1,0 +1,4 @@
+\begin{align}
+\frac{\mathrm{d} \mathtt{n2.n3.jr1.x}\left( t \right)}{\mathrm{d}t} &= \frac{ - 2 \mathtt{n2.n3.jr1.x}\left( t \right)}{\mathtt{n2.n3.jr1.\tau}\left( t \right)} + \mathtt{n2.n3.jr1.y}\left( t \right) \\
+\frac{\mathrm{d} \mathtt{n2.n3.jr1.y}\left( t \right)}{\mathrm{d}t} &= \frac{ - \mathtt{n2.n3.jr1.x}\left( t \right)}{\left( \mathtt{n2.n3.jr1.\tau}\left( t \right) \right)^{2}} + \frac{\left( \frac{2 \mathtt{n2.n3.jr1.\lambda}\left( t \right)}{1 + e^{ - \mathtt{n2.n3.jr1.jcn}\left( t \right) \mathtt{n2.n3.jr1.r}\left( t \right)}} - \mathtt{n2.n3.jr1.\lambda}\left( t \right) \right) \mathtt{n2.n3.jr1.H}\left( t \right)}{\mathtt{n2.n3.jr1.\tau}\left( t \right)}
+\end{align}

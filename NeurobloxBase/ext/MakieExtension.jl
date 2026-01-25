@@ -4,7 +4,7 @@ isdefined(Base, :get_extension) ? using Makie : using ..Makie
 
 using NeurobloxBase
 using NeurobloxBase: AbstractBlox, AbstractNeuron, AbstractComposite
-using NeurobloxBase: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, powerspectrum
+using NeurobloxBase: meanfield_timeseries, voltage_timeseries, detect_spikes, firing_rate, get_neurons, powerspectrum, strip_outer_namespace
 using SciMLBase: AbstractSolution, EnsembleSolution
 using LinearAlgebra: diag
 using SparseArrays
@@ -30,12 +30,14 @@ function Makie.plot!(p::Adjacency)
     adj = AdjacencyMatrix(blox_or_graph)
 
     N = length(adj.names)
-
+    ax_names = String.(strip_outer_namespace.(adj.names))
     ax = current_axis()
-    ax.xticks = (Base.OneTo(N), String.(adj.names))
-    ax.yticks = (Base.OneTo(N), String.(adj.names))
+    ax.xticks = (1:N, ax_names)
+    ax.yticks = (1:N, ax_names)
     ax.xticklabelrotation = pi/2
-    ax.title = p.title[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
 
     hidexdecorations!(ax, ticklabels = false, ticks = false)
     hideydecorations!(ax, ticklabels = false, ticks = false)
@@ -55,6 +57,7 @@ end
 
 @recipe(MeanField, blox, sol) do scene
     Theme(
+        state="V",
         xlabel = "Time (ms)",
         ylabel = "Voltage (mV)",
         title = "",
@@ -67,13 +70,16 @@ argument_names(::Type{<: MeanField}) = (:blox, :sol)
 function Makie.plot!(p::MeanField)
     sol = p.sol[]
     blox = p.blox[]
+    state = p.state[]
 
     ax = current_axis()
     ax.xlabel = p.xlabel[]
-    ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
+    ax.ylabel = isempty(ax.ylabel[]) ? p.ylabel[] : ax.ylabel[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
 
-    V = meanfield_timeseries(blox, sol)
+    V = meanfield_timeseries(blox, sol, state)
     
     lines!(p, sol.t, vec(V); color=p.color[])
 
@@ -103,7 +109,9 @@ function Makie.plot!(p::RasterPlot)
     ax = current_axis()
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
 
     spikes = detect_spikes(blox, sol; threshold=threshold)
     N_neurons = length(cl)
@@ -137,7 +145,9 @@ function Makie.plot!(p::StackPlot)
     ax = current_axis()
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
     hideydecorations!(ax; label = false)
 
     V = voltage_timeseries(blox, sol)
@@ -190,7 +200,9 @@ function Makie.plot!(p::FRPlot)
     ax = current_axis()
     ax.xlabel = p.xlabel[]
     ax.ylabel = p.ylabel[]
-    ax.title = p.title[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
     
     fr = firing_rate(blox, sol; win_size = p.win_size[], overlap = p.overlap[], transient = p.transient[], threshold = p.threshold[])
 
@@ -324,7 +336,9 @@ function set_powerplot_axis(p)
     ax.ylabel = p.ylabel[]
     ax.xticks = p.xticks[]
     ax.yscale = p.yscale[]
-    ax.title = p.title[]
+    if !isempty(p.title[])
+        ax.title = p.title[]
+    end 
 
     if p.show_bands[]
         # if the y-limits are not provided by the user, Makie computes them but only after the plot has been displayed

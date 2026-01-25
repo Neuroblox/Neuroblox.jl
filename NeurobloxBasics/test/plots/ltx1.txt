@@ -1,0 +1,7 @@
+\begin{align}
+\frac{\mathrm{d} \mathtt{n1.V}\left( t \right)}{\mathrm{d}t} &= \frac{\mathtt{n1.I\_in}\left( t \right) + \frac{\mathtt{n1.E_m}\left( t \right) - \mathtt{n1.V}\left( t \right)}{\mathtt{n1.R_m}\left( t \right)} + \mathtt{n1.jcn}\left( t \right)}{\mathtt{n1.C}\left( t \right)} \\
+\frac{\mathrm{d} \mathtt{n1.G}\left( t \right)}{\mathrm{d}t} &= \frac{ - \mathtt{n1.G}\left( t \right)}{\mathtt{n1.\tau}\left( t \right)} \\
+\frac{\mathrm{d} \mathtt{n2.V}\left( t \right)}{\mathrm{d}t} &= \frac{\frac{ - \mathtt{n2.V}\left( t \right) + \mathtt{n2.E_m}\left( t \right)}{\mathtt{n2.R_m}\left( t \right)} + \mathtt{n2.I\_in}\left( t \right) + \mathtt{n2.jcn}\left( t \right)}{\mathtt{n2.C}\left( t \right)} \\
+\frac{\mathrm{d} \mathtt{n2.G}\left( t \right)}{\mathrm{d}t} &= \frac{ - \mathtt{n2.G}\left( t \right)}{\mathtt{n2.\tau}\left( t \right)} \\
+\mathtt{n2.jcn}\left( t \right) &= \mathtt{w\_n1\_n2} \mathtt{n1.G}\left( t \right)
+\end{align}

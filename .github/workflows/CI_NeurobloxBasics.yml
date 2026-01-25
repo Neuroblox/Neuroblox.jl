@@ -1,0 +1,46 @@
+name: CI_NeurobloxBasics
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - GraphDynamics/**
+      - NeurobloxBase/**
+      - NeurobloxBasics/**
+      - .github/workflows/CI_NeurobloxBasics.yml
+  push:
+    branches:
+      - master
+    paths:
+      - GraphDynamics/**
+      - NeurobloxBase/**
+      - NeurobloxBasics/**
+      - .github/workflows/CI_NeurobloxBasics.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+jobs:
+  test_NeurobloxBasics:
+    runs-on: [self-hosted, CI]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12.2'
+      - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: 'NeurobloxBasics'
+      - name: Run tests
+        run: julia --project=NeurobloxBasics -e 'using Pkg; Pkg.test(; julia_args=["-O1"])'
+        env:
+          REFERENCE_TESTS_STAGING_PATH: '${{ github.workspace }}/NeurobloxBasics/test/plots-staging/'
+      - name: Make PR if reference tests changed
+        if: always()
+        uses: ./.github/actions/create-update-pr
+        with:
+          github-token: ${{ github.token }}
+          commit-message: 'Update generated images from CI'
+          pr-title-prefix: 'Update reference images ${{ github.job }}'
+          branch-prefix: 'update-images-${{ github.job }}'
+          reference-path: 'NeurobloxBasics/test/plots/'
+          reference-staging-path: 'NeurobloxBasics/test/plots-staging/'

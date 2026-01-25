@@ -1,17 +1,3 @@
-# Continuous square‑pulse DBS stimulus
-struct DBS <: AbstractSimpleStimulus
-    name        ::Symbol
-    system      ::ODESystem
-    namespace   ::Union{Symbol,Nothing}
-end
-
-# Burst DBS stimulus
-struct ProtocolDBS <: AbstractSimpleStimulus
-    name        ::Symbol
-    system      ::ODESystem
-    namespace   ::Union{Symbol,Nothing}
-end
-
 """
     DBS(; name, namespace=nothing, frequency=130.0, amplitude=2.5, pulse_width=0.066, 
         offset=0.0, start_time=0.0, smooth=1e-4)
@@ -30,7 +16,7 @@ Arguments:
 
 Returns a DBS stimulus blox that outputs square pulses with specified parameters.
 """
-function DBS(;
+@blox struct DBS(;
     name,
     namespace=nothing,
     frequency=130.0,
@@ -38,18 +24,15 @@ function DBS(;
     pulse_width=0.066,
     offset=0.0,
     start_time=0.0,
-    smooth=1e-4
-    )
-    stim     = SquareStimulus(frequency, amplitude, offset, start_time, pulse_width, smooth)
-    StimType = typeof(stim)
+    smooth=1e-4) <: AbstractSimpleStimulus
 
-    @variables  u(t) [output=true]
-    stim_param = @parameters (stimulus::StimType)(::Real) = stim
-
-    eqs = [u ~ stimulus(t)]
-    sys = ODESystem(eqs, t, [u], stim_param; name=name)
-
-    return DBS(name, sys, namespace)
+    @params 
+    @states
+    @inputs
+    @outputs
+    @extra_fields stimulus = SquareStimulus(frequency, amplitude, offset, start_time, pulse_width, smooth)
+    @equations begin
+    end
 end
 
 """
@@ -76,7 +59,7 @@ Arguments:
 
 Returns a DBS stimulus blox that outputs a block of pulse bursts.
 """
-function ProtocolDBS(;
+@blox struct ProtocolDBS(;
     name,
     namespace=nothing,
     frequency=130.0,
@@ -88,29 +71,28 @@ function ProtocolDBS(;
     pulses_per_burst=10,
     bursts_per_block=12,
     pre_block_time=200.0,
-    inter_burst_time=200.0
-    )
+    inter_burst_time=200.0) <: AbstractSimpleStimulus
     
-    stim = BurstStimulus(frequency, amplitude, offset, start_time, pulse_width, smooth,
-                         pulses_per_burst, bursts_per_block,
-                         pre_block_time, inter_burst_time)
-    StimType = typeof(stim)
-
-    @variables  u(t) [output=true]
-    stim_param = @parameters (stimulus::StimType)(::Real) = stim
-
-    eqs = [u ~ stimulus(t)]
-    sys = ODESystem(eqs, t, [u], stim_param; name=name)
-
-    return ProtocolDBS(name, sys, namespace)
+    @params 
+    @states
+    @inputs
+    @outputs
+    @extra_fields stimulus = BurstStimulus(frequency, amplitude, offset, start_time, pulse_width, smooth,
+                    pulses_per_burst, bursts_per_block,
+                    pre_block_time, inter_burst_time)
+    @equations begin
+    end
 end
+
 
 # ------------------------------------------------------------------------------------------
 #  Stimulus functions
 # ------------------------------------------------------------------------------------------
 
+abstract type AbstractStimulusFunction <: Function end
+
 # Simple square pulse (constant amplitude, constant duty‑cycle)
-struct SquareStimulus{T} <: Function
+struct SquareStimulus{T} <: AbstractStimulusFunction
     frequency_khz :: T   # kHz
     amplitude     :: T
     offset        :: T
@@ -150,7 +132,7 @@ function (s::SquareStimulus)(t)
 end
 
 # Burst DBS stimulus
-struct BurstStimulus{T} <: Function
+struct BurstStimulus{T} <: AbstractStimulusFunction
     frequency_khz    :: T   # kHz
     amplitude        :: T
     offset           :: T
@@ -266,21 +248,18 @@ phase(t, f, t0) = f*(t - t0) - floor(f*(t - t0))
 #  Utility functions
 # ------------------------------------------------------------------------------------------
 
-get_stimulus_function(dbs::Union{DBS, ProtocolDBS}) = ModelingToolkit.getdefault(dbs.system.stimulus)
-
-function get_stimulus_function(sys::AbstractTimeDependentSystem)
-    params = parameters(sys)
-    params_str = string.(params)
-    ind   = only(get_inds(params_str, Regex("₊stimulus⋆\$")))
-    return ModelingToolkit.getdefault(params[ind])
+get_stimulus_function(dbs::Union{DBS, ProtocolDBS}) = dbs.stimulus
+function get_stimulus_function(sys::GraphSystem)
+    dbs = filter(b -> b isa Union{DBS, ProtocolDBS}, collect(nodes(sys.flat_graph)))
+    @assert length(dbs) == 1 "A system can only have one DBS input."
+    get_stimulus_function(only(dbs))
 end
-
-get_stimulus_function(prob::SciMLBase.AbstractDEProblem) = get_param_value(prob, "stimulus⋆")
+get_stimulus_function(prob::ODEProblem) = prob.ps[:stimulus_DBSConnection_g₊dbs_n1] #TODO: it's very weird that this is hardcoded this way
 
 # total duration (ms) of a DBS protocol --------------------------------------
-function get_protocol_duration(dbs::Union{ProtocolDBS, SciMLBase.AbstractDEProblem, AbstractTimeDependentSystem})
+function get_protocol_duration(dbs::Union{ProtocolDBS, GraphSystem, ODEProblem})
     stim = get_stimulus_function(dbs)
-    @assert !(stim isa SquareStimulus) "You are using and endless SquareStimulus."
+    @assert !(stim isa SquareStimulus) "You are using an endless SquareStimulus."
     stim.pre_block_time + stim.bursts_per_block * stim.cycle_duration - stim.inter_burst_time
 end
 
@@ -307,7 +286,7 @@ function detect_transitions(t, signal::Vector{T}; atol=0) where T <: AbstractFlo
     return transitions_inds
 end
 
-function compute_transition_times(stimulus::Function, f , dt, tspan, start_time, pulse_width; atol=0)
+function compute_transition_times(stimulus::AbstractStimulusFunction, f , dt, tspan, start_time, pulse_width; atol=0)
     period = 1000.0 / f
     n_periods = floor((tspan[end] - start_time) / period)
 
@@ -329,7 +308,6 @@ function compute_transition_times(stimulus::Function, f , dt, tspan, start_time,
 end
 
 function compute_transition_values(transition_times, t, signal)
-
     # Ensure transition_points are within the range of t, assuming both are ordered
     @assert begin
         t[1] <= transition_times[1]
@@ -341,17 +319,4 @@ function compute_transition_values(transition_times, t, signal)
     transition_values = signal[indices]
     
     return transition_values
-end
-
-get_inds(x::AbstractVector{<:Union{String,Symbol}}, pattern::Regex) =
-    findall(y -> occursin(pattern, string(y)), x)
-
-function get_param_value(prob::SciMLBase.AbstractDEProblem, name;
-                         params=nothing, params_str=nothing)
-    isnothing(params) && (params = parameters(prob.f.sys))
-    isnothing(params_str) && (params_str = string.(params))
-    ind   = get_inds(params_str, Regex("₊$(name)\$"))
-    @assert length(ind) == 1 "$(length(ind)) parameter(s) '$name' found"
-    sym   = params[ind]
-    getp(prob,sym)(prob)[1]
 end

@@ -1,0 +1,31 @@
+name: CI_NeurobloxBase
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - GraphDynamics/**
+      - NeurobloxBase/**
+      - .github/workflows/CI_NeurobloxBase.yml
+  push:
+    branches:
+      - master
+    paths:
+      - GraphDynamics/**
+      - NeurobloxBase/**
+      - .github/workflows/CI_NeurobloxBase.yml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+jobs:
+  test_NeurobloxBase:
+    runs-on: [self-hosted, CI]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12.2'
+      - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: 'NeurobloxBase'
+      - name: Run tests
+        run: julia --project=NeurobloxBase -e 'using Pkg; Pkg.test(; julia_args=["-O1"])'

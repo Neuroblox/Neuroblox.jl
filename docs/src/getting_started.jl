@@ -40,20 +40,19 @@ using Neuroblox
 using OrdinaryDiffEqRosenbrock
 using CairoMakie
 
-## Create two Wilson-Cowan blox
-@named WC1 = WilsonCowan()
-@named WC2 = WilsonCowan()
-
-## Create a graph to represent our circuit
-g = MetaDiGraph()
-add_blox!.(Ref(g), [WC1, WC2])
-
-## Define the connectivity between the neural masses
-add_edge!(g, WC1 => WC1; weight = -1) ## recurrent connection from WC1 to itself
-add_edge!(g, WC1 => WC2; weight = 7) ## connection from WC1 to WC2
-add_edge!(g, WC2 => WC1; weight = 4) ## connection from WC2 to WC1
-add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
-
+## Create a graph of two Wilson-Cowan blox to represent our circuit
+@graph g begin
+    @nodes begin
+        WC1 = WilsonCowan()
+        WC2 = WilsonCowan()
+    end
+    @connections begin
+        WC1 => WC1, [weight = -1] ## recurrent connection from WC1 to itself
+        WC1 => WC2, [weight =  7] ## connection from WC1 to WC2
+        WC2 => WC1, [weight =  4] ## connection from WC2 to WC1
+        WC2 => WC2, [weight = -1] ## recurrent connection from WC2 to itself
+    end
+end
 # Here, we've created two Wilson-Cowan blox and connected them as nodes in a directed graph. Each blox connects to itself and to the other blox. 
 
 # By default, the output of each Wilson-Cowan blox is its excitatory activity (E). The negative self-connections (-1) provide inhibitory feedback, while the positive inter-blox connections (6) provide strong excitatory coupling. This setup creates an oscillatory dynamic between the two Wilson-Cowan units.
@@ -62,15 +61,14 @@ add_edge!(g, WC2 => WC2; weight = -1) ## recurrent connection from WC2 to itself
 
 # Now, let's build the complete model:
 
-@named sys = system_from_graph(g; graphdynamics = true)
+prob = ODEProblem(g, [], (0.0, 100), [])
 
-# This creates a differential equations system from our graph representation using ModelingToolkit and symbolically simplifies it for efficient computation.
+# This creates an efficient differential equations system from our graph representation using GraphDynamics.
 
 # ### Simulating the Model
 
-# We are now ready to simulate our model. The following code creates and solves an `ODEProblem` for our system, simulating 100 time units of activity. In Neuroblox, the default time unit is milliseconds. We use `Rodas4`, a solver efficient for stiff problems. The solution is saved every 0.1 ms, allowing us to observe the detailed evolution of the system's behavior.
+# We are now ready to simulate our model. The following code solvesthe `ODEProblem` for our system, simulating 100 time units of activity. In Neuroblox, the default time unit is milliseconds. We use `Rodas4`, a solver efficient for stiff problems. The solution is saved every 0.1 ms, allowing us to observe the detailed evolution of the system's behavior.
 
-prob = ODEProblem(sys, [], (0.0, 100), [])
 sol = solve(prob, Rodas4(), saveat=0.1)
 
 # ### Plotting simulation results
