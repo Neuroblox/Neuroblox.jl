@@ -1,12 +1,14 @@
 """
     @graph
 
-Helper macro that returns a directed graph whose nodes are Blox and whose edges are connections. This graph can then be turned into a system to be solved by calling `system_with_graph`.
-Nodes should be declared within the block starting with @nodes, and connections should be declared within the block starting with @connections. Connections should be declared as Pairs, with an optional vector of keyword arguments coming after.
+Helper macro that returns a GraphSystem whose nodes are Blox and whose edges are connections.
+Nodes should be declared within the block starting with @nodes, and connections should be declared
+within the block starting with @connections. Connections should be declared as Pairs, with an optional
+vector of keyword arguments coming after.
 
 Example:
 ```julia
-cortical = @graph begin
+cortical = @graph name begin
     @nodes begin
         ASC1 = NextGenerationEI(; ...)
         Layer_2_3_A = Cortical(; density = 0.03) 
@@ -18,90 +20,194 @@ cortical = @graph begin
 end
 ```
 """
+macro graph(namespace::Symbol, body::Expr)
+    graph_macro(:($namespace = $GraphSystem(; name=$(QuoteNode(namespace)))), body)
+end
+
 macro graph(body::Expr)
-    output = Expr(:block)
-    push!(output.args, :(g = $GraphDynamics.GraphSystem()))
+    graph_macro(:($GraphSystem(; name=$nothing)), body)
+end
+
+macro graph()
+    :(GraphSystem(; name=nothing))
+end
+
+"""
+    @graph! g expr
+
+Like the `@graph` macro, except it takes an existing graph `g` as its first argument and mutates it by adding
+additional nodes and connections.
+"""
+macro graph!(g, body)
+    graph_macro(g, body)
+end
+
+function graph_macro(g_input, body)
+    @gensym g namespace
+    output = Expr(:block,
+                  :($g::$(Union{GraphSystem, PartitioningGraphSystem}) = $g_input),
+                  :($namespace = $getfield($g, :name)),
+                  )
 
     nodelist = Tuple{Symbol, Expr}[]
     nodelinenums = LineNumberNode[]
     edgelist = Tuple{Expr, Any}[]
     edgelinenums = LineNumberNode[]
+    
+    body = let
+        sub_nodes = Substitute() do expr
+            isexpr(expr, :macrocall) && expr.args[1] == Symbol("@nodes")
+        end
+        sub_nodes(body) do expr
+            expr_block = Expr(:block, expr.args[2:end]...)
+            substitute_nodes(expr_block, g, namespace)
+        end
+    end
+    body = let
+        sub_connections = Substitute() do expr
+            isexpr(expr, :macrocall) && expr.args[1] == Symbol("@connections")
+        end
+        sub_connections(body) do expr
+            expr_block = Expr(:block, expr.args[2:end]...)
+            substitute_edges(expr_block, g, namespace)
+        end
+    end
+    push!(output.args, body, g)
+    return esc(output)
+end
 
-    for expr in body.args
-        if expr isa Expr && expr.head == :macrocall
-            if expr.args[1] === Symbol("@nodes")
-                parse_nodes!(nodelist, nodelinenums, expr.args[end])
-            elseif expr.args[1] === Symbol("@connections")
-                parse_edges!(edgelist, edgelinenums, expr.args[end])
+function substitute_nodes(nodeblock, g, namespace)
+    function walk_and_replace(ex)
+        if isexpr(ex, :macrocall, 3) && ex.args[1] == Symbol("@rule") && isexpr(ex.args[3], :(=))
+            # Turn `@rule x = y` into system_wiring_rule!(g, x)
+            _substitude_node(ex.args[3], g, namespace, system_wiring_rule!)
+        elseif isexpr(ex, :(=))
+            # Turn `x = y` into add_node!(g, x)
+            _substitude_node(ex, g, namespace, add_node!)
+        elseif ex isa Expr
+            Expr(ex.head, walk_and_replace.(ex.args)...)
+        else
+            ex
+        end
+    end
+    walk_and_replace(nodeblock)
+end
+
+function _substitude_node(expr, g, namespace, func!)
+    @gensym idx res
+    @match expr begin
+        :($a = [$f($(args...)) for $c ∈ $d]) => begin
+            call = inferred_name_namespace_fexpr(f, args, a, namespace, idx)
+            body = Expr(:block,
+                        :($res = $call),
+                        :($func!($g, $res)),
+                        res)
+            :($a = [$body for ($idx, $c) ∈ enumerate($d)])
+        end
+        :($a = for $c ∈ $d
+              $(assignments...)
+              $f($(args...))
+              $lnn
+          end) => begin
+              call = inferred_name_namespace_fexpr(f, args, a, namespace, idx)
+              body = Expr(:block,
+                          assignments...,
+                          :($res = $call),
+                          :($func!($g, $res)),
+                          res)
+              :($a = [$body for ($idx, $c) ∈ enumerate($d)])
+          end
+        :($a = $f($(args...))) => begin
+            call = inferred_name_namespace_fexpr(f, args, a, namespace, nothing)
+            :($a = $call; $func!($g, $a); $a)
+        end
+        ex => error("Unrecognized syntax in @nodes block:\n $ex")
+    end
+end
+
+function inferred_name_namespace_fexpr(fname, fargs, name::Symbol, namespace, idxsym)
+    args, kwargs = @match fargs begin
+        [Expr(:parameters, kwargs...), args...] => handle_kwargs(args, kwargs, namespace, name, idxsym)
+        [args...] => handle_kwargs(args, (), namespace, name, idxsym)
+        ex => error("Invalid expression $(:($fname($(fargs...))))")
+    end
+    :($fname($(args...); $(kwargs...)))
+end
+
+function handle_kwargs(args_in, kwargs_in, namespace, name, idxsym)
+    name_ex = isnothing(idxsym) ? QuoteNode(name) : :($Symbol($(QuoteNode(name)), $idxsym))
+    kwargs = Any[Expr(:kw, :name, name_ex), Expr(:kw, :namespace, namespace)]
+    args = []
+    for arg in args_in
+        if isexpr(arg, :kw)
+            if arg.args[1] == :name
+                kwargs[1] = arg
+            elseif arg.args[1] == :namespace
+                kwargs[2] = arg
             else
-                error("Unknown macro call $(expr.args[1]) found in the @graph macro. Use @nodes to define nodes and @connections to define edges.")
+                push!(kwargs, arg)
             end
         else
-            push!(output.args, expr)
+            push!(args, arg)
         end
     end
-
-    for (l, (lhs, rhs)) in zip(nodelinenums, nodelist)
-        push!(output.args, l)
-        push!(output.args, :($ModelingToolkit.@named $lhs = $rhs))
-        push!(output.args, :($GraphDynamics.add_node!(g, $lhs)))
-    end
-    for (l, (e, kwargs)) in zip(edgelinenums, edgelist)
-        push!(output.args, l)
-        push!(output.args, :($GraphDynamics.add_connection!(g, $e[1], $e[2]; $(kwargs...))))
-    end
-    push!(output.args, :(g))
-    esc(output)
-end
-
-macro graph()
-    :(g = $GraphDynamics.GraphSystem())
-end
-
-function parse_nodes!(nodelist, nodelinenums, body)
-    if body.head === :block
-        for expr in body.args
-            parse_node!(nodelist, nodelinenums, expr)
+    for kwarg in kwargs_in
+        if isexpr(kwarg, :kw)
+            if kwarg.args[1] == :name
+                kwargs[1] = kwarg
+            elseif kwarg.args[1] == :namespace
+                kwargs[2] = kwarg
+            else
+                push!(kwargs, kwarg)
+            end
+        else
+            push!(kwargs, kwarg)
         end
-    else
-        parse_node!(nodelist, nodelinenums, body)
     end
+    args, kwargs
 end
 
-function parse_node!(nodelist, nodelinenums, expr)
-    if expr isa LineNumberNode
-        push!(nodelinenums, expr)
-    elseif expr.head === :(=)
-        push!(nodelist, (expr.args[1], expr.args[2]))
-    else
-        error("Malformed node definition $expr. Node definitions should be of the format `(var_name) =Blox(...)`")
-    end
-end
-
-function parse_edges!(edgelist, edgelinenums, body)
-    if body.head === :block
-        for expr in body.args
-            parse_edge!(edgelist, edgelinenums, expr)
+function substitute_edges(edgeblock, g, namespace)
+    function walk_and_replace(ex)
+        # Turn `@rule x => y` into system_wiring_rule!(g, x)
+        if isexpr(ex, :macrocall, 3) && ex.args[1] == Symbol("@rule")
+            @match ex.args[3] begin
+                :($a => $b)        => _substitude_edge(ex.args[3], g, namespace, system_wiring_rule!)
+                :(($a => $b), $kw) => _substitude_edge(ex.args[3], g, namespace, system_wiring_rule!)
+                ex => error("Invalid use of @rule, expected expression of the form @rule a => b, [kwargs...], got\n @rule $ex")
+            end
+        else
+            @match ex begin
+                :($a => $b)        => _substitude_edge(ex, g, namespace, add_connection!)
+                :(($a => $b), $kw) => _substitude_edge(ex, g, namespace, add_connection!)
+                ex::Expr           => Expr(ex.head, walk_and_replace.(ex.args)...)
+                x                  => x
+            end
         end
-    else
-        parse_edge!(edgelist, edgelinenums, body)
+    end
+    walk_and_replace(edgeblock)
+end
+
+function _substitude_edge(expr, g, namespace, func!)
+    @match expr begin
+        ::Symbol => expr
+        :($src => $dst) => :($func!($g, $src, $dst))
+        :($src => $dst, $kw) => begin
+            kwargs = @match kw begin
+                :([$(kwargs...)]) => make_kwarg.(kwargs)
+                :(($(kwargs...),)) => make_kwarg.(kwargs)
+                :((; $(kwargs...))) => make_kwarg.(kwargs)
+            end
+            :($func!($g, $src, $dst; $(kwargs...)))
+        end
+        ex => ex
     end
 end
 
-function parse_edge!(edgelist, edgelinenums, expr)
-    if expr isa LineNumberNode
-        push!(edgelinenums, expr)
-    elseif expr.head === :call && expr.args[1] === :(=>)
-        push!(edgelist, (expr, ()))
-    elseif expr.head === :tuple && length(expr.args) == 2
-        kwargs = []
-        for arg in expr.args[2].args
-            (arg.head != :(=)) && error("Malformed keyword argument $arg.")
-            (arg.args[1] isa Symbol) || error("Invalid keyword argument name $(arg.args[1]).")
-            push!(kwargs, Expr(:kw, (arg.args[1]), arg.args[2]))
-        end
-        push!(edgelist, (expr.args[1], kwargs))
-    else
-        error("Malformed edge line $expr. The line should contain a pair x => y indicating which nodes are connected, followed by an optional vector of keyword arguments separated by a comma.")
-    end
+make_kwarg(kwarg) = @match kwarg begin
+    s::Symbol => s
+    :($name = $val) => Expr(:kw, name, val)
+    Expr(:kw, name, val) => Expr(:kw, name, val)
+    Expr(:(...), args...) => Expr(:(...), args...)
+    ex => error("Malformed keyword argument $kwarg.")
 end

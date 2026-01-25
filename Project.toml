@@ -1,41 +1,34 @@
 name = "Neuroblox"
 uuid = "769b91e5-4c60-41ee-bfae-153c84203cb2"
-version = "0.7.0"
+version = "0.8.0"
 repo = "https://github.com/Neuroblox/Neuroblox.jl.git"
 
 [workspace]
-projects = [
-	"test",
-	"NeurobloxBase",
-	"NeurobloxBasics",
-	"NeurobloxPharma",
-	"NeurobloxDBS",
-	"NeurobloxSynapticBlox",
-	"scrap",
-	"examples",
-  "docs",
-]
+projects = ["test", "NeurobloxBase", "NeurobloxBasics", "NeurobloxPharma", "NeurobloxDBS", "GraphDynamics", "scrap", "examples", "docs", "benchmark"]
 
 [deps]
 NeurobloxBase = "c1a47a78-a13f-4f42-9de5-c5b922306e53"
 NeurobloxBasics = "6341abd9-5539-449d-87b3-7e81c4d50fb5"
 NeurobloxDBS = "d34949e2-e824-4448-b7f9-1a74e4d2565a"
 NeurobloxPharma = "6d6291d7-c437-44bd-acf4-438a4f54bfaa"
-NeurobloxSynapticBlox = "07666d11-74ed-43ff-badd-c2050c738c55"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+
 
 [sources]
 NeurobloxBase = {path = "NeurobloxBase"}
 NeurobloxBasics = {path = "NeurobloxBasics"}
 NeurobloxDBS = {path = "NeurobloxDBS"}
 NeurobloxPharma = {path = "NeurobloxPharma"}
-NeurobloxSynapticBlox = {path = "NeurobloxSynapticBlox"}
+GraphDynamics = {path = "GraphDynamics"}
 
 [compat]
-NeurobloxBase = "0.1"
-NeurobloxBasics = "0.1"
-NeurobloxDBS = "0.1"
-NeurobloxPharma = "0.1"
-NeurobloxSynapticBlox = "0.1"
+GraphDynamics = "0.7"
+NeurobloxBase = "0.2"
+NeurobloxBasics = "0.2"
+NeurobloxDBS = "0.2"
+NeurobloxPharma = "0.2"
 Reexport = "1.2"
 julia = "1.9"
+
+[extras]
+GraphDynamics = "bcd5d0fe-e6b7-4ef1-9848-780c183c7f4c"

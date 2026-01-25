@@ -2,7 +2,6 @@ using NeurobloxPharma, GraphDynamics, Test, Random, OrdinaryDiffEqVerner, OhMyTh
 using DataFrames: DataFrames, DataFrame
 using CSV: CSV
 using Random
-using Test
 
 rrng() = Xoshiro(rand(Int))
 
@@ -10,7 +9,7 @@ function small_corticostriatal_learning_run(;time_block_dur = 90.0, ## ms (size 
                                             N_trials = 700, ## number of trials
                                             trial_dur = 1000, ## ms
                                             seed = nothing,
-                                            graphdynamics=true,
+                                            save_everystep=true,
                                             kwargs...
                                             )
     if !isnothing(seed)
@@ -22,7 +21,7 @@ function small_corticostriatal_learning_run(;time_block_dur = 90.0, ## ms (size 
         model_name=:g
         ## define stimulus source blox
         ## t_stimulus: how long the stimulus is on (in msec)
-        ## t_pause : how long th estimulus is off (in msec)
+        ## t_pause : how long the stimulus is off (in msec)
         @named stim = ImageStimulus(image_set; namespace=model_name, t_stimulus=trial_dur, t_pause=0); 
 
         ## cortical blox
@@ -68,14 +67,13 @@ function small_corticostriatal_learning_run(;time_block_dur = 90.0, ## ms (size 
         add_connection!(g, STR1 => AS);
         add_connection!(g, STR2 => AS);
 
-        @named env = ClassificationEnvironment(stim, N_trials)
-        @named agent = Agent(g; t_block = time_block_dur, graphdynamics);
-        print("Construction:  "); 
+        env = ClassificationEnvironment(stim, N_trials)
+        agent = Agent(g; t_block = time_block_dur);
+        print("Construction:  ");
     end
-    
     trace = run_experiment!(agent, env; t_warmup=200.0, alg=Vern7(),
                             monitor=ProgressMeterMonitor(N_trials),
-                            save_everystep=false,
+                            save_everystep,
                             kwargs...)
 end
 
@@ -83,8 +81,8 @@ function big_corticostriatal_learning_run(; t_block = 90, # ms (size of discrete
                                           scheduler = SerialScheduler(),
                                           t_warmup=800.0,
                                           seed = nothing,
-                                          graphdynamics=true,
                                           N_trials = 700, #number of trials
+                                          save_everystep=true,
                                           kwargs...)
     if !isnothing(seed)
         Random.seed!(seed)
@@ -173,14 +171,15 @@ function big_corticostriatal_learning_run(; t_block = 90, # ms (size of discrete
 	    add_connection!(g, STR1 => SNcb; weight = 1.0, rng=rrng()) # str1->Snc
         add_connection!(g, STR2 => SNcb; weight = 1.0, rng=rrng())  # str2->Snc
 
-        @named env = ClassificationEnvironment(stim, N_trials)
-        @named agent = Agent(g; t_block, graphdynamics, scheduler);
+        env = ClassificationEnvironment(stim, N_trials)
+        agent = Agent(g; t_block, scheduler);
         print("Construction:  ");
     end
+    agent.problem
     @time run_experiment!(agent, env;
                           alg=Vern7(),
                           t_warmup,
-                          save_everystep=false,
+                          save_everystep,
                           monitor=ProgressMeterMonitor(N_trials),
                           modulator=SNcb,
                           kwargs...)

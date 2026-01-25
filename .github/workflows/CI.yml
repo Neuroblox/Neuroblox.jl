@@ -5,168 +5,29 @@ on:
   push:
     branches:
       - master
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 jobs:
   test_Neuroblox:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, CI]
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
-      - uses: julia-actions/cache@v2
+          version: '1.12.2'
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run tests
         run: julia --project=. -e 'using Pkg; Pkg.test("Neuroblox"; julia_args=["-O1"])'
         env:
-          JULIA_NUM_THREADS: 4
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
+          REFERENCE_TESTS_STAGING_PATH: '${{ github.workspace }}/test/plots-staging/'
+      - name: Make PR if reference tests changed
+        if: always()
+        uses: ./.github/actions/create-update-pr
         with:
-          file: lcov.info
-
-  test_NeurobloxBase:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxBase"; julia_args=["-O1"])'
-        env:
-          JULIA_NUM_THREADS: 4
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxBasics:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxBasics"; julia_args=["-O1"])'
-        env:
-          JULIA_NUM_THREADS: 4
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxDBS:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxDBS"; julia_args=["-O1"])'
-        env:
-          JULIA_NUM_THREADS: 4
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxPharma1:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - group: Basics
-          - group: MTK_Small_RL_Pipeline
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxPharma"; julia_args=["-O3"])'
-        env:
-          JULIA_NUM_THREADS: 4
-          GROUP: ${{ matrix.group }}
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxPharma2:
-    runs-on: [self-hosted, CI]
-    timeout-minutes: 1200
-    strategy:
-      matrix:
-        include:
-          - group: Full_CS_RL_Pipeline
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxPharma"; julia_args=["-O3"])'
-        env:
-          JULIA_NUM_THREADS: 4
-          GROUP: ${{ matrix.group }}
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxSynapticBlox1:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - group: Basics
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxSynapticBlox"; julia_args=["-O3"])'
-        env:
-          JULIA_NUM_THREADS: 4
-          GROUP: ${{ matrix.group }}
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
-
-  test_NeurobloxSynapticBlox2:
-    runs-on: [self-hosted, CI]
-    timeout-minutes: 1200
-    strategy:
-      matrix:
-        include:
-          - group: Full_CS_RL_Pipeline
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Run tests
-        run: julia --project=. -e 'using Pkg; Pkg.test("NeurobloxSynapticBlox"; julia_args=["-O3"])'
-        env:
-          JULIA_NUM_THREADS: 4
-          GROUP: ${{ matrix.group }}
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          file: lcov.info
+          github-token: ${{ github.token }}
+          commit-message: 'Update generated images from CI'
+          pr-title-prefix: 'Update reference images ${{ github.job }}'
+          branch-prefix: 'update-images-${{ github.job }}'
+          reference-path: 'test/plots/'
+          reference-staging-path: 'test/plots-staging/'

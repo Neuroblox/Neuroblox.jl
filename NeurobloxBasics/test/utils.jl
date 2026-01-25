@@ -4,41 +4,41 @@ using StochasticDiffEq
 using Statistics
 using SparseArrays
 using Peaks: argmaxima
+using Test
 
 @testset "Voltage timeseries [LIFExciNeuron]" begin
     global_ns = :g 
     @named n = LIFExciNeuron(; namespace = global_ns)
 
-    g = MetaDiGraph()
-    add_blox!(g, n)
+    g = GraphSystem()
+    add_node!(g, n)
 
-    sys = system_from_graph(g; name = global_ns)
-    prob = ODEProblem(sys, [], (0, 200.0))
+    prob = ODEProblem(g, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
-    @test all(sol[sys.n.V] .== NeurobloxBase.voltage_timeseries(n, sol))
+    @test all(sol[n.V] .== NeurobloxBase.voltage_timeseries(n, sol))
 end
 
 @testset "Voltage timeseries [Vector{<:AbstractNeuron}]" begin
     global_ns = :g # global namespace
-    @named s = PoissonSpikeTrain(3, (0, 200); namespace = global_ns)
-    @named n1 = LIFExciNeuron(; namespace = global_ns)
-    @named n2 = LIFExciNeuron(; namespace = global_ns)
-    @named n3 = LIFInhNeuron(; namespace = global_ns)
+    @graph g begin
+        @nodes begin
+            s = PoissonSpikeTrain(3, (0, 200))
+            n1 = LIFExciNeuron()
+            n2 = LIFExciNeuron()
+            n3 = LIFInhNeuron()
+        end
+        @connections begin
+            n1 => n2, [weight=1]
+            n1 => n3, [weight=1]
+            s  => n1, [weight=1]
+        end
+    end
 
-    neurons = [n1, n2, n3]
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), neurons)
-
-    add_edge!(g, n1 => n2; weight=1)
-    add_edge!(g, n1 => n3; weight=1)
-    add_edge!(g, s => n1; weight=1)
-
-    sys = system_from_graph(g; name=global_ns)
-    prob = ODEProblem(sys, [], (0, 200.0))
+    prob = ODEProblem(g, [], (0, 200.0))
     sol = solve(prob, Tsit5())
 
-    V = hcat(sol[sys.n1.V], sol[sys.n2.V], sol[sys.n3.V])
+    V = hcat(sol[n1.V], sol[n2.V], sol[n3.V])
 
     @test all(V .== NeurobloxBase.voltage_timeseries([n1, n2, n3], sol))
 end
@@ -47,22 +47,20 @@ end
     global_ns = :g 
     tspan = (0, 200)
     V_reset = -55
-    
-    @named s = PoissonSpikeTrain(3, tspan; namespace = global_ns)
-    @named n = LIFExciCircuit(; V_reset, namespace = global_ns, N_neurons = 3, weight=1)
-    
-    neurons = [s, n]
-    
-    g = MetaDiGraph()
-    add_blox!.(Ref(g), neurons)
-    
-    add_edge!(g, 1, 2, Dict(:weight => 1))
-    
-    sys = system_from_graph(g; name = global_ns)
-    prob = ODEProblem(sys, [], (0, 200.0))
+
+    @graph g begin
+        @nodes begin
+            s = PoissonSpikeTrain(3, tspan)
+            n = LIFExciCircuit(; V_reset,  N_neurons = 3, weight=1)
+        end
+        @connections begin
+            s => n, [weight=1]
+        end
+    end
+    prob = ODEProblem(g, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     
-    V = hcat(sol[sys.n.neuron1.V], sol[sys.n.neuron2.V], sol[sys.n.neuron3.V])
+    V = hcat(sol[n.neurons[1].V], sol[n.neurons[2].V], sol[n.neurons[3].V])
     V[V .== V_reset] .= NaN
     
     V_nb = NeurobloxBase.voltage_timeseries(n, sol)
@@ -78,18 +76,18 @@ end
 end
 
 @testset "Spike detection [LIFExciNeuron and LIFExciCircuit]" begin
-    global_ns = :g # global namespace
-    @named s = PoissonSpikeTrain(3, (0, 200); namespace = global_ns)
-    @named n = LIFExciNeuron(; namespace = global_ns)
-    @named cb = LIFExciCircuit(; namespace = global_ns, N_neurons = 3, weight=1)
-    
-    g = MetaDiGraph()
-    
-    add_edge!(g, s => n; weight=1)
-    add_edge!(g, s => cb; weight=1)
-    
-    sys = system_from_graph(g; name=global_ns)
-    prob = ODEProblem(sys, [], (0, 200.0))
+    @graph g begin
+        @nodes begin
+            s = PoissonSpikeTrain(3, (0, 200))
+            n = LIFExciNeuron(;)
+            cb = LIFExciCircuit(; N_neurons = 3, weight=1)
+        end
+        @connections begin
+            s => n, [weight=1]
+            s => cb, [weight=1]
+        end
+    end
+    prob = ODEProblem(g, [], (0, 200.0))
     sol = solve(prob, Tsit5())
     
     spikes_n = detect_spikes(n, sol)

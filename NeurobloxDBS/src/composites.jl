@@ -48,12 +48,11 @@ function adam_connection_matrix_gap(density, g_density, N, weight, g_weight)
 end
 
 struct Striatum_MSN_Adam <: AbstractComposite
+    name
     namespace
     parts
-    system
-    connector
-    mean
     connection_matrix
+    graph::GraphSystem
 
     function Striatum_MSN_Adam(;
         name, 
@@ -68,58 +67,48 @@ struct Striatum_MSN_Adam <: AbstractComposite
         G_M=1.3,
         connection_matrix=nothing
     )
-        n_inh = [
-            HHNeuronInhib_MSN_Adam(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    τ = τ_inhib,
-                    I_bg = I_bg[i],
-                    σ=σ,
-                    G_M=G_M
-            ) 
-            for i in Base.OneTo(N_inhib)
-        ]
-
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_inhib)
-            add_blox!(g, n_inh[i])
-        end
         if isnothing(connection_matrix)
             connection_matrix = adam_connection_matrix(density, N_inhib, weight)
         end
-        for i ∈ axes(connection_matrix, 2)
-            for j ∈ axes(connection_matrix, 1)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
+
+        sys = @graph begin
+            @nodes begin
+                n_inh = [
+                    HHNeuronInhib_MSN_Adam(
+                            name = Symbol("inh$i"),
+                            namespace = namespaced_name(namespace, name),
+                            E_syn = E_syn_inhib, 
+                            τ = τ_inhib,
+                            I_bg = I_bg[i],
+                            σ=σ,
+                            G_M=G_M
+                    ) 
+                    for i in 1:N_inhib
+                ]
+            end
+
+            @connections begin
+                for i ∈ axes(connection_matrix, 2)
+                    for j ∈ axes(connection_matrix, 1)
+                        cji = connection_matrix[j,i]
+                        if !iszero(cji)
+                            n_inh[j] => n_inh[i], [weight = cji]
+                        end
+                    end
                 end
             end
         end
-        parts = n_inh
-        
-        bc = connectors_from_graph(g)
 
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(name, namespace, n_inh, connection_matrix, sys)
     end
-
 end    
 
 struct Striatum_FSI_Adam  <: AbstractComposite
+    name
     namespace
     parts
-    system
-    connector
-    mean
     connection_matrix
+    graph::GraphSystem
 
     function Striatum_FSI_Adam(;
         name, 
@@ -136,67 +125,55 @@ struct Striatum_FSI_Adam  <: AbstractComposite
         g_weight=0.15,
         connection_matrix=nothing
     )
-        n_inh = [
-            HHNeuronInhib_FSI_Adam(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    τ = τ_inhib,
-                    τₛ = τ_inhib_s,
-                    I_bg = I_bg[i],
-                    σ=σ
-            ) 
-            for i in Base.OneTo(N_inhib)
-        ]
 
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_inhib)
-            add_blox!(g, n_inh[i])
-        end
         if isnothing(connection_matrix)
             connection_matrix = adam_connection_matrix_gap(density, g_density, N_inhib, weight, g_weight)
         end
-        for i ∈ axes(connection_matrix, 2)
-            for j ∈ axes(connection_matrix, 1)
-                cji = connection_matrix[j, i]
-                if iszero(cji.weight) && iszero(cji.g_weight) 
-                    nothing
-                elseif iszero(cji.g_weight) 
-                    add_edge!(g, j, i, Dict(:weight=>cji.weight))
-                else
-                    add_edge!(g, j, i, Dict(:weight=>cji.weight,
-                                            :gap => true,
-                                            :gap_weight => cji.g_weight)) 
+
+        sys = @graph begin
+            @nodes begin
+                n_inh = [
+                    HHNeuronInhib_FSI_Adam(
+                            name = Symbol("inh$i"),
+                            namespace = namespaced_name(namespace, name), 
+                            E_syn = E_syn_inhib, 
+                            τ = τ_inhib,
+                            τₛ = τ_inhib_s,
+                            I_bg = I_bg[i],
+                            σ=σ
+                    ) 
+                    for i in 1:N_inhib
+                ]
+            end
+
+            @connections begin
+                for i ∈ axes(connection_matrix, 2)
+                    for j ∈ axes(connection_matrix, 1)
+                        cji = connection_matrix[j, i]
+                        w = cji.weight
+                        gw = cji.g_weight
+
+                        if iszero(w) && iszero(gw) 
+                        elseif iszero(gw) 
+                            n_inh[j] => n_inh[i], [weight = w]
+                        else
+                            n_inh[j] => n_inh[i], [weight = w, gap = true, gap_weight = gw]
+                        end
+                    end
                 end
             end
         end
 
-        parts = n_inh
-        
-        bc = connectors_from_graph(g)
-
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(name, namespace, n_inh, connection_matrix, sys)
     end
-
 end
 
 struct GPe_Adam <: AbstractComposite
+    name
     namespace
     parts
-    system
-    connector
-    mean
     connection_matrix
+    graph::GraphSystem
 
     function GPe_Adam(;
         name, 
@@ -210,58 +187,47 @@ struct GPe_Adam <: AbstractComposite
         weight=0.0,
         connection_matrix=nothing
     )
-        n_inh = [
-            HHNeuronInhib_MSN_Adam(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    τ = τ_inhib,
-                    I_bg = I_bg[i],
-                    σ=σ
-            ) 
-            for i in Base.OneTo(N_inhib)
-        ]
-
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_inhib)
-            add_blox!(g, n_inh[i])
-        end
         if isnothing(connection_matrix)
             connection_matrix = adam_connection_matrix(density, N_inhib, weight)
         end
-        for i ∈ axes(connection_matrix, 2)
-            for j ∈ axes(connection_matrix, 1)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
+
+        sys = @graph begin
+            @nodes begin
+                n_inh = [
+                    HHNeuronInhib_MSN_Adam(
+                            name = Symbol("inh$i"),
+                            namespace = namespaced_name(namespace, name), 
+                            E_syn = E_syn_inhib, 
+                            τ = τ_inhib,
+                            I_bg = I_bg[i],
+                            σ=σ
+                    ) 
+                    for i in 1:N_inhib
+                ]
+            end
+            @connections begin
+                for i ∈ axes(connection_matrix, 2)
+                    for j ∈ axes(connection_matrix, 1)
+                        cji = connection_matrix[j,i]
+
+                        if !iszero(cji)
+                            n_inh[j] => n_inh[i], [weight = cji]
+                        end
+                    end
                 end
             end
         end
-        parts = n_inh
-        
-        bc = connectors_from_graph(g)
 
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(name, namespace, n_inh, connection_matrix, sys) 
     end
-
 end    
 
 struct STN_Adam <: AbstractComposite
+    name
     namespace
     parts
-    system
-    connector
-    mean
     connection_matrix
+    graph::GraphSystem
 
     function STN_Adam(;
         name, 
@@ -275,47 +241,37 @@ struct STN_Adam <: AbstractComposite
         weight=0.0,
         connection_matrix=nothing
     )
-        n_exci = [
-            HHNeuronExci_STN_Adam(
-                    name = Symbol("exci$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_exci, 
-                    τ = τ_exci,
-                    I_bg = I_bg[i],
-                    σ=σ
-            ) 
-            for i in Base.OneTo(N_exci)
-        ]
 
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_exci)
-            add_blox!(g, n_exci[i])
-        end
         if isnothing(connection_matrix)
             connection_matrix = adam_connection_matrix(density, N_exci, weight)
         end
-        for i ∈ axes(connection_matrix, 2)
-            for j ∈ axes(connection_matrix, 1)
-                cji = connection_matrix[j,i]
-                if !iszero(cji)
-                    add_edge!(g, j, i, Dict(:weight => cji))
+        sys = @graph begin
+            @nodes begin
+                n_exci = [
+                    HHNeuronExci_STN_Adam(
+                            name = Symbol("exci$i"),
+                            namespace = namespaced_name(namespace, name), 
+                            E_syn = E_syn_exci, 
+                            τ = τ_exci,
+                            I_bg = I_bg[i],
+                            σ=σ
+                    ) 
+                    for i in 1:N_exci
+                ]
+            end
+            @connections begin
+                for i ∈ axes(connection_matrix, 2)
+                    for j ∈ axes(connection_matrix, 1)
+                        cji = connection_matrix[j,i]
+
+                        if !iszero(cji)
+                            n_exci[j] => n_exci[i], [weight = cji]
+                        end
+                    end
                 end
             end
         end
-        parts = n_exci
-    
-        bc = connectors_from_graph(g)
 
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(name, namespace, n_exci, connection_matrix, sys)
     end
-
-end    
+end

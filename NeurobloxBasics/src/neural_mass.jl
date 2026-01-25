@@ -1,6 +1,3 @@
-struct Noisy end
-struct NonNoisy end
-
 """
     LinearNeuralMass(name, namespace)
 
@@ -9,27 +6,23 @@ There are no parameters in this blox.
 This is a blox of the sort used for spectral DCM modeling.
 The formal definition of this blox is:
 
-
 ```math
 \\frac{d}{dx} = \\sum{jcn}
 ```
 
 where ``jcn``` is any input to the blox.
 
-
 Arguments:
 - name: Options containing specification about deterministic.
 - namespace: Additional namespace above name if needed for inheritance.
 """
-struct LinearNeuralMass <: AbstractNeuralMass
-    system
-    namespace
-
-    function LinearNeuralMass(;name, namespace=nothing)
-        sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
-        eqs = [D(x) ~ jcn]
-        sys = System(eqs, t, name=name)
-        new(sys, namespace)
+@blox struct LinearNeuralMass(; name, namespace=nothing) <: AbstractNeuralMass
+    @params
+    @states x = 0.0
+    @inputs jcn = 0.0
+    @outputs x
+    @equations begin
+        D(x) = jcn
     end
 end
 
@@ -41,7 +34,7 @@ Create a harmonic oscillator blox with the specified parameters.
 The formal definition of this blox is:
 
 ```math
-\\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(atan((\\sum{jcn})/h)
+\\frac{dx}{dt} = y-(2*\\omega*\\zeta*x)+ k*(2/\\pi)*(\\text{atan}((\\sum{jcn})/h) \\\\
 \\frac{dy}{dt} = -(\\omega^2)*x
 ```
 where ``jcn`` is any input to the blox.
@@ -54,24 +47,17 @@ Arguments:
 - k: Gain.
 - h: Threshold.
 """
-struct HarmonicOscillator <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function HarmonicOscillator(;name, namespace=nothing, ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0)
-        # p = progress_scope(ω, ζ, k, h)
-        p = paramscoping(ω=ω, ζ=ζ, k=k, h=h)
-        sts    = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true]
-        ω, ζ, k, h = p
-        eqs    = [D(x) ~ y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
-                  D(y) ~ -(ω^2)*x]
-        sys = System(eqs, t, name=name)
-
-        new(p, sys, namespace)
+@blox struct HarmonicOscillator(; name, namespace=nothing,
+                                ω=25*(2*pi)*0.001, ζ=1.0, k=625*(2*pi), h=35.0) <: AbstractNeuralMass
+    @params ω ζ k h
+    @states x=1.0 y=1.0
+    @inputs jcn=0.0
+    @outputs x
+    @equations begin
+        D(x) = y-(2*ω*ζ*x)+ k*(2/π)*(atan((jcn)/h))
+        D(y) = -(ω^2)*x
     end
 end
-
 
 """
     JansenRit(name, namespace, τ, H, λ, r, cortical, delayed)
@@ -80,8 +66,8 @@ Create a Jansen Rit blox as described in Liu et al.
 The formal definition of this blox is:
 
 ```math
-\\frac{dx}{dt} = y-\\frac{2}{\\tau}x
-\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1+\\text{exp}(-r*\\sum{jcn})} - \\lambda]
+\\frac{dx}{dt} = y-\\frac{2}{\\tau}x \\\\
+\\frac{dy}{dt} = -\\frac{x}{\\tau^2} + \\frac{H}{\\tau} [\\frac{2\\lambda}{1 + e^{-r*\\sum{jcn}}} - \\lambda]
 ```
 
 where ``jcn`` is any input to the blox.
@@ -98,51 +84,25 @@ Arguments:
 
 Citations:
 1. Liu C, Zhou C, Wang J, Fietkiewicz C, Loparo KA. The role of coupling connections in a model of the cortico-basal ganglia-thalamocortical neural loop for the generation of beta oscillations. Neural Netw. 2020 Mar;123:381-392. doi: 10.1016/j.neunet.2019.12.021.
-
 """
-struct JansenRit <: AbstractNeuralMass
-    params
-    system
-    namespace
-    function JansenRit(;name,
-                        namespace=nothing,
-                        τ=nothing, 
-                        H=nothing, 
-                        λ=nothing, 
-                        r=nothing, 
-                        cortical=true, 
-                        delayed=false)
-
-        τ = isnothing(τ) ? (cortical ? 1 : 14) : τ
-        H = isnothing(H) ? 0.02 : H # H doesn't have different parameters for cortical and subcortical
-        λ = isnothing(λ) ? (cortical ? 5.0 : 400.0) : λ
-        r = isnothing(r) ? (cortical ? 0.15 : 0.1) : r
-
-        # p = progress_scope(τ, H, λ, r)
-        p = paramscoping(τ=τ, H=H, λ=λ, r=r)
-        τ, H, λ, r = p
-        if !delayed
-            sts = @variables x(t)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
-            eqs = [D(x) ~ y - ((2/τ)*x),
-                   D(y) ~ -x/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-            sys = System(eqs, t, name=name)
-            #can't use outputs because x(t) is Num by then
-            #wrote inputs similarly to keep consistent
-            return new(p, sys, namespace)
-        else
-            error("Delay systems are currently not supported")
-            # sts = @variables x(..)=1.0 [output=true] y(t)=1.0 jcn(t) [input=true] 
-            # eqs = [D(x(t)) ~ y - ((2/τ)*x(t)),
-            #        D(y) ~ -x(t)/(τ*τ) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)]
-            # sys = System(eqs, t, name=name)
-            # #can't use outputs because x(t) is Num by then
-            # #wrote inputs similarly to keep consistent
-            # return new(p, sys, namespace)
-        end
-        sys = System(eqs, t, name=name)
-        #can't use outputs because x(t) is Num by then
-        #wrote inputs similarly to keep consistent
-        return new(p, sts[1], sts[3], sys, namespace)
+@blox struct JansenRit(; name,
+                       namespace=nothing,
+                       cortical=true,
+                       τ=(cortical ? 1 : 14),
+                       H=0.02,
+                       λ=(cortical ? 5.0 : 400.0),
+                       r=(cortical ? 0.15 : 0.1),
+                       delayed=false) <: AbstractNeuralMass
+    if delayed
+        error("Delay systems are currently not supported")
+    end
+    @params τ H λ r
+    @states x=1.0 y=1.0
+    @inputs jcn=0.0
+    @outputs x
+    @equations begin
+        D(x) = y - ((2x/τ))
+        D(y) = -x/(τ^2) + (H/τ)*((2*λ)/(1 + exp(-r*(jcn))) - λ)
     end
 end
 
@@ -153,8 +113,8 @@ Create a standard Wilson Cowan blox.
 The formal definition of this blox is:
 
 ```math
-\\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))}
-\\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + exp(-a_I*(c_{EI}*E - c_{II}*I - \\theta_I)}
+\\frac{dE}{dt} = \\frac{-E}{\\tau_E} + \\frac{1}{1 + \\text{exp}(-a_E*(c_{EE}*E - c_{IE}*I - \\theta_E + \\eta*(\\sum{jcn}))} \\\\
+\\frac{dI}{dt} = \\frac{-I}{\\tau_I} + \\frac{1}{1 + e^{-a_I*(c_{EI}*E - c_{II}*I) - \\theta_I}}
 ```
 where ``jcn`` is any input to the blox.
 
@@ -163,12 +123,7 @@ Arguments:
 - namespace: Additional namespace above name if needed for inheritance.
 - Others: See equation for use.
 """
-struct WilsonCowan <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function WilsonCowan(;name,
+@blox struct WilsonCowan(; name,
                         namespace=nothing,
                         τ_E=1.0,
                         τ_I=1.0,
@@ -180,17 +135,14 @@ struct WilsonCowan <: AbstractNeuralMass
                         c_II=1.0,
                         θ_E=2.0,
                         θ_I=3.5,
-                        η=1.0
-    )
-        # p = progress_scope(τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η)
-        p = paramscoping(τ_E=τ_E, τ_I=τ_I, a_E=a_E, a_I=a_I, c_EE=c_EE, c_IE=c_IE, c_EI=c_EI, c_II=c_II, θ_E=θ_E, θ_I=θ_I, η=η)
-        τ_E, τ_I, a_E, a_I, c_EE, c_IE, c_EI, c_II, θ_E, θ_I, η = p
-        sts = @variables E(t)=1.0 [output=true] I(t)=1.0 jcn(t) [input=true] #P(t)=0.0
-        eqs = [D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn)))), #old form: D(E) ~ -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + P + η*(jcn)))),
-               D(I) ~ -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))]
-        sys = System(eqs, t, name=name)
-
-        new(p, sys, namespace)
+                        η=1.0) <: AbstractNeuralMass
+    @params τ_E τ_I a_E a_I c_EE c_IE c_EI c_II θ_E θ_I η
+    @states E=1.0 I=1.0
+    @inputs jcn=0.0
+    @outputs E
+    @equations begin
+        D(E) = -E/τ_E + 1/(1 + exp(-a_E*(c_EE*E - c_IE*I - θ_E + η*(jcn))))
+        D(I) = -I/τ_I + 1/(1 + exp(-a_I*(c_EI*E - c_II*I - θ_I)))
     end
 end
 
@@ -209,14 +161,8 @@ Citations:
 1. Endo H, Hiroe N, Yamashita O. Evaluation of Resting Spatio-Temporal Dynamics of a Neural Mass Model Using Resting fMRI Connectivity and EEG Microstates. Front Comput Neurosci. 2020 Jan 17;13:91. doi: 10.3389/fncom.2019.00091.
 2. Chesebro AG, Mujica-Parodi LR, Weistuch C. Ion gradient-driven bifurcations of a multi-scale neuronal model. Chaos Solitons Fractals. 2023 Feb;167:113120. doi: 10.1016/j.chaos.2023.113120. 
 3. van Nieuwenhuizen, H, Chesebro, AG, Polis, C, Clarke, K, Strey, HH, Weistuch, C, Mujica-Parodi, LR. Ketosis regulates K+ ion channels, strengthening brain-wide signaling disrupted by age. Preprint. bioRxiv 2023.05.10.540257; doi: https://doi.org/10.1101/2023.05.10.540257. 
-
 """
-struct LarterBreakspear <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function LarterBreakspear(;
+@blox struct LarterBreakspear(;
                         name,
                         namespace=nothing,
                         T_Ca=-0.01,
@@ -248,27 +194,31 @@ struct LarterBreakspear <: AbstractNeuralMass
                         τ_K=1.0,
                         ϕ=0.7,
                         r_NMDA=0.25,
-                        C=0.35
-    )
-        # p = progress_scope(C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na, V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ,r_NMDA)
-        p = paramscoping(C=C, δ_VZ=δ_VZ, T_Ca=T_Ca, δ_Ca=δ_Ca, g_Ca=g_Ca, V_Ca=V_Ca, T_K=T_K, δ_K=δ_K, g_K=g_K, V_K=V_K, T_Na=T_Na, δ_Na=δ_Na, g_Na=g_Na, V_Na=V_Na, V_L=V_L, g_L=g_L, V_T=V_T, Z_T=Z_T, Q_Vmax=Q_Vmax, Q_Zmax=Q_Zmax, IS=IS, a_ee=a_ee, a_ei=a_ei, a_ie=a_ie, a_ne=a_ne, a_ni=a_ni, b=b, τ_K=τ_K, ϕ=ϕ, r_NMDA=r_NMDA)
-        C, δ_VZ, T_Ca, δ_Ca, g_Ca, V_Ca, T_K, δ_K, g_K, V_K, T_Na, δ_Na, g_Na,V_Na, V_L, g_L, V_T, Z_T, Q_Vmax, Q_Zmax, IS, a_ee, a_ei, a_ie, a_ne, a_ni, b, τ_K, ϕ, r_NMDA = p
-        
-        sts = @variables V(t)=0.5 Z(t)=0.5 W(t)=0.5 jcn(t) [input=true] Q_V(t) [output=true] Q_Z(t) m_Ca(t) m_Na(t) m_K(t)
-
-        eqs = [ D(V) ~ -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
-                         g_K * W * (V - V_K) - g_L * (V - V_L) -
-                        (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
-                         a_ie * Z * Q_Z + a_ne * IS,
-                D(Z) ~ b * (a_ni * IS + a_ei * V * Q_V),
-                D(W) ~ ϕ * (m_K - W) / τ_K,
-                Q_V ~ 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ)),
-                Q_Z ~ 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ)),
-                m_Ca ~  0.5*(1 + tanh((V-T_Ca)/δ_Ca)),
-                m_Na ~  0.5*(1 + tanh((V-T_Na)/δ_Na)),
-                m_K ~  0.5*(1 + tanh((V-T_K)/δ_K))]
-        sys = System(eqs, t; name=name)
-        new(p, sys, namespace)
+                        C=0.35) <: AbstractNeuralMass
+    @params C δ_VZ T_Ca δ_Ca g_Ca V_Ca T_K δ_K g_K V_K T_Na δ_Na g_Na V_Na V_L g_L V_T Z_T Q_Vmax Q_Zmax IS a_ee a_ei a_ie a_ne a_ni b τ_K ϕ r_NMDA
+    @states V=0.5 Z=0.5 W=0.5
+    @inputs jcn=0.0
+    @outputs Q_Z
+    @equations begin
+        @setup begin
+            (; m_Ca, m_Na, m_K, Q_V, Q_Z) = __sys__
+        end
+        D(V) = -(g_Ca + (1 - C) * r_NMDA * a_ee * Q_V + C * r_NMDA * a_ee * jcn) * m_Ca * (V-V_Ca) -
+            g_K * W * (V - V_K) - g_L * (V - V_L) -
+            (g_Na * m_Na + (1 - C) * a_ee * Q_V + C * a_ee * jcn) * (V-V_Na) -
+            a_ie * Z * Q_Z + a_ne * IS
+        D(Z) = b * (a_ni * IS + a_ei * V * Q_V)
+        D(W) = ϕ * (m_K - W) / τ_K
+    end
+    @computed_properties begin
+        Q_V  = 0.5*Q_Vmax*(1 + tanh((V-V_T)/δ_VZ))
+        Q_Z  = 0.5*Q_Zmax*(1 + tanh((Z-Z_T)/δ_VZ))
+        m_Ca = 0.5*(1 + tanh((V-T_Ca)/δ_Ca))
+        m_Na = 0.5*(1 + tanh((V-T_Na)/δ_Na))
+        m_K  = 0.5*(1 + tanh((V-T_K)/δ_K))
+    end
+    @computed_properties_with_inputs begin
+        jcn = jcn
     end
 end
 
@@ -288,7 +238,7 @@ Equations:
 ```math
         \\begin{align}
         \\dot{V} &= d \\, \\tau (-f V^3 + e V^2 + g V + \\alpha W + \\gamma I) \\\\
-        \\dot{W} &= \\dfrac{d}{\tau}\\,\\,(c V^2 + b V - \\beta W + a)
+        \\dot{W} &= \\dfrac{d}{\\tau}\\,\\,(c V^2 + b V - \\beta W + a)
         \\end{align}
 ```
 
@@ -315,14 +265,8 @@ Mathematical Biology, 2010.
 Stefanescu, R., Jirsa, V.K. A low dimensional description
 of globally coupled heterogeneous neural networks of excitatory and
 inhibitory neurons. PLoS Computational Biology, 4(11), 2008).
-
 """
-struct Generic2dOscillator <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function Generic2dOscillator(;
+@blox struct Generic2dOscillator(;
                         name,
                         namespace=nothing,
                         τ=1.0,
@@ -336,22 +280,23 @@ struct Generic2dOscillator <: AbstractNeuralMass
                         α=1.0,
                         β=1.0,
                         γ=6e-2,
-                        bn=0.02,
-    )
-        p = paramscoping(τ=τ, a=a,b=b,c=c,d=d,e=e,f=f,g=g,α=α,β=β,γ=γ)
-        τ,a,b,c,d,e,f,g,α,β,γ = p
-        
-        sts = @variables V(t)=0.0 [output = true] W(t)=1.0 jcn(t) [input=true]
-        @brownian w v
-        eqs = [ D(V) ~ d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn) + bn * w,
-                D(W) ~ d / τ * ( c * V^2 + b * V - β * W + a) + bn * v]
-        sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+                        bn=0.02) <: AbstractNeuralMass
+    @params τ a b c d e f g α β γ bn
+    @states V=0.0 W=1.0
+    @inputs jcn=0.0
+    @outputs V
+    @equations begin
+        D(V) = d * τ * ( -f * V^3 + e * V^2 + g * V + α * W - γ * jcn)
+        D(W) = d / τ * ( c * V^2 + b * V - β * W + a)
+    end
+    @noise_equations begin
+        W(V) = bn
+        W(W) = bn
     end
 end
 
 """
-    KuramotoOscillator(name, namespace, ...)
+    KuramotoOscillator(name, namespace, ω, ζ, include_noise=false)
 
 Simple implementation of the Kuramoto oscillator as described in the original paper [1].
 Useful for general models of synchronization and oscillatory behavior.
@@ -378,7 +323,7 @@ where \$W_i\$ is a Wiener process and \$\\zeta_i\$ is the noise strength.
 Keyword arguments:
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
-- `include_noise` (default `false`) determines if brownian noise is included in the dynamics of the blox.
+- include_noise: (default `false`) determines if brownian noise is included in the dynamics of the blox.
 - Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
                     Default parameter values are taken from [2].
 
@@ -390,40 +335,36 @@ Citations:
 2. Sermon JJ, Wiest C, Tan H, Denison T, Duchet B. Evoked resonant neural activity long-term 
    dynamics can be reproduced by a computational model with vesicle depletion. Neurobiol Dis. 
    2024 Jun 14;199:106565. doi: 10.1016/j.nbd.2024.106565. Epub ahead of print. PMID: 38880431.
-
 """
-struct KuramotoOscillator{IsNoisy} <: AbstractNeuralMass
-    params
-    system
-    namespace
+abstract type KuramotoOscillator <: AbstractNeuralMass end
+function KuramotoOscillator(; name, namespace=nothing, ω=249.0, ζ=5.92, include_noise=false)
+    if include_noise
+        KuramotoOscillator_Noisy(;name, namespace, ω, ζ)
+    else
+        KuramotoOscillator_NonNoisy(;name, namespace, ω)
+    end
+end
 
-    function KuramotoOscillator(; name,
-                                  namespace=nothing,
-                                  ω=249.0,
-                                  ζ=5.92,
-                                  include_noise=false)
-        if include_noise
-            KuramotoOscillator{Noisy}(;name, namespace, ω, ζ)
-        else
-            KuramotoOscillator{NonNoisy}(;name, namespace, ω)
-        end
+@blox struct KuramotoOscillator_NonNoisy(; name, namespace=nothing, ω=249.0) <: KuramotoOscillator
+    @params ω
+    @states θ=0.0
+    @inputs jcn=0.0
+    @outputs θ
+    @equations begin
+        D(θ) = ω + jcn
     end
-    function KuramotoOscillator{Noisy}(;name, namespace=nothing, ω=249.0, ζ=5.92)
-        p = paramscoping(ω=ω, ζ=ζ)
-        ω, ζ = p
-        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
-        @brownian w
-        eqs = [D(θ) ~ ω + jcn + ζ*w]
-        sys = System(eqs, t, sts, p; name=name)
-        new{Noisy}(p, sys, namespace)
+end
+
+@blox struct KuramotoOscillator_Noisy(; name, namespace=nothing, ω=249.0, ζ=5.92) <: KuramotoOscillator
+    @params ω ζ
+    @states θ=0.0
+    @inputs jcn=0.0
+    @outputs θ
+    @equations begin
+        D(θ) = ω + jcn
     end
-    function KuramotoOscillator{NonNoisy}(;name, namespace=nothing, ω=249.0)
-        p = paramscoping(ω=ω)
-        ω = p[1]
-        sts = @variables θ(t)=0.0 [output = true] jcn(t) [input=true]
-        eqs = [D(θ) ~ ω + jcn]
-        sys = System(eqs, t, sts, p; name=name)
-        new{NonNoisy}(p, sys, namespace)
+    @noise_equations begin
+        W(θ) = ζ
     end
 end
 
@@ -443,64 +384,50 @@ Equations:
 Arguments:
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
+- include_noise: (default `false`) determines if the system supports brownian noise
+- ζ: (default `0.0`) strength of the Brownian noise term (if `include_noise == true`)
 - Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citation:
 1. Chen, L., & Campbell, S. A. (2022). Exact mean-field models for spiking neural networks with adaptation. Journal of Computational Neuroscience, 50(4), 445-469.
-
 """
-struct NGNMM_Izh{IsNoisy} <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function NGNMM_Izh(;
-                name,
-                namespace=nothing,
-                Δ=0.02,
-                α=0.6215,
-                gₛ=1.2308,
-                η̄=0.12,
-                I_ext=0.0,
-                eᵣ=1.0,
-                a=0.0077,
-                b=-0.0062,
-                wⱼ=0.0189,
-                sⱼ=1.2308,
-                τₛ=2.6,
-                κ=1.0,
-                ζ=0.0)
-        if ζ == 0
-            NGNMM_Izh{NonNoisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ)
-        else
-            NGNMM_Izh{Noisy}(; name, namespace, Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ)
-        end
-
+abstract type NGNMM_Izh <: AbstractNeuralMass end
+function NGNMM_Izh(; include_noise=false, kwargs...)
+    if include_noise
+        NGNMM_Izh_NonNoisy(; kwargs...)
+    else
+        NGNMM_Izh_Noisy(; kwargs...)
     end
-    function NGNMM_Izh{NonNoisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0)
-        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, κ=κ)
-        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, κ = p
-        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s*κ)*r,
-                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2,
-                D(w) ~ a*(b*V - w) + wⱼ*r,
-                D(s) ~ -s/τₛ + sⱼ*r
-              ]
-        sys = System(eqs, t, sts, p; name=name)
-        new(p, sys, namespace)
+end
+
+@blox struct NGNMM_Izh_NonNoisy(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077,
+                                b=-0.0062, wⱼ=0.0189, sᵣ=1.2308, τₛ=2.6, κ=1.0) <: NGNMM_Izh
+    @params Δ α gₛ η̄ I_ext eᵣ a b wⱼ sᵣ τₛ κ
+    @states r=0.0 V=0.0 w=0.0 s=0.0
+    @inputs jcn=0.0
+    @outputs s
+    @equations begin
+        D(r) = Δ/π + 2*r*V - (α+gₛ*s*κ)*r
+        D(V) = V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2
+        D(w) = a*(b*V - w) + wⱼ*r
+        D(s) = -s/τₛ + sᵣ*r
     end
-    function NGNMM_Izh{Noisy}(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077, b=-0.0062, wⱼ=0.0189, sⱼ=1.2308, τₛ=2.6, κ=1.0, ζ=0.0)
-        p = paramscoping(Δ=Δ, α=α, gₛ=gₛ, η̄=η̄, I_ext=I_ext, eᵣ=eᵣ, a=a, b=b, wⱼ=wⱼ, sⱼ=sⱼ, τₛ=τₛ, κ=κ, ζ=ζ)
-        Δ, α, gₛ, η̄, I_ext, eᵣ, a, b, wⱼ, sⱼ, τₛ, κ, ζ = p
-        sts = @variables r(t)=0.0 V(t)=0.0 w(t)=0.0 s(t)=0.0 [output=true] jcn(t) [input=true]
-        @brownian ξ
-        eqs = [ D(r) ~ Δ/π + 2*r*V - (α+gₛ*s*κ)*r,
-                D(V) ~ V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + ζ*ξ + jcn - (π*r)^2,
-                D(w) ~ a*(b*V - w) + wⱼ*r,
-                D(s) ~ -s/τₛ + sⱼ*r
-              ]
-        sys = System(eqs, t, sts, p; name=name)
-        new{Noisy}(p, sys, namespace)
+end
+
+@blox struct NGNMM_Izh_Noisy(; name, namespace=nothing, Δ=0.02, α=0.6215, gₛ=1.2308, η̄=0.12, I_ext=0.0, eᵣ=1.0, a=0.0077,
+                            b=-0.0062, wⱼ=0.0189, sᵣ=1.2308, τₛ=2.6, κ=1.0, ζ=0.0) <: NGNMM_Izh
+    @params Δ α gₛ η̄ I_ext eᵣ a b wⱼ sᵣ τₛ κ ζ
+    @states r=0.0 V=0.0 w=0.0 s=0.0
+    @inputs jcn=0.0
+    @outputs s
+    @equations begin
+        D(r) = Δ/π + 2*r*V - (α+gₛ*s*κ)*r
+        D(V) = V^2 - α*V - w + η̄ + I_ext + gₛ*s*κ*(eᵣ - V) + jcn - (π*r)^2
+        D(w) = a*(b*V - w) + wⱼ*r
+        D(s) = -s/τₛ + sᵣ*r
+    end
+    @noise_equations begin
+        W(V) = ζ
     end
 end
 
@@ -508,7 +435,7 @@ end
     NGNMM_QIF(name, namespace, ...)
 
 This is the basic QIF next-gen neural mass as described in [1].
-This includes the connections via firing rate as described in [1] and the optional noise term.
+This includes the connections via firing rate as described in [1].
 
 Equations:
     To be added once we have a final form that we like here.
@@ -516,109 +443,94 @@ Equations:
 Arguments:
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
+- include_noise: (default `false`) determines if the system supports brownian noise
+- A: (default `0.0`) strength of the Brownian noise term (if `include_noise == true`)
 - Other parameters: See reference for full list. Note that parameters are scaled so that units of time are in milliseconds.
 
 Citation:
 Theta-nested gamma bursts by Torcini group.
 """
-struct NGNMM_QIF{IsNoisy} <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function NGNMM_QIF(;
-                        name,
-                        namespace=nothing,
-                        Δ=1.0,
-                        τₘ=20.0,
-                        H=1.3,
-                        I_ext=0.0,
-                        ω=0.0,
-                        J_internal=8.0,
-                        A=0.0)
-        if A == 0
-            NGNMM_QIF{NonNoisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal)
-        else
-            NGNMM_QIF{Noisy}(; name, namespace, Δ, τₘ, H, I_ext, ω, J_internal, A)
-        end
+abstract type NGNMM_QIF <: AbstractNeuralMass end
+function NGNMM_QIF(; kwargs...)
+    if haskey(kwargs, :A)
+        NGNMM_QIF_Noisy(;kwargs...)
+    else
+        NGNMM_QIF_NonNoisy(;kwargs...)
     end
-
-    function NGNMM_QIF{NonNoisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0)
-        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
-        Δ, τₘ, H, I_ext, J_internal = p
-        sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
-        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
-               D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + jcn]
-        sys = System(eqs, t, sts, p; name=name)
-
-        new{NonNoisy}(p, sys, namespace)
+end
+@blox struct NGNMM_QIF_NonNoisy(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0) <: NGNMM_QIF
+    @params Δ τₘ H I_ext ω J_internal
+    @states r=0.0 V=0.0
+    @inputs jcn=0.00
+    @outputs r
+    @equations begin
+        D(r) = Δ/(π*τₘ^2) + 2*r*V/τₘ
+        D(V) = (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r + jcn
     end
-
-    function NGNMM_QIF{Noisy}(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0, A=0.0)
-        p = paramscoping(Δ=Δ, τₘ=τₘ, H=H, I_ext=I_ext, J_internal=J_internal)
-        Δ, τₘ, H, I_ext, J_internal = p
-        sts = @variables r(t)=0.0 [output=true] V(t)=0.0 jcn(t) [input=true]
-        @brownian ξ
-        eqs = [D(r) ~ Δ/(π*τₘ^2) + 2*r*V/τₘ,
-               D(V) ~ (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r  + A*ξ + jcn]
-        sys = System(eqs, t, sts, p; name=name)
-
-        new{Noisy}(p, sys, namespace)
+end
+@blox struct NGNMM_QIF_Noisy(; name, namespace=nothing, Δ=1.0, τₘ=20.0, H=1.3, I_ext=0.0, ω=0.0, J_internal=8.0, A=0.0) <: NGNMM_QIF
+    @params Δ τₘ H I_ext ω J_internal A
+    @states r=0.0 V=0.0
+    @inputs jcn=0.00
+    @outputs r
+    @equations begin
+        D(r) = Δ/(π*τₘ^2) + 2*r*V/τₘ
+        D(V) = (V^2 + H + I_ext*sin(ω*t))/τₘ - τₘ*(π*r)^2 + J_internal*r + jcn
+    end
+    @noise_equations begin
+        W(V) = A
     end
 end
 
 """
-    VanDerPol(; name, namespace = nothing, θ=1.0, ϕ=0.1, include_noise = false)
+    VanDerPol(; name, namespace = nothing, θ=1.0, include_noise=false)
 
 Create a neural mass model whose activity variable follows the dynamics of the (stochastic) van der Pol oscillator.
 
 The formal definition of this blox is:
 ```math
 \\frac{dx}{dt} = y
-\\frac{dy}{dt} = θ(1 - x^2)y - x + ϕξ + jcn
+\\frac{dy}{dt} = θ(1 - x^2)y - x + ϕ ξ + jcn
 ```
-where `jcn` is any input to the blox, and ξ is a Brownian variable that is added if `include_noise` is set.
+where `jcn` is any input to the blox.
 
 Arguments: 
 - name: Name given to ODESystem object within the blox.
 - namespace: Additional namespace above name if needed for inheritance.
+- `include_noise`: (default `false`) controls whether the system includes stochastic noise
 - θ: damping strength
-- ϕ: strength of the Brownian motion
+- ϕ: strength of the Brownian motion (if `include_noise == true`)
 """
-struct VanDerPol{IsNoisy} <: AbstractNeuralMass
-    params
-    system
-    namespace
-
-    function VanDerPol(; name, namespace=nothing, θ=1.0, ϕ=0.1, include_noise=false)
-        if include_noise
-            VanDerPol{Noisy}(;name, namespace, θ, ϕ)
-        else
-            VanDerPol{NonNoisy}(;name, namespace, θ)
-        end
+abstract type VanDerPol <: AbstractNeuralMass end
+function VanDerPol(; include_noise=false, kwargs...)
+    if include_noise
+        VanDerPol_Noisy(; kwargs...)
+    else
+        VanDerPol_NonNoisy(;kwargs...)
     end
-    function VanDerPol{Noisy}(; name, namespace=nothing, θ=1.0, ϕ=0.1)
-        p = paramscoping(θ=θ, ϕ=ϕ)
-        θ, ϕ = p
-        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
-        @brownian ξ
-
-        eqs = [D(x) ~ y,
-               D(y) ~ θ*(1-x^2)*y - x + ϕ*ξ + jcn]
-
-        sys = System(eqs, t, sts, p; name=name)
-        new{Noisy}(p, sys, namespace)
+end
+@blox struct VanDerPol_NonNoisy(; name, namespace=nothing, θ=1.0) <: VanDerPol
+    @params θ
+    @states x=0.0 y=0.0
+    @inputs jcn=0.0
+    @outputs x
+    @equations begin
+        D(x) = y
+        D(y) = θ*(1-x^2)*y - x + jcn
     end
-    function VanDerPol{NonNoisy}(; name, namespace=nothing, θ=1.0)
-        p = paramscoping(θ=θ)
-        θ = p[1]
-        sts = @variables x(t)=0.0 [output=true] y(t)=0.0 jcn(t) [input=true]
-        
-        eqs = [D(x) ~ y,
-               D(y) ~ θ*(1-x^2)*y - x + jcn]
+end
 
-        sys = System(eqs, t, sts, p; name=name)
-        new{NonNoisy}(p, sys, namespace)
+@blox struct VanDerPol_Noisy(; name, namespace=nothing, θ=1.0, ϕ=0.1) <: VanDerPol
+    @params θ ϕ
+    @states x=0.0 y=0.0
+    @inputs jcn=0.0
+    @outputs x
+    @equations begin
+        D(x) = y
+        D(y) = θ*(1-x^2)*y - x + jcn
+    end
+    @noise_equations begin
+        W(y) = ϕ
     end
 end
 
@@ -640,19 +552,15 @@ Arguments:
 - μ: Mean of the OU process
 - σ: Strength of the Brownian motion (variance of OUProcess process is τ*σ^2/2)
 """
-mutable struct OUProcess <: AbstractNeuralMass
-    # all parameters are Num as to allow symbolic expressions
-    namespace
-    stochastic
-    system
-    function OUProcess(;name, namespace=nothing, μ=0.0, σ=1.0, τ=1.0)
-        p = paramscoping(μ=μ, τ=τ, σ=σ)
-        μ, τ, σ = p
-        sts = @variables x(t)=0.0 [output=true] jcn(t) [input=true]
-        @brownian w
-
-        eqs = [D(x) ~ (-x + μ + jcn)/τ + sqrt(2/τ)*σ*w]
-        sys = System(eqs, t; name=name)
-        new(namespace, true, sys)
+@blox struct OUProcess(; name, namespace=nothing, μ=0.0, σ=1.0, τ=1.0) <: AbstractNeuralMass
+    @params μ σ τ
+    @states x=0.0
+    @inputs jcn=0.0
+    @outputs x
+    @equations begin
+        D(x) = (-x + μ + jcn)/τ
+    end
+    @noise_equations begin
+        W(x) = sqrt(2/τ)*σ
     end
 end

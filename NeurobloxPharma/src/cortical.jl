@@ -1,59 +1,49 @@
-struct Cortical <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    connection_matrices
-    kwargs
+"""
+    Cortical(; N_wta=20, N_exci=5, E_syn_exci=0, E_syn_inhib=-70, G_syn_exci=3, G_syn_inhib=3,, G_syn_ff_inhib=3.5, I_bg_ar=0, τ_exci=5, τ_inhib=70)
 
-    function Cortical(;
-        name, 
-        N_wta=20,
-        namespace=nothing,
-        N_exci=5,
-        E_syn_exci=0.0,
-        E_syn_inhib=-70,
-        G_syn_exci=3.0,
-        G_syn_inhib=4.0,
-        G_syn_ff_inhib=3.5,
-        I_bg_ar=0,
-        I_bg_ff_inhib=0,
-        τ_exci=5,
-        τ_inhib=70,             
-        kwargs...
-            )
-        
-        wtas = map(1:N_wta) do i
-            if I_bg_ar isa Array
-                I_bg = I_bg_ar[i]
-            else
-                I_bg = I_bg_ar
-            end
-            WinnerTakeAll(;
-                name=Symbol("wta$i"),
-                namespace=namespaced_name(namespace, name),
-                N_exci,
-                E_syn_exci,
-                E_syn_inhib,
-                G_syn_exci,
-                G_syn_inhib,
-                I_bg = I_bg,
-                τ_exci,
-                τ_inhib,
-                rng=get(kwargs, :rng, default_rng())          
-            )
-        end
-        n_ff_inh = HHNeuronInhib(
-            name = "ff_inh",
-            namespace = namespaced_name(namespace, name),
-            E_syn = E_syn_inhib,
-            G_syn = G_syn_ff_inhib,
-            I_bg = I_bg_ff_inhib,
-            τ = τ_inhib
-        )
+A component representing a layer of neocortex. It contains multiple lateral inhibition `WinnerTakeAll` microcircuits and a single feedforward inhibitory neuron.
+Excitatory neurons across `WinnerTakeAll` microcircuits are connected together using a hypergeometric rule [1]. The feedforward neuron inhibits each one of the `N_wta` local interneurons. 
+The excitatory neurons are [`HHNeuronExci`](@ref) and the feedforward and feedback interneurons are [`HHNeuronInhib`](@ref) and their parameters are based on [2].
+
+Arguments : 
+- `N_wta` : Number of `WinnerTakeAll` microcircuits in the cortical circuit.
+- `N_exci` : Number of excitatory neurons in each one of the `N_wta` `WinnerTakeAll` components.
+- `E_syn_exci` [mV, reversal potential for AMPA receptors]
+- `E_syn_inhib` [mV, reversal potential for GABA A receptors]
+- `G_syn_exci` [mV, AMPA receptor conductance]
+- `G_syn_inhib` [mV, GABA A receptor conductance for lateral inhibition]
+- `G_syn_ff_inhib` [mV, GABA A receptor conductance for feedforward inhibition]
+- `I_bg_ar` : [μA] Background current applied to excitatory neurons. If it is a single value then the same current is applied to all [`N_wta` x `N_exci`] excitatory neurons. If it is a Vector then it needs to be of length `N_exci` and each element is applied to each neuron of every WinnerTakeAll microcircuit.
+- `τ_exci` : [ms, decay time constant for AMPA receptor conductance]
+- `τ_inhib` : [ms, decay time constant for GABA A receptor conductance]
+
+References: 
+1. Andrew C. Felch and Richard H. Granger. The hypergeometric connectivity hypothesis: Divergent performance of brain circuits with different synaptic connectivity distributions. Brain Research, 1202:3–13, April 2008.
+2. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
+"""
+struct Cortical <: AbstractComposite
+    name::Symbol
+    namespace::Union{Symbol, Nothing}
+    wtas
+    n_ff_inh
+    graph::GraphSystem
+    function Cortical(;name,
+                      namespace=nothing,
+                      N_wta=20,
+                      N_exci=5,
+                      E_syn_exci=0.0,
+                      E_syn_inhib=-70,
+                      G_syn_exci=3.0,
+                      G_syn_inhib=4.0,
+                      G_syn_ff_inhib=3.5,
+                      I_bg_ar=0,
+                      τ_exci=5.0,
+                      τ_inhib=70.0,
+                      kwargs...)
+
         # users can supply a matrix of connection matrices.
-        # connection_matrices[i,j][k, l] determines if neuron k from wta i is connected to
-        # neuron l from wta j.
+        # connection_matrices[i,j][k, l] determines if neuron k from l-flic i is connected to
+        # neuron l from l-flic j.
         connection_matrices = get(kwargs, :connection_matrices) do
             map(Iterators.product(1:N_wta, 1:N_wta)) do (i, j)
                 get_connection_matrix(kwargs,
@@ -61,96 +51,111 @@ struct Cortical <: AbstractComposite
                                       N_exci, N_exci)
             end
         end
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), vcat(wtas, n_ff_inh))
-        for i in 1:N_wta
-            for j in 1:N_wta
-                if j != i
-                    kwargs_ij = merge(kwargs, Dict(:connection_matrix => connection_matrices[i, j]))
-                    add_edge!(g, i, j, kwargs_ij)
+        g = GraphSystem(;name=namespaced_name(namespace, name))
+        @graph! g begin
+            @nodes begin
+                ff_inh = HHNeuronInhib(E_syn=E_syn_inhib, G_syn=G_syn_ff_inhib, τ=τ_inhib)
+                wtas = for i ∈ 1:N_wta
+                    if I_bg_ar isa AbstractArray
+                        I_bg = I_bg_ar[i]
+                    else
+                        I_bg = I_bg_ar
+                    end
+                    WinnerTakeAll(; name=Symbol("wta$i"),
+                                  # namespace=g.name,
+                                  N_exci,
+                                  E_syn_exci,
+                                  E_syn_inhib,
+                                  G_syn_exci,
+                                  G_syn_inhib,
+                                  I_bg = I_bg,
+                                  τ_exci,
+                                  τ_inhib)
                 end
             end
-            add_edge!(g, N_wta+1, i, Dict(:weight => 1))
+            @connections begin
+                for i ∈ 1:N_wta
+                    # connect the inhibitory neuron to the i-th wta
+                    ff_inh => wtas[i], [weight=1.0]
+                    for j ∈ 1:N_wta
+                        if j != i
+                            wtas[i] => wtas[j], [kwargs..., connection_matrix=connection_matrices[i, j]]
+                        end
+                    end
+                end
+            end
         end
-        
-        bc = connectors_from_graph(g)
-        # If a namespace is not provided, assume that this is the highest level
-        # and construct the ODEsystem from the graph.
-        # If there is a higher namespace, construct only a subsystem containing the parts of this level
-        # and propagate the Connector object `bc` to the higher level 
-        # to potentially add more terms to the same connections.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(vcat(wtas, n_ff_inh); name)
-
-        new(namespace, vcat(wtas, n_ff_inh), sys, bc, connection_matrices, kwargs)
+        new(name, namespace, wtas, ff_inh, g)
     end
 end
 
 """
-    WinnerTakeAll
+    WinnerTakeAll(; N_exci=5, E_syn_exci=0, E_syn_inhib=-70, G_syn_exci=3, G_syn_inhib=3, I_bg=zeros(N_exci), τ_exci=5, τ_inhib=70)
 
-Creates a winner-take-all local circuit found in neocortex,
-typically 5 pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory)
-and receive feedback inhibition from that interneuron.
+A winner-take-all microcircuit found in neocortex, also known as a lateral inhibition microcircuit [1].
+Multiple pyramidal (excitatory) neurons send synapses to a single interneuron (inhibitory) and receive feedback inhibition from that interneuron.
+The excitatory neurons are [`HHNeuronExci`](@ref) and and feedback interneuron is [`HHNeuronInhib`](@ref) and their parameters are based on [2].
+
+Arguments : 
+- `N_exci` : Number of excitatory neurons.
+- `E_syn_exci` [mV, reversal potential for AMPA receptors]
+- `E_syn_inhib` [mV, reversal potential for GABA A receptors]
+- `G_syn_exci` [mV, AMPA receptor conductance]
+- `G_syn_inhib` [mV, GABA A receptor conductance]
+- `I_bg` : [μA] Background current applied to excitatory neurons. If it is a single value then the same current is applied to all `N_exci` excitatory neurons. If it is a Vector then it needs to be of length `N_exci` and each element is applied to each neuron.
+- `τ_exci` : [ms, decay time constant for AMPA receptor conductance]
+- `τ_inhib` : [ms, decay time constant for GABA A receptor conductance]
 
 References: 
-- Coultrip, Robert, Richard Granger, and Gary Lynch. “A Cortical Model of Winner-Take-All Competition via Lateral Inhibition.” Neural Networks 5, no. 1 (January 1, 1992): 47-54.
-- Pathak A., Brincat S., Organtzidis H., Strey H., Senneff S., Antzoulatos E., Mujica-Parodi L., Miller E., Granger R. "Biomimetic model of corticostriatal micro-assemblies discovers new neural code.", bioRxiv 2023.11.06.565902, 2024
+1. Coultrip, Robert, Richard Granger, and Gary Lynch. “A Cortical Model of Winner-Take-All Competition via Lateral Inhibition.” Neural Networks 5, no. 1 (January 1, 1992): 47-54.
+2. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
 """
-struct WinnerTakeAll{P} <: AbstractComposite
-    namespace
-    parts::Vector{P}
-    system
-    connector
+struct WinnerTakeAll <: AbstractComposite
+    name::Symbol
+    namespace::Union{Symbol, Nothing}
+    inhi::HHNeuronInhib
+    excis::Vector{HHNeuronExci}
+    graph::GraphSystem
+    function WinnerTakeAll(;name,
+                           namespace=nothing,
+                           N_exci = 5,
+                           E_syn_exci=0.0,
+                           E_syn_inhib=-70,
+                           G_syn_exci=3.0,
+                           G_syn_inhib=3.0,
+                           I_bg=zeros(N_exci),
+                           # phase=0.0,
+                           τ_exci=5.0,
+                           τ_inhib=70.0)
 
-    function WinnerTakeAll(; 
-        name, 
-        namespace = nothing,
-        N_exci = 5,
-        E_syn_exci=0.0,
-        E_syn_inhib=-70,
-        G_syn_exci=3.0,
-        G_syn_inhib=3.0,
-        I_bg=zeros(N_exci),
-        τ_exci=5,
-        τ_inhib=70,
-        rng=default_rng()                   
-    )  
-        n_inh = HHNeuronInhib(
-            name = "inh",
-            namespace = namespaced_name(namespace, name), 
-            E_syn = E_syn_inhib, 
-            G_syn = G_syn_inhib, 
-            τ = τ_inhib
-        )
-        n_excis = [
-            HHNeuronExci(
-                    name = Symbol("exci$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_exci, 
-                    G_syn = G_syn_exci, 
-                    τ = τ_exci,
-                    I_bg = (I_bg isa Array) ? I_bg[i] : I_bg*rand(rng), # behave differently if I_bg is array
-            ) 
-            for i in Base.OneTo(N_exci)
-        ]
-
-        g = MetaDiGraph()
-        add_blox!(g, n_inh)
-        for i in Base.OneTo(N_exci)
-            add_blox!(g, n_excis[i])
-            add_edge!(g, 1, i+1, :weight, 1.0)
-            add_edge!(g, i+1, 1, :weight, 1.0)
+        g = GraphSystem(; name= namespaced_name(namespace, name))
+        @graph! g begin
+            @nodes begin
+                inhi = HHNeuronInhib(name = :inh,
+                                     namespace = namespaced_name(namespace, name),
+                                     E_syn = E_syn_inhib, G_syn = G_syn_inhib, τ = τ_inhib)
+                
+                excis = for i ∈ 1:N_exci
+                    HHNeuronExci(
+                        name = Symbol("exci$i"),
+                        I_bg = (I_bg isa AbstractArray) ? I_bg[i] : I_bg*rand(), # behave differently if I_bg is array
+                        E_syn = E_syn_exci,
+                        G_syn = G_syn_exci,
+                        τ = τ_exci
+                    )
+                end
+            end
+            @connections begin
+                for excii ∈ excis
+                    inhi => excii, [weight=1.0]
+                    excii => inhi, [weight=1.0]
+                end
+            end
         end
-
-        parts = vcat(n_inh, n_excis)
-        
-        bc = connectors_from_graph(g)
-        # If a namespace is not provided, assume that this is the highest level
-        # and construct the ODEsystem from the graph.
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-
-        new{Union{eltype(n_excis), typeof(n_inh)}}(namespace, parts, sys, bc)
-    end 
+        new(name, namespace, inhi, excis, g)
+    end
 end
 
-
+get_ff_inh_neurons(n::AbstractInhNeuron) = [n]
+get_ff_inh_neurons(n) = AbstractInhNeuron[]
+get_ff_inh_neurons(b::Cortical) = [b.n_ff_inh]

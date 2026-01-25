@@ -1,0 +1,28 @@
+name: Neuroblox Benchmarks
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  bench:
+    name: "Benchmarks"
+    strategy:
+      matrix:
+        version:
+          - "1.12.2"
+    runs-on: [self-hosted, CI]
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: "./benchmark/"
+        with:
+          julia-version: "${{ matrix.version }}"
+          script: "benchmark/benchmarks.jl"
+          extra-pkgs: "OrdinaryDiffEqVerner,OrdinaryDiffEqRosenbrock,CSV,DataFrames"
+          github-token: ${{ github.token }}"
+          mode: "time,memory"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

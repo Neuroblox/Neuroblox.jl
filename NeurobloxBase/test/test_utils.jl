@@ -26,6 +26,8 @@ using NeurobloxBase.GraphDynamicsInterop: t_block_event
 
 using SciMLBase: successful_retcode, solve
 
+using ReferenceTests
+
 function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
                                   u0map=[], param_map=[],
                                   rtol,
@@ -130,6 +132,7 @@ function test_compare_du_and_sols(::Type{ODEProblem}, g, tspan;
             @test last(getsym(sol_grp_obj, name)(sol_grp_obj)) ≈ last(getsym(sol_grp_p_obj, name)(sol_grp_p_obj)) rtol=rtol
         end
     end
+    return sol_grp_obj
 end
 
 function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=true, alg=nothing, seed=1234,
@@ -144,7 +147,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
     end
     @named gsys = system_from_graph(graph_l; graphdynamics=true)
     state_names = variable_symbols(gsys)
-    sol_grp, du_grp, dnoise_grp = let sys = gsys
+    sol_grp, du_grp, dnoise_grp, sol_grp_obj = let sys = gsys
         prob = SDEProblem(sys, u0map, tspan, param_map, seed=seed)
         (; f, g, u0, p) = prob
         du = similar(u0)
@@ -159,7 +162,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
         sol_reordered = map(state_names) do name
             sol[name][end]
         end
-        sol_reordered, collect(du), collect(dnoise)
+        sol_reordered, collect(du), collect(dnoise), sol
     end
     if mtk
         sol_mtk, du_mtk, dnoise_mtk = let neuron_net = system_from_graph(graph_r; name=:neuron_net)
@@ -183,7 +186,7 @@ function test_compare_du_and_sols(::Type{SDEProblem}, graph, tspan; rtol, mtk=tr
         @test sort(dnoise_grp) ≈ sort(dnoise_mtk) broken=g_comparison_broken
         @test sol_grp ≈ sol_mtk rtol=rtol         broken=sol_comparison_broken
     end
-    nothing
+    return sol_grp_obj
 end
 
 

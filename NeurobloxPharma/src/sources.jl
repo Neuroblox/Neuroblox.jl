@@ -1,125 +1,139 @@
-struct PulsesInput <: AbstractSimpleStimulus
-    name
-    namespace
-    system
-    times_on
-    times_off
-    pulse_switch
-    baseline
-    pulse_amp
-
-    function PulsesInput(; name, namespace=nothing, baseline=0.0, pulse_amp=1.0, t_start=[0], pulse_width=100, pulse_switch=ones(length(t_start)))
-        @variables u(t) [output=true, description="ext_input"]
-        @parameters I=baseline pulse_amp=pulse_amp
-        eqs = [u ~ I]
-
-        on = [t_start[1]] => [I~pulse_amp*pulse_switch[1]]
-        off = [t_start[1]+pulse_width] => [I~baseline]
-
-        dc = [on,off]
-
-        for i in collect(2:length(t_start))
-            on = [t_start[i]] => [I~pulse_amp*pulse_switch[i]]
-            off = [t_start[i]+pulse_width] => [I~baseline]
-            push!(dc,on)
-            push!(dc,off)
-        end
-
-        sys = System(eqs, t, [u], [I, pulse_amp]; name=name, discrete_events=dc)
-
-        times_off = t_start .+ pulse_width 
-        new(name, namespace, sys, t_start, times_off, pulse_switch, baseline, pulse_amp)
-    end
-end
-
-function get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
-    idx = floor(Int, t / t_trial) + 1
-    
-    return ifelse(
-        (t >= first(t_stims[idx])) && (t <= last(t_stims[idx])), 
-        pixel_data[idx], 
-        0.0
+"""
+    PulsesInput(; baseline=0, 
+                pulse_amp=1,
+                t_start=[0], 
+                pulse_width=100, 
     )
+
+A source that applies square wave pulses as input currents to neuron blox. 
+
+Arguments : 
+- baseline : Baseline current value that applies when the pulse is off.
+- pulse_amp : [μA] Current pulse amplitude.
+- t_start : [ms] Vector of values that denote the begin of each pulse in a sequence. there will be as many pulses as elements in t_start.
+- pulse_width : [ms] Duration of each pulse in a sequence.
+"""
+@blox struct PulsesInput(;name, namespace, baseline=0.0, pulse_amp=1.0,
+                         t_start=[0], pulse_width=100) <: AbstractSimpleStimulus
+    @params(
+        times_on  = t_start,
+        times_off = t_start .+ pulse_width,
+        baseline=float(baseline),
+        pulse_amp=float(pulse_amp)
+    )
+    @states I=float(baseline)
+    @inputs
+    @outputs I
+    @equations begin
+        # no evolution via differential equation. I changes via events
+        D(I) = 0.0
+    end
+    @event_times [times_on; times_off]
+end
+GraphDynamics.has_discrete_events(::Type{PulsesInput}) = true
+GraphDynamics.discrete_event_condition(s::Subsystem{PulsesInput}, t, _) = (t ∈ s.times_on || t ∈ s.times_off)
+function GraphDynamics.apply_discrete_event!(integrator, sys_view, s::Subsystem{PulsesInput}, _)
+    (;t) = integrator
+    (;times_on, times_off, pulse_amp, baseline) = s
+    for i ∈ eachindex(times_on)
+        if t == times_on[i]
+            sys_view.I[] = pulse_amp
+        end
+    end
+    if t ∈ times_off
+        sys_view.I[] = baseline
+    end
+    nothing
 end
 
-@register_symbolic get_sampled_data(t, t_trial::Real, t_stims::AbstractVector, pixel_data::AbstractVector)
+"""
+    ImageStimulus(data::DataFrame; t_stimulus, t_pause)
 
-mutable struct ImageStimulus <: AbstractStimulus
-    const name
-    const namespace
-    const system
-    const IMG # Matrix[pixels X stimuli]
-    const stim_parameters
-    const category
-    const t_stimulus
-    const t_pause
-    const N_pixels
-    const N_stimuli
-    current_pixel::Int
+A blox to emulate the presentation of images during a behavioral task.
 
-    function ImageStimulus(data::DataFrame; name, namespace, t_stimulus, t_pause)
-        N_pixels = DataFrames.ncol(data[!, Not(:category)])
-        N_stimuli = DataFrames.nrow(data[!, Not(:category)])
+Arguments : 
+- data : A DataFrame object where each row is a separate image and each column is a pixel value of the corresponding image. The images are flattened from a Matrix to a Vector to fit this format.
+- t_stimulus : [ms] Timepoint at which an image is presented. This is a single value and applied to all images in data.
+- t_pause : [ms] Timepoint at which an image disappears. This emulates pauses that are often added in behavioral tasks after an image is presented and before the participant makes a choice and/or the next trial begins.
+"""
+@blox struct ImageStimulus(data::DataFrame; name, namespace=nothing,
+                           t_stimulus, t_pause) <: AbstractSimpleStimulus
+    N_pixels = DataFrames.ncol(data[!, Not(:category)])
+    N_stimuli = DataFrames.nrow(data[!, Not(:category)])
 
-        # Append a row of zeros at the end of data so that indexing can work
-        # on the final simulation time step when the index will be `nrow(data)+1`.
-        d0 = DataFrame(Dict(n => 0 for n in names(data)))
-        append!(data, d0)
+    # Append a row of zeros at the end of data so that indexing can work
+    # on the final simulation time step when the index will be `nrow(data)+1`.
+    d0 = DataFrame(Dict(n => 0 for n in names(data)))
+    append!(data, d0)
 
-        S = transpose(Matrix(data[!, Not(:category)]))
+    IMG = transpose(Matrix(data[!, Not(:category)]))
 
-        t_trial = t_stimulus + t_pause
-        t_stims = [
-            ((i-1)*t_trial, (i-1)*t_trial + t_stimulus)
-            for i in Base.OneTo(N_stimuli)
-        ]
-        # Append a dummy stimulation interval at the end
-        # so that index is not out of bounds , similar to data above.
-        push!(t_stims, (0,0))
-
-        param_name = :u
-        @parameters t
-        ps = Vector{Num}(undef, N_pixels)
-        reset_eqs = Vector{Equation}(undef, N_pixels)
-        for i in Base.OneTo(N_pixels)
-            s = Symbol(param_name, "_", i)
-            ps[i] = only(@parameters $(s) = S[i,1])
-            reset_eqs[i] = ps[i] ~ 0.0
-        end
-
-        cb_stop_stim = [t_stimulus] => reset_eqs
-        sys = ODESystem(Equation[], t, [], ps; name, discrete_events = cb_stop_stim)
-        category = data[!, :category]
-
-        ps_namespaced = namespace_parameters(get_namespaced_sys(sys))
-
-        new(name, namespace, sys, S, ps_namespaced, category, t_stimulus, t_pause, N_pixels, N_stimuli, 1)
+    t_trial = t_stimulus + t_pause
+    t_stims = [((i-1)*t_trial, (i-1)*t_trial + t_stimulus)  for i in 1:N_stimuli]
+    # Append a dummy stimulation interval at the end
+    # so that index is not out of bounds , similar to data above.
+    push!(t_stims, (0,0))
+    @params(
+        current_image=IMG[:,1],
+        IMG,
+        category = data[!, :category],
+        t_stimulus,
+        t_pause,
+        N_pixels,
+        N_stimuli
+    )
+    @states
+    @inputs
+    @equations begin
     end
-
-    function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
-        @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
-        data = read(file, DataFrame)
-        ImageStimulus(data; name, namespace, t_stimulus, t_pause)
-    end
+    @event_times t_stimulus
+    @extra_fields current_pixel::Base.RefValue{Int} = Ref(1)
+end
+GraphDynamics.has_discrete_events(::Type{ImageStimulus}) = true
+GraphDynamics.discrete_event_condition(s::Subsystem{ImageStimulus}, t, _) = s.t_stimulus == t
+function GraphDynamics.apply_discrete_event!(integrator, sys_view, s::Subsystem{ImageStimulus}, _)
+    # zero out the current image
+    s.current_image .= 0.0
+    nothing
 end
 
-increment_pixel!(stim::ImageStimulus) = stim.current_pixel = mod(stim.current_pixel, stim.N_pixels) + 1
+increment_pixel!(stim::ImageStimulus) = stim.current_pixel[] = mod(stim.current_pixel[], stim.param_vals.N_pixels) + 1
 
-struct VoltageClampSource <: AbstractSimpleStimulus
-    name
-    namespace
-    system
+function ImageStimulus(file::String; name, namespace, t_stimulus, t_pause)
+    @assert last(split(file, '.')) == "csv" "Image file must be a CSV file."
+    data = read(file, DataFrame)
+    ImageStimulus(data; name, namespace, t_stimulus, t_pause)
+end
 
-    function VoltageClampSource(clamp_schedule::Vector{@NamedTuple{t::T1, V::T2}}; name, namespace=nothing) where {T1, T2}
-        @variables V(t)=0 [output=true]
-        eqs = [D(V) ~ 0]
 
-        cbs = map(clamp_schedule) do cs
-            [cs.t] => [V ~ cs.V]
-        end
+"""
+    VoltageClampSource(clamp_schedule::Vector{<:NamedTuple{(:t, :V)}})
 
-        sys = System(eqs, t, [V], []; name=name, discrete_events=cbs)
+A blox to emulate a voltage clamp experiment.
 
-        new(name, namespace, sys)
+Arguments : 
+- clamp_schedule : A vector where each element is a Tuple of the form (t = time_value_A, V = voltage_value_A), representing a schedule for the clamping experiment. Each value corresponds to setting the voltage V of the target neuron to a value voltage_value_A at the timepoint time_value_A.
+"""
+@blox struct VoltageClampSource(clamp_schedule::Vector{<:NamedTuple{(:t, :V)}}; name, namespace=nothing) <: AbstractSimpleStimulus
+    @params(
+        clamp_times=map(x -> x.t, clamp_schedule),
+        clamp_volages=map(x -> x.V, clamp_schedule),
+        V=0.0,
+    )
+    @states
+    @inputs
+    @equations begin
     end
+    @event_times clamp_times
+end
+GraphDynamics.has_discrete_events(::Type{VoltageClampSource}) = true
+GraphDynamics.discrete_event_condition(s::Subsystem{VoltageClampSource}, t, _) = t ∈ s.clamp_times
+function GraphDynamics.apply_discrete_event!(integrator, sys_view, s::Subsystem{VoltageClampSource}, _)
+    t = integrator.t
+    for (ct, V) ∈ zip(s.clamp_times, s.clamp_volages)
+        if t == ct
+            sys_view.V[] = V
+        end
+    end
+    nothing
 end

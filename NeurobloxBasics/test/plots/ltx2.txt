@@ -1,0 +1,4 @@
+\begin{align}
+\frac{\mathrm{d} \mathtt{jr1.x}\left( t \right)}{\mathrm{d}t} &= \frac{ - 2 \mathtt{jr1.x}\left( t \right)}{\mathtt{jr1.\tau}\left( t \right)} + \mathtt{jr1.y}\left( t \right) \\
+\frac{\mathrm{d} \mathtt{jr1.y}\left( t \right)}{\mathrm{d}t} &= \frac{ - \mathtt{jr1.x}\left( t \right)}{\left( \mathtt{jr1.\tau}\left( t \right) \right)^{2}} + \frac{\mathtt{jr1.H}\left( t \right) \left( \frac{2 \mathtt{jr1.\lambda}\left( t \right)}{1 + e^{ - \mathtt{jr1.r}\left( t \right) \mathtt{jr1.jcn}\left( t \right)}} - \mathtt{jr1.\lambda}\left( t \right) \right)}{\mathtt{jr1.\tau}\left( t \right)}
+\end{align}

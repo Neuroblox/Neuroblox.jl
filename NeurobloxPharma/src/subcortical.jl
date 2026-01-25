@@ -18,302 +18,286 @@ function subcortical_connection_matrix(density, N, weight; rng=Random.default_rn
     connection_matrix
 end
 
-struct Striatum <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    mean
-
-    function Striatum(;
-        name, 
-        namespace = nothing,
-        N_inhib = 25,
-        E_syn_inhib=-70,
-        G_syn_inhib=1.2,
-        I_bg=zeros(N_inhib),
-        τ_inhib=70
+"""
+    Striatum(N_inhib = 25,
+            E_syn_inhib=-70,
+            G_syn_inhib=1.2,
+            I_bg=zeros(N_inhib),
+            τ_inhib=70.0
     )
-        n_inh = [
+
+A model of the Striatum that contains three components; [`Matrisome`](@ref), [`Striosome`](@ref) and an additional group of [`HHNeuronInhib`](@ref) neurons representing Medium Spiny Neurons (MSNs). There are no connections between these clusters, however they may receive connections from or project to other blox components in a model, depending on what other regions are part of the model and the connection rules between Striatum and these regions. 
+
+Arguments : 
+- `N_inhib` : Number of inhibitory neurons.
+- `E_syn_inhib` [mV, reversal potential for GABA A receptors]
+- `G_syn_inhib` [mV, GABA A receptor conductance]
+- `I_bg` : [μA] Background current applied to the additional cluster of inhibitory neurons. If it is a single value then the same current is applied to all `N_inhib` inhibitory neurons. If it is a Vector then it needs to be of length `N_inhib` and each element is applied to one neuron.
+- `τ_inhib` : [ms, decay time constant for GABA A receptor conductance]
+
+References: 
+1. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
+
+See also [`Matrisome`](@ref), [`Striosome`](@ref) and [`HHNeuronInhib`](@ref).
+"""
+struct Striatum <: AbstractComposite
+    name::Symbol
+    namespace::Union{Nothing, Symbol}
+    inhibs::Vector{HHNeuronInhib}
+    matrisome::Matrisome
+    striosome::Striosome
+    graph::GraphSystem
+    function Striatum(; name,
+                      namespace=nothing,
+                      N_inhib = 25,
+                      E_syn_inhib=-70,
+                      G_syn_inhib=1.2,
+                      I_bg=zeros(N_inhib),
+                      τ_inhib=70.0
+                      )
+
+        inner_namespace = namespaced_name(namespace, name)
+        inhibs = map(1:N_inhib) do i
             HHNeuronInhib(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    G_syn = G_syn_inhib, 
-                    τ = τ_inhib,
-                    I_bg = I_bg[i],
+                name = Symbol("inh$i"),
+                namespace = inner_namespace,
+                E_syn = E_syn_inhib, 
+                G_syn = G_syn_inhib, 
+                τ = τ_inhib,
+                I_bg = I_bg[i],
             ) 
-            for i in Base.OneTo(N_inhib)
-        ]
-
-        matrisome = Matrisome(; name=:matrisome, namespace=namespaced_name(namespace, name))
-        striosome = Striosome(; name=:striosome, namespace=namespaced_name(namespace, name))
-        
-        parts = vcat(n_inh, matrisome, striosome) 
-
-        g = MetaDiGraph()
-        add_blox!.(Ref(g), n_inh)
-
-        # If this blox is simulated on its own, 
-        # then only the parts with dynamics are included in the system.
-        # This is done to avoid messing with structural_simplify downstream. 
-        # Also it makes sense, as the discrete parts rely exclusively on inputs/outputs, 
-        # which are not present in this case.
-        if !isnothing(namespace)
-            add_blox!(g, matrisome)
-            add_blox!(g, striosome)
-            bc = connectors_from_graph(g)
-            sys = system_from_parts(parts; name)
-
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            m = [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-            
-            new(namespace, parts, sys, bc, m)
-        else
-            bc = connectors_from_graph(g)
-            sys = system_from_graph(g, bc; name, simplify=false)
-
-            m = [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-            
-            new(namespace, parts, sys, bc, m)
         end
+        matrisome = Matrisome(; name=:matrisome, namespace=inner_namespace)
+        striosome = Striosome(; name=:striosome, namespace=inner_namespace)
+        
+        g = GraphSystem()
+
+        for n ∈ inhibs
+            system_wiring_rule!(g, n)
+        end
+        system_wiring_rule!(g, matrisome)
+        system_wiring_rule!(g, striosome)
+
+        new(name, namespace, inhibs, matrisome, striosome, g)
     end
-end    
-
-function get_striosome(str::Striatum)
-    idx = findfirst(x -> x isa Striosome, str.parts)
-    return str.parts[idx]
 end
 
-function get_matrisome(str::Striatum)
-    idx = findfirst(x -> x isa Matrisome, str.parts)
-    return str.parts[idx]
-end
+get_striosome(str::Striatum) = str.striosome
+get_matrisome(str::Striatum) = str.matrisome
 
-struct GPi <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    mean
-
-    function GPi(;
-        name, 
-        namespace = nothing,
-        N_inhib = 25,
-        E_syn_inhib=-70,
+"""
+    GPi(; N_inhib = 25,
+        E_syn_inhib =-70,
         G_syn_inhib=8,
         I_bg=4*ones(N_inhib),
-        τ_inhib=70
-    )
-        n_inh = [
-            HHNeuronInhib(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    G_syn = G_syn_inhib, 
-                    τ = τ_inhib,
-                    I_bg = I_bg[i],
-            ) 
-            for i in Base.OneTo(N_inhib)
-        ]
+        τ_inhib=70.0
+)
 
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_inhib)
-            add_blox!(g, n_inh[i])
+A model of Globus Pallidus Internus (GPi). A group of [`HHNeuronInhib`](@ref) neurons, which are typically project to the inhibitory neurons in [`Striatum`](@ref).
+
+Arguments : 
+- `N_inhib` : Number of inhibitory neurons.
+- `E_syn_inhib` [mV, reversal potential for GABA A receptors]
+- `G_syn_inhib` [mV, GABA A receptor conductance]
+- `I_bg` : [μA] Background current applied to all neurons. If it is a single value then the same current is applied to all `N_inhib` inhibitory neurons. If it is a Vector then it needs to be of length `N_inhib` and each element is applied to one neuron.
+- `τ_inhib` : [ms, decay time constant for GABA A receptor conductance]
+
+References: 
+1. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
+"""
+struct GPi <: AbstractComposite
+    name::Symbol
+    namespace::Union{Nothing, Symbol}
+    inhibs::Vector{HHNeuronInhib}
+    graph::GraphSystem
+    function GPi(; name,
+                 namespace=nothing,
+                 N_inhib = 25,
+                 E_syn_inhib =-70,
+                 G_syn_inhib=8,
+                 I_bg=4*ones(N_inhib),
+                 τ_inhib=70.0)
+
+        graph = GraphSystem()
+        inner_namespace = namespaced_name(namespace, name)
+        inhibs = map(1:N_inhib) do i
+            inhib = HHNeuronInhib(; name=Symbol(:inh, i),
+                                  namespace = inner_namespace,
+                                  E_syn = E_syn_inhib,
+                                  G_syn = G_syn_inhib,
+                                  τ = τ_inhib,
+                                  I_bg = I_bg[i])
+            system_wiring_rule!(graph, inhib)
+            inhib
         end
-
-        parts = n_inh
-        
-        bc = connectors_from_graph(g)
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m)
+        new(name, namespace, inhibs, graph)
     end
-end    
+end
 
+"""
+    GPe(; N_inhib = 25,
+        E_syn_inhib =-70,
+        G_syn_inhib=8,
+        I_bg=4*ones(N_inhib),
+        τ_inhib=70.0
+)
 
+A model of Globus Pallidus Externus (GPe). A group of [`HHNeuronInhib`](@ref) neurons, which are typically project to the inhibitory neurons in [`Striatum`](@ref) and to the ones in [`GPi`](@ref).
+
+Arguments : 
+- `N_inhib` : Number of inhibitory neurons.
+- `E_syn_inhib` [mV, reversal potential for GABA A receptors]
+- `G_syn_inhib` [mV, GABA A receptor conductance]
+- `I_bg` : [μA] Background current applied to all neurons. If it is a single value then the same current is applied to all `N_inhib` inhibitory neurons. If it is a Vector then it needs to be of length `N_inhib` and each element is applied to one neuron.
+- `τ_inhib` : [ms, decay time constant for GABA A receptor conductance]
+
+References: 
+1. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.  
+"""
 struct GPe <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    mean
-
-    function GPe(;
-        name, 
-        namespace = nothing,
-        N_inhib = 15,
-        E_syn_inhib=-70,
-        G_syn_inhib=3,
-        I_bg=2*ones(N_inhib),
-        τ_inhib=70
-    )
-        n_inh = [
-            HHNeuronInhib(
-                    name = Symbol("inh$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_inhib, 
-                    G_syn = G_syn_inhib, 
-                    τ = τ_inhib,
-                    I_bg = I_bg[i],
-            ) 
-            for i in Base.OneTo(N_inhib)
-        ]
-
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_inhib)
-            add_blox!(g, n_inh[i])
+    name::Symbol
+    namespace::Union{Nothing, Symbol}
+    inhibs::Vector{HHNeuronInhib}
+    graph::GraphSystem
+    function GPe(;name,
+                 namespace=nothing,
+                 N_inhib=15,
+                 E_syn_inhib=-70,
+                 G_syn_inhib=3,
+                 I_bg=2*ones(N_inhib),
+                 τ_inhib=70.0)
+        graph = GraphSystem()
+        inner_namespace = namespaced_name(namespace, name)
+        inhibs = map(1:N_inhib) do i
+            inhib = HHNeuronInhib(; name=Symbol(:inh, i),
+                                  namespace=inner_namespace,
+                                  E_syn = E_syn_inhib,
+                                  G_syn = G_syn_inhib,
+                                  τ = τ_inhib,
+                                  I_bg = I_bg[i])
+            system_wiring_rule!(graph, inhib)
+            inhib
         end
-
-        parts = n_inh
-        
-        bc = connectors_from_graph(g)
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m)
+        new(name, namespace, inhibs, graph)
     end
+end
 
-end    
 
-
-struct Thalamus <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    mean
-    connection_matrix
-
-    function Thalamus(;
-        name, 
-        namespace = nothing,
-        N_exci = 25,
-        E_syn_exci=0,
-        G_syn_exci=3,
-        I_bg=3*ones(N_exci),
-        freq=zeros(N_exci),
-        phase=zeros(N_exci),
-        τ_exci=5,
-        density=0.0,
-        weight=1,
-        connection_matrix=nothing,
-        rng=Random.default_rng()              
+"""
+    Thalamus(N_exci = 25,
+            E_syn_exci=0,
+            G_syn_exci=3,
+            I_bg=3*ones(N_exci),
+            τ_exci=5.0,
+            density=0.0,
+            weight=1.0,
+            rng=default_rng(),
+            connection_matrix=subcortical_connection_matrix(density, N_exci, weight; rng)
     )
-        I_bg = I_bg isa Array ? I_bg : fill(I_bg, N_exci)
-        n_exci = [
-            HHNeuronExci(
-                    name = Symbol("exci$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_exci, 
-                    G_syn = G_syn_exci, 
-                    τ = τ_exci,
-                    I_bg = I_bg[i],
-            ) 
-            for i in Base.OneTo(N_exci)
-        ]
-        
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_exci)
-            add_blox!(g, n_exci[i])
-        end
 
-        if isnothing(connection_matrix)
-            connection_matrix = subcortical_connection_matrix(density, N_exci, weight; rng)
+A Thalamus blox used to model either the Thalamus core or matrix subregions. 
+It contains N_exci [`HHNeuronExci`](@ref) neurons connected via a connection_matrix.
+
+Arguments : 
+- `N_exci` : Number of excitatory neurons.
+- `E_syn_exci` [mV, reversal potential for AMPA receptors]
+- `G_syn_exci` [mV, AMPA receptor conductance]
+- `I_bg` : [μA] Background current applied to excitatory neurons. If it is a single value then the same current is applied to all `N_exci` excitatory neurons. If it is a Vector then it needs to be of length `N_exci` and each element is applied to one neuron.
+- `τ_exci` : [ms, decay time constant for AMPA receptor conductance]
+- `density` : Value in range [0,1]. Connection density that determines the sparseness of the Thalamus circuit.
+- `weight` : Connection weight to be used in all connections made between the excitatory neurons of Thalamus.
+- `rng` : Random number generator. This may be used in the connection_matrix to sample connections based on the density value.
+- `connection_matrix` : The connection rule that is applied between the excitatory neurons. By default subcortical_connection_matrix determines whether a connection between every possible pair of [`N_exci` x `N_exci`] neurons is made by flipping a coin with a probability of success equal to the density value. 
+
+References: 
+1. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
+"""
+struct Thalamus <: AbstractComposite
+    name::Symbol
+    namespace::Union{Nothing, Symbol}
+    excis::Vector{HHNeuronExci}
+    graph::GraphSystem
+    function Thalamus(;name,
+                      namespace=nothing,
+                      N_exci = 25,
+                      E_syn_exci=0,
+                      G_syn_exci=3,
+                      I_bg=3*ones(N_exci),
+                      τ_exci=5.0,
+                      density=0.0,
+                      weight=1.0,
+                      rng=default_rng(),
+                      connection_matrix=subcortical_connection_matrix(density, N_exci, weight; rng))
+        graph = GraphSystem()
+        inner_namespace = namespaced_name(namespace, name)
+        excis = map(1:N_exci) do i
+            exci = HHNeuronExci(; name=Symbol(:exci, i),
+                                namespace = inner_namespace,
+                                E_syn = E_syn_exci,
+                                G_syn = G_syn_exci,
+                                τ = τ_exci,
+                                I_bg = I_bg[i])
+            system_wiring_rule!(graph, exci)
+            exci
         end
-        for i in 1:N_exci
-            for j in 1:N_exci
+        for i ∈ 1:N_exci
+            for j ∈ 1:N_exci
                 cij = connection_matrix[i,j]
                 if !iszero(cij)
-                    add_edge!(g, i, j, Dict(:weight => cij))
+                    add_connection!(graph, excis[i], excis[j], weight=cij)
                 end
             end
         end
-
-        parts = n_exci
-        
-        bc = connectors_from_graph(g)
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
-        end
-
-        new(namespace, parts, sys, bc, m, connection_matrix)
+        new(name, namespace, excis, graph)
     end
-end   
+end
 
-struct STN <: AbstractComposite
-    namespace
-    parts
-    system
-    connector
-    mean
-
-    function STN(;
-        name, 
-        namespace = nothing,
-        N_exci = 25,
+"""
+    STN(; N_exci = 25,
         E_syn_exci=0,
         G_syn_exci=3,
         I_bg=3*ones(N_exci),
-        τ_exci=5
+        τ_exci=5.0
     )
-        n_exci = [
-            HHNeuronExci(
-                    name = Symbol("exci$i"),
-                    namespace = namespaced_name(namespace, name), 
-                    E_syn = E_syn_exci, 
-                    G_syn = G_syn_exci, 
-                    τ = τ_exci,
-                    I_bg = I_bg[i],
-            ) 
-            for i in Base.OneTo(N_exci)
-        ]
 
-        g = MetaDiGraph()
-        for i in Base.OneTo(N_exci)
-            add_blox!(g, n_exci[i])
-        end
+A model of the Subthalamic Nucleus (STN). A group of [`HHNeuronExci`](@ref) neurons, which are typically project to the inhibitory neurons in [`GPe`](@ref) and to the ones in [`GPi`](@ref).
 
-        parts = n_exci
-        
-        bc = connectors_from_graph(g)
-        sys = isnothing(namespace) ? system_from_graph(g, bc; name, simplify=false) : system_from_parts(parts; name)
-        
-        # TO DO : m is a subset of unknowns to be plotted in the GUI. 
-        # This can be moved to NeurobloxGUI, maybe via plotting recipes, 
-        # since it is not an essential part of the blox.
-        m = if isnothing(namespace) 
-            [s for s in unknowns.((sys,), unknowns(sys)) if contains(string(s), "V(t)")]
-        else
-            @variables t
-            # HACK : Need to define an empty system to add the correct namespace to unknowns.
-            # Adding a dispatch `ModelingToolkit.unknowns(::Symbol, ::AbstractArray)` upstream will solve this.
-            sys_namespace = System(Equation[], t; name=namespaced_name(namespace, name))
-            [s for s in unknowns.((sys_namespace,), unknowns(sys)) if contains(string(s), "V(t)")]
+Arguments : 
+- `N_exci` : Number of excitatory neurons.
+- `E_syn_exci` [mV, reversal potential for AMPA receptors]
+- `G_syn_exci` [mV, AMPA receptor conductance]
+- `I_bg` : [μA] Background current applied to excitatory neurons. If it is a single value then the same current is applied to all `N_exci` excitatory neurons. If it is a Vector then it needs to be of length `N_exci` and each element is applied to one neuron.
+- `τ_exci` : [ms, decay time constant for AMPA receptor conductance]
+
+References: 
+1. Pathak, A., Brincat, S.L., Organtzidis, H. et al. Biomimetic model of corticostriatal micro-assemblies discovers a neural code. Nat Commun 2025.
+"""
+struct STN <: AbstractComposite
+    name::Symbol
+    namespace::Union{Nothing, Symbol}
+    excis::Vector{HHNeuronExci}
+    graph::GraphSystem
+    function STN(;name,
+                 namespace=nothing,
+                 N_exci = 25,
+                 E_syn_exci=0,
+                 G_syn_exci=3,
+                 I_bg=3*ones(N_exci),
+                 τ_exci=5.0)
+        graph = GraphSystem()
+        excis = map(1:N_exci) do i
+            exci = HHNeuronExci(; name=Symbol(:exci, i),
+                                namespace=namespaced_name(namespace, name),
+                                E_syn = E_syn_exci,
+                                G_syn = G_syn_exci,
+                                τ = τ_exci,
+                                I_bg = I_bg[i])
+            system_wiring_rule!(graph, exci)
+            exci
         end
-        new(namespace, parts, sys, bc, m)
+        new(name, namespace, excis, graph)
     end
-end    
+end
+
+
+
