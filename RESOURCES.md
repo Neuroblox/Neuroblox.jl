@@ -15,3 +15,10 @@ David Hofmann, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi,
    Data: [OSF](https://osf.io/mdghu/)
   
    Code: [GitHub](https://github.com/Neuroblox/corticostriatal-circuit-notebook)
+
+3. **Computational modeling of neurotransmitter cycling predicts human brain glutamate and GABA dynamics in response to administration of exogenous ketones**.
+   Botond B. Antal, Lilianne R. Mujica-Parodi, Helmut H. Strey, Eva-Maria Ratai, Silvia Mangia, Douglas L. Rothman. BioRxiv 2026
+
+   Publication: (added soon)
+
+   Code: [Github](https://github.com/Neuroblox/MetabolicModuleNTCyclingPaper/tree/main)
