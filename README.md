@@ -1,14 +1,8 @@
+# Neuroblox.jl
+
 | **Documentation** | **Build Status** | **Citation** |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:------------------------------------------:|
 | [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] | [![][CI-img]][CI-url] | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14192732.svg)](https://doi.org/10.5281/zenodo.14192732)
-
-## Neuroblox.jl
-## About
-Neuroblox.jl is designed for computational neuroscience and psychiatry applications. Our tools range from control circuit system identification to brain circuit simulations bridging scales from spiking neurons to fMRI-derived circuits, parameter-fitting models to neuroimaging data, interactions between the brain and other physiological systems, experimental optimization, and scientific machine learning.
-
-## Description
-Neuroblox.jl is based on a library of modular computational building blocks (“blox”) in the form of systems of symbolic dynamic differential equations that can be combined to describe large-scale brain dynamics.  Once a model is built, it can be simulated efficiently and fit electrophysiological and neuroimaging data.  Moreover, the circuit behavior of multiple model variants can be investigated to aid in distinguishing between competing hypotheses.
-We employ ModelingToolkit.jl to describe the dynamical behavior of blox as symbolic (stochastic/delay) differential equations.  Our libraries of modular blox consist of individual neurons (Hodgkin-Huxley, IF, QIF, LIF, etc.), neural mass models (Jansen-Rit, Wilson-Cowan, Lauter-Breakspear, Next Generation, microcanonical circuits etc.) and biomimetically-constrained control circuit elements.  A GUI designed to be intuitive to neuroscientists allows researchers to build models that automatically generate high-performance systems of numerical ordinary/stochastic differential equations from which one can run stimulations with parameters fit to experimental data.  Our benchmarks show that the increase in speed for simulation often exceeds a factor of 100 as compared to neural mass model implementation by the Virtual Brain (python** and similar packages in MATLAB.  For parameter fitting of brain circuit dynamical models, we use Turing.jl to perform probabilistic modeling, including Hamilton-Monte-Carlo sampling and Automated Differentiation Variational Inference.
 
 ## Installation
 
@@ -16,6 +10,7 @@ Neuroblox is available in the [NeurobloxRegistry](https://github.com/Neuroblox/N
 
 ``` julia
 using Pkg
+pkg"registry add General"
 pkg"registry add https://github.com/Neuroblox/NeurobloxRegistry"
 ```
 
@@ -25,11 +20,25 @@ and then Neuroblox can be installed like any other julia package with
 Pkg.add("Neuroblox")
 ```
 
-If this is your first time using Julia, you *may* also need to add the General registry, which can be done with
-```
-pkg"registry add General"
-```
+## About
 
+[Neuroblox](neuroblox.ai) is a computational platform for designing and testing brain interventions before they reach the clinic. Build neural circuit models from modular components, simulate treatment effects across biological scales, and predict outcomes from molecular targets to clinical symptoms.
+
+Neuroblox is built on a library of modular computational building blocks ("blox") that snap together like components in a circuit diagram.
+
+### What Neuroblox can model:
+- Individual neurons (Hodgkin-Huxley, IF, QIF, LIF, etc.)
+- Receptor dynamics (NMDA, Glutamate, GABA A/B, Dopamine, etc.)
+- Neural mass models (Jansen-Rit, Wilson-Cowan, Next Generation models, etc.)
+- Multi-scale, biomimetically-constrained neural circuits comprised of neurons, synapses, neural mass models, and other sub-circuits
+
+### What you can do with Neuroblox:
+- Build circuits through an intuitive GUI or programmatically
+- Simulate interventions (drugs, devices, stimulation) and observe downstream effects
+- Fit model parameters to your experimental data (electrophysiology, neuroimaging)
+- Compare competing hypotheses by testing alternative circuit architectures
+
+Neuroblox models compile to high-performance numerical kernels making it practical to explore large parameter spaces and run optimization experiments that would be infeasible on other platforms.
 
 ## Licensing
 
