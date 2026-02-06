@@ -22,21 +22,21 @@ Pkg.add("Neuroblox")
 
 ## About
 
-[Neuroblox](neuroblox.ai) is a computational platform for engineering and testing brain interventions before they reach the clinic. Integrate and operationalize data across scales, generate and test hypotheses, design and optimize novel neurotherapeutics, and inform precision medicine.  Build or load pre-built neural circuit models from modular components, simulate treatment effects across biological scales, and predict outcomes: from molecular targets to clinical symptoms (cognition, mood, and behavior).
+[Neuroblox](neuroblox.ai) is a neuroCAD platform for engineering and testing brain interventions in silico.  Integrate and operationalize brain data across scales.  Inform strategy for experimental data-collection.  Identify and optimize novel neurotherapeutics.  And design pipelines for precision psychiatry and neurology.  
 
-Neuroblox is built on a library of modular computational building blocks ("blox") that snap together like components in a circuit diagram.
+Build your own models or load pre-built (data-validated) neural circuit models from modular components.  Then simulate treatment effects across spatio-temporal scales and predict outcomes, from molecular targets to biomarkers to psychiatric/cognitive symptoms.  Neuroblox uses libraries of modular neurobiological building blocks ("blox") that snap together like components in a circuit diagram.
 
-### What Neuroblox can model:
-- Individual neurons (e.g., Hodgkin-Huxley, IF, QIF, LIF)
-- Pharma and disorder-specific modulation via neuroreceptor dynamics (e.g., Glu AMPA, GABA A, GABA B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh ($\alpha$, $\beta$), muscarinic ACh)
-- Neural mass models (e.g., Jansen-Rit, Wilson-Cowan, Next-Generation)
-- Multiscale biomimetic neural circuits composed of neurons, synapses, micro-assemblies (including biomimetic computational primitives), and neural mass models.
+### What Neuroblox can simulate:
+- Individual neurons: Hodgkin-Huxley, IF, QIF, LIF
+- Neuroreceptor dynamics: Glu AMPA, GABA-A, GABA-B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh ($\alpha$, $\beta$), muscarinic ACh
+- Neural mass models: Jansen-Rit, Wilson-Cowan, Next-Generation
+- Multiscale biomimetic neural circuits composed of neurons, synapses, micro-assemblies, and neural mass models
 
 ### What you can do with Neuroblox:
 - Build circuits through an intuitive GUI or Neuroblox's neuroscience-specific programming language 
-- Simulate interventions (drugs, devices, sensory inputs, behavioral tasks) and observe neurobehavioral effects across scales
+- Simulate interventions (drugs, devices, sensory inputs, behavioral tasks) and track neurobehavioral effects across scales
 - Fit model parameters to your experimental data (electrophysiology, neuroimaging, behavioral)
-- Rigorously compare competing hypotheses by parallel testing of alternative circuit-architectures and mechanisms
+- Rigorously compare competing hypotheses with parallel testing of alternative circuit-architectures and mechanisms
 
 Neuroblox models compile to high-performance numerical kernels, enabling practical exploration of large parameter spaces and running optimization experiments that would be infeasible on other platforms.
 
