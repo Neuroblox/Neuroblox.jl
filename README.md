@@ -22,29 +22,29 @@ Pkg.add("Neuroblox")
 
 ## About
 
-[Neuroblox](neuroblox.ai) is a computational platform for designing and testing brain interventions before they reach the clinic. Build neural circuit models from modular components, simulate treatment effects across biological scales, and predict outcomes from molecular targets to clinical symptoms.
+[Neuroblox](neuroblox.ai) is a computational platform for engineering and testing brain interventions before they reach the clinic. Integrate and operationalize data across scales, generate and test hypotheses, design and optimize novel neurotherapeutics, and inform precision medicine.  Build or load pre-built neural circuit models from modular components, simulate treatment effects across biological scales, and predict outcomes: from molecular targets to clinical symptoms (cognition, mood, and behavior).
 
 Neuroblox is built on a library of modular computational building blocks ("blox") that snap together like components in a circuit diagram.
 
 ### What Neuroblox can model:
-- Individual neurons (Hodgkin-Huxley, IF, QIF, LIF, etc.)
-- Receptor dynamics (NMDA, Glutamate, GABA A/B, Dopamine, etc.)
-- Neural mass models (Jansen-Rit, Wilson-Cowan, Next Generation models, etc.)
-- Multi-scale, biomimetically-constrained neural circuits comprised of neurons, synapses, neural mass models, and other sub-circuits
+- Individual neurons (e.g., Hodgkin-Huxley, IF, QIF, LIF)
+- Pharma and disorder-specific modulation via neuroreceptor dynamics (e.g., Glu AMPA, GABA A, GABA B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh (alpha, beta), muscarinic ACh)
+- Neural mass models (e.g., Jansen-Rit, Wilson-Cowan, Next-Generation)
+- Multiscale biomimetic neural circuits composed of neurons, synapses, micro-assemblies (including biomimetic computational primitives), and neural mass models.
 
 ### What you can do with Neuroblox:
-- Build circuits through an intuitive GUI or programmatically
-- Simulate interventions (drugs, devices, stimulation) and observe downstream effects
-- Fit model parameters to your experimental data (electrophysiology, neuroimaging)
-- Compare competing hypotheses by testing alternative circuit architectures
+- Build circuits through an intuitive GUI or Neuroblox's neuroscience-specific programming language 
+- Simulate interventions (drugs, devices, sensory inputs, behavioral tasks) and observe neurobehavioral effects across scales
+- Fit model parameters to your experimental data (electrophysiology, neuroimaging, behavioral)
+- Rigorously compare competing hypotheses by parallel testing of alternative circuit-architectures and mechanisms
 
-Neuroblox models compile to high-performance numerical kernels making it practical to explore large parameter spaces and run optimization experiments that would be infeasible on other platforms.
+Neuroblox models compile to high-performance numerical kernels, enabling practical exploration of large parameter spaces and running optimization experiments that would be infeasible on other platforms.
 
 ## Licensing
 
-Neuroblox is free for non-commerical and academic use. For full details of the license, please see 
-[the Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, get in contact
-with info@neuroblox.ai.
+Neuroblox is free for non-commercial and academic use. For full details of the license, please see 
+[the Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, please contact
+info@neuroblox.ai.
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://neuroblox.github.io/NeurobloxDocsHost/dev
