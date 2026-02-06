@@ -22,7 +22,7 @@ Pkg.add("Neuroblox")
 
 ## About
 
-[Neuroblox](neuroblox.ai) is a neuroCAD platform for engineering and testing brain interventions in silico.  Integrate and operationalize brain data across scales.  Inform strategy for experimental data-collection.  Identify and optimize novel neurotherapeutics.  And design pipelines for precision psychiatry and neurology.  
+[Neuroblox](neuroblox.ai) is a neuroCAD platform for engineering and testing brain interventions in silico.  Integrate and operationalize brain data across scales.  Inform strategy for experimental data-collection.  Identify and optimize novel neurotherapeutics.  Design pipelines for precision psychiatry and neurology.  
 
 Build your own models or load pre-built (data-validated) neural circuit models from modular components.  Then simulate treatment effects across spatio-temporal scales and predict outcomes, from molecular targets to biomarkers to psychiatric/cognitive symptoms.  Neuroblox uses libraries of modular neurobiological building blocks ("blox") that snap together like components in a circuit diagram.
 
