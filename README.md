@@ -14,7 +14,7 @@ pkg"registry add General"
 pkg"registry add https://github.com/Neuroblox/NeurobloxRegistry"
 ```
 
-and then Neuroblox can be installed like any other julia package with
+and then Neuroblox can be installed like any other Julia package with
 
 ``` julia
 Pkg.add("Neuroblox")
@@ -28,7 +28,7 @@ Neuroblox is built on a library of modular computational building blocks ("blox"
 
 ### What Neuroblox can model:
 - Individual neurons (e.g., Hodgkin-Huxley, IF, QIF, LIF)
-- Pharma and disorder-specific modulation via neuroreceptor dynamics (e.g., Glu AMPA, GABA A, GABA B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh (alpha, beta), muscarinic ACh)
+- Pharma and disorder-specific modulation via neuroreceptor dynamics (e.g., Glu AMPA, GABA A, GABA B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh ($\alpha$, $\beta$), muscarinic ACh)
 - Neural mass models (e.g., Jansen-Rit, Wilson-Cowan, Next-Generation)
 - Multiscale biomimetic neural circuits composed of neurons, synapses, micro-assemblies (including biomimetic computational primitives), and neural mass models.
 
