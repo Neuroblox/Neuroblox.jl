@@ -22,3 +22,7 @@ David Hofmann, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi,
    Publication: (added soon)
 
    Code: [Github](https://github.com/Neuroblox/MetabolicModuleNTCyclingPaper/tree/main)
+
+   Tutorial: [Github](https://github.com/Neuroblox/MetabolicModuleNTCyclingPaper/tree/main)
+
+   GUI: [GUI](https://nt-cycling.fly.dev/)
