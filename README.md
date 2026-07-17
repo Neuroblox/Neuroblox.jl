@@ -4,32 +4,73 @@
 |:-------------------------------------------------------------------------------:|:------------------------------------------:|
 | [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] |  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14192732.svg)](https://doi.org/10.5281/zenodo.14192732)
 
-## About
+# Installing the Neuroblox GUI
 
-[Neuroblox](neuroblox.ai) is a neuroCAD platform designed to accelerate biotech innovation and precision therapeutics for neuropsychiatric disorders and cognitive performance.  Optimize and derisk drugs, devices, and procedures in silico &mdash; before launching in patients.	
+The Neuroblox graphical application is distributed as a downloadable installer for Windows, macOS, and Linux.
 
-Start by loading prebuilt (experimentally validated) neural circuits that you can modify, or use experimental data to model your own neural circuits from modular components.  Next, simulate treatment effects across spatio-temporal scales and predict outcomes: from molecular targets to biomarkers to psychiatric/cognitive symptoms.  Neuroblox uses libraries of modular neurobiological building blocks ("blox") that snap together like components in a circuit diagram.
+## Installation
 
-### What Neuroblox can simulate:
-- Individual neurons: Hodgkin-Huxley, IF, QIF, LIF
-- Neuroreceptor dynamics: Glu AMPA, GABA-A, GABA-B, NMDA, D1, D2, 5-HT, TRPM4, nicotinic ACh ($\alpha$, $\beta$), muscarinic ACh
-- Neural mass models: Jansen-Rit, Wilson-Cowan, Next-Generation
-- Multiscale biomimetic neural circuits composed of neurons, synapses, micro-assemblies, and neural mass models
+1. Visit the [Neuroblox.jl releases on GitHub](https://github.com/Neuroblox/Neuroblox.jl/releases).
+2. Download the appropriate archive for your operating system:
+   - **Windows (x86-64):** `neuroblox-windows-0.9.zip`
+   - **macOS (Apple Silicon):** `neuroblox-macos-0.9.zip`
+   - **Linux (x86-64):** `neuroblox-linux-0.9.zip`
+3. Extract the downloaded ZIP archive.
+4. Install the application:
+   - **Windows:** Open the extracted folder, then double-click the `.exe` installer and follow the on-screen installation wizard.
+   - **macOS:** Open the extracted `.dmg` file, then drag **Neuroblox** into the **Applications** folder.
+   - **Linux:** Open the extracted folder, then make the `.AppImage` file executable (`chmod +x`) and double-click it to launch, or run it from a terminal.
 
-### What you can do with Neuroblox:
-- Build circuits through an intuitive GUI or Neuroblox's neuroscience-specific programming language 
-- Simulate interventions (drugs, devices, sensory inputs, behavioral tasks) and track neurobehavioral effects across scales
-- Fit model parameters to your experimental data (electrophysiology, neuroimaging, behavioral)
-- Rigorously compare competing hypotheses with parallel testing of alternative circuit-architectures and mechanisms
+## Privacy and security warnings
 
-Neuroblox models compile to high-performance numerical kernels, enabling practical exploration of large parameter spaces and running optimization experiments that would be infeasible on other platforms.
+The current release of the Neuroblox GUI is not yet code-signed, so your operating system may warn you that the application is from an unidentified developer and block it from opening.
 
-## Licensing and Usage
+> **_NOTE_:**
+> We are in the process of obtaining developer certification from both Apple and Microsoft, so that future releases can be installed without these warnings.
 
-A public release of Neuroblox is coming soon. For full details of the license, see 
-the [Neuroblox EULA](https://github.com/Neuroblox/NeurobloxEULA). For commercial use, please contact
-info@neuroblox.ai.
+**If** you would like to run the current release before signed installers are available, the steps below describe how to do so on each platform.
 
+### macOS
+
+If macOS reports that Neuroblox "cannot be opened because the developer cannot be verified":
+
+1. Click **Done** (or **Cancel**) to dismiss the initial warning dialog.
+2. Open **System Settings → Privacy & Security**.
+3. Scroll down to the **Security** section. You will see a message stating that "Neuroblox was blocked to protect your Mac."
+4. Click **Open Anyway** next to that message.
+5. Confirm by clicking **Open Anyway** again, then authenticate with your password or Touch ID if prompted.
+
+Neuroblox will now launch, and macOS will remember your choice for future launches.
+
+### Windows
+
+If Windows displays a **"Windows protected your PC"** SmartScreen warning:
+
+1. On the warning dialog, click **More info**.
+2. Click the **Run anyway** button that appears.
+3. Follow the installation wizard as normal.
+
+Windows will remember your choice, so the warning will not appear again for this installer.
+
+### Linux
+
+Linux does not block unsigned applications, but the `.AppImage` file must be marked as executable before it can run:
+
+1. In your file manager, right-click the `.AppImage`, open its **Properties**, and enable **Allow executing file as program** (or run `chmod +x neuroblox-*.AppImage` from a terminal).
+2. Double-click the file, or launch it from a terminal with `./neuroblox-*.AppImage`.
+
+## System Requirements
+
+### Supported operating systems
+
+- **Windows:** Windows 10 or later (x86-64)
+- **macOS:** macOS 12 Monterey or later on Apple Silicon (M1, M2, M3, M4, or newer)
+- **Linux:** A modern 64-bit distribution (x86-64) with a desktop environment
+
+### Hardware recommendations
+
+- **Memory:** 16 GB RAM
+- **Processor:** 64-bit processor, 4+ CPU cores
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://neuroblox.github.io/NeurobloxDocsHost/dev
