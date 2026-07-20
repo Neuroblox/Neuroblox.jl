@@ -6,6 +6,8 @@ NeurobloxGUI is the interactive modeling environment for the Neuroblox neuroCAD 
 
 Circuits are assembled from dynamical "blox" — individual neurons, neural assemblies, and neural mass models — and simulated to predict how the underlying system behaves. This supports mechanism-of-action studies, target and biomarker exploration, and the *in silico* evaluation of candidate interventions across molecular, cellular, and circuit scales.
 
+https://github.com/user-attachments/assets/8440fade-344c-416a-8f77-369732c35cb7
+
 Installation instructions can be found [here](https://github.com/Neuroblox/Neuroblox.jl/blob/main/INSTALLATION.md)
 
 > [!NOTE]
