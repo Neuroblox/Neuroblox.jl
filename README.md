@@ -21,30 +21,15 @@ The Neuroblox graphical application is distributed as a downloadable installer f
    - **macOS:** Open the extracted `.dmg` file, then drag **Neuroblox** into the **Applications** folder.
    - **Linux:** Open the extracted folder, then make the `.AppImage` file executable (`chmod +x`) and double-click it to launch, or run it from a terminal.
 
-## Privacy and security warnings
-
-The current release of the Neuroblox GUI is not yet code-signed, so your operating system may warn you that the application is from an unidentified developer and block it from opening.
-
-> **_NOTE_:**
-> We are in the process of obtaining developer certification from both Apple and Microsoft, so that future releases can be installed without these warnings.
-
-**If** you would like to run the current release before signed installers are available, the steps below describe how to do so on each platform.
+## Specific Installation Instructions
 
 ### macOS
 
-If macOS reports that Neuroblox "cannot be opened because the developer cannot be verified":
-
-1. Click **Done** (or **Cancel**) to dismiss the initial warning dialog.
-2. Open **System Settings → Privacy & Security**.
-3. Scroll down to the **Security** section. You will see a message stating that "Neuroblox was blocked to protect your Mac."
-4. Click **Open Anyway** next to that message.
-5. Confirm by clicking **Open Anyway** again, then authenticate with your password or Touch ID if prompted.
-
-Neuroblox will now launch, and macOS will remember your choice for future launches.
+NeurobloxGUI will launch after the user acknowledges that the software was downloaded from the internet.  The NeurobloxGUI app is code-signed through the Apple Developer Program.
 
 ### Windows
 
-If Windows displays a **"Windows protected your PC"** SmartScreen warning:
+Windows may display a **"Windows protected your PC"** SmartScreen warning:
 
 1. On the warning dialog, click **More info**.
 2. Click the **Run anyway** button that appears.
