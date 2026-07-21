@@ -6,9 +6,9 @@ NeurobloxGUI is the interactive modeling environment for the Neuroblox neuroCAD 
 
 Circuits are assembled from dynamical "blox" — individual neurons, neural assemblies, and neural mass models — and simulated to predict how the underlying system behaves. This supports mechanism-of-action studies, target and biomarker exploration, and the *in silico* evaluation of candidate interventions across molecular, cellular, and circuit scales.
 
-https://github.com/user-attachments/assets/8440fade-344c-416a-8f77-369732c35cb7
-
 Installation instructions can be found [here](https://github.com/Neuroblox/Neuroblox.jl/blob/main/INSTALLATION.md)
+
+https://github.com/user-attachments/assets/13a4c325-4f43-45ca-8bba-414ca52c961b
 
 > [!NOTE]
 > **Neuroblox 0.95 (1 August 2026)** will contain the Neuroblox Domain Specific Language (DSL): a new programming language designed to be highly intuitive and user-friendly for neuroscientists. In Neuroblox 0.95, the NeurobloxGUI will include an Integrated Development Environment (IDE) to permit users to interact with the GUI via the Neuroblox DSL. Neuroblox 0.95 users are highly encouraged to provide feedback by contacting <support@neuroblox.ai>; this feedback will be incorporated into **Neuroblox 1.0 (1 October 2026)**.
