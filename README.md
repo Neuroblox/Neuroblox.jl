@@ -8,10 +8,10 @@ Circuits are assembled from dynamical "blox" — individual neurons, neural asse
 
 Installation instructions can be found [here](https://github.com/Neuroblox/Neuroblox.jl/blob/main/INSTALLATION.md)
 
-https://github.com/user-attachments/assets/13a4c325-4f43-45ca-8bba-414ca52c961b
-
 > [!NOTE]
 > **Neuroblox 0.95 (1 August 2026)** will contain the Neuroblox Domain Specific Language (DSL): a new programming language designed to be highly intuitive and user-friendly for neuroscientists. In Neuroblox 0.95, the NeurobloxGUI will include an Integrated Development Environment (IDE) to permit users to interact with the GUI via the Neuroblox DSL. Neuroblox 0.95 users are highly encouraged to provide feedback by contacting <support@neuroblox.ai>; this feedback will be incorporated into **Neuroblox 1.0 (1 October 2026)**.
+
+https://github.com/user-attachments/assets/13a4c325-4f43-45ca-8bba-414ca52c961b
 
 ## Guided tutorials and worked examples
 
