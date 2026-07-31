@@ -6,9 +6,9 @@ The Neuroblox graphical application is distributed as a downloadable installer f
 
 1. Visit the [Neuroblox.jl releases on GitHub](https://github.com/Neuroblox/Neuroblox.jl/releases).
 2. Download the appropriate archive for your operating system:
-   - **Windows (x86-64):** `neuroblox-windows-0.9.zip`
-   - **macOS (Apple Silicon):** `neuroblox-macos-0.9.zip`
-   - **Linux (x86-64):** `neuroblox-linux-0.9.zip`
+   - [**Windows (x86-64)**](https://github.com/Neuroblox/Neuroblox.jl/releases/download/v0.9.0/neuroblox-windows-0.9.exe)
+   - [**macOS (Apple Silicon)**](https://github.com/Neuroblox/Neuroblox.jl/releases/download/v0.9.0/neuroblox-macos-0.9.dmg)
+   - [**Linux (x86-64)**](https://github.com/Neuroblox/Neuroblox.jl/releases/download/v0.9.0/neuroblox-linux-0.9.AppImage)
 3. Extract the downloaded ZIP archive.
 4. Install the application:
    - **Windows:** Open the extracted folder, then double-click the `.exe` installer and follow the on-screen installation wizard.
