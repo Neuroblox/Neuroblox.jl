@@ -26,3 +26,8 @@ David Hofmann, Anthony G. Chesebro, Chris Rackauckas, Lilianne R. Mujica-Parodi,
    Tutorial: [Github](https://github.com/Neuroblox/MetabolicModuleNTCyclingPaper/tree/main)
 
    GUI: [GUI](https://nt-cycling.fly.dev/)
+
+4. **Mechanistic simulation identifies predictive dose-dependent biomarkers of propofol anesthesia**,
+Anand Pathak, Scott L. Brincat, Yihan (Sophy) Xiong, Haris Organtzidis, Mason Protter, Vincent Du, Helmut H. Strey, Lilianne R. Mujica-Parodi, Earl K. Miller, Richard Granger. BioRxiv 2026
+
+Publication: [Preprint](https://doi.org/10.64898/2026.06.10.731411)
