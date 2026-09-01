@@ -13,7 +13,7 @@ The Neuroblox graphical application is distributed as a downloadable installer f
 4. Install the application:
    - **Windows:** Open the extracted folder, then double-click the `.exe` installer and follow the on-screen installation wizard.
    - **macOS:** Open the extracted `.dmg` file, then drag **Neuroblox** into the **Applications** folder.
-   - **Linux:** Open the extracted folder, then make the `.AppImage` file executable (`chmod +x`) and double-click it to launch, or run it from a terminal.
+   - **Linux:** Open the extracted folder and double-click it to launch, or run it from a terminal.
 
 ## Specific Installation Instructions
 
@@ -33,7 +33,7 @@ Windows will remember your choice, so the warning will not appear again for this
 
 ### Linux
 
-Linux does not block unsigned applications, but the `.AppImage` file must be marked as executable before it can run:
+Linux does not block unsigned applications, but on some distributions, the the `.AppImage` file may need to be marked as executable before it can run. If it's not executable
 
 1. In your file manager, right-click the `.AppImage`, open its **Properties**, and enable **Allow executing file as program** (or run `chmod +x neuroblox-*.AppImage` from a terminal).
 2. Double-click the file, or launch it from a terminal with `./neuroblox-*.AppImage`.
